@@ -1,5 +1,5 @@
 const Professor = require("../models/ProfessorModel")
-const ProfessorCode = require("../models/ProfessorCode")
+const ProfessorCode = require("../models/ProfessorCodeModel")
 const bcrypt = require("bcrypt");
 const generateTokenSetCookie = require("../utils/generateToken");
 
@@ -37,17 +37,14 @@ const verifyCode = async(req, res) => {
 // and then it hashes their password
 // and then it saves their info to our database under professors
 const signup = async (req, res) => { 
-    const {inviteCode, email, name, password} = req.body; 
+    let {email, name, password} = req.body; 
     try{ 
-        if (!inviteCode || !email || !name  || !password) {
+        if (!email || !name  || !password) {
             return res.status(400).send("Please fill all fields")
         }
+        console.log(email, name, password)
 
-        const inviteCodeAssociatedEmail = await ProfessorCode.findOne({uniqueCode:inviteCode});
-
-        if (inviteCodeAssociatedEmail.email !== email) { 
-            return res.status(400).send("This email is not associated with this invite code!")
-        }
+        email = email.toLowerCase(); 
 
         const profExists = await Professor.findOne({email});
         if (profExists) { 
@@ -57,11 +54,11 @@ const signup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const professor = new Professor({
-            verificationCode: inviteCode, email, name, password:hashedPassword
+            email, name, password:hashedPassword
         })
 
         await professor.save();
-
+        console.log("created professor: ", professor)
         generateTokenSetCookie(professor._id, res);
 
         res.status(201).json({
@@ -70,9 +67,49 @@ const signup = async (req, res) => {
             email: professor.email
         })
     }catch(error) { 
-        console.log(error); 
-        res.status(400).send(error)
+        console.debug(`Error in signup function: ${error}`)
+        return res.status(500).json({error})
     }
 }
 
-module.exports = {signup, verifyCode}
+const verifyEmail = async (req, res) => {
+    let {verificationCode} = req.body;
+    try{ 
+
+    } catch (error) { 
+        console.debug(`Error in verifyEmail function: ${error}`)
+        return res.status(500).json({error})
+    }
+}
+
+
+const login = async (req, res) => { 
+    let {email, password} = req.body; 
+    try{ 
+        email = email.toLowerCase(); 
+        const prof = await Professor.findOne({ email });
+        const passwordCorrect = await bcrypt.compare(password, prof?.password || "");
+        
+        if (!prof ) { 
+            return res.status(400).json({error: "Invalid email"})
+        }
+        if (!passwordCorrect) {
+            return res.status(400).json({error: "Invalid password"})
+        }
+
+        generateTokenSetCookie(prof._id, res); 
+
+        res.status(200).json({
+            _id: prof._id,
+        })
+    }catch(error) { 
+        console.debug(`Error in login function: ${error}`)
+        return res.status(500).json({error})
+    }
+}
+
+const logout = async (req, res) => {
+
+}
+
+module.exports = {signup, verifyCode, login}

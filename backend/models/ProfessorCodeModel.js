@@ -6,6 +6,7 @@ const mongoose = require("mongoose")
 // this code is emailed to invited professors
 // and then they will be prompted to enter it on our site to register their account!
 
+
 const ProfessorCodeSchema = new mongoose.Schema({
     email: {
         type: String,
@@ -18,15 +19,11 @@ const ProfessorCodeSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    status: {
-        type: String,
-        enum: ['unused', 'used', 'expired'],
-        default: 'unused',
-    },
-    // expiration_time: {
-    //     type: Date,
-    //     required: true,
-    // },
+    createdAt: { 
+        type: Date,
+        default: Date.now,
+        expires: 60 * 30
+    }
 });
 
 module.exports = mongoose.model("ProfessorCode", ProfessorCodeSchema)

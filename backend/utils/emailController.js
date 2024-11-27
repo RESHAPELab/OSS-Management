@@ -87,7 +87,7 @@ const sendEmail = (recipientEmail, verificationCode) => {
         </head>
         <body>
             <div class="email-container">
-                <h1>Welcome to OSS - Your Invitation Code</h1>
+                <h1>Welcome to OSS - Email Confirmation</h1>
                 <p>Dear Professor,</p>
                 <p>Thank you for joining our platform! We're excited to have you on board.</p>
                 <p>To complete your registration, please use the following unique invitation code:</p>

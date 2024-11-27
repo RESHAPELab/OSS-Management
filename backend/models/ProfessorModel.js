@@ -8,14 +8,15 @@ const mongoose = require("mongoose")
 const ProfessorSchema = mongoose.Schema({
     email: { 
         type: String, 
-        required: [true, "Professor needs an email"]
+        required: [true, "Please enter an email"]
     },
     name: { 
         type: String,
-        required: [true, "Professor needs a name"]
+        required: [true, "Please enter a name"]
     },
     password: {
-        type: String
+        type: String,
+        required: [true, "Please enter a password"]
     },
     verificationCode: {
         type: String
@@ -23,7 +24,15 @@ const ProfessorSchema = mongoose.Schema({
     ownedGroups: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Group"
-    }]
+    }],
+    quests: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Quest"
+    }],
+    verified: { 
+        type: Boolean,
+        default: false
+    }
 })
 
 module.exports = mongoose.model("Professor", ProfessorSchema)
