@@ -22,9 +22,13 @@ const GroupSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Quest"
     }],
-    uniqueCode: {
+    classCode: {
         type: String
-    }
+    },
+    students: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Student"
+    }]
 })
 
 module.exports = mongoose.model("Group", GroupSchema)

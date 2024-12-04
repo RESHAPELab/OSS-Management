@@ -52,9 +52,20 @@ const createGroup = async (req, res) =>  {
             return res.status(401).json({error: `No professor with id ${professorID} found`})
         }
 
+        let hash = 0; 
+        for (let i = 0; i < groupName.length; i++ ) {
+            hash = (hash<<5) - hash + groupName.charCodeAt(i);
+            hash &= hash; 
+        }
+        const randomFactor = Math.floor(Math.random() * 1000);
+        const combined = Math.abs(hash + randomFactor); 
+        let classCode = combined % 1000000;
+        classCode = classCode.toString().padStart(6, '0');
+
         let newGroup = new Group({ 
             groupName,
-            professor: professorID
+            professor: professorID,
+            classCode
         })
 
         await newGroup.save()
@@ -65,7 +76,8 @@ const createGroup = async (req, res) =>  {
         if (newGroup) {
             res.status(201).json({
                 professorID: newGroup.professor, 
-                groupName: newGroup.groupName
+                groupName: newGroup.groupName,
+                classCode: newGroup.classCode
             })
         } else { 
             return res.status(400).json({error: `Error creating new group for professor with id ${professorID}`})

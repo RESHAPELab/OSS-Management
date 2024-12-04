@@ -1,6 +1,5 @@
 const ProfessorCode = require("../models/ProfessorCodeModel")
 const dotenv = require("dotenv").config();
-const mongoose = require("mongoose"); 
 const {sendEmail} = require("./emailController");
 const connectDB = require("../config/db");
 connectDB(); 
@@ -13,49 +12,18 @@ async function generateAndSendCode (email) {
     }
     const randomFactor = Math.floor(Math.random() * 1000);
     const combined = Math.abs(hash + randomFactor); 
-    const code = combined % 1000000;
+    let code = combined % 1000000;
     code = code.toString().padStart(6, '0');
-}
 
-async function generateAndStoreCode(email) { 
-    const uniqueCode = generateUniqueCode(email); 
-    const codeExists = await ProfessorCode.findOne({email});
-    if (codeExists) { 
-        console.log(`A code was already made for ${email}: ${uniqueCode}`)
+    try {
+        await sendEmail(email, code)
+        console.log(`Email sent to ${email} with code ${code}`)
+    } catch(error) { 
+        console.debug(`Error in generateAndSendCode function: ${error}`)
+        return res.status(500).json({error})
     }
-    
-    const newCode = new ProfessorCode({
-        email, 
-        uniqueCode,
-        status: "unused"
-    })
 
-    await newCode.save();
-    return uniqueCode; 
+    return code;
 }
 
-
-// function run(email) { 
-//     generateAndStoreCode(email)
-//         .then((uniqueCode) => {
-//             console.log("Generated unique code:", uniqueCode);
-//             sendEmail(email, uniqueCode)
-//                 .then(() => {
-//                     console.log(`Email sent to ${email} with code: ${uniqueCode}`);
-//                     process.exit();  
-//                 })
-//                 .catch((error) => {
-//                     console.error("Error sending email:", error);
-//                     process.exit(1);  
-//                 }); 
-//         })
-//         .catch((error) => {
-//             console.error("Error generating code:", error);
-//             process.exit(1); 
-//         });
-// }
-
-// run("jlc2243@nau.edu")
-
-
-module.exports = {generateAndSendCode, generateAndStoreCode}
+module.exports = {generateAndSendCode}
