@@ -42,7 +42,6 @@ const signup = async (req, res) => {
         if (!email || !name  || !password) {
             return res.status(400).send("Please fill all fields")
         }
-        console.log(email, name, password)
 
         email = email.toLowerCase(); 
 
@@ -58,7 +57,7 @@ const signup = async (req, res) => {
         })
 
         await professor.save();
-        console.log("created professor: ", professor)
+
         generateTokenSetCookie(professor._id, res);
 
         res.status(201).json({
@@ -66,7 +65,8 @@ const signup = async (req, res) => {
             name: professor.name,
             email: professor.email
         })
-    }catch(error) { 
+
+    } catch(error) { 
         console.debug(`Error in signup function: ${error}`)
         return res.status(500).json({error})
     }
@@ -102,7 +102,7 @@ const login = async (req, res) => {
         res.status(200).json({
             _id: prof._id,
         })
-    }catch(error) { 
+    } catch(error) { 
         console.debug(`Error in login function: ${error}`)
         return res.status(500).json({error})
     }
