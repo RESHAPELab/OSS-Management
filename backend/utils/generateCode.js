@@ -14,7 +14,9 @@ async function generateAndSendCode (email) {
     const randomFactor = Math.floor(Math.random() * 1000);
     const combined = Math.abs(hash + randomFactor); 
     const code = combined % 1000000;
-    code = code.toString().padStart(6, '0');
+    const final_code = code.toString().padStart(6, '0');
+
+    return final_code;
 }
 
 async function generateAndStoreCode(email) { 
