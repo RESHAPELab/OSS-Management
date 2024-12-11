@@ -1,8 +1,8 @@
-const Professor = require("../models/ProfessorModel");
-const Group = require("../models/GroupModel");
+
 const Quest = require("../models/QuestModel");
 const Task = require("../models/TaskModel")
 const Hint = require('../models/HintModel');
+const Student = require("../models/StudentModel");
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,9 +95,7 @@ const getGroups = async (req, res) => {
     const { professorID } = req.params;
 
     try{ 
-        console.log(professorID)
         const prof = await Professor.findById(professorID)
-        console.log(prof)
         if (!prof) { 
             return res.status(400).json({error: "No professor provided"})
         }
@@ -176,19 +174,10 @@ const deleteGroup = async(req, res) => {
     }
 }
 
-const addStudentToGroup = async(req, res) => {
-
-}
-
 const addAdministrator = async (req, res ) => { 
     //! determine what access they will have 
 }
 
-
-// create a code to give students to register with
-const generateGroupCode = async(req, res) => {
-
-}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // these functions are for dealing with quests

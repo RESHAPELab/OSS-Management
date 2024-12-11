@@ -15,7 +15,7 @@ const App = () => {
     const storedUser  = localStorage.getItem("professor");
     if (storedUser ) {
       setAuthUser (JSON.parse(storedUser));
-      console.log(storedUser)
+      console.log(`signed in user: `, authUser)
     }
   }, [setAuthUser ]);
 
@@ -23,7 +23,7 @@ const App = () => {
     <div className="App">
       <Routes>
         <Route path='/login' element={authUser  ? <Home /> : <LoginSignup />} />
-        <Route path='/' element={authUser && authUser.verified ? <Home /> : <EmailVerification />} />
+        <Route path='/' element={authUser ? (authUser.verified ? <Home /> : <EmailVerification />) : <LoginSignup /> } />
         <Route path='/verify' element={authUser && !authUser.verified ? <EmailVerification /> : <Home/>} />
         <Route path='/studentRegister' element={< StudentRegister />} />
       </Routes>

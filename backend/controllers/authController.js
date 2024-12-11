@@ -10,31 +10,6 @@ const {generateAndSendCode} = require("../utils/generateCode")
 // this script is responsible for verifying a given invitation code
 // and creating account information for verified professors
 
-// this function verifies a given invitation code by checking that it is 
-// found in our database (under professorCodes)
-// const verifyCode = async(req, res) => {
-//     const {inviteCode} = req.body;
-//     if (!inviteCode) { 
-//         return res.status(400).send("No invite code provided")
-//     }
-//     try{ 
-//         const codeExists = await ProfessorCode.findOne({classCode: inviteCode});
-//         if (!codeExists) {
-//             return res.status(400).send("Invalid invite code")
-//         }
-//         if (codeExists.status != "unused") {
-//             return res.status(400).send("This code has already been used")
-//         }
-
-//         codeExists.status = "used"; 
-//         await codeExists.save(); 
-//         return res.status(200).send("Code successfully verified"); 
-//     }catch(error){ 
-//         console.log("Error in verify code function", error);
-//         return res.status(500).send("Error verifying code")
-//     }
-// }
-
 // this function allows a professor to create an acc with their email, name, and password
 // it first checks that the email associated with the invite code is the same as the one they attempt to register with
 // and then it hashes their password
