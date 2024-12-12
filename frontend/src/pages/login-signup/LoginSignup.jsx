@@ -49,7 +49,7 @@ const LoginSignup = () => {
                 const professor = await axios.get(`${baseURL}/api/group/${response.data._id}`)
                 if(professor) { 
                     localStorage.setItem("professor", JSON.stringify(professor.data))
-                    window.location.href = "email-verification"
+                    window.location.href = "/verify"
                 }
             }
         } catch(error) { 
@@ -65,7 +65,7 @@ const LoginSignup = () => {
                 const professor = await axios.get(`${baseURL}/api/group/${response.data._id}`)
                 if (professor) { 
                     localStorage.setItem("professor", JSON.stringify(professor.data))
-                    window.location.href = "home"
+                    window.location.href = "/verify"
                 }
             }
         } catch(error) { 
