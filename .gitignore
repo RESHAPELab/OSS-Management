@@ -4,6 +4,7 @@
 .env.test.local
 .env.production.local
 package-lock.json
+github-app-private-key.pem
 
 node_modules
 *.bkp
