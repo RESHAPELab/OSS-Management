@@ -12,18 +12,18 @@ async function generateAndSendCode (email) {
     }
     const randomFactor = Math.floor(Math.random() * 1000);
     const combined = Math.abs(hash + randomFactor); 
-    let code = combined % 1000000;
-    code = code.toString().padStart(6, '0');
+    const code = combined % 1000000;
+    const final_code = code.toString().padStart(6, '0');
 
     try {
-        await sendEmail(email, code)
-        console.log(`Email sent to ${email} with code ${code}`)
+        await sendEmail(email, final_code)
+        console.log(`Email sent to ${email} with code ${final_code}`)
     } catch(error) { 
         console.debug(`Error in generateAndSendCode function: ${error}`)
         return res.status(500).json({error})
     }
 
-    return code;
+    return final_code;
 }
 
 module.exports = {generateAndSendCode}

@@ -1,8 +1,10 @@
 const Professor = require("../models/ProfessorModel")
+const ProfessorCode = require("../models/ProfessorCodeModel")
+const RecoveringPassword = require("../models/RecoveringPasswordModel")
+const bcrypt = require("bcrypt");
+const generateTokenSetCookie = require("../utils/generateToken");
 const Student = require("../models/StudentModel")
 const Group = require("../models/GroupModel");
-// const ProfessorCode = require("../models/ProfessorCodeModel")
-const bcrypt = require("bcrypt");
 const generateTokenSetCookie = require("../utils/generateToken");
 const {generateAndSendCode} = require("../utils/generateCode")
 
@@ -90,7 +92,8 @@ const login = async (req, res) => {
         res.status(200).json({
             _id: prof._id,
         })
-    }catch(error) { 
+
+    } catch(error) { 
         console.debug(`Error in login function: ${error}`)
         return res.status(500).json({error})
     }
@@ -99,6 +102,109 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
 
 }
+
+const generatePasswordRecoveringCode = async (req, res) => {
+    const {email} = req.body;
+    const requiredFields = {email: "No email provided"};
+
+    for (const [key, errorMessage] of Object.entries(requiredFields)) {
+        if (!req.body[key]) {
+            return res.status(400).send(errorMessage);
+        }
+    }
+
+    try {
+        const existingRecord = await RecoveringPassword.findOne({
+            email,
+            createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) }, 
+            status: "active",
+        });
+
+        const profExists = await Professor.findOne({email});
+        
+        if (!profExists) { 
+            return res.status(400).send("Professor account doesn't exists")
+        }
+
+        if (existingRecord) {
+            existingRecord.status = "expired";
+            await existingRecord.save();
+        }
+
+        const newCode = await generateCode.generateAndSendCode(email);
+        
+        const newRecord = new RecoveringPassword({
+            email,
+            code: newCode,
+            status: "active",
+            totalTrials: 0,
+        });
+
+        await newRecord.save();
+
+        console.debug(`New code generated for ${email}: ${newCode}`);
+        return res.status(200).send("Recovering code has been generated and sent to your email");
+    } 
+    
+    catch (error) {
+        console.debug(`Error in recoverPassword function: ${error}`);
+        return res.status(500).json({ error });
+    }
+}
+
+const recoverPassword = async (req, res) => {
+    const { email, code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword ) {
+        return res.status(400).send("Email, recovering code, and password are required");
+    }
+
+    try {
+        const existingRecord = await RecoveringPassword.findOne({
+            email,
+            status: "active",
+            createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) }
+        });
+
+        if (!existingRecord) {
+            return res.status(400).send("No active recovery request found for this email");
+        }
+
+        if (existingRecord.code !== code) {
+            existingRecord.totalTrials += 1;
+
+            if (existingRecord.totalTrials > 3) {
+                existingRecord.status = "blocked";
+                await existingRecord.save();
+                return res.status(400).send("Too many failed attempts. The recovery code is now blocked.");
+            }
+
+            await existingRecord.save();
+            return res.status(400).send("Invalid code. Please try again.");
+        }
+
+        const professor = await Professor.findOne({ email });
+            
+        if (!professor) {
+            return res.status(404).send("Professor not found.");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        professor.password = hashedPassword;
+        existingRecord.status = "expired"; 
+
+        await professor.save();
+        await existingRecord.save();
+
+        console.debug(`Password updated successfully for ${email}`);
+        return res.status(200).send("Password has been successfully updated.");
+
+    } catch (error) {
+        console.debug(`Error in recoverPassword function: ${error}`);
+        return res.status(500).json({ error: `An error occurred during the recovery process ${error}`});
+    }
+};
 
 const registerStudent = async (req, res) => {
     const {firstName, lastName, githubUsername, studentEmail, classCode} = req.body
@@ -144,5 +250,4 @@ const registerStudent = async (req, res) => {
     }
 }
 
-
-module.exports = {signup, login, registerStudent, verifyEmail}
+module.exports = {signup, login, generatePasswordRecoveringCode, recoverPassword, registerStudent, verifyEmail}
