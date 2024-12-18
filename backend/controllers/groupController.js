@@ -1,8 +1,8 @@
-const Professor = require("../models/ProfessorModel");
-const Group = require("../models/GroupModel");
+
 const Quest = require("../models/QuestModel");
 const Task = require("../models/TaskModel")
 const Hint = require('../models/HintModel');
+const Student = require("../models/StudentModel");
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -52,9 +52,20 @@ const createGroup = async (req, res) =>  {
             return res.status(401).json({error: `No professor with id ${professorID} found`})
         }
 
+        let hash = 0; 
+        for (let i = 0; i < groupName.length; i++ ) {
+            hash = (hash<<5) - hash + groupName.charCodeAt(i);
+            hash &= hash; 
+        }
+        const randomFactor = Math.floor(Math.random() * 1000);
+        const combined = Math.abs(hash + randomFactor); 
+        let classCode = combined % 1000000;
+        classCode = classCode.toString().padStart(6, '0');
+
         let newGroup = new Group({ 
             groupName,
-            professor: professorID
+            professor: professorID,
+            classCode
         })
 
         await newGroup.save()
@@ -65,7 +76,8 @@ const createGroup = async (req, res) =>  {
         if (newGroup) {
             res.status(201).json({
                 professorID: newGroup.professor, 
-                groupName: newGroup.groupName
+                groupName: newGroup.groupName,
+                classCode: newGroup.classCode
             })
         } else { 
             return res.status(400).json({error: `Error creating new group for professor with id ${professorID}`})
@@ -83,9 +95,7 @@ const getGroups = async (req, res) => {
     const { professorID } = req.params;
 
     try{ 
-        console.log(professorID)
         const prof = await Professor.findById(professorID)
-        console.log(prof)
         if (!prof) { 
             return res.status(400).json({error: "No professor provided"})
         }
@@ -164,19 +174,10 @@ const deleteGroup = async(req, res) => {
     }
 }
 
-const addStudentToGroup = async(req, res) => {
-
-}
-
 const addAdministrator = async (req, res ) => { 
     //! determine what access they will have 
 }
 
-
-// create a code to give students to register with
-const generateGroupCode = async(req, res) => {
-
-}
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // these functions are for dealing with quests

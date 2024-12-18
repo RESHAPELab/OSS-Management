@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/group", require("./routes/groupRoutes"));
+app.use("/api/student", require('./routes/studentRoutes'));
 app.use(errorHandler);
 
 // Export app for testing purposes

@@ -87,14 +87,14 @@ const sendEmail = (recipientEmail, verificationCode) => {
         </head>
         <body>
             <div class="email-container">
-                <h1>Welcome to OSS - Email Confirmation</h1>
+                <h1>Welcome to OSS - Verify Email</h1>
                 <p>Dear Professor,</p>
                 <p>Thank you for joining our platform! We're excited to have you on board.</p>
-                <p>To complete your registration, please use the following unique invitation code:</p>
+                <p>To complete your registration, please use the following unique registration code:</p>
         
                 <div class="code">${verificationCode}</div>
         
-                <p>Simply click the button below to continue the registration process:</p>
+                <p>Simply click the button below to register your account:</p>
                 <a href="{{registrationLink}}" class="cta-button">Register Now</a>
         
                 <p>If you have any issues or need assistance, please don't hesitate to reach out to us at <a href="mailto:jlc2243@nau.edu">jlc2243@nau.edu</a>.</p>
