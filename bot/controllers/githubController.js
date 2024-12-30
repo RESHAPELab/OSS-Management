@@ -64,7 +64,7 @@ const createRepo = async (req, res) => {
         console.log('Repo Created')
         res.status(201).json(apiResponse);
     } catch (error) {
-        console.error("Error creating issue:", error.message);
+        console.error("Error creating issue:", error);
         res.status(500).json({ error: error.message });
     }
 };
