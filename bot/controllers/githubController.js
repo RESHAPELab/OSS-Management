@@ -8,6 +8,9 @@ const handleWebhook = async (req, res) => {
         const payload = req.body; 
 
         if (event === "issue_comment") {
+            console.log(payload);
+            
+            /*
             issueId = payload.issue.id;
             issueTitle = payload.issue.title;
             username = payload.comment.user.login;
@@ -19,15 +22,14 @@ const handleWebhook = async (req, res) => {
                 username,
                 messageContent,
             };
-
+            
             const backendResponse = await axios.post(
                 "http://your-backend-endpoint/processMessage",
                 backendPayload
             );
-
+            */
             res.status(200).json({
                 message: "Webhook processed successfully.",
-                backendResponse: backendResponse.data,
             });
         } else {
             res.status(200).json({ message: "Event ignored." });
