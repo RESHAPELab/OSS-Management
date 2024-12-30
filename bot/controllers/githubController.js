@@ -73,25 +73,84 @@ const addUserToProject = async (req, res) => {
     }
 };
 
+const createIssueInProject = async (req, res) => {
+    const { org, repoName, title, body } = req.body;
+    try {
+        const githubToken = await getGithubAppInstallationAccessToken();
+        const apiResponse = await axios.post(
+            `https://api.github.com/repos/${org}/${repoName}/issues`,
+            {
+                title,
+                body,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${githubToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            }
+        );
+
+        res.status(200).json(apiResponse.data);
+    } catch (error) {
+        console.error("Error creating issue in repository:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const createCommentInIssue = async (req, res) => {
+    const { org, repoName, issueNumber, commentBody } = req.body; // Extract parameters from the request body
+    try {
+        const githubToken = await getGithubAppInstallationAccessToken();
+        const apiResponse = await axios.post(
+            `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}/comments`,
+            {
+                body: commentBody, // The content of the comment
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${githubToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            }
+        );
+
+        res.status(200).json(apiResponse.data); // Send the response back with the comment data
+    } catch (error) {
+        console.error("Error creating comment on issue:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const closeIssue = async (req, res) => {
+    const { org, repoName, issueNumber } = req.body; // Extract parameters from the request body
+    try {
+        const githubToken = await getGithubAppInstallationAccessToken();
+        const apiResponse = await axios.patch(
+            `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}`,
+            {
+                state: 'closed', // Update the issue state to 'closed'
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${githubToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            }
+        );
+
+        res.status(200).json(apiResponse.data); // Send the response back with the updated issue data
+    } catch (error) {
+        console.error("Error closing the issue:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
 
 module.exports = {
     createRepo, 
     dropRepo,
     addUserToProject,
-    /*
-    dropRepo,
-    addUserToProject,
-    createIssue,
-    updateIssue,
-    closeIssue,
-    createComment,
-    updateComment,
-    deleteComment,
-    createFile,
-    updateFile,
-    deleteFile,
-    getNumberIssues,
-    getNumberPullRequests,
-    getTopContributor
-    */
+    createIssueInProject,
+    createCommentInIssue,
+    closeIssue
 };

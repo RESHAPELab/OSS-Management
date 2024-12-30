@@ -5,14 +5,11 @@ const githubMiddleware = require("../middleware/githubMiddleware");
 
 router.post("/webhook", githubMiddleware.verifyWebhook, githubController.handleWebhook);
 
-router.post("/createIssue", githubController.createIssue);
-router.post("/updateIssue", githubController.updateIssue);
-router.post("/closeIssue", githubController.closeIssue);
-router.post("/createIssueComment", githubController.createComment);
-router.post("/updateIssueComment", githubController.updateComment);
-router.post("/deleteIssueComment", githubController.deleteComment);
-router.get("/numberIssues", githubController.getNumberIssues);
-router.get("/numberPullRequests", githubController.getNumberPullRequests);
-router.get("/topConributor", githubController.getTopConributor);
+router.post("/createIssue", githubController.createIssueInProject);
+router.post("/createRepo", githubController.createRepo);
+router.delete("/dropRepo", githubController.dropRepo);
+router.post("/addUserToRepo", githubController.addUserToProject);
+router.post("/commentIssue", githubController.createCommentInIssue);
+router.patch("/closeIssue", githubController.closeIssue);
 
 module.exports = router;
