@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Path to your private key for the GitHub App
-const privateKeyPath = path.resolve(__dirname, 'github-app-private-key.pem');
+const privateKeyPath = path.resolve(__dirname, '../../github-app-private-key.pem');
 const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
 
 // Your GitHub App ID

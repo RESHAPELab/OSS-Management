@@ -26,7 +26,7 @@
     "test": "cross-env NODE_ENV=test jest",
     "test:backend": "cross-env NODE_ENV=test jest backend/",
     "test:frontend": "cross-env NODE_ENV=test jest frontend/",
-    "test:bot": "cross-env NODE_ENV=test jest bot/",
+    "test:bot": "cross-env NODE_ENV=test jest bot/"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.26.3",
