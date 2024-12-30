@@ -4,30 +4,15 @@ const GITHUB_API_URL = 'https://api.github.com';
 
 const handleWebhook = async (req, res) => {
     try {
-        const event = req.headers["x-github-event"]; 
-        const payload = req.body; 
+        const event = req.headers["x-github-event"];
+        const payload = req.body;
+
+        console.log('Received GitHub Webhook Event:', event); // Log event type
+        console.log('Payload:', JSON.stringify(payload, null, 2)); // Log the payload
 
         if (event === "issue_comment") {
-            console.log(payload);
-            
-            /*
-            issueId = payload.issue.id;
-            issueTitle = payload.issue.title;
-            username = payload.comment.user.login;
-            messageContent = payload.comment.body;
-
-            const backendPayload = {
-                issueId,
-                issueTitle,
-                username,
-                messageContent,
-            };
-            
-            const backendResponse = await axios.post(
-                "http://your-backend-endpoint/processMessage",
-                backendPayload
-            );
-            */
+            console.log('Processing issue comment...');
+            // Process the issue comment logic
             res.status(200).json({
                 message: "Webhook processed successfully.",
             });
