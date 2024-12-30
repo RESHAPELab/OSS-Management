@@ -4,7 +4,7 @@ require("dotenv").config(); // Load environment variables from .env file
 exports.verifyWebhook = (req, res, next) => {
     const signature = req.headers["x-hub-signature"]; // GitHub's HMAC signature
     const payload = JSON.stringify(req.body); // The request body
-    const secret = process.env.GITHUB_WEBHOOK_SECRET; // Load the secret from .env
+    const secret = process.env.WEBHOOK_SECRET; // Load the secret from .env
 
     if (!secret) {
         console.error("GitHub webhook secret is not defined in the environment variables.");
