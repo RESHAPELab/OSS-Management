@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const githubRoutes = require("./routes/githubRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.use(bodyParser.json());
 app.use("/github", githubRoutes);

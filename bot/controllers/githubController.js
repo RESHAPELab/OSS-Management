@@ -41,6 +41,8 @@ const handleWebhook = async (req, res) => {
 };
 
 const createRepo = async (req, res) => {
+    console.log("Creating Repo");
+
     const {org, repoName, repoDescription, privateRepo} = req.params;
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
@@ -59,6 +61,7 @@ const createRepo = async (req, res) => {
             }
         );
 
+        console.log('Repo Created')
         res.status(201).json(apiResponse);
     } catch (error) {
         console.error("Error creating issue:", error.message);
