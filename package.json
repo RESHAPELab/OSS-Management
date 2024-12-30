@@ -22,10 +22,11 @@
     "frontend": "cd frontend && npm start",
     "backend": "cross-env NODE_ENV=production node backend/server.js",
     "dev": "cross-env NODE_ENV=development nodemon backend/server.js",
+    "bot": "cross-env NODE_ENV=production node bot/index.js", 
     "test": "cross-env NODE_ENV=test jest",
     "test:backend": "cross-env NODE_ENV=test jest backend/",
     "test:frontend": "cross-env NODE_ENV=test jest frontend/",
-    "test:bot": "cross-env NODE_ENV=test jest bot/"
+    "test:bot": "cross-env NODE_ENV=test jest bot/",
   },
   "devDependencies": {
     "@babel/preset-react": "^7.26.3",
