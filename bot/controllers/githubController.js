@@ -2,6 +2,42 @@ const axios = require('axios');
 const { getGithubAppInstallationAccessToken } = require('./githubAppAuth');
 const GITHUB_API_URL = 'https://api.github.com';
 
+const handleWebhook = async (req, res) => {
+    try {
+        const event = req.headers["x-github-event"]; 
+        const payload = req.body; 
+
+        if (event === "issue_comment") {
+            issueId = payload.issue.id;
+            issueTitle = payload.issue.title;
+            username = payload.comment.user.login;
+            messageContent = payload.comment.body;
+
+            const backendPayload = {
+                issueId,
+                issueTitle,
+                username,
+                messageContent,
+            };
+
+            const backendResponse = await axios.post(
+                "http://your-backend-endpoint/processMessage",
+                backendPayload
+            );
+
+            res.status(200).json({
+                message: "Webhook processed successfully.",
+                backendResponse: backendResponse.data,
+            });
+        } else {
+            res.status(200).json({ message: "Event ignored." });
+        }
+    } catch (error) {
+        console.error("Error processing webhook:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const createRepo = async (req, res) => {
     const {org, repoName, repoDescription, privateRepo} = req.params;
     try {
@@ -147,6 +183,7 @@ const closeIssue = async (req, res) => {
 };
 
 module.exports = {
+    handleWebhook,
     createRepo, 
     dropRepo,
     addUserToProject,
