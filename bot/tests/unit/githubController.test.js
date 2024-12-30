@@ -10,7 +10,7 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
         const privateRepo = true;
 
         const req = {
-            params: {
+            body: {
                 org,
                 repoName,
                 repoDescription,
@@ -61,7 +61,7 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
         const role = "push";
 
         const req = {
-            params: {
+            body: {
                 org,
                 repoName,
                 username,

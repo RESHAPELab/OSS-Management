@@ -41,9 +41,7 @@ const handleWebhook = async (req, res) => {
 };
 
 const createRepo = async (req, res) => {
-    console.log("Creating Repo");
-
-    const {org, repoName, repoDescription, privateRepo} = req.params;
+    const {org, repoName, repoDescription, privateRepo} = req.body;
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
         const apiResponse = await axios.post(
@@ -61,8 +59,7 @@ const createRepo = async (req, res) => {
             }
         );
 
-        console.log('Repo Created')
-        res.status(201).json(apiResponse);
+        res.status(201).json(apiResponse.data);
     } catch (error) {
         console.error("Error creating issue:", error);
         res.status(500).json({ error: error.message });
@@ -91,7 +88,7 @@ const dropRepo = async (req, res) => {
 };
 
 const addUserToProject = async (req, res) => {
-    const { org, repoName, username, role } = req.params;
+    const { org, repoName, username, role } = req.body;
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
         const apiResponse = await axios.put(
@@ -140,7 +137,7 @@ const createIssueInProject = async (req, res) => {
 };
 
 const createCommentInIssue = async (req, res) => {
-    const { org, repoName, issueNumber, commentBody } = req.body; // Extract parameters from the request body
+    const { org, repoName, issueNumber, commentBody } = req.body;
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
         const apiResponse = await axios.post(
@@ -156,7 +153,7 @@ const createCommentInIssue = async (req, res) => {
             }
         );
 
-        res.status(200).json(apiResponse.data); // Send the response back with the comment data
+        res.status(200).json(apiResponse.data);
     } catch (error) {
         console.error("Error creating comment on issue:", error.message);
         res.status(500).json({ error: error.message });
@@ -164,13 +161,13 @@ const createCommentInIssue = async (req, res) => {
 };
 
 const closeIssue = async (req, res) => {
-    const { org, repoName, issueNumber } = req.body; // Extract parameters from the request body
+    const { org, repoName, issueNumber } = req.body;
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
         const apiResponse = await axios.patch(
             `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}`,
             {
-                state: 'closed', // Update the issue state to 'closed'
+                state: 'closed',
             },
             {
                 headers: {
@@ -180,7 +177,7 @@ const closeIssue = async (req, res) => {
             }
         );
 
-        res.status(200).json(apiResponse.data); // Send the response back with the updated issue data
+        res.status(200).json(apiResponse.data);
     } catch (error) {
         console.error("Error closing the issue:", error.message);
         res.status(500).json({ error: error.message });
