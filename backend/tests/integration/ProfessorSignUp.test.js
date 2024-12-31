@@ -1,12 +1,13 @@
-const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb-memory-server');
 const app = require('../../server');
 const request = require('supertest');
+
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create(); 
+  mongoServer = await MongoMemoryServer.create();
   const uri = mongoServer.getUri();
 
   process.env.MONGO_URI = uri; 
@@ -25,6 +26,7 @@ afterAll(async () => {
 });
 
 describe("POST /signup", () => {
+  
   it("Registering a New Professor", async () => {
     const professorData = {
       email: "professor7@example.com",
@@ -33,7 +35,7 @@ describe("POST /signup", () => {
     };
 
     const response = await request(app)
-      .post("/api/auth/")
+      .post("/api/auth")
       .send(professorData)
       .expect(201); 
     
@@ -44,14 +46,14 @@ describe("POST /signup", () => {
 
   it("Registering a Professor Without Email", async () => {
     const response = await request(app)
-      .post("/api/auth/")
+      .post("/api/auth")
       .send({ name: "Test Professor", password: "testpassword123" })
       .expect(400);
   });
 
   it("Registering a Professor Without Password", async () => {
     const response = await request(app)
-      .post("/api/auth/")
+      .post("/api/auth")
       .send({ name: "Test Professor", email: "test@mail.com", password: "" })
       .expect(400);
   });
@@ -64,12 +66,12 @@ describe("POST /signup", () => {
     };
 
     await request(app)
-      .post("/api/auth/")
+      .post("/api/auth")
       .send(professorData)
       .expect(201);
 
     const response = await request(app)
-      .post("/api/auth/")
+      .post("/api/auth")
       .send(professorData)
       .expect(400);
   });

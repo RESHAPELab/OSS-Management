@@ -1,18 +1,15 @@
-const mongoose = require("mongoose");
-const { MongoMemoryServer } = require("mongodb-memory-server");
 const { createProfessor } = require("../factories/ProfessorFactory");
 const Professor = require("../../models/ProfessorModel");
 
+const mongoose = require('mongoose');
+const { MongoMemoryServer } = require('mongodb-memory-server');
 let mongoServer;
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create(); // Creates a new in-memory MongoDB instance
-  const uri = mongoServer.getUri(); // Get the URI to connect to this in-memory server
-
-  // Set the MONGO_URI for testing, this ensures mongoose connects to the fake database.
+  mongoServer = await MongoMemoryServer.create(); 
+  const uri = mongoServer.getUri();
   process.env.MONGO_URI = uri; 
 
-  // If no connection exists, we connect to the in-memory database.
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(uri, {
       useNewUrlParser: true,

@@ -22,7 +22,8 @@ async function createProfessor(overrides = {}) {
     verified,
   });
 
-  return professor.save();
+  await professor.save();
+  return professor;
 }
 
 module.exports = { createProfessor };
