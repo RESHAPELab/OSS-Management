@@ -23,6 +23,11 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+        
+    - name: Clear Cache
+      run: |
+        rm -rf ~/.npm
+        rm -rf node_modules
 
     - name: Set up .env file
       run: echo "${{ secrets.ENV_FILE }}" > .env
