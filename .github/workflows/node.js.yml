@@ -23,14 +23,14 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-
-    # Add private key.pem as environment variable
+        
     - name: Set up GitHub Private Key
-      run: echo "${{ secrets.GITHUB_PRIVATE_KEY }}" > private_key.pem
+      run: |
+        echo "${{ secrets.GITHUB_PRIVATE_KEY }}" > private_key.pem
+        chmod 600 private_key.pem
 
-    # Set up the .env file
     - name: Set up .env file
       run: echo "${{ secrets.ENV_FILE }}" > .env
 
-    - run: npm ci  # Install dependencies
-    - run: npm test  # Run tests
+    - run: npm ci
+    - run: npm test
