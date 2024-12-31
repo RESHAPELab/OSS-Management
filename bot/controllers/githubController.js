@@ -7,12 +7,12 @@ const handleWebhook = async (req, res) => {
         const event = req.headers["x-github-event"];
         const payload = req.body;
 
-        console.log('Received GitHub Webhook Event:', event); // Log event type
-        console.log('Payload:', JSON.stringify(payload, null, 2)); // Log the payload
+        console.log('Received GitHub Webhook Event:', event);
+        console.log('Payload:', JSON.stringify(payload, null, 2));
 
         if (event === "issue_comment") {
             console.log('Processing issue comment...');
-            // Process the issue comment logic
+            
             res.status(200).json({
                 message: "Webhook processed successfully.",
             });
@@ -128,7 +128,7 @@ const createCommentInIssue = async (req, res) => {
         const apiResponse = await axios.post(
             `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}/comments`,
             {
-                body: commentBody, // The content of the comment
+                body: commentBody,
             },
             {
                 headers: {

@@ -3,18 +3,14 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-// Path to your private key for the GitHub App
 const privateKeyPath = path.resolve(__dirname, '../../github-app-private-key.pem');
 const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-
-// Your GitHub App ID
 const GITHUB_APP_ID = '1088526';
 
-// Function to generate the JWT token for GitHub App
 const generateJWT = () => {
     const payload = {
         iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + (5 * 60), // Expiry time: 5 minutes
+        exp: Math.floor(Date.now() / 1000) + (5 * 60),
         iss: GITHUB_APP_ID,
     };
 
@@ -25,7 +21,6 @@ const getGithubAppInstallationAccessToken = async () => {
     const jwtToken = generateJWT();
 
     try {
-        // Step 1: Get installations
         const installationsResponse = await axios.get('https://api.github.com/app/installations', {
             headers: {
                 Authorization: `Bearer ${jwtToken}`,
@@ -38,7 +33,6 @@ const getGithubAppInstallationAccessToken = async () => {
             throw new Error('No installations found for this GitHub App');
         }
 
-        // Step 2: Get access token for the first installation found
         const installationId = installationsResponse.data[0].id;
         const tokenResponse = await axios.post(
             `https://api.github.com/app/installations/${installationId}/access_tokens`,

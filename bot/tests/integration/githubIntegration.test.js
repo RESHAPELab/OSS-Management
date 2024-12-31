@@ -3,6 +3,7 @@ const app = require('../../server'); // Adjust the path to your Express app
 const axios = require('axios');
 const REPOSITORY_NAME = `integration-test-repo-${Date.now()}`;
 const request = supertest(app); // Request instance for testing
+const {signPayload} = require('../../utils/backendMessage');
 
 describe('GitHub Routes Integration Tests', () => {
     let org = 'OSS-Doorway-Development';
@@ -10,15 +11,18 @@ describe('GitHub Routes Integration Tests', () => {
     let githubToken;
 
     beforeAll(async () => {
-        // Get the GitHub App token before tests run
         githubToken = await require('../../controllers/githubAppAuth').getGithubAppInstallationAccessToken();
     });
 
     test('Should create a repository using /createRepo route', async () => {
         const repoDescription = 'Repository created during live testing without mocks';
         const privateRepo = true;
+        const signature = signPayload({ org, repoName, repoDescription, privateRepo })
 
-        const response = await request.post('/github/createRepo').send({
+        const response = await request
+        .post('/github/createRepo')
+        .set("x-bot-signature", signature)
+        .send({
             org,
             repoName,
             repoDescription,
@@ -27,7 +31,6 @@ describe('GitHub Routes Integration Tests', () => {
 
         expect(response.status).toBe(201);
 
-        // Verify that the repository was created via GitHub API
         const githubApiResponse = await axios.get(
             `https://api.github.com/repos/${org}/${repoName}`,
             {
@@ -45,8 +48,12 @@ describe('GitHub Routes Integration Tests', () => {
     test('Should add a user to the repository using /addUserToRepo route', async () => {
         const username = 'pedrorodriguesarantes';
         const role = 'push';
+        const signature = signPayload({ org, repoName, username, role });
 
-        const response = await request.post('/github/addUserToRepo').send({
+        const response = await request
+        .post('/github/addUserToRepo')
+        .set("x-bot-signature", signature)
+        .send({
             org,
             repoName,
             username,
@@ -55,7 +62,6 @@ describe('GitHub Routes Integration Tests', () => {
 
         expect(response.status).toBe(200);
 
-        // Verify that the user was added to the repository
         const githubResponse = await axios.get(
             `https://api.github.com/repos/${org}/${repoName}/collaborators`,
             {
@@ -73,8 +79,12 @@ describe('GitHub Routes Integration Tests', () => {
     test('Should create an issue using /createIssue route', async () => {
         const title = 'Test issue title';
         const body = 'This is a test issue created for testing purposes.';
+        const signature = signPayload({ org, repoName, title, body });
 
-        const response = await request.post('/github/createIssue').send({
+        const response = await request
+        .post('/github/createIssue')
+        .set("x-bot-signature", signature)
+        .send({
             org,
             repoName,
             title,
@@ -83,7 +93,6 @@ describe('GitHub Routes Integration Tests', () => {
 
         expect(response.status).toBe(200);
 
-        // Verify that the issue was created
         const githubResponse = await axios.get(
             `https://api.github.com/repos/${org}/${repoName}/issues`,
             {
@@ -100,10 +109,14 @@ describe('GitHub Routes Integration Tests', () => {
     });
 
     test('Should create a comment on an issue using /commentIssue route', async () => {
-        const issueNumber = 1; // Use an existing issue number
+        const issueNumber = 1;
         const commentBody = 'This is a test comment for the issue.';
+        const signature = signPayload({ org, repoName, issueNumber, commentBody });
 
-        const response = await request.post('/github/commentIssue').send({
+        const response = await request
+        .post('/github/commentIssue')
+        .set("x-bot-signature", signature)
+        .send({
             org,
             repoName,
             issueNumber,
@@ -112,7 +125,6 @@ describe('GitHub Routes Integration Tests', () => {
 
         expect(response.status).toBe(200);
 
-        // Verify that the comment was created
         const githubResponse = await axios.get(
             `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}/comments`,
             {
@@ -129,9 +141,13 @@ describe('GitHub Routes Integration Tests', () => {
     });
 
     test('Should close the issue using /closeIssue route', async () => {
-        const issueNumber = 1; // Use an existing issue number
+        const issueNumber = 1;
+        const signature = signPayload({ org, repoName, issueNumber });
 
-        const response = await request.patch('/github/closeIssue').send({
+        const response = await request
+        .patch('/github/closeIssue')
+        .set("x-bot-signature", signature)
+        .send({
             org,
             repoName,
             issueNumber
@@ -139,7 +155,6 @@ describe('GitHub Routes Integration Tests', () => {
 
         expect(response.status).toBe(200);
 
-        // Verify that the issue is closed
         const githubResponse = await axios.get(
             `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}`,
             {
