@@ -29,5 +29,5 @@ jobs:
         rm -rf ~/.npm
         rm -rf node_modules
       
-    - run: npm ci
+    - run: npm install --force
     - run: npm test
