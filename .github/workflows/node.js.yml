@@ -28,6 +28,9 @@ jobs:
       run: |
         rm -rf ~/.npm
         rm -rf node_modules
+    
+    - name: Debug environment variables
+      run: printenv
 
     - name: Set up .env file
       run: echo "${{ secrets.ENV_FILE }}" > .env
