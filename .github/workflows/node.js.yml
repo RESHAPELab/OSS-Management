@@ -3,10 +3,10 @@ name: Node.js CI
 on:
   push:
     branches:
-      - 'development'  # Trigger on pushes to the development branch
+      - 'development' 
   pull_request:
     branches:
-      - 'development'  # Trigger on PRs to the development branch
+      - 'development'
 
 jobs:
   build:
