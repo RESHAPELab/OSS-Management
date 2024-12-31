@@ -30,4 +30,4 @@ jobs:
         rm -rf node_modules
       
     - run: npm install --force
-    - run: npm test
+    - run: npm run test
