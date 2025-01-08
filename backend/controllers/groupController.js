@@ -3,7 +3,8 @@ const Quest = require("../models/QuestModel");
 const Task = require("../models/TaskModel")
 const Hint = require('../models/HintModel');
 const Student = require("../models/StudentModel");
-
+const Professor = require('../models/ProfessorModel')
+const Group = require('../models/GroupModel')
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -95,7 +96,7 @@ const getGroups = async (req, res) => {
     const { professorID } = req.params;
 
     try{ 
-        const prof = await Professor.findById(professorID)
+        const prof = await Professor.findById(professorID).populate('ownedGroups');
         if (!prof) { 
             return res.status(400).json({error: "No professor provided"})
         }
@@ -114,7 +115,6 @@ const getGroups = async (req, res) => {
 //return info for one of professor's groups
 const getGroup = async (req, res ) => {
     const { professorID, groupID } = req.params;
-
     try{ 
         const professorExists = await Professor.findById(professorID)
         if (!professorExists) { 

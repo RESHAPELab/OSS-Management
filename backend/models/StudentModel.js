@@ -17,10 +17,10 @@ const StudentSchema = mongoose.Schema({
         type: String,
         required: [true, "Please enter your student email"]
     },
-    groups: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Group"
-    }]
+    // groups: [{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "Group"
+    // }]
 })
 
 module.exports = mongoose.model("Student", StudentSchema)

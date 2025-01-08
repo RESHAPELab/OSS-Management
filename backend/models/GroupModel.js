@@ -14,7 +14,6 @@ const GroupSchema = mongoose.Schema({
         ref: "Student"
     }],
     professor:{
-        //describes teacher/professor/organization/etc...
         type: mongoose.Schema.Types.ObjectId,
         ref: "GroupOrganizer"
     },
