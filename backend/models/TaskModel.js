@@ -48,9 +48,54 @@ const TaskSchema = mongoose.Schema({
             required: [true, "Response must include 'success' case"]
         }
     },
+    
+    /*
+    An answer can have a dynamic answer, like:
+        - How many issues are open in repo X?
+        - How many members does repo X have?
+    
+    For answering this, we are going to save a reference for a specific function
+    like, "numberOfIssues". 
+    
+    Allowing professors to incentive students to discover other open source 
+    projects, we can save the reference for a repo (link). Using this we can request 
+    for the bot the metric in real time for any repo.
+
+    So, we can support different cases. 
+
+    1. Answers using different repos
+    {
+        answer: numberOfMembers,
+        answerType: metric,
+        answerRepoReference: https://github.com/meta-llama/llama3,
+    }
+
+    2. Answers for Quizzes
+    {
+        answer: [A, B, C, C, D],
+        answerType: multipleAnswers,
+        answersRepoReference: null,
+    }
+
+    3. Simple Answers
+    {
+        answer: 4,
+        answerType: singleAnswer,
+        answersRepoReference: null,
+    }
+    */
+
     answer: {
         type: String,
         required: [true, "Please provide an answer for the task"]
+    },
+    answerType: {
+        type: String, // singleAnswer, multipleAnswers, metric
+        required: [true, "Please provide the type of answer"]
+    },
+    answerRepoReference: {
+        type: String,
+        required: [true, "Please provide the reference for the repo"]
     }
 })
 
