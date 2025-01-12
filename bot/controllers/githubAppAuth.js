@@ -1,11 +1,26 @@
+require("dotenv").config();
+
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-const privateKeyPath = path.resolve(__dirname, '../../github-app-private-key.pem');
-const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
-const GITHUB_APP_ID = '1088526';
+let privateKeyPath = null;
+let privateKey;
+let GITHUB_APP_ID;
+let USER_AGENT;
+
+if (process.env.NODE_ENV === "production") {
+    privateKeyPath = path.resolve(__dirname, '../../github-app-private-key-prod.pem');
+    privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    GITHUB_APP_ID = process.env.APP_ID_PROD;
+    USER_AGENT = process.env.USER_AGENT_PROD;
+} else {
+    privateKeyPath = path.resolve(__dirname, '../../github-app-private-key-dev.pem');
+    privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    GITHUB_APP_ID = process.env.APP_ID_DEV;
+    USER_AGENT = process.env.USER_AGENT_DEV;
+}
 
 const generateJWT = () => {
     const payload = {
@@ -25,7 +40,7 @@ const getGithubAppInstallationAccessToken = async () => {
             headers: {
                 Authorization: `Bearer ${jwtToken}`,
                 Accept: 'application/vnd.github.v3+json',
-                'User-Agent': 'OSS-Doorway-Development',
+                'User-Agent': USER_AGENT,
             },
         });
 

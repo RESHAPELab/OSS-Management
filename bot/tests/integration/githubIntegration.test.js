@@ -1,8 +1,8 @@
+const app = require('../../server');
 const supertest = require('supertest');
-const app = require('../../server'); // Adjust the path to your Express app
+const request = supertest(app);
 const axios = require('axios');
 const REPOSITORY_NAME = `integration-test-repo-${Date.now()}`;
-const request = supertest(app); // Request instance for testing
 const {signPayload} = require('../../utils/backendMessage');
 
 describe('GitHub Routes Integration Tests', () => {

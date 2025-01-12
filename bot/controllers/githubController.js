@@ -1,6 +1,5 @@
 const axios = require('axios');
 const { getGithubAppInstallationAccessToken } = require('./githubAppAuth');
-const GITHUB_API_URL = 'https://api.github.com';
 
 const handleWebhook = async (req, res) => {
     try {
