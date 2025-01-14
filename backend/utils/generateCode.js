@@ -1,8 +1,6 @@
 const ProfessorCode = require("../models/ProfessorCodeModel")
 const dotenv = require("dotenv").config();
 const {sendEmail} = require("./emailController");
-const connectDB = require("../config/db");
-connectDB(); 
 
 async function generateAndSendCode (email) {
     let hash = 0; 

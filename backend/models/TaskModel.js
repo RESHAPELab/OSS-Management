@@ -1,6 +1,5 @@
 const mongoose = require("mongoose")
 
-
 const TaskSchema = mongoose.Schema({
     taskTitle: {
         type: String,
@@ -95,8 +94,12 @@ const TaskSchema = mongoose.Schema({
     },
     answerRepoReference: {
         type: String,
-        required: [true, "Please provide the reference for the repo"]
-    }
+    },
+    prerequisite: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Task",
+        default: null
+    }],
 })
 
 module.exports = mongoose.model("Task", TaskSchema)

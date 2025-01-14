@@ -26,6 +26,7 @@ const handleWebhook = async (req, res) => {
 
 const createRepo = async (req, res) => {
     const {org, repoName, repoDescription, privateRepo} = req.body;
+
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
         const apiResponse = await axios.post(
@@ -73,6 +74,7 @@ const dropRepo = async (req, res) => {
 
 const addUserToProject = async (req, res) => {
     const { org, repoName, username, role } = req.body;
+    
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
         const apiResponse = await axios.put(
@@ -96,6 +98,8 @@ const addUserToProject = async (req, res) => {
 };
 
 const createIssueInProject = async (req, res) => {
+    console.log(req.body);
+    
     const { org, repoName, title, body } = req.body;
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
@@ -112,7 +116,8 @@ const createIssueInProject = async (req, res) => {
                 },
             }
         );
-
+        
+        console.log(apiResponse.data);
         res.status(200).json(apiResponse.data);
     } catch (error) {
         console.error("Error creating issue in repository:", error.message);

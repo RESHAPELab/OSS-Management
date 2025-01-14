@@ -5,23 +5,18 @@ const QuestSchema = mongoose.Schema({
         type: String,
         required: [true, "Please provide quest name"]
     },
-    groups: [{ 
+    group: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: "Group",
-    }],
+    },
     professor: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Professor"
     },
-    prerequisite: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Quest",
-        default: null
-    }],
-    tasks: {
+    tasks: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Task"
-    },
+    }],
     finalQuiz: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Quiz"

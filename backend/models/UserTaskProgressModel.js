@@ -1,4 +1,4 @@
-const mongoose = require("moongose")
+const mongoose = require("mongoose")
 
 const UserTaskProgressSchema = mongoose.Schema({
     user: {
@@ -14,8 +14,8 @@ const UserTaskProgressSchema = mongoose.Schema({
         required: [true, "Please provide the reference to Github issue"]
     },
     hintsUsed: [{
-        type: Number,
-        required: [true, "Please provide the number of hints already used"]
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Hint"
     }],
     status: {
         type: String

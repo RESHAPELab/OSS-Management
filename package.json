@@ -14,15 +14,16 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.10.0",
     "nodemailer": "^6.9.16",
-    "react": "^18.3.1",
-    "react-router-dom": "^7.0.1"
+    "react": "^18.3.1"
   },
   "scripts": {
     "start": "concurrently npm:frontend npm:backend",
     "frontend": "cd frontend && npm start",
     "backend": "cross-env NODE_ENV=production node backend/server.js",
+    "backend:validation": "cross-env NODE_ENV=test node backend/server.js",
     "dev": "cross-env NODE_ENV=development nodemon backend/server.js",
-    "bot": "cross-env NODE_ENV=production node bot/server.js", 
+    "bot": "cross-env NODE_ENV=production node bot/server.js",
+    "bot:validation": "cross-env NODE_ENV=test node bot/server.js",
     "test": "cross-env NODE_ENV=test jest",
     "test:backend": "cross-env NODE_ENV=test jest backend/",
     "test:frontend": "cross-env NODE_ENV=test jest frontend/",
@@ -36,7 +37,7 @@
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "mocha": "^11.0.1",
-    "mongodb-memory-server": "^10.1.2",
+    "mongodb-memory-server": "^10.1.3",
     "mongoose": "^8.8.3",
     "nock": "^13.5.6",
     "nodemon": "^3.1.7",
@@ -47,6 +48,8 @@
       "^.+\\.jsx?$": "babel-jest"
     },
     "testEnvironment": "node",
-    "testTimeout": 30000
+    "testTimeout": 30000,
+    "globalSetup": "./backend/tests/testSetup.js", 
+    "globalTeardown": "./backend/tests/testTeardown.js"
   }
 }

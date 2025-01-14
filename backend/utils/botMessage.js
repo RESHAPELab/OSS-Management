@@ -13,20 +13,20 @@ function signPayload(payload) {
 
 async function sendMessageToBot(url, payload) {
     const signature = signPayload(payload);
+    const botUrl = "http://localhost:10000/" + url;
 
     try {
-        const response = await axios.post(url, payload, {
-            headers: {
-                "Content-Type": "application/json",
-                "x-bot-signature": signature,
-            }
-        });
-        console.log("Message sent successfully:", response.data);
+        const response = await axios.post(
+            botUrl, payload, 
+            { headers: { "Content-Type": "application/json", "x-bot-signature": signature } }
+        );
+
+        return response;
     } catch (error) {
         console.error("Error sending message to bot:", error.message);
     }
 }
 
 module.exports = {
-    sendMessageToBot
+    sendMessageToBot, signPayload
 }
