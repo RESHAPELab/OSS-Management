@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from 'axios'
+import './StudentRegister.css'
 
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
@@ -37,9 +38,8 @@ const StudentRegister = () => {
     }
 
     return (
-        <div className="container active" id="container">
-
-            <div className="form-container sign-up">
+        <div className="container active sign-up-container" id="container">
+            <div className="form-container student-sign-up">
                 <form onSubmit={handleRegisterSubmit}>
                     <h1>Student Signup</h1>
                     <input type="text" placeholder="First Name" name='firstName' value={studentRegisterData.firstName} onChange={handleChange}/>

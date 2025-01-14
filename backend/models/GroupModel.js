@@ -27,7 +27,11 @@ const GroupSchema = mongoose.Schema({
     students: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Student"
-    }]
+    }],
+    active: { 
+        type: Boolean,
+        default: true
+    }
 })
 
 module.exports = mongoose.model("Group", GroupSchema)

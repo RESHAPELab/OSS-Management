@@ -1,0 +1,114 @@
+div.class-container { 
+    padding: 70px;
+    padding-top: 40px;
+    display: flex;
+    text-align: left;
+}
+
+* {
+    font-weight: bold;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    letter-spacing: 0;
+    font-weight: 900;
+}
+
+.class-info {
+    display: flex;
+    flex-direction: row; 
+    height: 55vh;
+}
+
+.students { 
+    margin-right: 10px;
+    display: flex;
+    border-radius: 2%;
+    background: #fb5233;
+}
+
+.quest-completion { 
+    margin-left: 10px; 
+    margin-right: 10px;
+    border-radius: 2%;
+    background: #fb5233;
+}
+
+.course-outline { 
+    margin-left: 10px; 
+    border-radius: 2%;
+    background: #fb5233;
+}
+
+.title { 
+    text-align: center;
+    font-size: xx-large;
+}
+
+.student-list {
+    width: 95%;
+    margin-top: 20px; 
+    margin-right: 2.5%; 
+    margin-bottom: 20px;
+    margin-left: 2.5%;
+    height: 43vh;
+    overflow: scroll;
+}
+
+.inside-info { 
+    width: 95%;
+    margin-top: 20px; 
+    margin-right: 2.5%; 
+    margin-bottom: 20px;
+    margin-left: 2.5%;
+    height: 43vh;
+    overflow: scroll;
+    border-radius: 2%;
+}
+
+a.list-group-item {
+    justify-content: center;
+}
+
+table { 
+    font-size: 16px;
+    border-bottom: none;
+}
+
+thead {
+    width: 20%;
+}
+
+
+
+.first-col { 
+    width: 10%; 
+}
+
+.second-col { 
+    width: 45%;
+}
+
+.third-col { 
+    width: 45%;
+}
+
+#accordion .btn-link { 
+    text-decoration: none;
+    color: #000000;
+    font-weight: bold;
+}
+
+#accordion .card-body { 
+    font-size: 16px;
+}
+
+.above-class-info { 
+    flex-direction: row;
+}
+
+.above-class-info h5 { 
+    width: 20%;
+}

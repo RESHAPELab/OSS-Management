@@ -1,0 +1,123 @@
+div.group-container { 
+    padding: 70px;
+    padding-top: 40px;
+    display: flex;
+    text-align: left;
+}
+
+* {
+    font-weight: bold;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    font-variation-settings: 'wdth' 149.99;
+    letter-spacing: 0;
+    font-weight: 900;
+}
+
+div.filter { 
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-end;
+    h5 { 
+        padding-left: 15px;
+        width: 40%;
+    }
+    input { 
+        width: 7%;
+        align-self: flex-end;
+    }
+    input.form-control { 
+        width: 20%;
+    }
+    h5.name-includes{
+        padding: 0;
+        width: 17%;
+    } 
+}
+
+div.table-header { 
+    flex-direction: row;
+    padding: 0;
+    justify-content: space-evenly;
+}
+
+div { 
+    background: #F8F9FA;
+}
+
+div.create-group-form { 
+    flex-direction: row;
+    display: flex;
+    justify-content: flex-end;
+    h5 {
+        width: 15%;
+    }
+    input { 
+        width: 20%;
+    }
+    h5.cancel-add-group { 
+        width: 3%;
+    }
+    h5.add-group { 
+        width: 3%;
+    }
+}
+
+.table.table-bordered.classes th { 
+    align-content: center;
+    background: #fb5233;
+    border: none;
+}
+
+input.form-control { 
+    padding: 0;
+    font-size: smaller;
+    margin-bottom: 0.2em;
+    margin-left: 0;
+    margin-right: 0;
+    align-items: flex-end;
+}
+
+.input-field { 
+    font-size: smaller;
+    align-items: flex-end;
+}
+
+.input-field::placeholder { 
+    font-size: smaller;
+    align-items: flex-end;
+}
+
+h5{ 
+    font-size: smaller;
+    padding: 0;
+    align-content: flex-end;
+    font-weight: bold;
+}
+
+h5.group-create-button { 
+    text-align: right;
+    background: #F8F9FA;
+    text-decoration: underline;
+}
+
+h5.name-includes { 
+    display: flex; 
+    flex-direction: row;
+    input { 
+        width: 50%;
+    }
+}
+
+
+thead {
+    text-align: center;
+}
+
+table.table-bordered { 
+    margin: 0;
+}
+

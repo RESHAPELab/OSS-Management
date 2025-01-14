@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'
+import "./Home.css"
 import { useAuthContext } from '../../context/AuthContext';
 import HomeHeader from './components/HomeHeader';
 import GroupComponent from './components/GroupComponent';
-import Navbar from './components/Navbar';
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
 const Home = () => {
@@ -14,7 +14,7 @@ const Home = () => {
 
     useEffect(() => {
         if (authUser) { 
-            console.log("logged in user:", authUser.name)
+            console.log("logged in user:", authUser.profName)
             fetchGroups()
         }
     }, [authUser])
@@ -43,6 +43,7 @@ const Home = () => {
         }
     }
 
+
     const createGroup = async (groupName) => {
         try {
             const response = await axios.post(`${baseURL}/api/group/${authUser._id}/groups`, groupName);
@@ -57,11 +58,10 @@ const Home = () => {
 
     }
 
-
     return (
         <div>
-            <HomeHeader professor={authUser} groups={profGroups}/>
-            <GroupComponent professor={authUser} groups={profGroups} createGroup={createGroup} />
+            <HomeHeader className="header"/>
+            <GroupComponent className="group" professor={authUser} groups={profGroups} createGroup={createGroup}/>
         </div>
     )
 }
