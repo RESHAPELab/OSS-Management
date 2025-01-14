@@ -1,0 +1,22 @@
+body{
+    background: #c9d6ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 100vh;
+}
+
+div{ 
+    display: flex;
+    align-content: flex-start;
+    flex-direction: column;
+}
+
+nav { 
+    height: auto;
+}
+
+div.group-container {
+    height: 90vh;
+}

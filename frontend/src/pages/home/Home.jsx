@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios'
+import "./Home.css"
 import { useAuthContext } from '../../context/AuthContext';
 import HomeHeader from './components/HomeHeader';
 import GroupComponent from './components/GroupComponent';
@@ -13,17 +14,20 @@ const Home = () => {
 
     useEffect(() => {
         if (authUser) { 
-            console.log("logged in user:", authUser.name)
-            fetchGroups();
+            console.log("logged in user:", authUser.profName)
+            fetchGroups()
         }
     }, [authUser])
     
+    useEffect(() => {
+        console.log('Updated Prof groups:', profGroups);
+    }, [profGroups]);
     
     const fetchGroups = async () => {
         try{ 
             const response = await axios.get(`${baseURL}/api/group/${authUser._id}/groups`)
-            console.log('Prof groups: ', response.data)
-            setProfGroups(response.data)
+            console.log('response', response.data.groups)
+            setProfGroups(response.data.groups)
         } catch(error) { 
             console.error('Error fetching professor groups: ', error)
         }
@@ -39,15 +43,25 @@ const Home = () => {
         }
     }
 
+
+    const createGroup = async (groupName) => {
+        try {
+            const response = await axios.post(`${baseURL}/api/group/${authUser._id}/groups`, groupName);
+            console.log('New group added:', response.data);
+            setProfGroups(prevGroups => [...prevGroups, response.data]);
+        } catch (error) { 
+            console.error('Error creating new group: ', error);
+        }
+    }
+
     const handleOpenGroup = async () => {
 
     }
 
-
     return (
         <div>
-            <HomeHeader professor={authUser}/>
-            <GroupComponent professor={authUser} />
+            <HomeHeader className="header"/>
+            <GroupComponent className="group" professor={authUser} groups={profGroups} createGroup={createGroup}/>
         </div>
     )
 }

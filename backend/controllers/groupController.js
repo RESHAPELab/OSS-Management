@@ -3,7 +3,8 @@ const Quest = require("../models/QuestModel");
 const Task = require("../models/TaskModel")
 const Hint = require('../models/HintModel');
 const Student = require("../models/StudentModel");
-
+const Professor = require('../models/ProfessorModel')
+const Group = require('../models/GroupModel')
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -19,10 +20,12 @@ const getProfessor = async(req, res) => {
         }
         
         return res.status(200).json({
+            _id: professor._id,
             profName: professor.name,
             email: professor.email,
             groups: professor.ownedGroups,
-            quests: professor.quests
+            quests: professor.quests,
+            verified: professor.verified
         });
     } catch(error) {
         console.debug(`Error in getProfessor function: ${error}`)
@@ -77,7 +80,8 @@ const createGroup = async (req, res) =>  {
             res.status(201).json({
                 professorID: newGroup.professor, 
                 groupName: newGroup.groupName,
-                classCode: newGroup.classCode
+                classCode: newGroup.classCode,
+                active: true
             })
         } else { 
             return res.status(400).json({error: `Error creating new group for professor with id ${professorID}`})
@@ -95,7 +99,7 @@ const getGroups = async (req, res) => {
     const { professorID } = req.params;
 
     try{ 
-        const prof = await Professor.findById(professorID)
+        const prof = await Professor.findById(professorID).populate('ownedGroups');
         if (!prof) { 
             return res.status(400).json({error: "No professor provided"})
         }
@@ -113,18 +117,8 @@ const getGroups = async (req, res) => {
 // given professorID and groupID
 //return info for one of professor's groups
 const getGroup = async (req, res ) => {
-    const { professorID, groupID } = req.params;
-
+    const { groupID } = req.params;
     try{ 
-        const professorExists = await Professor.findById(professorID)
-        if (!professorExists) { 
-            return res.status(400).json({error: "No professor provided"})
-        }
-
-        if (!professorExists.ownedGroups.includes(groupID)) {
-            return res.status(403).json({ error: `Group with ID ${groupID} is not owned by professor ${professorID}` });
-        }
-
         const group = await Group.findById(groupID);
         if (!group) {
             return res.status(404).json({ error: `Group with ID ${groupID} not found` });
@@ -137,6 +131,7 @@ const getGroup = async (req, res ) => {
             members: group.members,
             admin: group.admin,
             quests: group.quests,
+            classCode: group.classCode
         });
         
     } catch(error) { 
@@ -149,6 +144,7 @@ const getGroup = async (req, res ) => {
 const deleteGroup = async(req, res) => { 
     const { professorID, groupID } = req.params;
 
+    //! change this to disable group
     try {
         const professor = await Professor.findById(professorID)
         if (!professor) { 
