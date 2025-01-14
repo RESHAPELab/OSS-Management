@@ -1,25 +1,9 @@
 const mongoose = require("mongoose")
 
 const HintSchema = mongoose.Schema({
-    quest:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Quest"
-    },
     task:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Task"
-    },
-    group: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Group"
-    },
-    professor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Professor"
-    },
-    temporaryID: {
-        //example = "Q1T1"
-        type: String
     },
     sequence:{
         type: Number,
