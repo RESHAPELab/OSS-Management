@@ -119,7 +119,7 @@ const getGroups = async (req, res) => {
 const getGroup = async (req, res ) => {
     const { groupID } = req.params;
     try{ 
-        const group = await Group.findById(groupID);
+        const group = await Group.findById(groupID).populate('students');
         if (!group) {
             return res.status(404).json({ error: `Group with ID ${groupID} not found` });
         }
@@ -128,7 +128,7 @@ const getGroup = async (req, res ) => {
             groupID: group._id,
             groupName: group.groupName,
             professorID: group.professor,
-            members: group.members,
+            students: group.students,
             admin: group.admin,
             quests: group.quests,
             classCode: group.classCode

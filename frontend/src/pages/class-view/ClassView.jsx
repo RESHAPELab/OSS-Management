@@ -13,25 +13,45 @@ const ClassView = () => {
     const [classInfo, setClassInfo] = useState({})
     const { authUser } = useAuthContext();
     const [activeIndex, setActiveIndex] = useState(null);
-
+    const [studentData, setStudentData] = useState([{}]);
 
     useEffect(() => {
         if (authUser) {
             console.log("logged in user:", authUser.profName)
             fetchClassInfo();
-            console.log(classId);
         }
     }, [authUser])
 
+    
     const toggleAccordion = (index) => {
         setActiveIndex(activeIndex === index ? null : index);
     };
+    
+    useEffect(() => {
+        console.log('studentData:', studentData);
+    }, [studentData]);
+
+    //karissa: 
+
+    // i set it up for you here so that all of the students info will be inside 'studentData'! 
+    // i set up some fake students for both of the classes under your acc,
+    // but if you want more don't forget you can create some at 
+    // localhost:3000/studentRegister using the code for your classes!
+
+    // also don't forget you can access different parts of the student by doing stuff like: 
+    // student.firstName or student.lastName
+    // looking at the console.log of student data will help with structure/names of attributes of the objects 
+    // for display of students on this page, 
+    // i think it would look best if we displayed both their first and last names
+    // if you're not already doing too much and feel like being extra,
+    // it would be great to have the students sorted in order of last name! 
+    // good luck and reach out whenever you need anything!!!
 
     const fetchClassInfo = async () => {
         try {
             const response = await axios.get(`${baseURL}/api/group/class/${classId}`)
-            console.log('response', response.data)
             setClassInfo(response.data)
+            setStudentData(response.data.students)
         } catch (error) {
             console.error(`Error fetching class info: `, error)
         }
@@ -52,7 +72,8 @@ const ClassView = () => {
                     <div className="students">
                         <h3 className="title">Students</h3>
                         <div class="student-list list-group inside-info">
-                            <a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
+                            {/* studentData.map */}
+                            <a href="#" class="list-group-item list-group-item-action"></a>
                             <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
                             <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a>
                             <a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>

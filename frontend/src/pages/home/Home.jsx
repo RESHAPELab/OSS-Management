@@ -32,16 +32,7 @@ const Home = () => {
             console.error('Error fetching professor groups: ', error)
         }
     }
-    
-    const fetchStudents = async (groupID) => {
-        try{ 
-            const response = await axios.get(`${baseURL}/api/students/${groupID}`)
-            console.log(`Group's students: `, response.data)
-            setGroupStudents(response.data);
-        } catch(error) { 
-            console.error('Error fetching students: ', error)
-        }
-    }
+
 
 
     const createGroup = async (groupName) => {

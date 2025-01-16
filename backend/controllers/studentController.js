@@ -11,7 +11,6 @@ const getStudents = async(req, res) => {
         }
         
         const students = group.students
-
         return res.status(200).json({students})
     } catch(error) { 
         console.debug(`Error in addStudentToGroup function: ${error}`)

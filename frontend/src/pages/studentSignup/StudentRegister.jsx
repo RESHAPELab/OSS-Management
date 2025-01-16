@@ -28,7 +28,7 @@ const StudentRegister = () => {
             console.log(studentRegisterData)
             const response = await axios.post(`${baseURL}/api/auth/student`, studentRegisterData)
             console.log(response.data);
-            if (response.status === 201) { 
+            if (response.status === 200) { 
                 const student = await axios.get(`${baseURL}/api/group/${response.data._id}`)
                 console.log('student registered', student)
             }
