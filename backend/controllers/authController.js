@@ -265,6 +265,7 @@ const registerStudent = async (req, res) => {
         }
 
         return res.status(200).json(student) 
+
     } catch(error) { 
         console.debug(`Error in registerStudent function: ${error}`)
         return res.status(500).json({error})

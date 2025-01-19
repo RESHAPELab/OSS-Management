@@ -20,6 +20,9 @@ const QuestSchema = mongoose.Schema({
     finalQuiz: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Quiz"
+    },
+    sequenceNumber: {
+        type: Number
     }
 })
 

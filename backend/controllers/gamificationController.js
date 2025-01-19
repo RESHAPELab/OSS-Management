@@ -1,15 +1,26 @@
 const { request } = require('../../bot/server');
 const { sendMessageToBot } = require('../utils/botMessage');
 const { multipleAnswersValidation, singleAnswerValidation, metricAnswerValidation } = require('../utils/validateAnswer');
+const { CurrentQuestDescription, CompletedQuestsDescription } = require('../utils/gamificationContent');
 
 const UserTaskProgress = require("../models/UserTaskProgressModel");
 const Quest = require("../models/QuestModel");
 const Task = require("../models/TaskModel");
 const Hint = require("../models/HintModel");
 const UserRepo = require("../models/UserRepoModel");
+const Readme = require("../models/ReadmeModel");
+const UserQuestProgress = require("../models/UserQuestProgressModel");
 
 const generateNextTask = async (req, res) => {
     const { userId, questId } = req.body;
+
+    const quest = await Quest.findById(questId);
+
+    const userQuestProgress = await UserQuestProgress.findOne({ user: userId, quest: questId });
+    if (userQuestProgress === null) {
+        let userQuestProgress = new UserQuestProgress({ user: userId, quest: questId, group: quest.group, status: "active"});
+        await userQuestProgress.save();
+    }
 
     const tasks = await Task.find({ quest: questId });
     const taskIds = tasks.map(task => task.id);
@@ -51,37 +62,45 @@ const generateNextTask = async (req, res) => {
         const task = await Task.findById(taskId);
         const title = task.taskTitle;
         const body = task.desc;
-        const quest = await Quest.findById(questId);
-
-        console.log(userId, quest.group);
 
         const allUserRepos = await UserRepo.find({});
-        console.log("All UserRepo documents:", allUserRepos);
-
         const userRepo = await UserRepo.findOne({ student: userId, group: quest.group })
 
         const repoName = userRepo.repository_url;
         const org = userRepo.org;
-        
-        console.log(org, repoName, title, body);
 
         const responseIssue = await sendMessageToBot(
             'github/createIssue',
             { org, repoName, title, body }
         );
         
+        const githubUrl = responseIssue.data.url;
+
         const newTaskProgress = new UserTaskProgress({
             user: userId,
             task: taskId,
-            githubUrl: 'githubUrl',
+            githubUrl: githubUrl,
             hintsUsed: [],
-            status: "inProgress",
+            status: "active",
             xp: 10,
         });
 
         await newTaskProgress.save();
-        console.log(`Task progress created for task ${taskId}`);
     }
+
+    const questForReadme = await Quest.findById(questId);
+
+    const mockRes = {
+        status: function (code) { this.statusCode = code; return this; },
+        json: function (data) { this.data = data; return this; },
+        statusCode: null,
+        data: null,
+    };
+
+    const responseReadme = await updateReadme(
+        { body: { studentId: userId, groupId: questForReadme.group } }, 
+        mockRes
+    );
 
     res.status(201).json({
         message: "Tasks processed successfully",
@@ -123,14 +142,14 @@ const taskAnswer = async(req, res) => {
 const taskCompletion = async(req, res) => {
     const { issueUrl } = req.body;
     const parts = issueUrl.split('/');
-    const org = parts[4];
-    const repo = parts[5];
-    const issueNumber = parts[7]; 
+    let org = parts[4];
+    let repoName = parts[5];
+    let issueNumber = parts[7]; 
     const commentBody = "Congratulations. You are wrong!";
 
     const responseConclusionText = await sendMessageToBot(
         'github/commentIssue',
-        { org,  repo,  issueNumber, commentBody }
+        { org,  repoName,  issueNumber, commentBody }
     );
 
     const responseClosedIssue = await sendMessageToBot(
@@ -138,37 +157,55 @@ const taskCompletion = async(req, res) => {
         { org, repoName, issueNumber }
     );
 
-    res.status(201).json({message: "Task completed successfully"});
+    res.status(201).json({ message: "Task completed successfully" });
 }
 
 const taskFailure = async(req, res) => {
+    const { issueUrl } = req.body;
+    const parts = issueUrl.split('/');
+    let org = parts[4];
+    let repoName = parts[5];
+    let issueNumber = parts[7]; 
+    const commentBody = "This is not the correctly answer! Do you need a hint to help in the process?";
 
+    const responseText = await sendMessageToBot(
+        'github/commentIssue',
+        { org,  repoName,  issueNumber, commentBody }
+    );
+
+    res.status(201).json({ message: "Task updated successfully" });
 }
 
 const taskNextHint = async(req, res) => {
-    const issueUrl = req.body.issue.url;
+    const { issueUrl } = req.body;
+
     const parts = issueUrl.split('/');
     const org = parts[4];
-    const repo = parts[5];
+    const repoName = parts[5];
     const issueNumber = parts[7]; 
 
     const userTaskProgress = await UserTaskProgress.findOne({ githubUrl: issueUrl });
+    const taskId = userTaskProgress.task;
 
-    const NextHint = await Hint.findOne({
-        quest: userTaskProgress.task.quest,
-        task: userTaskProgress.task.id,
-        sequence: userTaskProgress.hintsUsed.length + 1
+    const task = await Task.findById(taskId);
+    const sequence = userTaskProgress.hintsUsed.length + 1
+
+    const nextHint = await Hint.findOne({
+        task: taskId,
+        sequence: sequence
     });
     
-    const commentBody = NextHint.content;
+    const commentBody = nextHint.content;
 
-    const responseHint = await sendMessageToBot(
+    const responseConclusionText = await sendMessageToBot(
         'github/commentIssue',
-        { org,  repo,  issueNumber, commentBody }
+        { org,  repoName,  issueNumber, commentBody }
     );
 
-    userTaskProgress.xp = userTaskProgress.xp - NextHint.penalty
-    userTaskProgress.hintsUsed.push(NextHint.id);
+    userTaskProgress.xp = userTaskProgress.xp - nextHint.penalty
+    userTaskProgress.hintsUsed.push(nextHint.id);
+    
+    await userTaskProgress.save();
     
     res.status(201).json({message: "Next Hint Successfuly Implemented"});
 }
@@ -185,6 +222,31 @@ const dynamicComment = async(req, res) => {
 
 }
 
+const updateReadme = async(req, res) => {
+    const { studentId, groupId } = req.body;
+    const readme = await Readme.findOne({ group: groupId });
+    const userRepo = await UserRepo.findOne({ student: studentId, group: groupId });
+    
+    let fileContent = readme.content
+    const currentQuestsDescription = await CurrentQuestDescription(studentId, groupId);
+    
+    fileContent = fileContent + currentQuestsDescription;
+    console.log(fileContent);
+
+    const org = userRepo.org; 
+    const repoName = userRepo.repository_url; 
+    const filePath = 'readme.md';
+    const commitMessage = "Add or update readme file"; 
+    const branch = 'main';
+
+    const responseText = await sendMessageToBot(
+        'github/commitFile',
+        { org, repoName, filePath, fileContent, commitMessage, branch }
+    );
+
+    res.status(201).json({message: responseText.data});
+}
+
 module.exports = {
-    taskAnswer, taskCompletion, generateNextTask, taskNextHint, questCompletion, generateNextQuest, dynamicComment
+    taskAnswer, taskCompletion, generateNextTask, taskNextHint, questCompletion, generateNextQuest, dynamicComment, updateReadme
 }

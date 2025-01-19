@@ -17,7 +17,6 @@ const UserRepoSchema = mongoose.Schema({
         type: String,
         required: [true, "Please provide the organization in Github"]
     },
-    
 })
 
 module.exports = mongoose.model("UserRepo", UserRepoSchema)

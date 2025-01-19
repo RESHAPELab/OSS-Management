@@ -2,7 +2,7 @@ const app = require('../../server');
 const supertest = require('supertest');
 const request = supertest(app);
 const axios = require('axios');
-const REPOSITORY_NAME = `integration-test-repo-${Date.now()}`;
+const REPOSITORY_NAME = `bot-integration-test-repo-${Date.now()}`;
 const {signPayload} = require('../../utils/backendMessage');
 
 describe('GitHub Routes Integration Tests', () => {
@@ -43,6 +43,21 @@ describe('GitHub Routes Integration Tests', () => {
 
         expect(githubApiResponse.status).toBe(200);
         expect(githubApiResponse.data.name).toBe(repoName);
+    });
+
+    test('Should commit a file using /commitFile route', async () => {
+        const filePath = 'readme.md';
+        const fileContent = '# Welcome to the Repository\nThis is the readme file.';
+        const commitMessage = "Add or update readme file";
+        const branch = 'main';
+        const signature = signPayload({ org, repoName, filePath, fileContent, commitMessage, branch});
+
+        const response = await request
+        .post('/github/commitFile')
+        .set("x-bot-signature", signature)
+        .send({ org, repoName, filePath, fileContent, commitMessage, branch});
+
+        expect(response.status).toBe(200);
     });
 
     test('Should add a user to the repository using /addUserToRepo route', async () => {
@@ -142,16 +157,13 @@ describe('GitHub Routes Integration Tests', () => {
 
     test('Should close the issue using /closeIssue route', async () => {
         const issueNumber = 1;
+        const repoName = REPOSITORY_NAME;
         const signature = signPayload({ org, repoName, issueNumber });
 
         const response = await request
-        .patch('/github/closeIssue')
+        .post('/github/closeIssue')
         .set("x-bot-signature", signature)
-        .send({
-            org,
-            repoName,
-            issueNumber
-        });
+        .send({ org, repoName, issueNumber });
 
         expect(response.status).toBe(200);
 

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { Buffer } = require('buffer');
 const { getGithubAppInstallationAccessToken } = require('./githubAppAuth');
 
 const handleWebhook = async (req, res) => {
@@ -98,9 +99,8 @@ const addUserToProject = async (req, res) => {
 };
 
 const createIssueInProject = async (req, res) => {
-    console.log(req.body);
-    
     const { org, repoName, title, body } = req.body;
+    
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
         const apiResponse = await axios.post(
@@ -117,7 +117,6 @@ const createIssueInProject = async (req, res) => {
             }
         );
         
-        console.log(apiResponse.data);
         res.status(200).json(apiResponse.data);
     } catch (error) {
         console.error("Error creating issue in repository:", error.message);
@@ -151,13 +150,13 @@ const createCommentInIssue = async (req, res) => {
 
 const closeIssue = async (req, res) => {
     const { org, repoName, issueNumber } = req.body;
+
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
+        
         const apiResponse = await axios.patch(
             `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}`,
-            {
-                state: 'closed',
-            },
+            { state: 'closed' },
             {
                 headers: {
                     Authorization: `Bearer ${githubToken}`,
@@ -173,6 +172,53 @@ const closeIssue = async (req, res) => {
     }
 };
 
+const commitFile = async (req, res) => {
+    const { org, repoName, filePath, fileContent, commitMessage, branch = 'main' } = req.body;
+
+    try {
+        const githubToken = await getGithubAppInstallationAccessToken();
+        let fileSHA = null;
+
+        try {
+            const fileResponse = await axios.get(
+                `https://api.github.com/repos/${org}/${repoName}/contents/${filePath}?ref=${branch}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${githubToken}`,
+                        Accept: 'application/vnd.github.v3+json',
+                    },
+                }
+            );
+            fileSHA = fileResponse.data.sha;
+        } catch (error) {
+            if (error.response && error.response.status !== 404) { throw error; }
+        }
+
+        const apiResponse = await axios.put(
+            `https://api.github.com/repos/${org}/${repoName}/contents/${filePath}`,
+            {
+                message: commitMessage,
+                content: Buffer.from(fileContent).toString('base64'),
+                sha: fileSHA, 
+                branch: branch,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${githubToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                },
+            }
+        );
+
+        res.status(200).json(apiResponse.data);
+    } catch (error) {
+        console.error("Error committing the file:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
 module.exports = {
     handleWebhook,
     createRepo, 
@@ -180,5 +226,6 @@ module.exports = {
     addUserToProject,
     createIssueInProject,
     createCommentInIssue,
-    closeIssue
+    closeIssue,
+    commitFile
 };

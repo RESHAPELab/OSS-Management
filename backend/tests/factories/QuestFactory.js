@@ -9,6 +9,7 @@ async function createQuest(overrides = {}) {
         prerequisite = null,
         tasks = [], 
         finalQuiz = null,
+        sequenceNumber = 0
     } = overrides;
 
     const quest = new Quest({
@@ -17,7 +18,8 @@ async function createQuest(overrides = {}) {
         professor,
         prerequisite,
         tasks,
-        finalQuiz
+        finalQuiz,
+        sequenceNumber
     });
 
     await quest.save();

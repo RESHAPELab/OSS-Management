@@ -17,6 +17,10 @@ const UserTaskProgressSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Hint"
     }],
+    trials: {
+        type: Number,
+        default: 0
+    },
     status: {
         type: String
     },

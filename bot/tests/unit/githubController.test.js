@@ -1,6 +1,6 @@
 const { createRepo, addUserToProject, createIssueInProject, createCommentInIssue, closeIssue } = require('../../controllers/githubController'); // Adjust the path to your controller
 const axios = require('axios');
-const REPOSITORY_NAME = `test-repo-${Date.now()}`
+const REPOSITORY_NAME = `bot-test-repo-${Date.now()}`
 
 describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
     test('Should create a repository using live GitHub API', async () => {
@@ -161,7 +161,7 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
     test('Should create a comment on the specified issue in the previously created repository', async () => {
         const org = 'OSS-Doorway-Development';
         const repoName = REPOSITORY_NAME;
-        const issueNumber = 1; // Replace with the actual issue number where you want to add the comment
+        const issueNumber = 1;
         const commentBody = 'This is a test comment for the issue.';
     
         const req = {
@@ -183,7 +183,6 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
         };
     
         try {
-            // Call the function to create a comment
             await createCommentInIssue(req, res);
     
             const githubToken = await require('../../controllers/githubAppAuth').getGithubAppInstallationAccessToken();
@@ -197,14 +196,10 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
                 }
             );
     
-            // Check if the comment was created by searching for the comment body
             const comment = response.data.find((comment) => comment.body === commentBody);
     
-            // Assert the status and that the comment exists
             expect(response.status).toBe(200);
-            expect(comment).toBeDefined(); // Ensure the comment is defined
-    
-            // Optionally, check the body of the comment
+            expect(comment).toBeDefined();
             expect(comment.body).toBe(commentBody);
         } catch (error) {
             console.error('Error during test:', error.message);
@@ -220,7 +215,7 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
     test('Should close the specified issue in the previously created repository', async () => {
         const org = 'OSS-Doorway-Development';
         const repoName = REPOSITORY_NAME;
-        const issueNumber = 1; // Replace with the actual issue number you want to close
+        const issueNumber = 1;
     
         const req = {
             body: {
@@ -240,10 +235,8 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
         };
     
         try {
-            // Call the function to close the issue
             await closeIssue(req, res);
     
-            // Retrieve the issue to verify its state
             const githubToken = await require('../../controllers/githubAppAuth').getGithubAppInstallationAccessToken();
             const response = await axios.get(
                 `https://api.github.com/repos/${org}/${repoName}/issues/${issueNumber}`,
@@ -255,9 +248,8 @@ describe('GitHub Controller - createRepo (Live Test without Mocks)', () => {
                 }
             );
     
-            // Assert the status and that the issue is closed
             expect(response.status).toBe(200);
-            expect(response.data.state).toBe('closed'); // Ensure the issue's state is 'closed'
+            expect(response.data.state).toBe('closed');
         } catch (error) {
             console.error('Error during test:', error.message);
     
