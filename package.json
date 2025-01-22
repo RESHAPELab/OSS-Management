@@ -5,6 +5,7 @@
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
     "circular-json": "^0.5.9",
+    "bootstrap": "^5.3.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",

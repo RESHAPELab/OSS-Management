@@ -9,8 +9,8 @@ const getStudents = async(req, res) => {
         if (!group) { 
             return res.status(400).json({error: `Group with ID ${groupID} not found`})
         }
+        
         const students = group.students
-
         return res.status(200).json({students})
     } catch(error) { 
         console.debug(`Error in addStudentToGroup function: ${error}`)
@@ -21,3 +21,4 @@ const getStudents = async(req, res) => {
 module.exports = {
     getStudents
 }
+

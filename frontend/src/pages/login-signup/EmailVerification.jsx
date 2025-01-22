@@ -54,19 +54,20 @@ const EmailVerification = () => {
         <div className="container" id="verification-container">
             <div className="form-container verification">
                 <form onSubmit={handleSubmit}>
-                    <h1>Email Verification</h1>
                     <p>Enter the 6-digit verification code sent to your email.</p>
                     <div className='email-input-group'>
+                    <h5>Enter Email:</h5>
                     <input
                             type="email"
                             value={email}
                             onChange={handleEmailChange}
-                            placeholder="Enter your email"
+                            placeholder="Email"
                             className="email-input"
                             required
                         />
                     </div>
                     <div className="input-group">
+                        <h5>Enter Code:</h5>
                         {verificationCode.map((digit, index) => (
                             <input
                                 key={index}

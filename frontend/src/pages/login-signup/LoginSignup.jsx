@@ -65,7 +65,11 @@ const LoginSignup = () => {
                 const professor = await axios.get(`${baseURL}/api/group/${response.data._id}`)
                 if (professor) { 
                     localStorage.setItem("professor", JSON.stringify(professor.data))
-                    window.location.href = "/verify"
+                    if (!professor.verified) { 
+                        window.location.href = "/verify"
+                    }else { 
+                        window.location.href="/"
+                    }
                 }
             }
         } catch(error) { 

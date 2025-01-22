@@ -1,0 +1,7 @@
+.sign-up-container{
+    display: flex;
+}
+
+form { 
+    justify-content: center;
+}
