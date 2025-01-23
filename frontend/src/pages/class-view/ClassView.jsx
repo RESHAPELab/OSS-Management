@@ -73,18 +73,17 @@ const ClassView = () => {
                         <h3 className="title">Students</h3>
                         <div class="student-list list-group inside-info">
                             {/* studentData.map */}
-                            <a href="#" class="list-group-item list-group-item-action"></a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a>
-                            <a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a><a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a><a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a><a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a>
+                            {studentData.length > 0 ? (
+                                studentData.map((student) => (
+                                    <div> {/* not sure what to label this */}
+                                        {student.firstName} {student.lastName}
+                                    </div>
+                                ))
+                            ) : (
+                                <div> {/* not sure what to label this */}
+                                        No students available.
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="quest-completion title">
