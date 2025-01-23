@@ -131,4 +131,5 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
     );
 };
 
+
 export default GroupComponent;
