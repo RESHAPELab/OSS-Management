@@ -3,10 +3,13 @@ const router = express.Router();
 const { getProfessor, createGroup, getGroup, getGroups, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
     getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint } = require("../controllers/groupController")
 
+
+//api/group
+
 router.route('/:professorID').get(getProfessor)
 
 router.route("/:professorID/groups").post(createGroup).get(getGroups)
-router.route("/:professorID/group/:groupID").get(getGroup).delete(deleteGroup)
+router.route("/class/:groupID").get(getGroup).delete(deleteGroup)
 
 router.route("/:professorID/quests").get(getQuests).post(createQuest)
 router.route("/:professorID/quest/:questID").get(getQuest).put(updateQuest).delete(deleteQuest)

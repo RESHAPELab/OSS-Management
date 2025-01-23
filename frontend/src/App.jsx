@@ -2,6 +2,7 @@ import './App.css';
 import LoginSignup from './pages/login-signup/LoginSignup';
 import EmailVerification from './pages/login-signup/EmailVerification'
 import StudentRegister from './pages/studentSignup/StudentRegister';
+import ClassView from './pages/class-view/ClassView'
 import Home from './pages/home/Home'
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from 'react';
@@ -22,10 +23,11 @@ const App = () => {
   return (
     <div className="App">
       <Routes>
-        <Route path='/login' element={authUser  ? <Home /> : <LoginSignup />} />
-        <Route path='/' element={authUser ? (authUser.verified ? <Home /> : <EmailVerification />) : <LoginSignup /> } />
-        <Route path='/verify' element={authUser && !authUser.verified ? <EmailVerification /> : <Home/>} />
-        <Route path='/studentRegister' element={< StudentRegister />} />
+        <Route exact path='/login' element={authUser  ? <Home /> : <LoginSignup />} />
+        <Route exact path='/' element={authUser ? (authUser.verified ? <Home /> : <EmailVerification />) : <LoginSignup /> } />
+        <Route exact path='/verify' element={authUser && !authUser.verified ? <EmailVerification /> : <Home/>} />
+        <Route exact path='/studentRegister' element={< StudentRegister />} />
+        <Route path="/class/:classId" element={<ClassView />} />
       </Routes>
     </div>
   );

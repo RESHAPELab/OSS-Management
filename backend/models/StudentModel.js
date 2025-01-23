@@ -17,9 +17,9 @@ const StudentSchema = mongoose.Schema({
         type: String,
         required: [true, "Please enter your student email"]
     },
-    groups: [{
+    progress: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Group"
+        ref: "StudentProgress"
     }]
 })
 
