@@ -3,6 +3,8 @@
 .env.development.local
 .env.test.local
 .env.production.local
+github-app-private-key-dev.pem
+github-app-private-key-prod.pem
 
 node_modules
 *.bkp

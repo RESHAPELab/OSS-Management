@@ -253,18 +253,14 @@ const registerStudent = async (req, res) => {
         if (!group) { 
             return res.status(404).send(`Group not found with the code : ${classCode}`)
         }
-        
-        if(!student.groups.includes(group._id)) { 
-            student.groups.push(group._id)
-            await student.save() 
-        }
 
-        if (!group.students.includes(student._id)) { 
+        if (group.students.length === 0 || !group.students.includes(student._id)) { 
             group.students.push(student._id) 
             await group.save()
         }
 
         return res.status(200).json(student) 
+
     } catch(error) { 
         console.debug(`Error in registerStudent function: ${error}`)
         return res.status(500).json({error})

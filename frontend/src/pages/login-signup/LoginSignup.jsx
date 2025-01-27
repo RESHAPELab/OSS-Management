@@ -65,7 +65,11 @@ const LoginSignup = () => {
                 const professor = await axios.get(`${baseURL}/api/group/${response.data._id}`)
                 if (professor) { 
                     localStorage.setItem("professor", JSON.stringify(professor.data))
-                    window.location.href = "/verify"
+                    if (!professor.verified) { 
+                        window.location.href = "/verify"
+                    }else { 
+                        window.location.href="/"
+                    }
                 }
             }
         } catch(error) { 
@@ -101,14 +105,14 @@ const LoginSignup = () => {
             <div className="toggle-container">
                 <div className="toggle">
                     <div className="toggle-panel toggle-left">
-                        <h1>Welcome Back!</h1>
+                        <h1>Hello, Professor</h1>
                         <p>Sign in to manage your classes and review student progress!</p>
                         <button className="hidden" onClick={handleLoginClick}>
                             Sign In
                         </button>
                     </div>
                     <div className="toggle-panel toggle-right">
-                        <h1>Hello, Professor!</h1>
+                        <h1>Welcome Back!</h1>
                         <p>Register now to begin creating your own classes and quests, and gain access to all your students' progress!</p>
                         <button className="hidden" onClick={handleRegisterClick}>
                             Sign Up

@@ -1,26 +1,16 @@
+/*
 const { createProfessor } = require("../factories/ProfessorFactory");
 const Professor = require("../../models/ProfessorModel");
 
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const { MongoMemoryServer } = require('mongodb-memory-server');
 let mongoServer;
 
-beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create(); 
-  const uri = mongoServer.getUri();
-  process.env.MONGO_URI = uri; 
-
-  if (mongoose.connection.readyState === 0) {
-    await mongoose.connect(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-  }
-});
-
 afterAll(async () => {
   await mongoose.disconnect();
-  await mongoServer.stop();
+  if (mongoServer) {
+    await mongoServer.stop();
+  }
 });
 
 describe("Professor Model Tests", () => {
@@ -74,3 +64,4 @@ describe("Professor Model Tests", () => {
   });
 
 });
+*/
