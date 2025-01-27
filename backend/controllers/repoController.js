@@ -11,6 +11,7 @@ const { sendMessageToBot } = require('../utils/botMessage');
 const createRepo = async (req, res) => {
     const { organizationGh, studentId, studentGithubUsername, groupId, groupName } = req.body;
 
+    console.log(req.body);
     const repoName = groupName + "-" + studentGithubUsername + "-" + Date.now();
     const repoDescription = "Gamified Repository (OSS Management)";
     const privateRepo = true;
@@ -22,6 +23,7 @@ const createRepo = async (req, res) => {
         "github/createRepo", 
         { org, repoName, repoDescription, privateRepo },
     )
+    console.log('response', responseCreateRepo);
     
     const repository_url = responseCreateRepo.data.name
     const group = groupId

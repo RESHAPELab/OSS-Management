@@ -32,13 +32,15 @@ const StudentRegister = () => {
             console.log(groupInfo.data)
 
             const organizationGh = 'OSS-Doorway-Development';
-            const studentId = studentInfo._id;
-            const studentGithubUsername = studentInfo.githubUsername;
-            const groupId = groupInfo._id;
-            const groupName = groupInfo.groupName;
+            const studentId = studentInfo.data._id;
+            const studentGithubUsername = studentInfo.data.githubUsername;
+            const groupId = groupInfo.data._id;
+            const groupName = groupInfo.data.groupName;
+            console.log('log', organizationGh, studentId, studentGithubUsername, groupId, groupName)
+            const send = { organizationGh, studentId, studentGithubUsername, groupId, groupName }
 
             // get the response to include the url that the students repo is at
-            const repoResponse = await axios.post(`${baseURL}/api/repo/repository`, { organizationGh, studentId, studentGithubUsername, groupId, groupName });
+            const repoResponse = await axios.post(`${baseURL}/api/repo/repository`, send);
             console.log(repoResponse); 
 
             if (studentInfo.status === 200 && groupInfo.status === 200 ) { 
