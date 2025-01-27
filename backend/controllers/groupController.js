@@ -114,6 +114,23 @@ const getGroups = async (req, res) => {
     }
 }
 
+const getGroupByCode = async (req, res) => {
+    const {classCode} = req.params; 
+    try {
+
+        const group = await Group.findOne({classCode})
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        console.log('group', group)
+        res.status(200).json(group);
+    } catch (error) { 
+        console.debug(`Error in getGroupByCode function: ${error}`)
+        return res.status(500).json({error})
+    }
+}
+
 // given professorID and groupID
 //return info for one of professor's groups
 const getGroup = async (req, res ) => {
@@ -689,6 +706,7 @@ module.exports = {
     getProfessor, 
     createGroup,
     getGroup,
+    getGroupByCode,
     getGroups,
     deleteGroup,
     createQuest,

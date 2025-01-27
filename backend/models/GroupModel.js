@@ -15,7 +15,7 @@ const GroupSchema = mongoose.Schema({
     }],
     professor:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "GroupOrganizer"
+        ref: "Professor"
     },
     quests:[{
         type: mongoose.Schema.Types.ObjectId,

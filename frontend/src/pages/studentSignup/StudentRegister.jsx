@@ -25,12 +25,25 @@ const StudentRegister = () => {
     const handleRegisterSubmit = async (e) => {
         e.preventDefault()
         try { 
-            console.log(studentRegisterData)
-            const response = await axios.post(`${baseURL}/api/auth/student`, studentRegisterData)
-            console.log(response.data);
-            if (response.status === 200) { 
-                const student = await axios.get(`${baseURL}/api/group/${response.data._id}`)
-                console.log('student registered', student)
+            const studentInfo = await axios.post(`${baseURL}/api/auth/student`, studentRegisterData)
+            console.log(studentInfo.data);
+
+            const groupInfo = await axios.get(`${baseURL}/api/group/code/groupByCode/${studentRegisterData.classCode}`);
+            console.log(groupInfo.data)
+
+            const organizationGh = 'OSS-Doorway-Development';
+            const studentId = studentInfo._id;
+            const studentGithubUsername = studentInfo.githubUsername;
+            const groupId = groupInfo._id;
+            const groupName = groupInfo.groupName;
+
+            // get the response to include the url that the students repo is at
+            const repoResponse = await axios.post(`${baseURL}/api/repo/repository`, { organizationGh, studentId, studentGithubUsername, groupId, groupName });
+            console.log(repoResponse); 
+
+            if (studentInfo.status === 200 && groupInfo.status === 200 ) { 
+                console.log("yay")
+                // window.location.href = "/studentRegistered"
             }
         } catch(error) { 
             console.log(`Error registering:`, error)
