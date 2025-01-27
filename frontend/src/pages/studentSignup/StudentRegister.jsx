@@ -31,11 +31,14 @@ const StudentRegister = () => {
             const groupInfo = await axios.get(`${baseURL}/api/group/code/groupByCode/${studentRegisterData.classCode}`);
             console.log(groupInfo.data)
 
-            const organizationGh = 'OSS-Doorway-Development';
+            const org = await axios.get(`${baseURL}/api/repo/prodStatus`);
+            console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+            const organizationGh = org.data.organizationGh;
             const studentId = studentInfo.data._id;
             const studentGithubUsername = studentInfo.data.githubUsername;
             const groupId = groupInfo.data._id;
             const groupName = groupInfo.data.groupName;
+
             console.log('log', organizationGh, studentId, studentGithubUsername, groupId, groupName)
             const send = { organizationGh, studentId, studentGithubUsername, groupId, groupName }
 
