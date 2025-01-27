@@ -14,98 +14,99 @@ const UserQuestProgress = require("../models/UserQuestProgressModel");
 const generateNextTask = async (req, res) => {
     const { userId, questId } = req.body;
 
-    const quest = await Quest.findById(questId);
+    try {
+        const quest = await Quest.findById(questId);
+        if (!quest) { return res.status(404).json({ message: "Quest not found." }); }
 
-    const userQuestProgress = await UserQuestProgress.findOne({ user: userId, quest: questId });
-    if (userQuestProgress === null) {
-        let userQuestProgress = new UserQuestProgress({ user: userId, quest: questId, group: quest.group, status: "active"});
-        await userQuestProgress.save();
-    }
-
-    const tasks = await Task.find({ quest: questId });
-    const taskIds = tasks.map(task => task.id);
-
-    const taskProgresses = await UserTaskProgress.find({
-        user: userId,
-        task: { $in: taskIds }
-    });
-
-    let prerequisiteVector = [];
-    if (taskProgresses.length > 0) {
-        const taskIdsInProgress = taskProgresses.map(taskProgress => taskProgress.task);
-        const tasksInProgress = await Task.find({ _id: { $in: taskIdsInProgress } });
-
-        prerequisiteVector = tasksInProgress
-            .map(task => task.prerequisite || [])
-            .flat(); 
-    }
-
-    let notOpenedTaskIds = [];
-
-    if (prerequisiteVector.length > 0) {
-        const dependentTasks = await Task.find({ $expr: { $not: { $gt: [ { $size: { $setDifference: ["$prerequisite", prerequisiteVector] } }, 0 ] } } });
-        const dependentTaskIds = dependentTasks.map(task => task._id.toString());
-        const userTaskProgresses = await UserTaskProgress.find({ user: userId, task: { $in: dependentTaskIds } });
-        const openedTaskIds = userTaskProgresses.map(progress => progress.task.toString());
+        let userQuestProgress = await UserQuestProgress.findOne({ user: userId, quest: questId });
         
-        notOpenedTaskIds = dependentTaskIds.filter(taskId => !openedTaskIds.includes(taskId));
-    } else {
-        const tasksWithoutDependencies = await Task.find({ quest: questId, prerequisite: null });
-        const tasksWithoutDependenciesIds = tasksWithoutDependencies.map(task => task._id.toString());
-        const userTaskProgresses = await UserTaskProgress.find({ user: userId, task: { $in: tasksWithoutDependenciesIds } });
-        const openedTaskIds = userTaskProgresses.map(progress => progress.task.toString());
+        if (!userQuestProgress) {
+            userQuestProgress = new UserQuestProgress({
+                user: userId,
+                quest: questId,
+                group: quest.group,
+                status: "active"
+            });
 
-        notOpenedTaskIds = tasksWithoutDependenciesIds.filter(taskId => !openedTaskIds.includes(taskId));
-    }
-    
-    for (const taskId of notOpenedTaskIds) {
-        const task = await Task.findById(taskId);
-        const title = task.taskTitle;
-        const body = task.desc;
+            await userQuestProgress.save();
+        }
 
-        const allUserRepos = await UserRepo.find({});
-        const userRepo = await UserRepo.findOne({ student: userId, group: quest.group })
+        const tasks = await Task.find({ quest: questId });
+        const taskIds = tasks.map(task => task._id.toString());
 
-        const repoName = userRepo.repository_url;
-        const org = userRepo.org;
+        const taskProgresses = await UserTaskProgress.find({ user: userId, task: { $in: taskIds } });
 
-        const responseIssue = await sendMessageToBot(
-            'github/createIssue',
-            { org, repoName, title, body }
+        const completedTaskIds = taskProgresses
+            .filter(taskProgress => taskProgress.status === "completed")
+            .map(taskProgress => taskProgress.task.toString());
+
+        const activeTaskIds = taskProgresses
+            .filter(taskProgress => taskProgress.status === "active")
+            .map(taskProgress => taskProgress.task.toString());
+
+        for (const task of tasks) {
+            const taskId = task._id;
+            const taskTitle = task.taskTitle;
+            const taskPrerequisite = task.prerequisite || [];
+
+            const prerequisitesCompleted = taskPrerequisite.every(
+                prereqId => completedTaskIds.some(completedId => completedId.toString() === prereqId.toString())
+            );
+            
+            if (activeTaskIds.includes(
+                taskId.toString()) || 
+                completedTaskIds.includes(taskId.toString()) || 
+                prerequisitesCompleted === false
+            ) { continue; }
+
+            const userRepo = await UserRepo.findOne({ student: userId, group: quest.group });
+            if (!userRepo) { continue; }
+
+            const { repository_url: repoName, org } = userRepo;
+
+            const responseIssue = await sendMessageToBot(
+                'github/createIssue', 
+                { org, repoName, title: taskTitle, body: task.desc }
+            );
+
+            const githubUrl = responseIssue.data.url;
+
+            const newTaskProgress = new UserTaskProgress({
+                user: userId,
+                task: taskId,
+                githubUrl,
+                hintsUsed: [],
+                status: "active",
+                xp: 10,
+            });
+            await newTaskProgress.save();
+        }
+
+        const mockRes = {
+            status: function (code) { this.statusCode = code; return this; },
+            json: function (data) { this.data = data; return this; },
+            statusCode: null,
+            data: null,
+        };
+
+        await updateReadme(
+            { body: { studentId: userId, groupId: quest.group } },
+            mockRes
         );
-        
-        const githubUrl = responseIssue.data.url;
 
-        const newTaskProgress = new UserTaskProgress({
-            user: userId,
-            task: taskId,
-            githubUrl: githubUrl,
-            hintsUsed: [],
-            status: "active",
-            xp: 10,
+        res.status(201).json({
+            message: "Tasks processed successfully",
+            notOpenedTaskIds: tasks.filter(
+                task => !completedTaskIds.includes(task._id.toString()) 
+                    && !activeTaskIds.includes(task._id.toString())
+                ).map(task => task._id.toString()),
+            activeTaskIds,
+            completedTaskIds
         });
-
-        await newTaskProgress.save();
+    } catch (error) {
+        console.error("Error generating next task:", error);
+        res.status(500).json({ message: "Internal server error.", error });
     }
-
-    const questForReadme = await Quest.findById(questId);
-
-    const mockRes = {
-        status: function (code) { this.statusCode = code; return this; },
-        json: function (data) { this.data = data; return this; },
-        statusCode: null,
-        data: null,
-    };
-
-    const responseReadme = await updateReadme(
-        { body: { studentId: userId, groupId: questForReadme.group } }, 
-        mockRes
-    );
-
-    res.status(201).json({
-        message: "Tasks processed successfully",
-        notOpenedTaskIds,
-    });
 };
 
 const taskAnswer = async(req, res) => {
@@ -132,29 +133,44 @@ const taskAnswer = async(req, res) => {
         // Needs to be implemented (future work)
     }
 
-    if (answerApproved === true) {
-        taskCompletion(req, res);
-    } else {
-        taskFailure(req, res); 
-    }
+    if (answerApproved === true) { taskCompletion(req, res); } 
+    else { taskFailure(req, res); }
 }
 
 const taskCompletion = async(req, res) => {
-    const { issueUrl } = req.body;
+    const { issueUrl, commentBody } = req.body;
     const parts = issueUrl.split('/');
     let org = parts[4];
     let repoName = parts[5];
     let issueNumber = parts[7]; 
-    const commentBody = "Congratulations. You are wrong!";
+    const answerCommentBody = "Congratulations. You are wrong!";
 
     const responseConclusionText = await sendMessageToBot(
         'github/commentIssue',
-        { org,  repoName,  issueNumber, commentBody }
+        { org,  repoName,  issueNumber, commentBody: answerCommentBody }
     );
 
     const responseClosedIssue = await sendMessageToBot(
         'github/closeIssue',
         { org, repoName, issueNumber }
+    );
+
+    const userTaskProgress = await UserTaskProgress.findOne({ githubUrl: issueUrl });
+    const task = await Task.findById(userTaskProgress.task);
+
+    userTaskProgress.status = "completed";
+    await userTaskProgress.save();
+
+    const mockRes = {
+        status: function (code) { this.statusCode = code; return this; },
+        json: function (data) { this.data = data; return this; },
+        statusCode: null,
+        data: null,
+    };
+
+    const responseNextTask = await generateNextTask(
+        { body: { userId: userTaskProgress.user, questId: task.quest } }, 
+        mockRes
     );
 
     res.status(201).json({ message: "Task completed successfully" });
@@ -214,14 +230,6 @@ const questCompletion = async(req, res) => {
 
 }
 
-const generateNextQuest = async(req, res) => {
-    
-}
-
-const dynamicComment = async(req, res) => {
-
-}
-
 const updateReadme = async(req, res) => {
     const { studentId, groupId } = req.body;
     const readme = await Readme.findOne({ group: groupId });
@@ -231,7 +239,6 @@ const updateReadme = async(req, res) => {
     const currentQuestsDescription = await CurrentQuestDescription(studentId, groupId);
     
     fileContent = fileContent + currentQuestsDescription;
-    console.log(fileContent);
 
     const org = userRepo.org; 
     const repoName = userRepo.repository_url; 
@@ -248,5 +255,5 @@ const updateReadme = async(req, res) => {
 }
 
 module.exports = {
-    taskAnswer, taskCompletion, generateNextTask, taskNextHint, questCompletion, generateNextQuest, dynamicComment, updateReadme
+    taskAnswer, taskCompletion, generateNextTask, taskNextHint, questCompletion, updateReadme
 }

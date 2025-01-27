@@ -27,13 +27,19 @@ async function CurrentQuestDescription(studentId, groupId) {
         return map;
     }, {});
 
+    let githubTaskUrl;
     tasks.forEach(task => {
         const progress = taskProgressMap[task.id];
         if (progress) {
+            githubTaskUrl = progress.githubUrl.replace(
+                "https://api.github.com/repos/",
+                "https://github.com/"
+            );
+
             if (progress.status === "completed") {
-                currentQuestDescription += `  - ~${task.taskTitle}~ [[COMPLETED](${progress.githubUrl})]\n`;
+                currentQuestDescription += `  - ~${task.taskTitle}~ [[COMPLETED](${githubTaskUrl})]\n`;
             } else if (progress.status === "active") {
-                currentQuestDescription += `  - ${task.taskTitle} [[Click here to start](${progress.githubUrl})]\n`;
+                currentQuestDescription += `  - ${task.taskTitle} [[Click here to start](${githubTaskUrl})]\n`;
             } else {
                 currentQuestDescription += `  - ${task.taskTitle}\n`;
             }
@@ -45,9 +51,8 @@ async function CurrentQuestDescription(studentId, groupId) {
     return currentQuestDescription;
 }
 
-
 async function CompletedQuestsDescription (studentId) {
-
+    
 }
 
 module.exports = {

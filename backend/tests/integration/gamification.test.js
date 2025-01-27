@@ -23,7 +23,6 @@ const UserRepo = require("../../models/UserRepoModel");
 const { createUserRepo } = require("../factories/UserRepoFactory");
 const Readme = require("../../models/ReadmeModel");
 const { createReadme } = require("../factories/ReadmeFactory");
-const { dynamicComment } = require('../../controllers/gamificationController');
 
 let professor;
 let student;
@@ -40,6 +39,7 @@ beforeAll(async () => {
   group = await createGroup({ professor: [professor.id], students: [student.id] });
   quest = await createQuest({ group: group.id });
   taskA = await createTask({ quest: quest.id, taskTitle: "Task 1"});
+  taskD = await createTask({ quest: quest.id, taskTitle: "Task 1.1"});
   hint = await createHint({ task: taskA.id, sequence: 1 });
   
   taskB = await createTask({ quest: quest.id, prerequisite: [taskA.id], taskTitle: "Task 2"});
