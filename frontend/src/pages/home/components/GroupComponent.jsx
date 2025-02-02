@@ -3,6 +3,8 @@ import "bootstrap/dist/css/bootstrap.min.css"
 import "./GroupComponent.css";
 import { useNavigate } from 'react-router-dom'
 
+import { toast } from "react-toastify"; 
+
 
 const GroupComponent = ({ professor, groups, createGroup }) => {
     const [createGroupOpen, setCreateGroupOpen] = useState(false);
@@ -28,6 +30,13 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
     };
 
     const handleAddGroup = () => {
+        // Regex to check group name: only letters, no spaces
+        const regex = /^[A-Za-z]+$/;
+        if (!regex.test(newGroupName)) {
+            toast.error("Invalid group name. Only letters (no spaces) are allowed.");
+            return; // Exit the function if the name is invalid
+        }
+
         if (newGroupName.trim() !== "") {
             createGroup({ groupName: newGroupName });
             setNewGroupName("");

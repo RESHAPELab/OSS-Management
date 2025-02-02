@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import "./LoginSignup.css"; 
 import axios from 'axios'
+
+// ADDED
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
 const LoginSignup = () => {
@@ -52,8 +57,13 @@ const LoginSignup = () => {
                     window.location.href = "/verify"
                 }
             }
-        } catch(error) { 
-            console.log(`Error registering:`, error)
+        } catch(error)  { 
+            if (error.response?.status === 400) {
+                toast.error("Email is already in use!");
+            } else {
+                toast.error("An error occurred. Please try again.");
+            }
+            console.log(`Error logging in:`, error);
         }
     }
 
@@ -73,7 +83,12 @@ const LoginSignup = () => {
                 }
             }
         } catch(error) { 
-            console.log(`Error logging in:`, error)
+            if (error.response?.status === 400) {
+                toast.error("Password is incorrect, try again.");
+            } else {
+                toast.error("An error occurred during login. Please try again.");
+            }
+            console.log(`Error logging in:`, error);
         }
     }
 
