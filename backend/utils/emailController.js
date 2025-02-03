@@ -95,7 +95,7 @@ const sendEmail = (recipientEmail, verificationCode) => {
                 <div class="code">${verificationCode}</div>
         
                 <p>Simply click the button below to register your account:</p>
-                <a href="{{registrationLink}}" class="cta-button">Register Now</a>
+                <a href="localhost:3000/verify" class="cta-button">Register Now</a>
         
                 <p>If you have any issues or need assistance, please don't hesitate to reach out to us at <a href="mailto:jlc2243@nau.edu">jlc2243@nau.edu</a>.</p>
                 

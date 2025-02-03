@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router(); 
-const {getStudents} = require('../controllers/studentController')
+const {getStudents, getStudent} = require('../controllers/studentController')
 
 
-//api/student/${groupID}
+//api/student
 router.route('/:groupID').get(getStudents)
+router.route('/:groupID/student/:studentID').get(getStudent)
 
 module.exports = router;

@@ -112,3 +112,22 @@ thead {
 .above-class-info h5 { 
     width: 20%;
 }
+
+
+button.btn.btn-link.course-outline-button.collapsed { 
+    text-align: left; 
+}
+
+button.btn.btn-link.course-outline-button { 
+    text-align: left; 
+}
+
+ul.course-outline-list { 
+    text-align: left;
+}
+
+.student-list.list-group.inside-info {
+    font-size: larger; 
+    padding-left: 1rem;
+    padding-top: .5rem;
+}

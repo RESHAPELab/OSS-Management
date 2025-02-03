@@ -39,16 +39,15 @@ const StudentRegister = () => {
             const groupId = groupInfo.data._id;
             const groupName = groupInfo.data.groupName;
 
-            console.log('log', organizationGh, studentId, studentGithubUsername, groupId, groupName)
             const send = { organizationGh, studentId, studentGithubUsername, groupId, groupName }
 
             // get the response to include the url that the students repo is at
             const repoResponse = await axios.post(`${baseURL}/api/repo/repository`, send);
-            console.log(repoResponse); 
+            let repoName = repoResponse.data.repoName;
 
             if (studentInfo.status === 200 && groupInfo.status === 200 ) { 
                 console.log("yay")
-                // window.location.href = "/studentRegistered"
+                window.location.href = `/studentRegistered/${repoName}`
             }
         } catch(error) { 
             console.log(`Error registering:`, error)

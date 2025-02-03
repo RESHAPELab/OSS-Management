@@ -5,6 +5,8 @@ import { useParams } from 'react-router-dom'
 import HomeHeader from '../home/components/HomeHeader'
 import axios from 'axios'
 import { useAuthContext } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom'
+
 
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
@@ -14,6 +16,7 @@ const ClassView = () => {
     const { authUser } = useAuthContext();
     const [activeIndex, setActiveIndex] = useState(null);
     const [studentData, setStudentData] = useState([{}]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (authUser) {
@@ -22,30 +25,16 @@ const ClassView = () => {
         }
     }, [authUser])
 
-    
+
     const toggleAccordion = (index) => {
         setActiveIndex(activeIndex === index ? null : index);
     };
-    
+
     useEffect(() => {
         console.log('studentData:', studentData);
+        console.log('classInfo', classInfo)
     }, [studentData]);
 
-    //karissa: 
-
-    // i set it up for you here so that all of the students info will be inside 'studentData'! 
-    // i set up some fake students for both of the classes under your acc,
-    // but if you want more don't forget you can create some at 
-    // localhost:3000/studentRegister using the code for your classes!
-
-    // also don't forget you can access different parts of the student by doing stuff like: 
-    // student.firstName or student.lastName
-    // looking at the console.log of student data will help with structure/names of attributes of the objects 
-    // for display of students on this page, 
-    // i think it would look best if we displayed both their first and last names
-    // if you're not already doing too much and feel like being extra,
-    // it would be great to have the students sorted in order of last name! 
-    // good luck and reach out whenever you need anything!!!
 
     const fetchClassInfo = async () => {
         try {
@@ -55,6 +44,13 @@ const ClassView = () => {
         } catch (error) {
             console.error(`Error fetching class info: `, error)
         }
+    }
+
+    const handleStudentClick = (studentId) => {
+        classInfo.quests.map((quest, index) => (
+            console.log(quest.questKey)
+        ))
+        navigate(`/class/${classId}/student/${studentId}`)
     }
 
 
@@ -72,19 +68,17 @@ const ClassView = () => {
                     <div className="students">
                         <h3 className="title">Students</h3>
                         <div class="student-list list-group inside-info">
-                            {/* studentData.map */}
-                            <a href="#" class="list-group-item list-group-item-action"></a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a>
-                            <a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a><a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a><a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a><a href="#" class="list-group-item list-group-item-action">Dapibus ac facilisis in</a>
-                            <a href="#" class="list-group-item list-group-item-action">Morbi leo risus</a>
-                            <a href="#" class="list-group-item list-group-item-action">Porta ac consectetur ac</a>
+                            {studentData.length > 0 ? (
+                                studentData.map((student) => (
+                                    <div onClick={() => handleStudentClick(student._id)}>
+                                        {student.firstName} {student.lastName}
+                                    </div>
+                                ))
+                            ) : (
+                                <div>
+                                    No students available.
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="quest-completion title">
@@ -99,26 +93,21 @@ const ClassView = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td className="first-col">Q1</td>
-                                        <td className="second-col">97%</td>
-                                        <td className="third-col">90%</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="first-col">Q2</td>
-                                        <td className="second-col">97%</td>
-                                        <td className="third-col">90%</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="first-col">Q3</td>
-                                        <td className="second-col">97%</td>
-                                        <td className="third-col">90%</td>
-                                    </tr>
-                                    <tr>
-                                        <td className="first-col">Q4</td>
-                                        <td className="second-col">97%</td>
-                                        <td className="third-col">90%</td>
-                                    </tr>
+                                    {classInfo && classInfo.quests && classInfo.quests.length > 0 ? (
+                                        classInfo.quests.map((quest, index) => (
+                                            <tr key={index}>
+                                                <td className="first-col">{quest.questKey}</td>
+                                                <td className="second-col">97%</td>
+                                                <td className="third-col">90%</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="text-center">
+                                                No quests have been set up for this class yet.
+                                            </td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -126,88 +115,53 @@ const ClassView = () => {
                     <div className="course-outline title">
                         <h3 className="title">Course Outline</h3>
                         <div className="inside-info">
-                            <div id="accordion">
-                                <div className="card">
-                                    <div className="card-header" id="headingOne">
+                        {classInfo && classInfo.quests && classInfo.quests.length > 0 ? (
+                        <div id="accordion">
+                            {classInfo.quests.map((quest, index) => (
+                                <div className="card" key={quest._id}>
+                                    <div className="card-header" id={`heading${index}`}>
                                         <h5 className="mb-0">
                                             <button
-                                                className={`btn btn-link ${activeIndex === 0 ? '' : 'collapsed'}`}
-                                                onClick={() => toggleAccordion(0)}
-                                                aria-expanded={activeIndex === 0}
-                                                aria-controls="collapseOne"
+                                                className={`btn btn-link course-outline-button ${activeIndex === index ? '' : 'collapsed'}`}
+                                                onClick={() => toggleAccordion(index)}
+                                                aria-expanded={activeIndex === index}
+                                                aria-controls={`collapse${index}`}
                                             >
-                                                Q1
+                                                {quest.questKey} - {quest.questTitle}  {/* Quest title */}
                                             </button>
                                         </h5>
                                     </div>
 
                                     <div
-                                        id="collapseOne"
-                                        className={`collapse ${activeIndex === 0 ? 'show' : ''}`}
-                                        aria-labelledby="headingOne"
+                                        id={`collapse${index}`}
+                                        className={`collapse ${activeIndex === index ? 'show' : ''}`}
+                                        aria-labelledby={`heading${index}`}
                                         data-parent="#accordion"
                                     >
                                         <div className="card-body">
-                                            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid...
+                                            {/* Map through tasks and display them */}
+                                            <ul className="course-outline-list">
+                                                {quest.tasks.map((task, taskIndex) => (
+                                                    <li key={taskIndex}>
+                                                        {task.taskKey} - {task.taskTitle}
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="card">
-                                    <div className="card-header" id="headingTwo">
-                                        <h5 className="mb-0">
-                                            <button
-                                                className={`btn btn-link ${activeIndex === 1 ? '' : 'collapsed'}`}
-                                                onClick={() => toggleAccordion(1)}
-                                                aria-expanded={activeIndex === 1}
-                                                aria-controls="collapseTwo"
-                                            >
-                                                Q2
-                                            </button>
-                                        </h5>
-                                    </div>
-                                    <div
-                                        id="collapseTwo"
-                                        className={`collapse ${activeIndex === 1 ? 'show' : ''}`}
-                                        aria-labelledby="headingTwo"
-                                        data-parent="#accordion"
-                                    >
-                                        <div className="card-body">
-                                            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid...
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="card">
-                                    <div className="card-header" id="headingThree">
-                                        <h5 className="mb-0">
-                                            <button
-                                                className={`btn btn-link ${activeIndex === 2 ? '' : 'collapsed'}`}
-                                                onClick={() => toggleAccordion(2)}
-                                                aria-expanded={activeIndex === 2}
-                                                aria-controls="collapseThree"
-                                            >
-                                                Q3
-                                            </button>
-                                        </h5>
-                                    </div>
-                                    <div
-                                        id="collapseThree"
-                                        className={`collapse ${activeIndex === 2 ? 'show' : ''}`}
-                                        aria-labelledby="headingThree"
-                                        data-parent="#accordion"
-                                    >
-                                        <div className="card-body">
-                                            Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid...
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            ))}
                         </div>
+                        ) : (
+                            <div style={{ fontSize: '1.3rem' }}>
+                                No course outline available yet.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </div>
+        </div >
     )
 }
 

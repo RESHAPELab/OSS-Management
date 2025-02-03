@@ -14,4 +14,10 @@
 .second { 
     padding-top: 10%;
     font-size: xx-large;
+
+}
+
+.container a.github-link { 
+    font-size: x-large;
+    text-decoration: underline;
 }

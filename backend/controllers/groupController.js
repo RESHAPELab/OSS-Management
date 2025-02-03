@@ -65,10 +65,13 @@ const createGroup = async (req, res) =>  {
         let classCode = combined % 1000000;
         classCode = classCode.toString().padStart(6, '0');
 
+        const quests = ["6720807592c7eb874a427469","6720807592c7eb874a42746f","6720807692c7eb874a42747d","6720807692c7eb874a427489"]
+
         let newGroup = new Group({ 
             groupName,
             professor: professorID,
-            classCode
+            classCode,
+            quests
         })
 
         await newGroup.save()
@@ -76,12 +79,15 @@ const createGroup = async (req, res) =>  {
         professor.ownedGroups.push(newGroup._id); 
         await professor.save()
 
+
         if (newGroup) {
             res.status(201).json({
+                _id: newGroup._id,
                 professorID: newGroup.professor, 
                 groupName: newGroup.groupName,
                 classCode: newGroup.classCode,
-                active: true
+                active: true,
+                quests: newGroup.quests
             })
         } else { 
             return res.status(400).json({error: `Error creating new group for professor with id ${professorID}`})
@@ -92,6 +98,31 @@ const createGroup = async (req, res) =>  {
     }
 }
 
+const updateGroup = async (req, res) => { 
+    const {groupId} = req.params; 
+    try{ 
+        const group = await Group.findById(groupId)
+
+        if (!group){
+            return res.status(401).json({error: `No group with id ${groupId} found`})
+        }
+
+        const updatedGroup = await Group.findByIdAndUpdate(groupId, req.body, {new: true})
+
+        res.status(200).json({
+            groupID: group._id,
+            groupName: group.groupName,
+            professorID: group.professor,
+            students: group.students,
+            admin: group.admin,
+            quests: group.quests,
+            classCode: group.classCode
+        });
+    } catch(error) { 
+        console.debug(`Error in updateGroup function: ${error}`)
+        return res.status(500).json({error})
+    }
+}
 
 // given professorID
 // get a list of all the professor's groups
@@ -136,11 +167,19 @@ const getGroupByCode = async (req, res) => {
 const getGroup = async (req, res ) => {
     const { groupID } = req.params;
     try{ 
-        const group = await Group.findById(groupID).populate('students');
+        console.log("id", groupID)
+        const group = await Group.findById(groupID).populate('students').populate({
+            path: 'quests', 
+            populate: {
+                path: 'tasks', 
+                model: 'Task',  
+            },
+        });
+
         if (!group) {
             return res.status(404).json({ error: `Group with ID ${groupID} not found` });
         }
-
+        console.log("group", group)
         res.status(200).json({
             groupID: group._id,
             groupName: group.groupName,

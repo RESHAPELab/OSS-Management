@@ -27,7 +27,7 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
         setNameSearch(e.target.value);
     };
 
-    const handleAddGroup = () => {
+    const handleAddGroup = async () => {
         if (newGroupName.trim() !== "") {
             createGroup({ groupName: newGroupName });
             setNewGroupName("");
