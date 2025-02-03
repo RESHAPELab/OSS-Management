@@ -10,6 +10,9 @@ import { useAuthContext } from './context/AuthContext';
 import StudentRegistered from './pages/studentSignup/StudentRegistered';
 import StudentView from './pages/student-view/StudentView';
 
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const App = () => {
   const { authUser , setAuthUser  } = useAuthContext(); 
@@ -24,6 +27,19 @@ const App = () => {
 
   return (
     <div className="App">
+
+    <ToastContainer 
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        closeButton={false}
+        style={{ fontSize: "18px", textAlign: "center", width: "400px", background: "transparent", boxShadow: "none", }} 
+    />
+
       <Routes>
         <Route exact path='/login' element={authUser  ? <Home /> : <LoginSignup />} />
         <Route exact path='/' element={authUser ? (authUser.verified ? <Home /> : <EmailVerification />) : <LoginSignup /> } />
