@@ -84,7 +84,7 @@ const LoginSignup = () => {
             }
         } catch(error) { 
             if (error.response?.status === 400) {
-                toast.error("Password is incorrect, try again.");
+                toast.error("Incorrect login credentials, try again.");
             } else {
                 toast.error("An error occurred during login. Please try again.");
             }

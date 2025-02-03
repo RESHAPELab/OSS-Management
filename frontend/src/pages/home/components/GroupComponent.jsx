@@ -31,9 +31,9 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
 
     const handleAddGroup = async () => {
         // Regex to check group name: only letters, no spaces
-        const regex = /^[A-Za-z]+$/;
+        const regex = /^[A-Za-z0-9]+$/;
         if (!regex.test(newGroupName)) {
-            toast.error("Invalid group name. Only letters (no spaces) are allowed.");
+            toast.error("Invalid group name. Only letters and numbers (no spaces) are allowed.");
             return; // Exit the function if the name is invalid
         }
       
@@ -122,7 +122,7 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
                                 <tr key={index} onClick={() => handleClassClick(group._id)}>
                                     <td>{group.groupName}</td>
                                     <td>{group.classCode}</td>
-                                    <td>{group.studentCount || "N/A"}</td>
+                                    <td>{group.students.length || "N/A"}</td>
                                     <td>{group.active ? "Yes" : "No"}</td>
                                 </tr>
                             ))

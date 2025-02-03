@@ -23,21 +23,21 @@ h1 {
 }
 
 .students { 
-    margin-right: 10px;
+    margin-left: 10px;
     display: flex;
     border-radius: 2%;
     background: #fb5233;
 }
 
 .quest-completion { 
-    margin-left: 10px; 
+    margin-left: 10px;
     margin-right: 10px;
     border-radius: 2%;
     background: #fb5233;
 }
 
 .course-outline { 
-    margin-left: 10px; 
+    margin-right: 10px;
     border-radius: 2%;
     background: #fb5233;
 }

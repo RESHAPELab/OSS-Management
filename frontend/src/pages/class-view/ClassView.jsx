@@ -62,57 +62,10 @@ const ClassView = () => {
                 <h2>Class Code: {classInfo.classCode}</h2>
                 <div className="above-class-info">
                     <h5>Export Grades</h5>
-                    <h5>O Active class</h5>
+                    <h5 className="check"> ☐ Active class</h5>
                 </div>
                 <div className="class-info">
-                    <div className="students">
-                        <h3 className="title">Students</h3>
-                        <div class="student-list list-group inside-info">
-                            {studentData.length > 0 ? (
-                                studentData.map((student) => (
-                                    <div onClick={() => handleStudentClick(student._id)}>
-                                        {student.firstName} {student.lastName}
-                                    </div>
-                                ))
-                            ) : (
-                                <div>
-                                    No students available.
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div className="quest-completion title">
-                        <h3 className="title">Quest Completion</h3>
-                        <div className="table-responsive inside-info">
-                            <table className="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th className="first-col" scope="col">Quest</th>
-                                        <th className="second-col" scope="col">% Completed</th>
-                                        <th className="third-col" scope="col">Avg Grade</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {classInfo && classInfo.quests && classInfo.quests.length > 0 ? (
-                                        classInfo.quests.map((quest, index) => (
-                                            <tr key={index}>
-                                                <td className="first-col">{quest.questKey}</td>
-                                                <td className="second-col">97%</td>
-                                                <td className="third-col">90%</td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan="4" className="text-center">
-                                                No quests have been set up for this class yet.
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div className="course-outline title">
+                <div className="course-outline title">
                         <h3 className="title">Course Outline</h3>
                         <div className="inside-info">
                         {classInfo && classInfo.quests && classInfo.quests.length > 0 ? (
@@ -159,6 +112,53 @@ const ClassView = () => {
                         )}
                     </div>
                 </div>
+                    <div className="quest-completion title">
+                        <h3 className="title">Quest Completion</h3>
+                        <div className="table-responsive inside-info">
+                            <table className="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th className="first-col" scope="col">Quest</th>
+                                        <th className="second-col" scope="col">% Completed</th>
+                                        <th className="third-col" scope="col">Avg Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {classInfo && classInfo.quests && classInfo.quests.length > 0 ? (
+                                        classInfo.quests.map((quest, index) => (
+                                            <tr key={index}>
+                                                <td className="first-col">{quest.questKey}</td>
+                                                <td className="second-col">97%</td>
+                                                <td className="third-col">90%</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="text-center">
+                                                No quests have been set up for this class yet.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                <div className="students">
+                        <h3 className="title">Students</h3>
+                        <div class="student-list list-group inside-info">
+                            {studentData.length > 0 ? (
+                                studentData.map((student) => (
+                                    <div onClick={() => handleStudentClick(student._id)}>
+                                        {student.firstName} {student.lastName}
+                                    </div>
+                                ))
+                            ) : (
+                                <div>
+                                    No students enrolled.
+                                </div>
+                            )}
+                        </div>
+                    </div>
             </div>
         </div>
         </div >
