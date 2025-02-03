@@ -20,7 +20,6 @@ async function sendMessageToBot(url, payload) {
             botUrl, payload, 
             { headers: { "Content-Type": "application/json", "x-bot-signature": signature } }
         );
-        console.log('responsesendmessage', response);
 
         return response;
     } catch (error) {

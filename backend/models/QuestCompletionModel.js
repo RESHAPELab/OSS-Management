@@ -10,10 +10,10 @@ const QuestCompletionSchema = mongoose.Schema({
         type: Boolean,
         required: [true, "Please provide completion status for quest"]
     },
-    tasks: {
+    tasks: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Task"
-    }
+    }]
 })
 
 export default mongoose.model("QuestCompletion", QuestCompletionSchema)

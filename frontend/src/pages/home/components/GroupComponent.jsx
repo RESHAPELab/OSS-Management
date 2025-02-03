@@ -29,14 +29,14 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
         setNameSearch(e.target.value);
     };
 
-    const handleAddGroup = () => {
+    const handleAddGroup = async () => {
         // Regex to check group name: only letters, no spaces
         const regex = /^[A-Za-z]+$/;
         if (!regex.test(newGroupName)) {
             toast.error("Invalid group name. Only letters (no spaces) are allowed.");
             return; // Exit the function if the name is invalid
         }
-
+      
         if (newGroupName.trim() !== "") {
             createGroup({ groupName: newGroupName });
             setNewGroupName("");

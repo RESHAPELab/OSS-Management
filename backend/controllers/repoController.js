@@ -14,7 +14,6 @@ const { recoverPassword } = require("./authController");
 const createRepo = async (req, res) => {
     const { organizationGh, studentId, studentGithubUsername, groupId, groupName } = req.body;
 
-    console.log(req.body);
     const repoName = groupName + "-" + studentGithubUsername + "-" + Date.now();
     const repoDescription = "Gamified Repository (OSS Management)";
     const privateRepo = true;
@@ -26,7 +25,6 @@ const createRepo = async (req, res) => {
         "github/createRepo", 
         { org, repoName, repoDescription, privateRepo },
     )
-    console.log('response', responseCreateRepo);
     
     const repository_url = responseCreateRepo.data.name
     const group = groupId
@@ -40,11 +38,10 @@ const createRepo = async (req, res) => {
         { org, repoName, username, role },
     );
     
-    res.status(201).json({message: "Repository created and user added successfully"});
+    res.status(201).json({repoName: repoName, message: "Repository created and user added successfully"});
 }
 
 const getProductionStatus = async (req, res) => { 
-    console.log(process.env.NODE_ENV);
     if (process.env.NODE_ENV === 'production') {
         res.status(200).json({organizationGh: process.env.USER_AGENT_PROD});
     } else { 
