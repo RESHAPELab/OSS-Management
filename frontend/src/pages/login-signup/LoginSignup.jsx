@@ -53,7 +53,7 @@ const LoginSignup = () => {
             if (response.status === 201) { 
                 const professor = await axios.get(`${baseURL}/api/group/${response.data._id}`)
                 if(professor) { 
-                    localStorage.setItem("professor", JSON.stringify(professor.data))
+                    sessionStorage.setItem("professor", JSON.stringify(professor.data))
                     window.location.href = "/verify"
                 }
             }
@@ -74,7 +74,7 @@ const LoginSignup = () => {
             if (response.status === 200) { 
                 const professor = await axios.get(`${baseURL}/api/group/${response.data._id}`)
                 if (professor) { 
-                    localStorage.setItem("professor", JSON.stringify(professor.data))
+                    sessionStorage.setItem("professor", JSON.stringify(professor.data))
                     if (!professor.verified) { 
                         window.location.href = "/verify"
                     }else { 
@@ -102,6 +102,7 @@ const LoginSignup = () => {
                     <input type="email" placeholder="Email" name='email' value={profRegisterData.email} onChange={handleChange}/>
                     <input type="password" placeholder="Password" name='password' value={profRegisterData.password} onChange={handleChange}/>
                     <button type="submit">Sign Up</button>
+                    <a href="/studentRegister">Student Sign Up</a>
                 </form>
             </div>
 
@@ -111,8 +112,9 @@ const LoginSignup = () => {
                     <h1>Professor Login</h1>
                     <input type="email" placeholder="Email" name='email' value={profLoginData.email} onChange={handleChange}/>
                     <input type="password" placeholder="Password" name='password' value={profLoginData.password} onChange={handleChange}/>
-                    <a href="#">Forgot Your Password?</a>
+                    <a href="/passwordReset">Forgot Your Password?</a>
                     <button type="submit">Sign In</button>
+                    <a href="/studentRegister">Student Sign Up</a>
                 </form>
             </div>
 

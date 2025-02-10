@@ -106,7 +106,7 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
                     )}
                 </div>
             </div>
-            <div class="table-responsive">
+            <div class="table-responsive class-table">
                 <table class="table table-bordered classes">
                     <thead>
                         <tr>
@@ -122,7 +122,7 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
                                 <tr key={index} onClick={() => handleClassClick(group._id)}>
                                     <td>{group.groupName}</td>
                                     <td>{group.classCode}</td>
-                                    <td>{group.students.length || "N/A"}</td>
+                                    <td>{group.students ? group.students.length : "N/A"}</td>
                                     <td>{group.active ? "Yes" : "No"}</td>
                                 </tr>
                             ))

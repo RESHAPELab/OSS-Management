@@ -1,6 +1,6 @@
 const ProfessorCode = require("../models/ProfessorCodeModel")
 const dotenv = require("dotenv").config();
-const {sendEmail} = require("./emailController");
+const {sendEmail, sendRecoverPasswordCode} = require("./emailController");
 
 async function generateAndSendCode (email) {
     let hash = 0; 
@@ -24,4 +24,24 @@ async function generateAndSendCode (email) {
     return final_code;
 }
 
-module.exports = {generateAndSendCode}
+async function generateAndSendPasswordRecover (email) {
+    let hash = 0; 
+    for (let i = 0; i < email.length; i++ ) {
+        hash = (hash<<5) - hash + email.charCodeAt(i);
+        hash &= hash; 
+    }
+    const randomFactor = Math.floor(Math.random() * 1000);
+    const combined = Math.abs(hash + randomFactor); 
+    const code = combined % 1000000;
+    const final_code = code.toString().padStart(6, '0');
+
+    console.log('before sending code', final_code)
+    try {
+        await sendRecoverPasswordCode(email, final_code);
+        return final_code; 
+    } catch(error) { 
+        return res.status(500).json({error})
+    }
+}
+
+module.exports = {generateAndSendCode, generateAndSendPasswordRecover}

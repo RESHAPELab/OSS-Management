@@ -7,6 +7,6 @@ export const useAuthContext = () => {
 };
 
 export const AuthContextProvider = ({ children }) => {
-	const [authUser, setAuthUser] = useState(JSON.parse(localStorage.getItem("professor")) || null);
+	const [authUser, setAuthUser] = useState(JSON.parse(sessionStorage.getItem("professor")) || null);
 	return <AuthContext.Provider value={{ authUser, setAuthUser }}>{children}</AuthContext.Provider>;
 };

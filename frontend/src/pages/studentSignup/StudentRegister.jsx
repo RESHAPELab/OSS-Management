@@ -65,6 +65,7 @@ const StudentRegister = () => {
                     <input type="studentEmail" placeholder="Student Email" name='studentEmail' value={studentRegisterData.studentEmail} onChange={handleChange}/>
                     <input type="classCode" placeholder="Class Code" name='classCode' value={studentRegisterData.classCode} onChange={handleChange}/>
                     <button type="submit">Sign Up</button>
+                    <a href="/login">Professor Login</a>
                 </form>
             </div>
         </div>

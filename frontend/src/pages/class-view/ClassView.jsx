@@ -16,6 +16,7 @@ const ClassView = () => {
     const { authUser } = useAuthContext();
     const [activeIndex, setActiveIndex] = useState(null);
     const [studentData, setStudentData] = useState([{}]);
+    const [isActive, setIsActive] = useState();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -36,10 +37,12 @@ const ClassView = () => {
     }, [studentData]);
 
 
+
     const fetchClassInfo = async () => {
         try {
             const response = await axios.get(`${baseURL}/api/group/class/${classId}`)
             setClassInfo(response.data)
+            setIsActive(response.data.active);
             setStudentData(response.data.students)
         } catch (error) {
             console.error(`Error fetching class info: `, error)
@@ -53,6 +56,24 @@ const ClassView = () => {
         navigate(`/class/${classId}/student/${studentId}`)
     }
 
+    const handleActiveToggle = async (classID) => {
+        console.log('class id', classID)
+        const newActiveState = !isActive;
+        setIsActive(newActiveState)
+        try{ 
+            const response = await axios.put(`${baseURL}/api/group/class/${classID}`, {
+                active: newActiveState
+            })
+            if (response.status === 200) { 
+                console.log("Group updated:", response.data);
+            } else {
+                console.error('error updating group:', response)
+            }
+        } catch(error) {
+            console.error("Error updating group", error)
+        }
+    }
+
 
     return (
         <div>
@@ -62,7 +83,7 @@ const ClassView = () => {
                 <h2>Class Code: {classInfo.classCode}</h2>
                 <div className="above-class-info">
                     <h5>Export Grades</h5>
-                    <h5 className="check"> ☐ Active class</h5>
+                    <h5 className="check"><input type="checkbox" checked={isActive} onChange={() => handleActiveToggle(classInfo.groupID)}/>Active class</h5>
                 </div>
                 <div className="class-info">
                 <div className="course-outline title">
@@ -112,7 +133,7 @@ const ClassView = () => {
                         )}
                     </div>
                 </div>
-                    <div className="quest-completion title">
+                <div className="class-quest-completion title">
                         <h3 className="title">Quest Completion</h3>
                         <div className="table-responsive inside-info">
                             <table className="table table-bordered">
@@ -142,27 +163,43 @@ const ClassView = () => {
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                <div className="students">
+                </div>
+            </div>
+            <div className="students">
                         <h3 className="title">Students</h3>
-                        <div class="student-list list-group inside-info">
-                            {studentData.length > 0 ? (
-                                studentData.map((student) => (
-                                    <div onClick={() => handleStudentClick(student._id)}>
-                                        {student.firstName} {student.lastName}
-                                    </div>
-                                ))
-                            ) : (
-                                <div>
-                                    No students enrolled.
-                                </div>
-                            )}
+                        <div class="table-responsive inside-info">
+                            <table className="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th className="student-first-col" scope="col">Student Name</th>
+                                        <th className="student-second-col" scope="col">Completed Quests</th>
+                                        <th className="student-third-col" scope="col">Grade</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {studentData && studentData.length > 0 ? (
+                                        studentData.map((student, index) => (
+                                            <tr key={index}>
+                                                <td onClick={() => handleStudentClick(student._id)} className="student-first-col">{student.firstName} {student.lastName}</td>
+                                                <td className="student-second-col">97%</td>
+                                                <td className="student-third-col">90%</td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="4" className="text-center">
+                                                No students enrolled.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
             </div>
         </div>
-        </div >
+        </div>
     )
 }
 
 export default ClassView
+

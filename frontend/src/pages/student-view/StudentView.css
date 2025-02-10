@@ -12,11 +12,18 @@ h1 {
     font-weight: 900;
 }
 
-.grades { 
-    margin-left: 10px; 
+.quest-completion { 
     margin-right: 10px;
     border-radius: 2%;
     background: #fb5233;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
+}
+
+.grades { 
+    margin-left: 10px; 
+    border-radius: 2%;
+    background: #fb5233;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
 }
 
 .inside-info-children { 

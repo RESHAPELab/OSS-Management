@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const generateTokenSetCookie = require("../utils/generateToken");
 const Student = require("../models/StudentModel")
 const Group = require("../models/GroupModel");
-const {generateAndSendCode} = require("../utils/generateCode")
+const {generateAndSendCode, generateAndSendPasswordRecover} = require("../utils/generateCode")
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // this script is responsible for verifying a given invitation code
@@ -125,7 +125,11 @@ const logout = async (req, res) => {
 }
 
 const generatePasswordRecoveringCode = async (req, res) => {
+    console.log("this is generate password recovering code")
     const {email} = req.body;
+    console.log('req.body email', email)
+
+
     const requiredFields = {email: "No email provided"};
 
     for (const [key, errorMessage] of Object.entries(requiredFields)) {
@@ -144,7 +148,7 @@ const generatePasswordRecoveringCode = async (req, res) => {
         const profExists = await Professor.findOne({email});
         
         if (!profExists) { 
-            return res.status(400).send("Professor account doesn't exists")
+            return res.status(400).send(`No professor found with email ${email}`)
         }
 
         if (existingRecord) {
@@ -152,8 +156,9 @@ const generatePasswordRecoveringCode = async (req, res) => {
             await existingRecord.save();
         }
 
-        const newCode = await generateCode.generateAndSendCode(email);
-        
+        let newCode = await generateAndSendPasswordRecover(email);
+        console.log('nwe codeee', newCode);
+
         const newRecord = new RecoveringPassword({
             email,
             code: newCode,
@@ -168,7 +173,7 @@ const generatePasswordRecoveringCode = async (req, res) => {
     } 
     
     catch (error) {
-        console.debug(`Error in recoverPassword function: ${error}`);
+        console.debug(`Error in generatePasswordRecoveringCode function: ${error}`);
         return res.status(500).json({ error });
     }
 }
@@ -210,7 +215,11 @@ const recoverPassword = async (req, res) => {
             return res.status(404).send("Professor not found.");
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        console.log('Professor:', professor);
+        console.log('New Password:', newPassword);
+        console.log('Hashed Password:', hashedPassword);
 
         professor.password = hashedPassword;
         existingRecord.status = "expired"; 

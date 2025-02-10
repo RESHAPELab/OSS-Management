@@ -119,5 +119,104 @@ const sendEmail = (recipientEmail, verificationCode) => {
     })
 }
 
-module.exports = { sendEmail };
+const sendRecoverPasswordCode = (recipientEmail, recoverPasswordCode) => {
+    console.log('verification code', recoverPasswordCode)
+    const mailOptions = {
+        from: 'jlc2243@nau.edu',
+        to: recipientEmail,
+        subject: 'OSS Invitation',
+        html: `<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Invitation Code</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f4f9;
+                    color: #333;
+                }
+                .email-container {
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: white;
+                    border-radius: 10px;
+                    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                }
+                h1 {
+                    color: #2a8bde;
+                }
+                p {
+                    font-size: 16px;
+                    line-height: 1.6;
+                }
+                .code {
+                    display: inline-block;
+                    padding: 10px 15px;
+                    background-color: #f0f0f0;
+                    font-size: 20px;
+                    font-weight: bold;
+                    border-radius: 5px;
+                    color: #333;
+                    margin-top: 15px;
+                }
+                .cta-button {
+                    display: inline-block;
+                    background-color: #2a8bde;
+                    color: white;
+                    padding: 12px 25px;
+                    border-radius: 5px;
+                    text-decoration: none;
+                    font-weight: bold;
+                    margin-top: 20px;
+                }
+                .cta-button:hover {
+                    background-color: #1a6fa3;
+                }
+                .footer {
+                    font-size: 14px;
+                    color: #777;
+                    margin-top: 30px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="email-container">
+                <h1>OSS - Reset Password</h1>
+                <p>Dear Professor,</p>
+                <p>Please use the following code to reset your password:</p>
+
+                <div class="code">${recoverPasswordCode}</div>
+        
+                <a href="localhost:3000/resetPassword" class="cta-button">Reset Password</a>
+        
+                <p>If you have any issues or need assistance, please don't hesitate to reach out to us at <a href="mailto:jlc2243@nau.edu">jlc2243@nau.edu</a>.</p>
+                
+                <div class="footer">
+                    <p>Best regards,</p>
+                    <p>The OSS Team</p>
+                </div>
+            </div>
+        </body>
+        </html>`
+    };
+
+    return new Promise((resolve, reject) => {
+        transporter.sendMail(mailOptions, (error, info) => {
+            if (error) { 
+                reject(error); 
+            } else { 
+                resolve({ info, recoverPasswordCode }); 
+            }
+        })
+    })
+}
+
+
+module.exports = { sendEmail, sendRecoverPasswordCode };
 

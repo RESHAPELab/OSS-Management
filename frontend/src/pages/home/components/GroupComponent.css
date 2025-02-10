@@ -102,6 +102,11 @@ h5.group-create-button {
     text-align: right;
     background: #F8F9FA;
     text-decoration: underline;
+    font-size: larger;
+}
+
+.class-table {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
 }
 
 h5.name-includes { 

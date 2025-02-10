@@ -31,14 +31,13 @@ const EmailVerification = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Join the code parts into a single string
         const code = verificationCode.join("");
 
         if (code.length === 6) {
             try {
                 const response = await axios.put(`${baseURL}/api/auth/verify`, { verificationCode: code, email });
                 if (response.status === 200) {
-                    localStorage.setItem("professor", JSON.stringify(response.data))
+                    sessionStorage.setItem("professor", JSON.stringify(response.data))
                     window.location.href = "/";
                 }
             } catch (error) {

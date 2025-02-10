@@ -99,24 +99,26 @@ const createGroup = async (req, res) =>  {
 }
 
 const updateGroup = async (req, res) => { 
-    const {groupId} = req.params; 
+    const {groupID} = req.params; 
     try{ 
-        const group = await Group.findById(groupId)
+        console.log("group id from backend", groupID)
+        const group = await Group.findById(groupID)
 
         if (!group){
-            return res.status(401).json({error: `No group with id ${groupId} found`})
+            return res.status(401).json({error: `No group with id ${groupID} found`})
         }
 
-        const updatedGroup = await Group.findByIdAndUpdate(groupId, req.body, {new: true})
+        const updatedGroup = await Group.findByIdAndUpdate(groupID, req.body, {new: true})
 
         res.status(200).json({
-            groupID: group._id,
-            groupName: group.groupName,
-            professorID: group.professor,
-            students: group.students,
-            admin: group.admin,
-            quests: group.quests,
-            classCode: group.classCode
+            groupID: updatedGroup._id,
+            groupName: updatedGroup.groupName,
+            professorID: updatedGroup.professor,
+            students: updatedGroup.students,
+            admin: updatedGroup.admin,
+            quests: updatedGroup.quests,
+            classCode: updatedGroup.classCode,
+            active: updatedGroup.active
         });
     } catch(error) { 
         console.debug(`Error in updateGroup function: ${error}`)
@@ -167,7 +169,6 @@ const getGroupByCode = async (req, res) => {
 const getGroup = async (req, res ) => {
     const { groupID } = req.params;
     try{ 
-        console.log("id", groupID)
         const group = await Group.findById(groupID).populate('students').populate({
             path: 'quests', 
             populate: {
@@ -179,7 +180,6 @@ const getGroup = async (req, res ) => {
         if (!group) {
             return res.status(404).json({ error: `Group with ID ${groupID} not found` });
         }
-        console.log("group", group)
         res.status(200).json({
             groupID: group._id,
             groupName: group.groupName,
@@ -187,7 +187,8 @@ const getGroup = async (req, res ) => {
             students: group.students,
             admin: group.admin,
             quests: group.quests,
-            classCode: group.classCode
+            classCode: group.classCode,
+            active: group.active
         });
         
     } catch(error) { 
@@ -747,6 +748,7 @@ module.exports = {
     getGroup,
     getGroupByCode,
     getGroups,
+    updateGroup,
     deleteGroup,
     createQuest,
     addQuestToGroup,

@@ -9,16 +9,18 @@ import { useEffect } from 'react';
 import { useAuthContext } from './context/AuthContext';
 import StudentRegistered from './pages/studentSignup/StudentRegistered';
 import StudentView from './pages/student-view/StudentView';
+import PasswordReset from './pages/login-signup/PasswordReset';
 
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PasswordResetSuccess from './pages/login-signup/PasswordResetSuccess';
 
 
 const App = () => {
   const { authUser , setAuthUser  } = useAuthContext(); 
   
   useEffect(() => {
-    const storedUser  = localStorage.getItem("professor");
+    const storedUser  = sessionStorage.getItem("professor");
     if (storedUser ) {
       setAuthUser (JSON.parse(storedUser));
       console.log(`signed in user: `, authUser)
@@ -48,6 +50,8 @@ const App = () => {
         <Route exact path='/studentRegistered/:repoName' element={< StudentRegistered />} />
         <Route path="/class/:classId" element={<ClassView />} />
         <Route path="/class/:classId/student/:studentId" element={<StudentView />} />
+        <Route exact path="/passwordReset" element={<PasswordReset />} />
+        <Route exact path="/passwordResetSuccess" element={<PasswordResetSuccess />} />
       </Routes>
     </div>
   );
