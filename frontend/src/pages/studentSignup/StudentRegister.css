@@ -9,8 +9,50 @@ form {
 
 .student-sign-up {
     background: #FFFFFF;
-    /* width: 70%;
+    width: 50%;
     margin-right: auto;
-    margin-left: auto;  */
+    margin-left: auto; 
 }
 
+.student-sign-up-container { 
+    display: flex;
+    flex-direction: row;
+}
+
+.student-panel { 
+    position: absolute;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 30px;
+    background: 	#50a254;
+    text-align: center;
+    top: 0;
+    color: #fff;
+
+
+    top: 0;
+    left: 50%;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+    transition: all 0.6s ease-in-out;
+    border-radius: 150px 0 0 100px;
+    z-index: 1000;
+
+}
+
+.panel-right { 
+    left: 50%;
+}
+
+.panel-container { 
+    border-radius: 150px 0 0 100px;
+}
+
+.panel { 
+    border-radius: 150px 0 0 100px;
+}

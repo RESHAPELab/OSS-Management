@@ -217,10 +217,6 @@ const recoverPassword = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        console.log('Professor:', professor);
-        console.log('New Password:', newPassword);
-        console.log('Hashed Password:', hashedPassword);
-
         professor.password = hashedPassword;
         existingRecord.status = "expired"; 
 

@@ -17,9 +17,14 @@ const StudentSchema = mongoose.Schema({
         type: String,
         required: [true, "Please enter your student email"]
     },
+    // this will be the way to go when student progress is synced with github
+    // progress: [{
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "StudentProgress"
+    // }]
+    // until then, this will be a temporary solution: 
     progress: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "StudentProgress"
+        type: mongoose.Schema.Types.Mixed
     }]
 })
 

@@ -28,7 +28,7 @@ const getStudent = async (req, res) => {
         }
 
         console.log('######################################################################')
-        console.log('student backend', student); 
+        console.log('student backend', student, student.progress); 
         return res.status(200).json({
             _id: student._id,
             firstName: student.firstName,

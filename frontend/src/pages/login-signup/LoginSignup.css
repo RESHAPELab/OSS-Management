@@ -55,7 +55,7 @@ body{
 }
 
 .container button{
-    background-color: #fb5233;
+    background-color: 	#50a254;
     color: #fff;
     font-size: 12px;
     padding: 10px 45px;
@@ -68,7 +68,7 @@ body{
     cursor: pointer;
 }
 
-.container button.hidden{
+.container button.hidden-signup{
     background-color: transparent;
     border-color: #fff;
 }
@@ -169,7 +169,7 @@ body{
 }
 
 .toggle{
-    background-color: #fb5233;
+    background-color:	#50a254;
     height: 100%;
     color: #fff;
     position: relative;
@@ -193,7 +193,7 @@ body{
     justify-content: center;
     flex-direction: column;
     padding: 0 30px;
-    background: #fb5233;
+    background: 	#50a254;
     text-align: center;
     top: 0;
     transform: translateX(0);

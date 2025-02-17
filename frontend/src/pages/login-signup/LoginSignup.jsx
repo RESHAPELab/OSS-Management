@@ -10,6 +10,7 @@ let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
 const LoginSignup = () => {
     const [isSignup, setIsSignup] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const [profRegisterData, setProfRegisterData] = useState ({ 
         name: '',
@@ -47,6 +48,7 @@ const LoginSignup = () => {
 
     const handleRegisterSubmit = async (e) => {
         e.preventDefault()
+        setLoading(true); 
         try { 
             const response = await axios.post(`${baseURL}/api/auth`, profRegisterData)
             console.log(response.data);
@@ -64,11 +66,14 @@ const LoginSignup = () => {
                 toast.error("An error occurred. Please try again.");
             }
             console.log(`Error logging in:`, error);
+        } finally {
+            setLoading(false);
         }
     }
 
     const handleLoginSubmit = async (e) => {
         e.preventDefault()
+        setLoading(true);
         try { 
             const response = await axios.post(`${baseURL}/api/auth/login`, profLoginData)
             if (response.status === 200) { 
@@ -89,6 +94,8 @@ const LoginSignup = () => {
                 toast.error("An error occurred during login. Please try again.");
             }
             console.log(`Error logging in:`, error);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -101,7 +108,9 @@ const LoginSignup = () => {
                     <input type="text" placeholder="Name" name='name' value={profRegisterData.name} onChange={handleChange}/>
                     <input type="email" placeholder="Email" name='email' value={profRegisterData.email} onChange={handleChange}/>
                     <input type="password" placeholder="Password" name='password' value={profRegisterData.password} onChange={handleChange}/>
-                    <button type="submit">Sign Up</button>
+                    <button type="submit" disabled={loading}>
+                        {loading ? "Loading..." : "Sign Up"}
+                    </button>
                     <a href="/studentRegister">Student Sign Up</a>
                 </form>
             </div>
@@ -113,25 +122,26 @@ const LoginSignup = () => {
                     <input type="email" placeholder="Email" name='email' value={profLoginData.email} onChange={handleChange}/>
                     <input type="password" placeholder="Password" name='password' value={profLoginData.password} onChange={handleChange}/>
                     <a href="/passwordReset">Forgot Your Password?</a>
-                    <button type="submit">Sign In</button>
+                    <button type="submit" disabled={loading}>
+                        {loading ? "Loading..." : "Sign In"}
+                    </button>
                     <a href="/studentRegister">Student Sign Up</a>
                 </form>
             </div>
 
-            {/* Toggle Panel */}
             <div className="toggle-container">
                 <div className="toggle">
                     <div className="toggle-panel toggle-left">
                         <h1>Hello, Professor</h1>
-                        <p>Sign in to manage your classes and review student progress!</p>
-                        <button className="hidden" onClick={handleLoginClick}>
+                        <p>Register now to begin creating your own classes and gain access to all your students' progress!</p>
+                        <button className="hidden-signup" onClick={handleLoginClick}>
                             Sign In
                         </button>
                     </div>
                     <div className="toggle-panel toggle-right">
                         <h1>Welcome Back!</h1>
-                        <p>Register now to begin creating your own classes and quests, and gain access to all your students' progress!</p>
-                        <button className="hidden" onClick={handleRegisterClick}>
+                        <p>Sign in to manage your classes and review student progress!</p>
+                        <button className="hidden-signup" onClick={handleRegisterClick}>
                             Sign Up
                         </button>
                     </div>

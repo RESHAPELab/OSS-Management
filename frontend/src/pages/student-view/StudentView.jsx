@@ -14,7 +14,9 @@ const StudentView = () => {
     const [studentInfo, setStudentInfo] = useState({})
     const { authUser } = useAuthContext();
     const [classInfo, setClassInfo] = useState({})
-
+    console.log('classinfo', classInfo)
+    const studentProgress = studentInfo.progress?.find(p => p.group.toString() === classID.toString());
+    console.log('studentprogre', studentProgress)
     useEffect(() => {
         if (authUser) {
             console.log("logged in user:", authUser.profName)
@@ -67,14 +69,40 @@ const StudentView = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {classInfo && classInfo.quests && classInfo.quests.length > 0 ? (
-                                        classInfo.quests.map((quest, index) => (
-                                            <tr key={index}>
-                                                <td className="first-col">{quest.questKey}</td>
-                                                <td className="second-col">100%</td>
-                                                <td className="third-col">90%</td>
-                                            </tr>
-                                        ))
+                                    {classInfo && classInfo.quests && classInfo.quests.length > 0 && studentInfo.progress && studentInfo.progress.length > 0 ? (
+                                        classInfo.quests.map((quest, index) => {
+                                            const completedQuest = studentProgress?.completed.find(c => c.quest === quest._id.toString());
+
+                                            let completionPercentage = 0;
+                                            let grade = 0;
+
+                                            if (completedQuest) {
+                                                const currentQuest = classInfo.quests.find(q => q._id.toString() === quest._id.toString());
+                                                if (currentQuest) {
+                                                    const totalTasks = quest.tasks.length;
+                                                    const completedTasks = completedQuest.tasks.length;
+
+                                                    completionPercentage = (completedTasks / totalTasks) * 100;
+
+                                                    if (completionPercentage === 100) {
+                                                        grade = 100;
+                                                    } else if (completionPercentage >= 75) {
+                                                        grade = 90;
+                                                    } else if (completionPercentage >= 50) {
+                                                        grade = 75;
+                                                    } else {
+                                                        grade = 60;
+                                                    }
+                                                }
+                                            }
+                                            return (
+                                                <tr key={index}>
+                                                    <td className="first-col">{quest.questKey}</td>
+                                                    <td className="second-col">{completionPercentage.toFixed(1)}%</td>
+                                                    <td className="third-col">{grade.toFixed(1)}%</td>
+                                                </tr>
+                                            );
+                                        })
                                     ) : (
                                         <tr>
                                             <td colSpan="4" className="text-center">
@@ -84,16 +112,30 @@ const StudentView = () => {
                                     )}
                                 </tbody>
                             </table>
+
                         </div>
                     </div>
                     <div className="grades title">
                         <h3 className="title">Current Status</h3>
                         <div className="inside-info inside-info-margin">
-                                <h5 className="grade inside-info-children">Overall grade: 92%</h5>
-                                <h5 className="current-task inside-info-children">Current Task: T1</h5>
-                                <h5 className="streak inside-info-children">Highest Streak Count: 12</h5>
-                                <h5 className="xp inside-info-children">XP: 81</h5>
-                                <h5 className="points inside-info-children">Total points: 80</h5>
+                            <h5 className="grade inside-info-children">Overall grade: {studentProgress?.xp / studentProgress?.points * 100}%</h5>
+                            <h5 className="current-task inside-info-children">Current Task: {
+                                studentProgress?.current?.quest && studentProgress?.current?.task ? (
+                                    classInfo?.quests?.find((quest) => quest._id === studentProgress?.current?.quest) ? (
+                                        (() => {
+                                            const quest = classInfo?.quests?.find((quest) => quest._id === studentProgress?.current?.quest);
+                                            const task = quest?.tasks.find((task) => task._id === studentProgress?.current?.task);
+
+                                            return task ? `${quest.questKey}-${task.taskKey}` : "Task not found";
+                                        })()
+                                    ) : "Quest not found"
+                                ) : (
+                                    "No quest or task assigned yet"
+                                )
+                            }</h5>
+                            <h5 className="streak inside-info-children">Highest Streak Count: {studentProgress?.streakCount}</h5>
+                            <h5 className="xp inside-info-children">XP: {studentProgress?.xp}</h5>
+                            <h5 className="points inside-info-children">Total points: {studentProgress?.points}</h5>
                         </div>
                     </div>
                 </div>

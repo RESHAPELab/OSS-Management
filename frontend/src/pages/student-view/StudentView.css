@@ -15,14 +15,14 @@ h1 {
 .quest-completion { 
     margin-right: 10px;
     border-radius: 2%;
-    background: #fb5233;
+    background: #50a254;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
 }
 
 .grades { 
     margin-left: 10px; 
     border-radius: 2%;
-    background: #fb5233;
+    background: #50a254;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
 }
 

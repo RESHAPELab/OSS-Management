@@ -14,13 +14,13 @@ async function generateAndSendCode (email) {
     const final_code = code.toString().padStart(6, '0');
 
     try {
+        console.log(`Email sent to ${email} with code ${final_code}`)
         await sendEmail(email, final_code)
-        //console.log(`Email sent to ${email} with code ${final_code}`)
+        console.log(`Email sent to ${email} with code ${final_code}`)
     } catch(error) { 
-        //console.debug(`Error in generateAndSendCode function: ${error}`)
+        console.debug(`Error in generateAndSendCode function: ${error}`)
         return res.status(500).json({error})
     }
-
     return final_code;
 }
 

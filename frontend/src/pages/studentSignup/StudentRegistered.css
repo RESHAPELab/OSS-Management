@@ -1,23 +1,35 @@
 .sign-up-container{
     display: flex;
 }
-
+/* 
 .congrats { 
-    font-size: 3rem;
     margin-top: 90px;
-}
+} */
 
 .registered { 
     font-size: larger;
 }
 
 .second { 
-    padding-top: 10%;
+    /* padding-top: 10%; */
     font-size: xx-large;
-
 }
 
 .container a.github-link { 
     font-size: x-large;
     text-decoration: underline;
+    color: white;
+}
+
+.student-registered { 
+    width: 50%;
+    background: #FFF;  
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 0 40px;
+    text-align: center;
+    overflow: hidden;
 }
