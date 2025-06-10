@@ -1,0 +1,27 @@
+const express = require("express");
+const dotenv = require("dotenv").config();
+const { errorHandler } = require("./middleware/errorMiddleware");
+const { connectDB, closeDB } = require("./config/db");
+const port = process.env.port || 8080;
+const cors = require('cors');
+
+connectDB(); 
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/group", require("./routes/groupRoutes"));
+app.use("/api/student", require('./routes/studentRoutes'));
+app.use("/api/repo", require("./routes/repoRoutes"));
+app.use("/api/gamification", require("./routes/gamificationRoutes"));
+app.use(errorHandler);
+
+// Export app for testing purposes
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => console.log(`Server has started on port ${port}`));
+}
+
+module.exports = app;
