@@ -747,6 +747,37 @@ const saveGroupReadme = async (req, res) => {
     }
 };
 
+const getGroupReadme = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        // Check if group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Find existing README
+        const readme = await Readme.findOne({ group: groupId });
+        
+        if (!readme) {
+            return res.status(404).json({ message: "No README found for this group" });
+        }
+
+        res.status(200).json({
+            readme: {
+                id: readme._id,
+                fileName: readme.fileName,
+                contentLength: readme.content.length,
+                content: readme.content
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching README:", error);
+        res.status(500).json({ message: "Error fetching README", error: error.message });
+    }
+};
+
 module.exports = {
     getProfessor, 
     createGroup,
@@ -772,5 +803,6 @@ module.exports = {
     updateHint, 
     deleteHint, 
     getHint,
-    saveGroupReadme
+    saveGroupReadme,
+    getGroupReadme
 }

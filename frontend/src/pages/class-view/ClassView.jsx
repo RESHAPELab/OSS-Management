@@ -23,19 +23,45 @@ const ClassView = () => {
     const [csvFile, setCsvFile] = useState(null);
     const [readmeFile, setReadmeFile] = useState(null);
     const [readmeContent, setReadmeContent] = useState('');
+    const [existingReadme, setExistingReadme] = useState(null);
+    const [questFormData, setQuestFormData] = useState({
+        title: '',
+        type: 'Q1',
+        description: '',
+        descriptionImage: null,
+        tasks: [{
+            type: 'multiple-choice',
+            points: 100,
+            description: '',
+            descriptionImage: null,
+            config: {}
+        }],
+        hints: {
+            enabled: false,
+            penalty: 10,
+            hints: []
+        },
+        dueDate: ''
+    });
     const [collaborationStatus, setCollaborationStatus] = useState({
         accepted: [],
         pending: [],
         notFound: []
     });
+    const [showActiveOnly, setShowActiveOnly] = useState(false);
 
     useEffect(() => {
         if (authUser) {
             console.log("logged in user:", authUser.profName)
             fetchClassInfo();
             fetchOrganizationGh();
+            fetchExistingReadme();
         }
     }, [authUser])
+
+    useEffect(() => {
+        console.log('existingReadme state changed:', existingReadme);
+    }, [existingReadme]);
 
     useEffect(() => {
         if (organizationGh) {
@@ -78,6 +104,21 @@ const ClassView = () => {
         } catch (error) {
             console.error('Error fetching class info:', error.response?.data || error.message);
             console.error('Full error:', error);
+        }
+    }
+
+    const fetchExistingReadme = async () => {
+        try {
+            const response = await axios.get(`${baseURL}/api/group/${classId}/readme`);
+            console.log('README fetch response:', response.data);
+            if (response.data && response.data.readme) {
+                setExistingReadme(response.data.readme);
+                console.log('Existing README set:', response.data.readme);
+            }
+        } catch (error) {
+            // README doesn't exist yet, which is fine
+            console.log('No existing README found for this class:', error.response?.status);
+            setExistingReadme(null);
         }
     }
 
@@ -243,6 +284,159 @@ const ClassView = () => {
             return () => clearInterval(interval);
         }
     }, [organizationGh]);
+
+    const handleShowActiveOnlyChange = (e) => {
+        setShowActiveOnly(e.target.checked);
+    };
+
+    const handleQuestFormChange = (field, value) => {
+        setQuestFormData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleTaskChange = (taskIndex, field, value) => {
+        setQuestFormData(prev => ({
+            ...prev,
+            tasks: prev.tasks.map((task, index) => 
+                index === taskIndex ? { ...task, [field]: value } : task
+            )
+        }));
+    };
+
+    const addTask = () => {
+        setQuestFormData(prev => ({
+            ...prev,
+            tasks: [...prev.tasks, {
+                type: 'multiple-choice',
+                points: 100,
+                description: '',
+                descriptionImage: null,
+                config: {}
+            }]
+        }));
+    };
+
+    const removeTask = (taskIndex) => {
+        setQuestFormData(prev => ({
+            ...prev,
+            tasks: prev.tasks.filter((_, index) => index !== taskIndex)
+        }));
+    };
+
+    const getTaskConfigFields = (taskType) => {
+        switch(taskType) {
+            case 'multiple-choice':
+                return ['correctAnswer', 'optionA', 'optionB', 'optionC', 'optionD'];
+            case 'github-api':
+                return ['apiCallType', 'ossRepository'];
+            case 'quiz':
+                return ['questionCount', 'correctAnswers'];
+            case 'text-input':
+                return ['expectedAnswer'];
+            default:
+                return [];
+        }
+    };
+
+    const addHint = () => {
+        if (questFormData.hints.hints.length < 3) {
+            setQuestFormData(prev => ({
+                ...prev,
+                hints: {
+                    ...prev.hints,
+                    hints: [...prev.hints.hints, '']
+                }
+            }));
+        }
+    };
+
+    const removeHint = (hintIndex) => {
+        setQuestFormData(prev => ({
+            ...prev,
+            hints: {
+                ...prev.hints,
+                hints: prev.hints.hints.filter((_, index) => index !== hintIndex)
+            }
+        }));
+    };
+
+    const updateHint = (hintIndex, content) => {
+        setQuestFormData(prev => ({
+            ...prev,
+            hints: {
+                ...prev.hints,
+                hints: prev.hints.hints.map((hint, index) => 
+                    index === hintIndex ? content : hint
+                )
+            }
+        }));
+    };
+
+    const handleImageUpload = (file, type, hintIndex = null, taskIndex = null) => {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const imageData = {
+                    name: file.name,
+                    type: file.type,
+                    data: e.target.result
+                };
+                
+                if (type === 'description') {
+                    setQuestFormData(prev => ({
+                        ...prev,
+                        descriptionImage: imageData
+                    }));
+                } else if (type === 'hint' && hintIndex !== null) {
+                    setQuestFormData(prev => ({
+                        ...prev,
+                        hints: {
+                            ...prev.hints,
+                            hints: prev.hints.hints.map((hint, index) => 
+                                index === hintIndex ? { ...hint, image: imageData } : hint
+                            )
+                        }
+                    }));
+                } else if (type === 'task' && taskIndex !== null) {
+                    setQuestFormData(prev => ({
+                        ...prev,
+                        tasks: prev.tasks.map((task, index) => 
+                            index === taskIndex ? { ...task, descriptionImage: imageData } : task
+                        )
+                    }));
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeImage = (type, hintIndex = null, taskIndex = null) => {
+        if (type === 'description') {
+            setQuestFormData(prev => ({
+                ...prev,
+                descriptionImage: null
+            }));
+        } else if (type === 'hint' && hintIndex !== null) {
+            setQuestFormData(prev => ({
+                ...prev,
+                hints: {
+                    ...prev.hints,
+                    hints: prev.hints.hints.map((hint, index) => 
+                        index === hintIndex ? { ...hint, image: null } : hint
+                    )
+                }
+            }));
+        } else if (type === 'task' && taskIndex !== null) {
+            setQuestFormData(prev => ({
+                ...prev,
+                tasks: prev.tasks.map((task, index) => 
+                    index === taskIndex ? { ...task, descriptionImage: null } : task
+                )
+            }));
+        }
+    };
 
     return (
         <div>
@@ -486,6 +680,52 @@ const ClassView = () => {
                     </div>
                     <div className="course-outline title">
                         <h3 className="title">Course Outline</h3>
+                        <div className="mt-3 text-center mb-4">
+                            <button 
+                                className="btn" 
+                                onClick={() => setShowReadmeModal(true)}
+                                style={{
+                                    backgroundColor: '#fb5233',
+                                    color: 'white',
+                                    fontWeight: 'bold',
+                                    border: 'none',
+                                    borderBottomLeftRadius: '8px',
+                                    borderBottomRightRadius: '8px',
+                                    borderTopLeftRadius: '0',
+                                    borderTopRightRadius: '0',
+                                    marginRight: '10px'
+                                }}
+                            >
+                                {existingReadme ? 'Edit README Instructions' : 'Add README Instructions'}
+                            </button>
+                            {existingReadme && (
+                                <div className="alert alert-success mt-2 mb-0 py-1 px-2" style={{ fontSize: '0.8rem' }}>
+                                    <strong>✓ README Instructions Set</strong>
+                                    <p className="mb-0">File: {existingReadme.fileName} | Content Length: {existingReadme.contentLength} characters</p>
+                                </div>
+                            )}
+                            {!existingReadme && (
+                                <div className="alert alert-info mt-2 mb-0 py-1 px-2" style={{ fontSize: '0.8rem' }}>
+                                    <strong>ℹ️ No README Instructions Set</strong>
+                                    <p className="mb-0">Click "Add README Instructions" to upload a README file for this class.</p>
+                                </div>
+                            )}
+                            <div style={{ marginTop: '15px' }}>
+                                <button 
+                                    className="btn" 
+                                    onClick={() => setShowQuestModal(true)}
+                                    style={{
+                                        backgroundColor: '#fb5233',
+                                        color: 'white',
+                                        fontWeight: 'bold',
+                                        border: 'none',
+                                        borderRadius: '8px'
+                                    }}
+                                >
+                                    Create Quest
+                                </button>
+                            </div>
+                        </div>
                         <div className="inside-info">
                                     <div className="accordion" id="accordion">
                                 <div className="card">
@@ -563,44 +803,9 @@ const ClassView = () => {
                                     </div>
                                 </div>
                             </div>
-                                </div>
-                                <div className="mt-3 text-center">
-                                    <button 
-                                        className="btn" 
-                                        onClick={() => setShowReadmeModal(true)}
-                                        style={{
-                                            backgroundColor: '#fb5233',
-                                            color: 'white',
-                                            fontWeight: 'bold',
-                                            border: 'none',
-                                            borderBottomLeftRadius: '8px',
-                                            borderBottomRightRadius: '8px',
-                                            borderTopLeftRadius: '0',
-                                            borderTopRightRadius: '0',
-                                            marginRight: '10px'
-                                        }}
-                                    >
-                                        Add README Instructions
-                                    </button>
-                                    <button 
-                                        className="btn" 
-                                        onClick={() => setShowQuestModal(true)}
-                                        style={{
-                                            backgroundColor: '#fb5233',
-                                            color: 'white',
-                                            fontWeight: 'bold',
-                                            border: 'none',
-                                            borderBottomLeftRadius: '8px',
-                                            borderBottomRightRadius: '8px',
-                                            borderTopLeftRadius: '0',
-                                            borderTopRightRadius: '0'
-                                        }}
-                                    >
-                                        Create Quest
-                                    </button>
-                                </div>
-                            </div>
                         </div>
+                    </div>
+                </div>
                     </>
                 )}
             </div>
@@ -608,7 +813,7 @@ const ClassView = () => {
             {/* Quest Creation Modal */}
             {showQuestModal && (
                 <div className="modal" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                    <div className="modal-dialog modal-dialog-centered">
+                    <div className="modal-dialog modal-dialog-centered modal-xl">
                         <div className="modal-content">
                             <div className="modal-header">
                                 <h4 className="modal-title">Create New Quest</h4>
@@ -621,32 +826,469 @@ const ClassView = () => {
                                 </button>
                             </div>
                             <div className="modal-body">
-                                <p>Create a new quest for your students:</p>
                                 <form>
-                                    <div className="form-group mb-3">
-                                        <label htmlFor="questTitle">Quest Title</label>
-                                        <input 
-                                            type="text" 
-                                            className="form-control" 
-                                            id="questTitle" 
-                                            placeholder="Enter quest title"
-                                        />
+                                    {/* Quest Basic Information */}
+                                    <div className="row mb-4">
+                                        <div className="col-md-6">
+                                            <div className="form-group mb-3">
+                                                <label htmlFor="questTitle">Quest Title</label>
+                                                <input 
+                                                    type="text" 
+                                                    className="form-control" 
+                                                    id="questTitle" 
+                                                    placeholder="e.g., Q1: Understanding OSS Projects"
+                                                    value={questFormData.title}
+                                                    onChange={(e) => handleQuestFormChange('title', e.target.value)}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="col-md-6">
+                                            <div className="form-group mb-3">
+                                                <label htmlFor="questType">Quest Type</label>
+                                                <div className="d-flex align-items-center">
+                                                    <select 
+                                                        className="form-control" 
+                                                        id="questType"
+                                                        value={questFormData.type}
+                                                        onChange={(e) => handleQuestFormChange('type', e.target.value)}
+                                                    >
+                                                        <option value="Q0">Q0: Setup & Preferences</option>
+                                                        <option value="Q1">Q1: Understanding OSS Projects</option>
+                                                        <option value="Q2">Q2: Issue Management</option>
+                                                        <option value="Q3">Q3: Pull Requests & Collaboration</option>
+                                                        <option value="custom">Custom Quest</option>
+                                                    </select>
+                                                    <small className="text-muted ml-2" style={{ fontSize: '0.8rem' }}>
+                                                        📋 Predefined quest structure
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="form-group mb-3">
+
+                                    <div className="form-group mb-4">
                                         <label htmlFor="questDescription">Quest Description</label>
                                         <textarea 
                                             className="form-control" 
                                             id="questDescription" 
-                                            rows="4" 
-                                            placeholder="Enter quest description and requirements"
+                                            rows="3" 
+                                            placeholder="Describe the overall objectives and learning outcomes of this quest"
+                                            value={questFormData.description}
+                                            onChange={(e) => handleQuestFormChange('description', e.target.value)}
                                         ></textarea>
+                                        
+                                        {/* Quest Description Image Upload */}
+                                        <div className="mt-3">
+                                            <label className="form-label">Quest Image (Optional)</label>
+                                            <div className="d-flex align-items-center">
+                                                <input 
+                                                    type="file" 
+                                                    className="form-control-file" 
+                                                    accept="image/*"
+                                                    onChange={(e) => handleImageUpload(e.target.files[0], 'description')}
+                                                    style={{ maxWidth: '300px' }}
+                                                />
+                                                {questFormData.descriptionImage && (
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn btn-sm btn-outline-danger ml-2"
+                                                        onClick={() => removeImage('description')}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {questFormData.descriptionImage && (
+                                                <div className="mt-2">
+                                                    <img 
+                                                        src={questFormData.descriptionImage.data} 
+                                                        alt="Quest description" 
+                                                        className="img-thumbnail" 
+                                                        style={{ maxWidth: '200px', maxHeight: '150px' }}
+                                                    />
+                                                    <small className="text-muted d-block mt-1">
+                                                        {questFormData.descriptionImage.name}
+                                                    </small>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {/* Task Configuration */}
+                                    <h5 className="mb-3">Task Configuration</h5>
+                                    
+                                    {questFormData.tasks.map((task, taskIndex) => (
+                                        <div className="card mb-3" key={taskIndex}>
+                                            <div className="card-header d-flex justify-content-between align-items-center">
+                                                <h6 className="mb-0">Task {taskIndex + 1}</h6>
+                                                {questFormData.tasks.length > 1 && (
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn btn-sm btn-outline-danger"
+                                                        onClick={() => removeTask(taskIndex)}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="card-body">
+                                                <div className="row">
+                                                    <div className="col-md-6">
+                                                        <div className="form-group mb-3">
+                                                            <label>Task Type</label>
+                                                            <div className="d-flex align-items-center">
+                                                                <select 
+                                                                    className="form-control task-type-select"
+                                                                    value={task.type}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'type', e.target.value)}
+                                                                >
+                                                                    <option value="multiple-choice">Multiple Choice Question</option>
+                                                                    <option value="github-api">GitHub API Call</option>
+                                                                    <option value="text-input">Text Input</option>
+                                                                    <option value="quiz">Quiz</option>
+                                                                    <option value="issue-selection">Issue Selection</option>
+                                                                    <option value="pr-creation">Pull Request Creation</option>
+                                                                </select>
+                                                                <small className="text-muted ml-2" style={{ fontSize: '0.8rem' }}>
+                                                                    {task.type === 'multiple-choice' && '🔘 A/B/C/D options'}
+                                                                    {task.type === 'github-api' && '🔗 GitHub data fetch'}
+                                                                    {task.type === 'text-input' && '📝 Free text answer'}
+                                                                    {task.type === 'quiz' && '📊 Multiple questions'}
+                                                                    {task.type === 'issue-selection' && '🎯 Select GitHub issue'}
+                                                                    {task.type === 'pr-creation' && '🔀 Create pull request'}
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-md-6">
+                                                        <div className="form-group mb-3">
+                                                            <label>Points</label>
+                                                            <input 
+                                                                type="number" 
+                                                                className="form-control" 
+                                                                placeholder="100"
+                                                                value={task.points}
+                                                                onChange={(e) => handleTaskChange(taskIndex, 'points', parseInt(e.target.value) || 0)}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="form-group mb-3">
+                                                    <label>Task Description</label>
+                                                    <textarea 
+                                                        className="form-control" 
+                                                        rows="2" 
+                                                        placeholder="Describe what the student needs to do"
+                                                        value={task.description}
+                                                        onChange={(e) => handleTaskChange(taskIndex, 'description', e.target.value)}
+                                                    ></textarea>
+                                                    
+                                                    {/* Task Description Image Upload */}
+                                                    <div className="mt-2">
+                                                        <label className="small text-muted">Task Image (Optional)</label>
+                                                        <div className="d-flex align-items-center">
+                                                            <input 
+                                                                type="file" 
+                                                                className="form-control-file form-control-sm" 
+                                                                accept="image/*"
+                                                                onChange={(e) => handleImageUpload(e.target.files[0], 'task', null, taskIndex)}
+                                                                style={{ maxWidth: '200px' }}
+                                                            />
+                                                            {task.descriptionImage && (
+                                                                <button 
+                                                                    type="button" 
+                                                                    className="btn btn-sm btn-outline-danger ml-1"
+                                                                    onClick={() => removeImage('task', null, taskIndex)}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                        {task.descriptionImage && (
+                                                            <div className="mt-1">
+                                                                <img 
+                                                                    src={task.descriptionImage.data} 
+                                                                    alt={`Task ${taskIndex + 1}`} 
+                                                                    className="img-thumbnail" 
+                                                                    style={{ maxWidth: '150px', maxHeight: '100px' }}
+                                                                />
+                                                                <small className="text-muted d-block">
+                                                                    {task.descriptionImage.name}
+                                                                </small>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Dynamic content based on task type */}
+                                                <div className="task-config-content">
+                                                    {/* Multiple Choice Options */}
+                                                    {task.type === 'multiple-choice' && (
+                                                        <div className="multiple-choice-options">
+                                                            <div className="form-group mb-2">
+                                                                <label>Correct Answer</label>
+                                                                <div className="d-flex align-items-center">
+                                                                    <select 
+                                                                        className="form-control"
+                                                                        value={task.config.correctAnswer || 'a'}
+                                                                        onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, correctAnswer: e.target.value})}
+                                                                    >
+                                                                        <option value="a">A</option>
+                                                                        <option value="b">B</option>
+                                                                        <option value="c">C</option>
+                                                                        <option value="d">D</option>
+                                                                    </select>
+                                                                    <small className="text-muted ml-2" style={{ fontSize: '0.8rem' }}>
+                                                                        ✅ Right answer
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+                                                            <div className="form-group mb-2">
+                                                                <label>Option A</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    className="form-control" 
+                                                                    placeholder="First option"
+                                                                    value={task.config.optionA || ''}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, optionA: e.target.value})}
+                                                                />
+                                                            </div>
+                                                            <div className="form-group mb-2">
+                                                                <label>Option B</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    className="form-control" 
+                                                                    placeholder="Second option"
+                                                                    value={task.config.optionB || ''}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, optionB: e.target.value})}
+                                                                />
+                                                            </div>
+                                                            <div className="form-group mb-2">
+                                                                <label>Option C</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    className="form-control" 
+                                                                    placeholder="Third option"
+                                                                    value={task.config.optionC || ''}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, optionC: e.target.value})}
+                                                                />
+                                                            </div>
+                                                            <div className="form-group mb-2">
+                                                                <label>Option D</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    className="form-control" 
+                                                                    placeholder="Fourth option"
+                                                                    value={task.config.optionD || ''}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, optionD: e.target.value})}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* GitHub API Options */}
+                                                    {task.type === 'github-api' && (
+                                                        <div className="github-api-options">
+                                                            <div className="form-group mb-2">
+                                                                <label>API Call Type</label>
+                                                                <div className="d-flex align-items-center">
+                                                                    <select 
+                                                                        className="form-control"
+                                                                        value={task.config.apiCallType || 'issue-count'}
+                                                                        onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, apiCallType: e.target.value})}
+                                                                    >
+                                                                        <option value="issue-count">Get Issue Count</option>
+                                                                        <option value="pr-count">Get PR Count</option>
+                                                                        <option value="top-contributor">Get Top Contributor</option>
+                                                                        <option value="open-issues">Get Open Issues</option>
+                                                                        <option value="issue-title">Get Issue Title</option>
+                                                                    </select>
+                                                                    <small className="text-muted ml-2" style={{ fontSize: '0.8rem' }}>
+                                                                        🔍 Data to fetch
+                                                                    </small>
+                                                                </div>
+                                                            </div>
+                                                            <div className="form-group mb-2">
+                                                                <label>OSS Repository</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    className="form-control" 
+                                                                    placeholder="owner/repo-name"
+                                                                    value={task.config.ossRepository || ''}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, ossRepository: e.target.value})}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Quiz Options */}
+                                                    {task.type === 'quiz' && (
+                                                        <div className="quiz-options">
+                                                            <div className="form-group mb-2">
+                                                                <label>Number of Questions</label>
+                                                                <input 
+                                                                    type="number" 
+                                                                    className="form-control" 
+                                                                    min="1" 
+                                                                    max="10" 
+                                                                    value={task.config.questionCount || 5}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, questionCount: parseInt(e.target.value) || 5})}
+                                                                />
+                                                            </div>
+                                                            <div className="form-group mb-2">
+                                                                <label>Correct Answers (comma-separated)</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    className="form-control" 
+                                                                    placeholder="b,a,c,b,d"
+                                                                    value={task.config.correctAnswers || ''}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, correctAnswers: e.target.value})}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Text Input Options */}
+                                                    {task.type === 'text-input' && (
+                                                        <div className="text-input-options">
+                                                            <div className="form-group mb-2">
+                                                                <label>Expected Answer</label>
+                                                                <input 
+                                                                    type="text" 
+                                                                    className="form-control" 
+                                                                    placeholder="Expected answer"
+                                                                    value={task.config.expectedAnswer || ''}
+                                                                    onChange={(e) => handleTaskChange(taskIndex, 'config', {...task.config, expectedAnswer: e.target.value})}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* Add More Tasks Button */}
+                                    <button type="button" className="btn btn-outline-primary mb-4" onClick={addTask}>
+                                        + Add Another Task
+                                    </button>
+
+                                    {/* Hints Configuration */}
+                                    <h5 className="mb-3">Hints Configuration</h5>
                                     <div className="form-group mb-3">
-                                        <label htmlFor="questDueDate">Due Date</label>
+                                        <div className="form-check">
+                                            <input 
+                                                className="form-check-input" 
+                                                type="checkbox" 
+                                                id="enableHints"
+                                                checked={questFormData.hints.enabled}
+                                                onChange={(e) => handleQuestFormChange('hints', {...questFormData.hints, enabled: e.target.checked})}
+                                            />
+                                            <label className="form-check-label" htmlFor="enableHints">
+                                                Enable hints for this quest
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {questFormData.hints.enabled && (
+                                        <div className="hint-config">
+                                            <div className="form-group mb-3">
+                                                <label>Hint Penalty (points deducted)</label>
+                                                <input 
+                                                    type="number" 
+                                                    className="form-control" 
+                                                    placeholder="10"
+                                                    value={questFormData.hints.penalty}
+                                                    onChange={(e) => handleQuestFormChange('hints', {...questFormData.hints, penalty: parseInt(e.target.value) || 0})}
+                                                />
+                                            </div>
+                                            
+                                            <div className="mb-3">
+                                                <label>Hints ({questFormData.hints.hints.length}/3)</label>
+                                                {questFormData.hints.hints.map((hint, hintIndex) => (
+                                                    <div key={hintIndex} className="card mb-2">
+                                                        <div className="card-body p-2">
+                                                            <div className="d-flex align-items-start">
+                                                                <div className="flex-grow-1">
+                                                                    <label className="small mb-1">Hint {hintIndex + 1}</label>
+                                                                    <textarea 
+                                                                        className="form-control form-control-sm" 
+                                                                        rows="2" 
+                                                                        placeholder={`Provide hint ${hintIndex + 1}`}
+                                                                        value={hint}
+                                                                        onChange={(e) => updateHint(hintIndex, e.target.value)}
+                                                                    ></textarea>
+                                                                    
+                                                                    {/* Hint Image Upload */}
+                                                                    <div className="mt-2">
+                                                                        <label className="small text-muted">Hint Image (Optional)</label>
+                                                                        <div className="d-flex align-items-center">
+                                                                            <input 
+                                                                                type="file" 
+                                                                                className="form-control-file form-control-sm" 
+                                                                                accept="image/*"
+                                                                                onChange={(e) => handleImageUpload(e.target.files[0], 'hint', hintIndex)}
+                                                                                style={{ maxWidth: '200px' }}
+                                                                            />
+                                                                            {hint.image && (
+                                                                                <button 
+                                                                                    type="button" 
+                                                                                    className="btn btn-sm btn-outline-danger ml-1"
+                                                                                    onClick={() => removeImage('hint', hintIndex)}
+                                                                                >
+                                                                                    ×
+                                                                                </button>
+                                                                            )}
+                                                                        </div>
+                                                                        {hint.image && (
+                                                                            <div className="mt-1">
+                                                                                <img 
+                                                                                    src={hint.image.data} 
+                                                                                    alt={`Hint ${hintIndex + 1}`} 
+                                                                                    className="img-thumbnail" 
+                                                                                    style={{ maxWidth: '150px', maxHeight: '100px' }}
+                                                                                />
+                                                                                <small className="text-muted d-block">
+                                                                                    {hint.image.name}
+                                                                                </small>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <button 
+                                                                    type="button" 
+                                                                    className="btn btn-sm btn-outline-danger ml-2"
+                                                                    onClick={() => removeHint(hintIndex)}
+                                                                    style={{ marginTop: '20px' }}
+                                                                >
+                                                                    ×
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                
+                                                {questFormData.hints.hints.length < 3 && (
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn btn-outline-primary btn-sm"
+                                                        onClick={addHint}
+                                                    >
+                                                        + Add Hint
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Due Date */}
+                                    <div className="form-group mb-3">
+                                        <label htmlFor="questDueDate">Due Date (Optional)</label>
                                         <input 
                                             type="date" 
                                             className="form-control" 
                                             id="questDueDate"
+                                            value={questFormData.dueDate}
+                                            onChange={(e) => handleQuestFormChange('dueDate', e.target.value)}
                                         />
                                     </div>
                                 </form>
@@ -697,6 +1339,14 @@ const ClassView = () => {
                                     <h5>📋 First Step: README Instructions</h5>
                                     <p>Upload a README file that will be added to each student's repository. This README will contain course information, objectives, and instructions for students.</p>
                                 </div>
+                                
+                                {existingReadme && (
+                                    <div className="alert alert-warning mb-4">
+                                        <h5>⚠️ Existing README Found</h5>
+                                        <p>This class already has a README file: <strong>{existingReadme.fileName}</strong></p>
+                                        <p>Uploading a new file will replace the existing one.</p>
+                                    </div>
+                                )}
                                 
                                 <div className="mb-4">
                                     <h5>📁 Upload README File</h5>
@@ -773,7 +1423,7 @@ Your current progress will be displayed here as you complete quests.
 ### ✅ Completed Quests
 {Completed quests will be listed here}
 
-## 📋 Available Quests
+##  Available Quests
 {Quest list will be populated here}
 
 ## 🛠️ Getting Started
@@ -802,8 +1452,8 @@ Your current progress will be displayed here as you complete quests.
                                     >
                                         📥 Download Template
                                     </button>
-                                </div>
-                            </div>
+            </div>
+        </div>
                             <div className="modal-footer">
                                 <button 
                                     type="button" 
@@ -836,6 +1486,8 @@ Your current progress will be displayed here as you complete quests.
                                                 setShowReadmeModal(false);
                                                 setReadmeFile(null);
                                                 setReadmeContent('');
+                                                // Refresh the existing README data
+                                                fetchExistingReadme();
                                             }
                                         } catch (error) {
                                             console.error('Error saving README:', error);

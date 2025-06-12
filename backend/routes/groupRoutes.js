@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme } = require("../controllers/groupController")
 const { getStudents } = require("../controllers/studentController")
 
 
@@ -25,6 +25,6 @@ router.route("/:professorID/group/:groupID/hints").post(addHint).get(getHints)
 router.route("/:professorID/group/:groupID/hint/:hintID").put(updateHint).delete(deleteHint).get(getHint)
 
 router.route("/:groupId/students").get(getStudents);
-router.route("/:groupId/readme").post(saveGroupReadme);
+router.route("/:groupId/readme").post(saveGroupReadme).get(getGroupReadme);
 
 module.exports = router;
