@@ -1,3 +1,7 @@
+body, html {
+  background: #fff !important;
+}
+
 .App {
   text-align: center;
   height: 100vh;
@@ -38,6 +42,4 @@
   }
 }
 
-div { 
-  background: #c9d6ff
-}
+/* Removed global div background override to restore component backgrounds */

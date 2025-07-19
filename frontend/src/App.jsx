@@ -8,7 +8,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useEffect } from 'react';
 import { useAuthContext } from './context/AuthContext';
 import StudentRegistered from './pages/studentSignup/StudentRegistered';
-
+import ManageQuests from './pages/class-view/ManageQuests';
 
 const App = () => {
   const { authUser , setAuthUser  } = useAuthContext(); 
@@ -30,6 +30,7 @@ const App = () => {
         <Route exact path='/studentRegister' element={< StudentRegister />} />
         <Route exact path='/studentRegistered' element={< StudentRegistered />} />
         <Route path="/class/:classId" element={<ClassView />} />
+        <Route path="/class/:classId/manage-quests" element={<ManageQuests />} />
       </Routes>
     </div>
   );

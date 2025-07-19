@@ -13,5 +13,6 @@ router.post("/addUserToRepo", authMiddleware.verifyBackendRequest, githubControl
 router.post("/commentIssue", authMiddleware.verifyBackendRequest, githubController.createCommentInIssue);
 router.post("/checkCollaboration", authMiddleware.verifyBackendRequest, githubController.checkCollaboration);
 router.post("/listRepos", authMiddleware.verifyBackendRequest, githubController.listRepos);
+router.post("/checkReadme", authMiddleware.verifyBackendRequest, githubController.checkReadmeExists);
 
 module.exports = router;

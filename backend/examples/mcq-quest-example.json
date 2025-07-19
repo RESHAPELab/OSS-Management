@@ -1,0 +1,76 @@
+{
+  "questTitle": "GitHub Fundamentals MCQ Quiz",
+  "professorId": "507f1f77bcf86cd799439011",
+  "tasks": [
+    {
+      "title": "Locate the Fork Button",
+      "objective": "Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.",
+      "description": "Go to the GitHub repository using the link below, locate the Fork button, and note where it's positioned.",
+      "outcome": "By completing this task, you'll gain insight into how to initiate the process of forking a repository, a key step towards making personal contributions or testing changes independently. Understanding the forking mechanism is crucial for anyone looking to contribute to open source projects.",
+      "helpText": "If you need help with this task, type 'help' in the comment box to get hints, but it will cost you 5 points from your total score.",
+      "points": 20,
+      "correctAnswer": "b",
+      "options": [
+        "In the top-left corner of the repository page",
+        "In the top-right corner of the repository page, next to the Watch and Star buttons",
+        "In the bottom-right corner of the repository page",
+        "In the middle of the repository page, below the description"
+      ],
+      "hints": [
+        {
+          "content": "Look for a button that says 'Fork' - it's usually near other action buttons.",
+          "penalty": 5,
+          "sequence": 1
+        },
+        {
+          "content": "The Fork button is typically located in the header area of the repository page.",
+          "penalty": 5,
+          "sequence": 2
+        },
+        {
+          "content": "Check the top-right area of the page, near the Watch and Star buttons.",
+          "penalty": 5,
+          "sequence": 3
+        }
+      ]
+    },
+    {
+      "title": "Find the Issue Tracker",
+      "objective": "The issue tracker is the hub for project discussions, bug reports, and feature requests. Your goal is to find the issue tracker within our GitHub repository.",
+      "description": "Visit the GitHub repository in the link below and COUNT the number of open issues and provide that number in the comment box to complete the task.",
+      "outcome": "This task will help you become familiar with how issues are reported, discussed, and tracked. Understanding the volume of discussions is crucial for grasping the project's activity level and areas that might need your contribution.",
+      "helpText": "If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+      "points": 20,
+      "correctAnswer": "b",
+      "options": [
+        "To list all contributors to the project",
+        "To track bug reports, feature requests, and project discussions",
+        "To store documentation and project guidelines",
+        "To manage pull requests and merges"
+      ],
+      "hints": [
+        {
+          "content": "Make sure you click on the tab called \"Issues\" at the top of the page.",
+          "penalty": 5,
+          "sequence": 1
+        },
+        {
+          "content": "Make sure you count the right number of Open issues. Enter the number of open issues in the comment box.",
+          "penalty": 5,
+          "sequence": 2
+        }
+      ]
+    }
+  ],
+  "generatedResponses": {
+    "accept": "### 🎯 Locate the Fork Button\n\n**Objective:** Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.\n\n**Task:** Go to the GitHub repository using the link below, locate the Fork button, and note where it's positioned.\n\n**Choose the option that best describes the location or answer:**\n\nA) In the top-left corner of the repository page\nB) In the top-right corner of the repository page, next to the Watch and Star buttons\nC) In the bottom-right corner of the repository page\nD) In the middle of the repository page, below the description\n\n**Outcome:** By completing this task, you'll gain insight into how to initiate the process of forking a repository, a key step towards making personal contributions or testing changes independently. Understanding the forking mechanism is crucial for anyone looking to contribute to open source projects.\n\n**Help:** If you need help with this task, type 'help' in the comment box to get hints, but it will cost you 5 points from your total score.",
+    
+    "error": "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the answer you've selected doesn't align with the correct response.\n\nNo worries, though! Mistakes are simply steps on the path to mastery, and every attempt brings you closer to understanding.\n\nIf you need help, don't forget that you can type **'help'** to get hints to complete this task.\n\nThis is a bit like a treasure hunt 🗺️.\n\nFinding the correct answer is a fundamental skill for navigating this topic and making your mark on the subject. Correctly identifying the right choice ensures you're ready to start experimenting and contributing on your own terms.\n\nReady for another try? Your correct answer is just a decision away!\n\n**Please select the correct answer from the options below:**\n\nA) In the top-left corner of the repository page\nB) In the top-right corner of the repository page, next to the Watch and Star buttons\nC) In the bottom-right corner of the repository page\nD) In the middle of the repository page, below the description\n\n**Type** the letter in the comment box to complete this task.",
+    
+    "success": "### 🌟 Congratulations! You've Got It Right!\n\nYou've correctly identified the answer, showcasing your growing familiarity with the topic and your ability to navigate through the options effectively.\n\nAs a reward for your keen observation and learning skills, you've earned **20 experience points!**\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **currentPoints points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **pointsRemaining points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have completionRate% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the subject and unlocking new levels of understanding and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of knowledge and collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon!\n\nTo dive into your next task, look in the issues tab!\n\nThe adventure continues! 🌟\n\n",
+    
+    "hints": "💡**Hints Used:** You used **hintsUsed hint(s)**, and it cost pointLoss points, you have **currentPoints** total points.",
+    
+    "noHints": "💡**Hints Used:** No hints used, congrats on achieving this challenge by yourself."
+  }
+} 

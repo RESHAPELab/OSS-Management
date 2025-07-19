@@ -778,6 +778,359 @@ const getGroupReadme = async (req, res) => {
     }
 };
 
+// Quest Order Management Functions
+const saveQuestOrder = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { questOrder } = req.body;
+
+        if (!questOrder || !Array.isArray(questOrder)) {
+            return res.status(400).json({ message: "Quest order array is required" });
+        }
+
+        // Generate dynamic prerequisites based on quest order
+        const questOrderWithPrerequisites = questOrder.map((quest, index) => {
+            const prerequisites = generateDynamicPrerequisites(questOrder, index);
+            
+            return {
+                questId: quest.questId || quest.id || quest._id,
+                questType: quest.questType || quest.type || 'custom',
+                sequenceNumber: quest.sequenceNumber || index,
+                title: quest.title || quest.questTitle || quest.content || 'Unknown Quest',
+                isQ0: quest.isQ0 || false,
+                prerequisites: prerequisites
+            };
+        });
+
+        // Try to update with retry logic for version conflicts
+        let updatedGroup = null;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+            try {
+                // Use findByIdAndUpdate to avoid version conflicts
+                updatedGroup = await Group.findByIdAndUpdate(
+                    groupId,
+                    {
+                        questOrder: questOrderWithPrerequisites,
+                        questOrderLastUpdated: new Date()
+                    },
+                    { 
+                        new: true, 
+                        runValidators: true,
+                        // Add optimistic concurrency control
+                        versionKey: false
+                    }
+                );
+
+                if (updatedGroup) {
+                    break; // Success, exit retry loop
+                }
+            } catch (updateError) {
+                retryCount++;
+                console.log(`Retry ${retryCount}/${maxRetries} for group ${groupId}:`, updateError.message);
+                
+                if (retryCount >= maxRetries) {
+                    throw updateError;
+                }
+                
+                // Wait a bit before retrying
+                await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
+            }
+        }
+
+        if (!updatedGroup) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Automatically generate dynamic config after saving quest order
+        try {
+            const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
+            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
+            const config = await generator.generateDynamicConfig();
+            
+            console.log(`✅ Auto-generated dynamic config for group ${groupId}:`, config.metadata);
+        } catch (configError) {
+            console.error(`⚠️ Auto-config generation failed for group ${groupId}:`, configError.message);
+            // Don't fail the entire request if config generation fails
+        }
+
+        res.status(200).json({
+            message: "Quest order and prerequisites saved successfully",
+            questOrder: updatedGroup.questOrder,
+            lastUpdated: updatedGroup.questOrderLastUpdated
+        });
+    } catch (error) {
+        console.error("Error saving quest order:", error);
+        
+        // Provide more specific error messages
+        if (error.name === 'VersionError') {
+            res.status(409).json({ 
+                message: "Quest order was modified by another operation. Please try again.",
+                error: "Version conflict detected"
+            });
+        } else {
+            res.status(500).json({ 
+                message: "Error saving quest order", 
+                error: error.message 
+            });
+        }
+    }
+};
+
+// Helper function to generate dynamic prerequisites
+const generateDynamicPrerequisites = (questOrder, currentIndex) => {
+    const prerequisites = [];
+    
+    // Q0 has no prerequisites
+    if (currentIndex === 0) {
+        return [];
+    }
+    
+    // For all other quests, prerequisite is the previous quest
+    if (currentIndex > 0) {
+        const previousQuest = questOrder[currentIndex - 1];
+        prerequisites.push({
+            questId: previousQuest.questId || previousQuest.id || previousQuest._id,
+            type: 'completion',
+            required: true,
+            description: `Complete ${previousQuest.title || previousQuest.questTitle || previousQuest.content} first`,
+            minScore: 0
+        });
+    }
+    
+    return prerequisites;
+};
+
+const getQuestOrder = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        // Check if group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Return quest order if it exists, otherwise return default order
+        if (group.questOrder && group.questOrder.length > 0) {
+            res.status(200).json({
+                questOrder: group.questOrder,
+                lastUpdated: group.questOrderLastUpdated,
+                hasCustomOrder: true
+            });
+        } else {
+            // Return default quest order with prerequisites
+            const defaultQuestOrder = [
+                { 
+                    questId: 'Q0', 
+                    questType: 'fixed', 
+                    sequenceNumber: 0, 
+                    title: 'Q0: Introduction to Open Source', 
+                    isQ0: true,
+                    prerequisites: []
+                },
+                { 
+                    questId: 'Q1', 
+                    questType: 'fixed', 
+                    sequenceNumber: 1, 
+                    title: 'Q1: Understanding OSS Projects and GitHub Basics', 
+                    isQ0: false,
+                    prerequisites: [{
+                        questId: 'Q0',
+                        type: 'completion',
+                        required: true,
+                        description: 'Complete Q0: Introduction to Open Source first',
+                        minScore: 0
+                    }]
+                },
+                { 
+                    questId: 'Q2', 
+                    questType: 'fixed', 
+                    sequenceNumber: 2, 
+                    title: 'Q2: Forking and Contributing to Repositories', 
+                    isQ0: false,
+                    prerequisites: [{
+                        questId: 'Q1',
+                        type: 'completion',
+                        required: true,
+                        description: 'Complete Q1: Understanding OSS Projects and GitHub Basics first',
+                        minScore: 0
+                    }]
+                },
+                { 
+                    questId: 'Q3', 
+                    questType: 'fixed', 
+                    sequenceNumber: 3, 
+                    title: 'Q3: Creating Pull Requests and Code Reviews', 
+                    isQ0: false,
+                    prerequisites: [{
+                        questId: 'Q2',
+                        type: 'completion',
+                        required: true,
+                        description: 'Complete Q2: Forking and Contributing to Repositories first',
+                        minScore: 0
+                    }]
+                }
+            ];
+            
+            res.status(200).json({
+                questOrder: defaultQuestOrder,
+                lastUpdated: null,
+                hasCustomOrder: false
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching quest order:", error);
+        res.status(500).json({ message: "Error fetching quest order", error: error.message });
+    }
+};
+
+const resetQuestOrder = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        // Reset to default quest order using findByIdAndUpdate to avoid version conflicts
+        const defaultQuestOrder = [
+            { 
+                questId: 'Q0', 
+                questType: 'fixed', 
+                sequenceNumber: 0, 
+                title: 'Q0: Introduction to Open Source', 
+                isQ0: true,
+                prerequisites: []
+            },
+            { 
+                questId: 'Q1', 
+                questType: 'fixed', 
+                sequenceNumber: 1, 
+                title: 'Q1: Understanding OSS Projects and GitHub Basics', 
+                isQ0: false,
+                prerequisites: [{
+                    questId: 'Q0',
+                    type: 'completion',
+                    required: true,
+                    description: 'Complete Q0: Introduction to Open Source first',
+                    minScore: 0
+                }]
+            },
+            { 
+                questId: 'Q2', 
+                questType: 'fixed', 
+                sequenceNumber: 2, 
+                title: 'Q2: Forking and Contributing to Repositories', 
+                isQ0: false,
+                prerequisites: [{
+                    questId: 'Q1',
+                    type: 'completion',
+                    required: true,
+                    description: 'Complete Q1: Understanding OSS Projects and GitHub Basics first',
+                    minScore: 0
+                }]
+            },
+            { 
+                questId: 'Q3', 
+                questType: 'fixed', 
+                sequenceNumber: 3, 
+                title: 'Q3: Creating Pull Requests and Code Reviews', 
+                isQ0: false,
+                prerequisites: [{
+                    questId: 'Q2',
+                    type: 'completion',
+                    required: true,
+                    description: 'Complete Q2: Forking and Contributing to Repositories first',
+                    minScore: 0
+                }]
+            }
+        ];
+
+        const updatedGroup = await Group.findByIdAndUpdate(
+            groupId,
+            {
+                questOrder: defaultQuestOrder,
+                questOrderLastUpdated: new Date()
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedGroup) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Automatically generate dynamic config after resetting quest order
+        try {
+            const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
+            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
+            const config = await generator.generateDynamicConfig();
+            
+            console.log(`✅ Auto-generated dynamic config for group ${groupId} after reset:`, config.metadata);
+        } catch (configError) {
+            console.error(`⚠️ Auto-config generation failed for group ${groupId} after reset:`, configError.message);
+            // Don't fail the entire request if config generation fails
+        }
+
+        res.status(200).json({
+            message: "Quest order reset to default successfully",
+            questOrder: updatedGroup.questOrder,
+            lastUpdated: updatedGroup.questOrderLastUpdated
+        });
+    } catch (error) {
+        console.error("Error resetting quest order:", error);
+        res.status(500).json({ message: "Error resetting quest order", error: error.message });
+    }
+};
+
+// Get class ID from repository name
+const getClassIdFromRepo = async (req, res) => {
+    try {
+        const { repoName } = req.params;
+        
+        // Extract class code from repository name pattern: cs-277-oss-in-theory-username
+        const match = repoName.match(/^cs-(\d+)-(\w+)-(\w+)-(.+)$/);
+        
+        if (!match) {
+            return res.status(404).json({
+                success: false,
+                message: 'Repository name does not match expected pattern'
+            });
+        }
+        
+        const [, courseNumber, subject, courseName] = match;
+        const classCode = `${courseNumber}-${subject}-${courseName}`;
+        
+        // Find the group with this class code
+        const group = await Group.findOne({ classCode, isActive: true });
+        
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'No active class found for this repository pattern'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: {
+                classId: group._id,
+                classCode: group.classCode,
+                groupName: group.groupName,
+                hasDynamicConfig: true
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error getting class ID from repo:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error getting class ID from repository',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getProfessor, 
     createGroup,
@@ -804,5 +1157,9 @@ module.exports = {
     deleteHint, 
     getHint,
     saveGroupReadme,
-    getGroupReadme
+    getGroupReadme,
+    saveQuestOrder,
+    getQuestOrder,
+    resetQuestOrder,
+    getClassIdFromRepo
 }

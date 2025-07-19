@@ -1,0 +1,45 @@
+{
+  "questSequence": [
+    {
+      "questId": "Q0",
+      "title": "Q0: Introduction to Open Source",
+      "isQ0": true,
+      "questType": "fixed"
+    },
+    {
+      "questId": "Q4",
+      "title": "Q4: Advanced GitHub Concepts", 
+      "isQ0": false,
+      "questType": "fixed"
+    },
+    {
+      "questId": "Q5",
+      "title": "Q5: Repository Analytics",
+      "isQ0": false,
+      "questType": "fixed"
+    },
+    {
+      "questId": "Q1",
+      "title": "Q1: Understanding OSS Projects and GitHub Basics",
+      "isQ0": false,
+      "questType": "fixed"
+    },
+    {
+      "questId": "Q2",
+      "title": "Q2: Forking and Contributing to Repositories",
+      "isQ0": false,
+      "questType": "fixed"
+    },
+    {
+      "questId": "Q3",
+      "title": "Q3: Creating Pull Requests and Code Reviews",
+      "isQ0": false,
+      "questType": "fixed"
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "description": "Quest sequence configuration for OSS-Doorway",
+    "lastUpdated": "2024-01-01"
+  }
+} 

@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo } = require("../controllers/groupController")
 const { getStudents } = require("../controllers/studentController")
 
 
@@ -26,5 +26,12 @@ router.route("/:professorID/group/:groupID/hint/:hintID").put(updateHint).delete
 
 router.route("/:groupId/students").get(getStudents);
 router.route("/:groupId/readme").post(saveGroupReadme).get(getGroupReadme);
+
+// Quest Order Management Routes
+router.route("/:groupId/quest-order").post(saveQuestOrder).get(getQuestOrder);
+router.route("/:groupId/quest-order/reset").post(resetQuestOrder);
+
+// Get class ID from repository name
+router.get('/repo/:repoName/class', getClassIdFromRepo);
 
 module.exports = router;

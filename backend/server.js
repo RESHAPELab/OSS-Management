@@ -17,6 +17,8 @@ app.use("/api/group", require("./routes/groupRoutes"));
 app.use("/api/student", require('./routes/studentRoutes'));
 app.use("/api/repo", require("./routes/repoRoutes"));
 app.use("/api/gamification", require("./routes/gamificationRoutes"));
+app.use("/api/quest", require("./routes/questRoutes"));
+app.use("/api/quest-config", require("./routes/questConfigRoutes"));
 app.use(errorHandler);
 
 // Export app for testing purposes

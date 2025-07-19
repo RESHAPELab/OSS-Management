@@ -179,6 +179,13 @@ const commitFile = async (req, res) => {
         const githubToken = await getGithubAppInstallationAccessToken();
         let fileSHA = null;
 
+        // Log when committing README files specifically
+        if (filePath.toLowerCase() === 'readme.md') {
+            console.log(`📝 README COMMIT: Calling GitHub API to commit README.md to ${org}/${repoName}`);
+            console.log(`📄 README COMMIT: File size: ${fileContent.length} characters`);
+            console.log(`🔗 README COMMIT: Branch: ${branch}, Message: "${commitMessage}"`);
+        }
+
         try {
             const fileResponse = await axios.get(
                 `https://api.github.com/repos/${org}/${repoName}/contents/${filePath}?ref=${branch}`,
@@ -190,8 +197,14 @@ const commitFile = async (req, res) => {
                 }
             );
             fileSHA = fileResponse.data.sha;
+            if (filePath.toLowerCase() === 'readme.md') {
+                console.log(`📝 README COMMIT: File exists, will update (SHA: ${fileSHA.substring(0, 8)}...)`);
+            }
         } catch (error) {
             if (error.response && error.response.status !== 404) { throw error; }
+            if (filePath.toLowerCase() === 'readme.md') {
+                console.log(`📝 README COMMIT: File does not exist, will create new README.md`);
+            }
         }
 
         const apiResponse = await axios.put(
@@ -210,8 +223,16 @@ const commitFile = async (req, res) => {
             }
         );
 
+        if (filePath.toLowerCase() === 'readme.md') {
+            console.log(`✅ README COMMIT: Successfully committed README.md to ${org}/${repoName}`);
+            console.log(`🔗 README COMMIT: GitHub URL: ${apiResponse.data.content.html_url}`);
+        }
+
         res.status(200).json(apiResponse.data);
     } catch (error) {
+        if (filePath.toLowerCase() === 'readme.md') {
+            console.error(`❌ README COMMIT: Failed to commit README.md to ${org}/${repoName}:`, error.message);
+        }
         console.error("Error committing the file:", error.message);
         res.status(500).json({ error: error.message });
     }
@@ -293,6 +314,44 @@ const listRepos = async (req, res) => {
     }
 };
 
+const checkReadmeExists = async (req, res) => {
+    const { org, repoName } = req.body;
+    
+    try {
+        const githubToken = await getGithubAppInstallationAccessToken();
+        
+        try {
+            const fileResponse = await axios.get(
+                `https://api.github.com/repos/${org}/${repoName}/contents/README.md`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${githubToken}`,
+                        Accept: 'application/vnd.github.v3+json',
+                    },
+                }
+            );
+            
+            // If we get here, the README exists
+            res.status(200).json({ 
+                exists: true, 
+                sha: fileResponse.data.sha,
+                size: fileResponse.data.size,
+                url: fileResponse.data.html_url
+            });
+        } catch (error) {
+            if (error.response && error.response.status === 404) {
+                // README doesn't exist
+                res.status(200).json({ exists: false });
+            } else {
+                throw error;
+            }
+        }
+    } catch (error) {
+        console.error("Error checking README existence:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     handleWebhook,
     createRepo, 
@@ -303,5 +362,6 @@ module.exports = {
     closeIssue,
     commitFile,
     checkCollaboration,
-    listRepos
+    listRepos,
+    checkReadmeExists
 };

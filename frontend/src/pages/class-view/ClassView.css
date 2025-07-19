@@ -58,14 +58,60 @@ h1 {
 }
 
 .inside-info { 
-    width: 95%;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
     margin-top: 20px; 
-    margin-right: 2.5%; 
-    margin-bottom: 20px;
-    margin-left: 2.5%;
-    height: 43vh;
-    overflow: scroll;
-    border-radius: 2%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.quest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.quest-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+}
+
+.quest-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+}
+
+.quest-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.quest-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    background-color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.quest-btn:hover {
+    background-color: #e9ecef;
+}
+
+.quest-btn:active {
+    background-color: #dee2e6;
 }
 
 a.list-group-item {

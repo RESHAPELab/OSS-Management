@@ -1,0 +1,92 @@
+/* Quest Layout Styles */
+
+.quest-list {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: white;
+}
+
+.quest-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #dee2e6;
+    background-color: white;
+    transition: background-color 0.2s;
+}
+
+.quest-item:hover {
+    background-color: #f8f9fa;
+}
+
+.quest-item:last-child {
+    border-bottom: none;
+}
+
+.quest-item-fixed {
+    background-color: #e9ecef;
+    font-weight: bold;
+}
+
+.quest-item-empty {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.quest-title {
+    flex: 1;
+    margin-right: 15px;
+}
+
+.quest-title strong {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.quest-title small {
+    font-size: 0.875em;
+}
+
+.quest-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.quest-actions .btn {
+    font-size: 12px;
+    line-height: 1;
+    min-width: 30px;
+    padding: 4px 8px;
+}
+
+.debug-info {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.debug-info strong {
+    color: #495057;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quest-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .quest-actions {
+        align-self: flex-end;
+    }
+} 

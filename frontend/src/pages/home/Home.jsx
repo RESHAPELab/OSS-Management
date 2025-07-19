@@ -4,6 +4,7 @@ import "./Home.css"
 import { useAuthContext } from '../../context/AuthContext';
 import HomeHeader from './components/HomeHeader';
 import GroupComponent from './components/GroupComponent';
+import CreateCustomRepoButton from '../../components/CreateCustomRepoButton';
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
 const Home = () => {
@@ -53,6 +54,7 @@ const Home = () => {
         <div>
             <HomeHeader className="header"/>
             <GroupComponent className="group" professor={authUser} groups={profGroups} createGroup={createGroup}/>
+            <CreateCustomRepoButton />
         </div>
     )
 }
