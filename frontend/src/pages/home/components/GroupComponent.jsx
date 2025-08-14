@@ -12,9 +12,6 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Checkbox,
-  FormControlLabel,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -25,7 +22,9 @@ import {
   Card,
   CardContent,
   Stack,
-  Divider
+  Divider,
+  InputBase,
+  Tooltip
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,16 +32,13 @@ import {
   Close as CloseIcon,
   Search as SearchIcon,
   School as SchoolIcon,
-  Group as GroupIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
+  Group as GroupIcon
 } from '@mui/icons-material';
 
 const GroupComponent = ({ professor, groups, createGroup }) => {
     const [createGroupOpen, setCreateGroupOpen] = useState(false);
     const [newGroupName, setNewGroupName] = useState("");
     const [nameSearch, setNameSearch] = useState("");
-    const [showActiveOnly, setShowActiveOnly] = useState(true);
     const navigate = useNavigate();
 
     const handleClassClick = (classId) => {
@@ -61,11 +57,15 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
         setNameSearch(e.target.value);
     };
 
-    const handleAddGroup = () => {
+    const handleAddGroup = async () => {
         if (newGroupName.trim() !== "") {
-            createGroup({ groupName: newGroupName });
-            setNewGroupName("");
-            setCreateGroupOpen(false);
+            const newGroup = await createGroup({ groupName: newGroupName });
+            if (newGroup && newGroup._id) {
+                setNewGroupName("");
+                setCreateGroupOpen(false);
+                // Navigate to the newly created class
+                navigate(`/class/${newGroup._id}`);
+            }
         }
     };
 
@@ -74,77 +74,108 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
         setCreateGroupOpen(false);  // Close the form
     };
 
-    const handleShowActiveOnlyChange = (e) => {
-        setShowActiveOnly(e.target.checked);
-    };
-
     const filteredGroups = groups.filter((group) => {
         const nameMatches = group.groupName.toLowerCase().includes(nameSearch.toLowerCase());
-        const activeMatches = showActiveOnly ? group.active : true;
-        return nameMatches && activeMatches;
+        return nameMatches;
+    }).sort((a, b) => {
+        // Sort by creation date: most recent first
+        // Handle cases where createdAt might be missing (fallback to _id timestamp)
+        const dateA = new Date(a.createdAt || a._id ? new Date(parseInt(a._id.toString().substring(0, 8), 16) * 1000) : 0);
+        const dateB = new Date(b.createdAt || b._id ? new Date(parseInt(b._id.toString().substring(0, 8), 16) * 1000) : 0);
+        return dateB - dateA;
     });
 
+    // Helper function to format creation date
+    const formatCreationDate = (dateString, groupId) => {
+        if (!dateString) {
+            // Fallback to _id timestamp if createdAt is missing
+            if (groupId) {
+                try {
+                    const timestamp = parseInt(groupId.toString().substring(0, 8), 16) * 1000;
+                    const date = new Date(timestamp);
+                    if (!isNaN(date.getTime())) {
+                        return formatRelativeDate(date);
+                    }
+                } catch (e) {
+                    // Ignore errors in fallback
+                }
+            }
+            return 'N/A';
+        }
+        
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'N/A';
+        
+        return formatRelativeDate(date);
+    };
+
+    // Helper function to format relative dates
+    const formatRelativeDate = (date) => {
+        const now = new Date();
+        const diffTime = Math.abs(now - date);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) return 'Today';
+        if (diffDays === 2) return 'Yesterday';
+        if (diffDays <= 7) return `${diffDays - 1} days ago`;
+        if (diffDays <= 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
+        if (diffDays <= 365) return `${Math.ceil(diffDays / 30)} months ago`;
+        return date.toLocaleDateString();
+    };
+
     return (
-        <Container maxWidth="lg" sx={{ py: 4, backgroundColor: 'white' }}>
-            <Box sx={{ mb: 4 }}>
+        <Container maxWidth="lg" sx={{ py: 4, backgroundColor: 'white', textAlign: 'left' }}>
+            <Box sx={{ mb: 3 }}>
                 <Typography 
-                    variant="h2" 
+                    variant="h3" 
                     component="h1" 
                     sx={{ 
-                        textAlign: 'center', 
-                        mb: 2,
-                        fontWeight: 900,
-                        fontFamily: 'Georgia, serif',
-                        color: '#fb5233'
-                    }}
-                >
-                    Welcome!
-                </Typography>
-                <Typography 
-                    variant="h5" 
-                    component="h2" 
-                    sx={{ 
-                        textAlign: 'center',
-                        color: 'text.secondary',
+                        fontWeight: 700,
+                        color: '#111827',
                         mb: 3
                     }}
                 >
-                    {professor.groups
-                ? `Your Classes:`
-                        : `Create groups to track student progress!`}
+                    Classes
+                </Typography>
+                <Typography 
+                    variant="body1" 
+                    component="p" 
+                    sx={{ 
+                        color: 'text.secondary',
+                        mt: 0.5
+                    }}
+                >
+                    Select a class to view the dashboard and manage students and quests.
                 </Typography>
             </Box>
 
             {/* Filters and Create Group Section */}
-            <Card sx={{ mb: 3, p: 3, backgroundColor: 'white' }}>
-                <Grid container spacing={3} alignItems="center">
-                    {/* Search and Filter */}
+            <Card sx={{ mb: 3, p: 2, backgroundColor: 'white', borderRadius: 2, boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+                <Grid container spacing={2} alignItems="center">
+                    {/* Search */}
                     <Grid item xs={12} md={8}>
-                        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                            <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 200 }}>
-                                <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
-                                <TextField
-                                    size="small"
-                                    label="Search Class Name"
-                        value={nameSearch}
-                        onChange={handleNameSearchChange}
-                                    placeholder="Enter class name..."
-                                    variant="outlined"
-                                    sx={{ minWidth: 200 }}
-                                />
-                            </Box>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={showActiveOnly}
-                                        onChange={handleShowActiveOnlyChange}
-                                        sx={{ color: '#fb5233', '&.Mui-checked': { color: '#fb5233' } }}
-                                    />
-                                }
-                                label="Show Active Classes Only"
-                                sx={{ ml: 2 }}
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                width: '100%',
+                                px: 2,
+                                py: 1.25,
+                                borderRadius: 999,
+                                border: '1px solid #e5e7eb',
+                                bgcolor: '#f9fafb',
+                                '&:focus-within': { borderColor: '#cbd5e1' }
+                            }}
+                        >
+                            <InputBase
+                                placeholder="Search classes..."
+                                value={nameSearch}
+                                onChange={handleNameSearchChange}
+                                sx={{ flex: 1, fontSize: '0.95rem' }}
+                                inputProps={{ 'aria-label': 'search classes' }}
                             />
-                        </Stack>
+                        </Box>
                     </Grid>
 
                     {/* Create Group Button */}
@@ -155,13 +186,15 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
                             onClick={toggleCreateGroupForm}
                             sx={{ 
                                 px: 3,
-                                py: 1.5,
+                                py: 1.25,
                                 borderRadius: 2,
                                 textTransform: 'none',
-                                fontSize: '1rem',
+                                fontSize: '0.95rem',
                                 backgroundColor: '#fb5233',
+                                boxShadow: 'none',
                                 '&:hover': {
-                                    backgroundColor: '#e64a19'
+                                    backgroundColor: '#e64a19',
+                                    boxShadow: 'none'
                                 }
                             }}
                         >
@@ -189,11 +222,11 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
                         autoFocus
                         margin="dense"
                         label="Class Name"
-                                type="text"
+                        type="text"
                         fullWidth
                         variant="outlined"
-                                value={newGroupName}
-                                onChange={handleGroupNameChange}
+                        value={newGroupName}
+                        onChange={handleGroupNameChange}
                         placeholder="Enter class name..."
                         sx={{ mt: 2 }}
                     />
@@ -203,6 +236,7 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
                         onClick={handleCancel}
                         startIcon={<CloseIcon />}
                         variant="outlined"
+                        sx={{ borderRadius: 2 }}
                     >
                         Cancel
                     </Button>
@@ -213,8 +247,11 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
                         disabled={!newGroupName.trim()}
                         sx={{
                             backgroundColor: '#fb5233',
+                            borderRadius: 2,
+                            boxShadow: 'none',
                             '&:hover': {
-                                backgroundColor: '#e64a19'
+                                backgroundColor: '#e64a19',
+                                boxShadow: 'none'
                             }
                         }}
                     >
@@ -224,85 +261,89 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
             </Dialog>
 
             {/* Groups Table */}
-            <Card sx={{ backgroundColor: 'white' }}>
-                <TableContainer component={Paper} elevation={0} sx={{ backgroundColor: 'white' }}>
+            <Card sx={{ backgroundColor: 'white', borderRadius: 2, boxShadow: 'none', border: '1px solid #e5e7eb' }}>
+                <TableContainer component={Paper} elevation={0} sx={{ backgroundColor: 'white', boxShadow: 'none' }}>
                     <Table>
                         <TableHead>
-                            <TableRow sx={{ backgroundColor: '#fb5233' }}>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
-                                    Class Name
-                                </TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
-                                    Code
-                                </TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>
-                                    Student Count
-                                </TableCell>
-                                <TableCell sx={{ color: 'white', fontWeight: 'bold', minWidth: 120 }}>
-                                    Status
-                                </TableCell>
+                            <TableRow sx={{ backgroundColor: '#1976d2' }}>
+                                <TableCell sx={{ color: 'white', fontWeight: 700 }}>Class Name</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 700 }}>Code</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 700 }}>Student Count</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 700, minWidth: 120 }}>Status</TableCell>
+                                <TableCell sx={{ color: 'white', fontWeight: 700, minWidth: 120 }}>Created</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                         {filteredGroups.length > 0 ? (
                             filteredGroups.map((group, index) => (
-                                    <TableRow 
-                                        key={index} 
-                                        onClick={() => handleClassClick(group._id)}
-                                        sx={{ 
-                                            cursor: 'pointer',
-                                            backgroundColor: 'white',
-                                            '&:hover': {
-                                                backgroundColor: '#f5f5f5',
-                                            },
-                                            transition: 'background-color 0.2s'
-                                        }}
-                                    >
-                                        <TableCell>
-                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                                <GroupIcon sx={{ mr: 1, color: '#fb5233' }} />
-                                                <Typography variant="body1" fontWeight="medium">
-                                                    {group.groupName}
-                                                </Typography>
-                                            </Box>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Chip 
-                                                label={group.classCode} 
-                                                size="small" 
-                                                variant="outlined"
-                                                sx={{ 
-                                                    borderColor: '#fb5233',
-                                                    color: '#fb5233'
-                                                }}
-                                            />
-                                        </TableCell>
-                                        <TableCell>
-                                            <Typography variant="body2">
-                                                {group.studentCount || "N/A"}
+                                <TableRow 
+                                    key={index} 
+                                    onClick={() => handleClassClick(group._id)}
+                                    sx={{ 
+                                        cursor: 'pointer',
+                                        backgroundColor: 'white',
+                                        '&:hover': { backgroundColor: '#f9fafb' },
+                                        transition: 'background-color 0.2s',
+                                        borderBottom: '1px solid #eef2f7'
+                                    }}
+                                >
+                                    <TableCell>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            <GroupIcon sx={{ color: '#fb5233' }} />
+                                            <Typography variant="body1" fontWeight={600} sx={{ color: '#111827' }}>
+                                                {group.groupName}
                                             </Typography>
-                                        </TableCell>
-                                        <TableCell sx={{ minWidth: 120 }}>
-                                            <Chip
-                                                label={group.active ? "Active" : "Inactive"}
-                                                color={group.active ? "success" : "default"}
-                                                size="small"
-                                                variant={group.active ? "filled" : "outlined"}
-                                                sx={{
-                                                    maxWidth: '100%',
-                                                    '& .MuiChip-label': {
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
+                                        </Box>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip 
+                                            label={group.classCode} 
+                                            size="small" 
+                                            variant="outlined"
+                                            sx={{ borderColor: '#fb5233', color: '#fb5233', borderRadius: 1 }}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="body2" sx={{ color: '#374151' }}>
+                                            {group.studentCount || "N/A"}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ minWidth: 120 }}>
+                                        <Chip
+                                            label={group.active ? "Active" : "Inactive"}
+                                            color={group.active ? "success" : "default"}
+                                            size="small"
+                                            variant={group.active ? "filled" : "outlined"}
+                                            sx={{ borderRadius: 1 }}
+                                        />
+                                    </TableCell>
+                                    <TableCell sx={{ minWidth: 120 }}>
+                                        <Tooltip title={(() => {
+                                            if (group.createdAt) {
+                                                return new Date(group.createdAt).toLocaleDateString();
+                                            } else if (group._id) {
+                                                try {
+                                                    const timestamp = parseInt(group._id.toString().substring(0, 8), 16) * 1000;
+                                                    const date = new Date(timestamp);
+                                                    if (!isNaN(date.getTime())) {
+                                                        return date.toLocaleDateString();
                                                     }
-                                                }}
-                                            />
-                                        </TableCell>
-                                    </TableRow>
+                                                } catch (e) {
+                                                    // Ignore errors
+                                                }
+                                            }
+                                            return 'Date not available';
+                                        })()}>
+                                            <Typography variant="body2" sx={{ color: '#374151' }}>
+                                                {formatCreationDate(group.createdAt, group._id)}
+                                            </Typography>
+                                        </Tooltip>
+                                    </TableCell>
+                                </TableRow>
                             ))
                         ) : (
                                 <TableRow sx={{ backgroundColor: 'white' }}>
-                                    <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
+                                    <TableCell colSpan={5} sx={{ textAlign: 'center', py: 4 }}>
                                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                             <SchoolIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
                                             <Typography variant="h6" color="text.secondary">

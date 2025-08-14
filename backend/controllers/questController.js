@@ -5,24 +5,94 @@ const Professor = require("../models/ProfessorModel");
 
 // Helper functions for generating responses
 const generateAcceptResponse = (taskData) => {
-    return `**Objective:** ${taskData.objective || 'Learn about this topic'}
-
-**Task:** ${taskData.description || 'Complete the task as described'}
-
-**Options:**
-A) ${taskData.options[0] || 'Option A'}
-B) ${taskData.options[1] || 'Option B'}
-C) ${taskData.options[2] || 'Option C'}
-D) ${taskData.options[3] || 'Option D'}
-
-**Outcome:** ${taskData.outcome || 'You will understand this concept better'}
-
-**Help:** ${taskData.helpText || 'Type "help" for hints if needed'}
-
-Choose the option that best answers the question.`;
+    // Handle quiz tasks with multiple questions
+    if (taskData.type === 'quiz') {
+        let quizContent = `**Objective:** ${taskData.objective || 'Test your knowledge'}\n\n**Task:** ${taskData.description || 'Answer the following questions to test your knowledge'}\n\n`;
+        
+        // Add instructions for quiz format
+        quizContent += `**Instructions:** Answer all questions and submit your answers in the format [a,b,c,d,e] where each letter corresponds to your answer for each question.\n\n**Example:** If you think the answers are A, C, B, D, E, type: [a,c,b,d,e]\n\n`;
+        
+        // Process each question
+        if (taskData.questions && Array.isArray(taskData.questions)) {
+            taskData.questions.forEach((question, index) => {
+                if (question.question) {
+                    quizContent += `**Question ${index + 1}:** ${question.question}\n\n`;
+                    if (question.optionA) quizContent += `A) ${question.optionA}\n`;
+                    if (question.optionB) quizContent += `B) ${question.optionB}\n`;
+                    if (question.optionC) quizContent += `C) ${question.optionC}\n`;
+                    if (question.optionD) quizContent += `D) ${question.optionD}\n`;
+                    quizContent += `\n`;
+                }
+            });
+        }
+        
+        quizContent += `**Outcome:** ${taskData.outcome || 'You will demonstrate your understanding of the material'}\n\n**Help:** ${taskData.helpText || 'Type "help" for hints if needed'}\n\nSubmit your answers in the format [a,b,c,d,e] where each letter is your answer choice.`;
+        return quizContent;
+    }
+    
+    // Handle get-issue-count and similar metric-based tasks
+    if (taskData.type === 'get-issue-count' || taskData.type === 'get-open-issue') {
+        const repository = taskData.ossRepository || taskData.config?.ossRepository || '[repository]';
+        return `**Objective:** ${taskData.objective || 'Analyze a GitHub repository'}\n\n**Task:** Go to the repository ${repository} and count the number of open issues. Reply with the number.\n\n**Help:** Look for the 'Issues' tab on the repository page. Make sure you're counting issues, not pull requests.`;
+    }
+    if (taskData.type === 'get-pr-count') {
+        const repository = taskData.ossRepository || taskData.config?.ossRepository || '[repository]';
+        return `**Objective:** ${taskData.objective || 'Analyze a GitHub repository'}\n\n**Task:** Go to the repository ${repository} and count the number of open pull requests. Reply with the number.\n\n**Help:** Look for the 'Pull requests' tab on the repository page. Make sure you're counting pull requests, not issues.`;
+    }
+    if (taskData.type === 'get-issue-title') {
+        const repository = taskData.ossRepository || taskData.config?.ossRepository || '[repository]';
+        const issueNumber = taskData.issueNumber || taskData.config?.issueNumber || '[issue number]';
+        return `**Objective:** ${taskData.objective || 'Explore GitHub issues'}\n\n**Task:** Go to the repository ${repository} and find the title of the issue with number ${issueNumber}. Reply with the exact title.\n\n**Help:** Use the Issues tab and search for the issue number.`;
+    }
+    if (taskData.type === 'get-top-contributor') {
+        const repository = taskData.ossRepository || taskData.config?.ossRepository || '[repository]';
+        return `**Objective:** ${taskData.objective || 'Analyze repository contributors'}\n\n**Task:** Go to the repository ${repository} and find the top contributor (the user with the most commits). Reply with their GitHub username.\n\n**Help:** Use the Insights > Contributors page on GitHub.`;
+    }
+    if (taskData.type === 'llm-text-validation') {
+        const question = taskData.llmTextValidation?.question || taskData.config?.llmTextValidation?.question || taskData.question || 'Answer the following question:';
+        const parameters = taskData.llmTextValidation?.validationParameters || taskData.config?.llmTextValidation?.validationParameters || [];
+        let parameterText = '';
+        if (parameters && parameters.length > 0) {
+            parameterText = '\n\n**Required Criteria:**\n' + parameters.map((param, idx) => `${idx + 1}. ${param}`).join('\n');
+        }
+        return `**Objective:** ${taskData.objective || 'Answer the question using AI validation'}\n\n**Task:** ${question}${parameterText}\n\n**Instructions:** Provide a detailed answer that addresses all the required criteria. The AI will evaluate your response based on the specified parameters.\n\n**Help:** Make sure your answer is comprehensive and covers all the required points.`;
+    }
+    // Default (MCQ)
+    return `**Objective:** ${taskData.objective || 'Learn about this topic'}\n\n**Task:** ${taskData.description || 'Complete the task as described'}\n\n**Options:**\nA) ${taskData.options?.[0] || 'Option A'}\nB) ${taskData.options?.[1] || 'Option B'}\nC) ${taskData.options?.[2] || 'Option C'}\nD) ${taskData.options?.[3] || 'Option D'}\n\n**Outcome:** ${taskData.outcome || 'You will understand this concept better'}\n\n**Help:** ${taskData.helpText || 'Type "help" for hints if needed'}\n\nChoose the option that best answers the question.`;
 };
 
 const generateErrorResponse = (taskData) => {
+    if (taskData.type === 'quiz') {
+        return `❌ **Quiz Submission Error**
+
+Please check your answer format and try again.
+
+**Required format:** [a,b,c,d,e] where each letter is your answer choice.
+
+**Example:** [a,c,b,d,e]
+
+**Hint:** ${taskData.helpText || 'Make sure you have the correct number of answers and they are in the right format'}
+
+You can type "help" for additional hints (though it may cost you points).`;
+    }
+    
+    if (taskData.type === 'llm-text-validation') {
+        const parameters = taskData.llmTextValidation?.validationParameters || taskData.config?.llmTextValidation?.validationParameters || [];
+        let parameterText = '';
+        if (parameters && parameters.length > 0) {
+            parameterText = '\n\n**Required Criteria:**\n' + parameters.map((param, idx) => `${idx + 1}. ${param}`).join('\n');
+        }
+        return `❌ **Answer Validation Failed**
+
+Your answer didn't meet all the required criteria. Please review the question and try again.
+
+**Required Criteria:**${parameterText}
+
+**Hint:** ${taskData.helpText || 'Make sure your answer addresses all the required points comprehensively'}
+
+You can type "help" for additional hints (though it may cost you points).`;
+    }
+    
     return `❌ **Incorrect Answer**
 
 That's not the right answer. Please review the question and try again.
@@ -33,6 +103,34 @@ You can type "help" for additional hints (though it may cost you points).`;
 };
 
 const generateSuccessResponse = (taskData) => {
+    if (taskData.type === 'quiz') {
+        return `✅ **Quiz Completed!**
+
+Excellent work! You've completed the quiz.
+
+**What you learned:** ${taskData.outcome || 'You now understand this concept better'}
+
+**Points earned:** ${taskData.points || 100}
+
+You correctly answered {correctCount} out of ${taskData.questions?.length || 0} questions! 🎯
+
+You're making excellent progress! 🎉`;
+    }
+    
+    if (taskData.type === 'llm-text-validation') {
+        return `✅ **Answer Validated Successfully!**
+
+Excellent work! Your answer has been validated by AI and meets all the required criteria.
+
+**What you learned:** ${taskData.outcome || 'You now understand this concept better'}
+
+**Points earned:** ${taskData.points || 100}
+
+**AI Validation:** Your response was comprehensive and addressed all the required points! 🤖✨
+
+You're making excellent progress! 🎉`;
+    }
+    
     return `✅ **Correct Answer!**
 
 Great job! You've successfully completed this task.
@@ -76,6 +174,31 @@ const uploadMCQQuest = async (req, res) => {
 
         // Create tasks for the quest
         for (const taskData of tasks) {
+            // Determine answer and answerType based on task type
+            let answer = '';
+            let answerType = '';
+            if (taskData.type === 'multiple-choice' || !taskData.type) {
+                answer = taskData.correctAnswer;
+                answerType = 'singleAnswer';
+            } else if (taskData.type === 'quiz') {
+                answer = Array.isArray(taskData.correctAnswers) ? taskData.correctAnswers.join(',') : (taskData.correctAnswers || '');
+                answerType = 'multipleAnswers';
+            } else if (taskData.type === 'get-issue-count' || taskData.type === 'get-pr-count' || taskData.type === 'get-open-issue' || taskData.type === 'get-top-contributor' || taskData.type === 'get-issue-title') {
+                answer = '';
+                answerType = 'metric';
+            } else if (taskData.type === 'text-input') {
+                answer = taskData.expectedAnswer || '';
+                answerType = 'singleAnswer';
+            } else if (taskData.type === 'custom-api-call') {
+                answer = '';
+                answerType = 'custom';
+            } else if (taskData.type === 'llm-text-validation') {
+                answer = '';
+                answerType = 'llm-validation';
+            } else {
+                answer = taskData.correctAnswer || '';
+                answerType = 'singleAnswer';
+            }
             const newTask = new Task({
                 taskTitle: taskData.title,
                 quest: newQuest._id,
@@ -86,8 +209,26 @@ const uploadMCQQuest = async (req, res) => {
                 helpText: taskData.helpText,
                 points: taskData.points || 100,
                 xp: taskData.points || 100,
-                answer: taskData.correctAnswer,
-                answerType: 'singleAnswer',
+                answer,
+                answerType,
+                type: taskData.type,
+                ossRepository: taskData.ossRepository || taskData.config?.ossRepository,
+                issueNumber: taskData.issueNumber || taskData.config?.issueNumber,
+                // Custom API call fields
+                apiEndpoint: taskData.apiEndpoint || taskData.config?.apiEndpoint || '',
+                responsePath: taskData.responsePath || taskData.config?.responsePath || '',
+                expectedAnswerType: taskData.expectedAnswerType || taskData.config?.expectedAnswerType || 'Number',
+                repository: taskData.repository || taskData.config?.repository || '',
+                // Tolerance fields
+                enableTolerance: taskData.enableTolerance || taskData.config?.enableTolerance || false,
+                toleranceRange: taskData.toleranceRange || taskData.config?.toleranceRange || 10,
+                // LLM Text Validation fields
+                llmTextValidation: {
+                    question: taskData.llmTextValidation?.question || taskData.config?.llmTextValidation?.question || '',
+                    validationParameters: taskData.llmTextValidation?.validationParameters || taskData.config?.llmTextValidation?.validationParameters || [],
+                    temperature: taskData.llmTextValidation?.temperature || taskData.config?.llmTextValidation?.temperature || 0.1,
+                    enableDetailedFeedback: taskData.llmTextValidation?.enableDetailedFeedback || taskData.config?.llmTextValidation?.enableDetailedFeedback || false
+                },
                 responses: {
                     accept: generateAcceptResponse(taskData),
                     error: generateErrorResponse(taskData),
@@ -285,6 +426,31 @@ const updateQuest = async (req, res) => {
 
         // Create new tasks
         for (const taskData of tasks) {
+            // Determine answer and answerType based on task type
+            let answer = '';
+            let answerType = '';
+            if (taskData.type === 'multiple-choice' || !taskData.type) {
+                answer = taskData.correctAnswer;
+                answerType = 'singleAnswer';
+            } else if (taskData.type === 'quiz') {
+                answer = Array.isArray(taskData.correctAnswers) ? taskData.correctAnswers.join(',') : (taskData.correctAnswers || '');
+                answerType = 'multipleAnswers';
+            } else if (taskData.type === 'get-issue-count' || taskData.type === 'get-pr-count' || taskData.type === 'get-open-issue' || taskData.type === 'get-top-contributor' || taskData.type === 'get-issue-title') {
+                answer = '';
+                answerType = 'metric';
+            } else if (taskData.type === 'text-input') {
+                answer = taskData.expectedAnswer || '';
+                answerType = 'singleAnswer';
+            } else if (taskData.type === 'custom-api-call') {
+                answer = '';
+                answerType = 'custom';
+            } else if (taskData.type === 'llm-text-validation') {
+                answer = '';
+                answerType = 'llm-validation';
+            } else {
+                answer = taskData.correctAnswer || '';
+                answerType = 'singleAnswer';
+            }
             const newTask = new Task({
                 taskTitle: taskData.title,
                 quest: questId,
@@ -295,8 +461,26 @@ const updateQuest = async (req, res) => {
                 helpText: taskData.helpText,
                 points: taskData.points || 100,
                 xp: taskData.points || 100,
-                answer: taskData.correctAnswer,
-                answerType: 'singleAnswer',
+                answer,
+                answerType,
+                type: taskData.type,
+                ossRepository: taskData.ossRepository || taskData.config?.ossRepository,
+                issueNumber: taskData.issueNumber || taskData.config?.issueNumber,
+                // Custom API call fields
+                apiEndpoint: taskData.apiEndpoint || taskData.config?.apiEndpoint || '',
+                responsePath: taskData.responsePath || taskData.config?.responsePath || '',
+                expectedAnswerType: taskData.expectedAnswerType || taskData.config?.expectedAnswerType || 'Number',
+                repository: taskData.repository || taskData.config?.repository || '',
+                // Tolerance fields
+                enableTolerance: taskData.enableTolerance || taskData.config?.enableTolerance || false,
+                toleranceRange: taskData.toleranceRange || taskData.config?.toleranceRange || 10,
+                // LLM Text Validation fields
+                llmTextValidation: {
+                    question: taskData.llmTextValidation?.question || taskData.config?.llmTextValidation?.question || '',
+                    validationParameters: taskData.llmTextValidation?.validationParameters || taskData.config?.llmTextValidation?.validationParameters || [],
+                    temperature: taskData.llmTextValidation?.temperature || taskData.config?.llmTextValidation?.temperature || 0.1,
+                    enableDetailedFeedback: taskData.llmTextValidation?.enableDetailedFeedback || taskData.config?.llmTextValidation?.enableDetailedFeedback || false
+                },
                 responses: {
                     accept: generateAcceptResponse(taskData),
                     error: generateErrorResponse(taskData),
@@ -370,9 +554,109 @@ const updateQuest = async (req, res) => {
     }
 };
 
+// Get quest by ID with populated tasks
+const getQuestById = async (req, res) => {
+    try {
+        const { questId } = req.params;
+        
+        const quest = await Quest.findById(questId).populate({
+            path: 'tasks',
+            model: 'Task'
+        });
+        
+        if (!quest) {
+            return res.status(404).json({
+                success: false,
+                message: "Quest not found"
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: quest
+        });
+    } catch (error) {
+        console.error("Error fetching quest by ID:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching quest",
+            error: error.message
+        });
+    }
+};
+
+// Get quest task types analysis
+const getQuestTaskTypes = async (req, res) => {
+    try {
+        const { questId } = req.params;
+        
+        const quest = await Quest.findById(questId).populate({
+            path: 'tasks',
+            model: 'Task'
+        });
+        
+        if (!quest) {
+            return res.status(404).json({
+                success: false,
+                message: "Quest not found"
+            });
+        }
+        
+        // Analyze task types
+        const taskTypes = quest.tasks.map(task => ({
+            taskId: task._id,
+            taskTitle: task.taskTitle,
+            type: task.type,
+            answerType: task.answerType,
+            ossRepository: task.ossRepository
+        }));
+        
+        // Count task types
+        const typeCounts = {};
+        quest.tasks.forEach(task => {
+            const type = task.type || 'unknown';
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
+        });
+        
+        // Determine overall quest type
+        const uniqueTypes = Object.keys(typeCounts);
+        let questType = 'unknown';
+        if (uniqueTypes.length === 1) {
+            const singleType = uniqueTypes[0];
+            if (singleType === 'multiple-choice') questType = 'mcq';
+            else if (['get-issue-count', 'get-pr-count', 'get-open-issue', 'get-top-contributor', 'get-issue-title'].includes(singleType)) questType = 'metric';
+            else questType = singleType;
+        } else if (uniqueTypes.length > 1) {
+            questType = 'mixed';
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: {
+                questId: quest._id,
+                questTitle: quest.questTitle,
+                totalTasks: quest.tasks.length,
+                questType: questType,
+                taskTypes: taskTypes,
+                typeCounts: typeCounts,
+                uniqueTypes: uniqueTypes
+            }
+        });
+    } catch (error) {
+        console.error("Error analyzing quest task types:", error);
+        res.status(500).json({
+            success: false,
+            message: "Error analyzing quest task types",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     uploadMCQQuest,
     getQuestsByProfessor,
     deleteQuest,
-    updateQuest
+    updateQuest,
+    getQuestById,
+    getQuestTaskTypes
 }; 

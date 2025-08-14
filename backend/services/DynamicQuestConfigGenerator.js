@@ -98,7 +98,7 @@ class DynamicQuestConfigGenerator {
 
     async getCustomQuestData(questItem) {
         try {
-            // Fetch from MongoDB quests collection
+            // Fetch from MongoDB quests collection - this should include populated tasks
             const response = await axios.get(`${this.baseURL}/api/quest/${questItem.questId}`);
             
             if (!response.data.success) {
@@ -106,6 +106,12 @@ class DynamicQuestConfigGenerator {
             }
             
             const customQuest = response.data.data;
+            console.log(`[getCustomQuestData] Fetched quest data:`, {
+                questId: customQuest._id,
+                title: customQuest.questTitle,
+                tasksCount: customQuest.tasks ? customQuest.tasks.length : 0,
+                taskTypes: customQuest.tasks ? customQuest.tasks.map(t => t.type || 'unknown') : []
+            });
             
             // Transform MongoDB format to config format
             return {
@@ -116,7 +122,7 @@ class DynamicQuestConfigGenerator {
                 sequenceNumber: questItem.sequenceNumber,
                 isQ0: questItem.isQ0,
                 prerequisites: questItem.prerequisites || [],
-                tasks: await this.transformCustomTasks(customQuest.tasks),
+                tasks: await this.transformCustomTasks(customQuest.tasks || []),
                 metadata: {
                     source: 'mongodb',
                     professorId: customQuest.professor,
@@ -130,52 +136,127 @@ class DynamicQuestConfigGenerator {
         }
     }
 
-    async transformCustomTasks(mongoTasks) {
-        if (!mongoTasks || !Array.isArray(mongoTasks)) {
+    async transformCustomTasks(tasks) {
+        if (!tasks || !Array.isArray(tasks)) {
+            console.warn('[transformCustomTasks] No tasks provided or not an array');
             return [];
         }
 
         const transformedTasks = [];
         
-        for (const taskRef of mongoTasks) {
+        for (const task of tasks) {
             try {
-                // Fetch individual task data
-                const taskResponse = await axios.get(`${this.baseURL}/api/task/${taskRef}`);
-                const task = taskResponse.data.data;
+                // Handle case where task might be a populated object or just an ID
+                let taskData = task;
                 
-                transformedTasks.push({
-                    id: task._id,
-                    title: task.taskTitle,
-                    description: task.desc,
-                    objective: this.extractFieldFromResponse(task.responses?.accept, 'Objective'),
-                    outcome: this.extractFieldFromResponse(task.responses?.accept, 'Outcome'),
-                    helpText: this.extractFieldFromResponse(task.responses?.accept, 'Help'),
-                    points: task.points,
-                    xp: task.xp,
-                    type: this.determineTaskType(task),
-                    config: this.buildTaskConfig(task),
-                    hints: task.hints || [],
-                    responses: {
-                        accept: task.responses?.accept,
-                        error: task.responses?.error,
-                        success: task.responses?.success
-                    }
+                // If task is just an ObjectId string, we need to fetch it
+                // For now, let's assume the quest API returns populated task data
+                if (typeof task === 'string') {
+                    console.warn(`[transformCustomTasks] Task is just an ID: ${task}, skipping...`);
+                    continue;
+                }
+                
+                console.log(`[transformCustomTasks] Processing task:`, {
+                    id: taskData._id,
+                    title: taskData.taskTitle,
+                    type: taskData.type,
+                    answerType: taskData.answerType,
+                    ossRepository: taskData.ossRepository,
+                    apiEndpoint: taskData.apiEndpoint,
+                    responsePath: taskData.responsePath,
+                    expectedAnswerType: taskData.expectedAnswerType,
+                    repository: taskData.repository
                 });
+                
+                const type = this.determineTaskType(taskData);
+                const config = this.buildTaskConfig(taskData);
+                
+                const transformed = {
+                    id: taskData._id,
+                    title: taskData.taskTitle,
+                    description: taskData.desc,
+                    objective: taskData.objective || this.extractFieldFromResponse(taskData.responses?.accept, 'Objective'),
+                    outcome: taskData.outcome || this.extractFieldFromResponse(taskData.responses?.accept, 'Outcome'),
+                    helpText: taskData.helpText || this.extractFieldFromResponse(taskData.responses?.accept, 'Help'),
+                    points: taskData.points,
+                    xp: taskData.xp,
+                    type,
+                    config,
+                    hints: taskData.hints || [],
+                    detailedHints: taskData.detailedHints || [],
+                    responses: {
+                        accept: taskData.responses?.accept,
+                        error: taskData.responses?.error,
+                        success: taskData.responses?.success
+                    }
+                };
+                
+                // For metric tasks, also set ossRepository and issueNumber at the top level
+                if (type === 'get-issue-count' || type === 'get-pr-count' || type === 'get-open-issue' || type === 'get-top-contributor') {
+                    transformed.ossRepository = taskData.ossRepository || config.ossRepository || '';
+                    console.log(`[transformCustomTasks] Added ossRepository for ${type}: ${transformed.ossRepository}`);
+                }
+                if (type === 'get-issue-title') {
+                    transformed.ossRepository = taskData.ossRepository || config.ossRepository || '';
+                    transformed.issueNumber = taskData.issueNumber || config.issueNumber || '';
+                    console.log(`[transformCustomTasks] Added ossRepository and issueNumber for ${type}: ${transformed.ossRepository}, ${transformed.issueNumber}`);
+                }
+                if (type === 'custom-api-call') {
+                    transformed.apiEndpoint = taskData.apiEndpoint || config.apiEndpoint || '';
+                    transformed.responsePath = taskData.responsePath || config.responsePath || '';
+                    transformed.expectedAnswerType = taskData.expectedAnswerType || config.expectedAnswerType || 'Number';
+                    transformed.repository = taskData.repository || config.repository || '';
+                    transformed.saveValidatedData = taskData.saveValidatedData || config.saveValidatedData || false;
+                    transformed.savedDataName = taskData.savedDataName || config.savedDataName || '';
+                    console.log(`[transformCustomTasks] Added custom-api-call fields for ${type}:`, {
+                        apiEndpoint: transformed.apiEndpoint,
+                        responsePath: transformed.responsePath,
+                        expectedAnswerType: transformed.expectedAnswerType,
+                        repository: transformed.repository,
+                        saveValidatedData: transformed.saveValidatedData,
+                        savedDataName: transformed.savedDataName
+                    });
+                }
+                if (type === 'llm-text-validation') {
+                    transformed.llmTextValidation = {
+                        question: taskData.llmTextValidation?.question || config.llmTextValidation?.question || '',
+                        validationParameters: taskData.llmTextValidation?.validationParameters || config.llmTextValidation?.validationParameters || [],
+                        temperature: taskData.llmTextValidation?.temperature || config.llmTextValidation?.temperature || 0.1,
+                        enableDetailedFeedback: taskData.llmTextValidation?.enableDetailedFeedback || config.llmTextValidation?.enableDetailedFeedback || false
+                    };
+                    console.log(`[transformCustomTasks] Added llm-text-validation fields for ${type}:`, {
+                        question: transformed.llmTextValidation.question,
+                        validationParameters: transformed.llmTextValidation.validationParameters,
+                        temperature: transformed.llmTextValidation.temperature,
+                        enableDetailedFeedback: transformed.llmTextValidation.enableDetailedFeedback
+                    });
+                }
+                
+                transformedTasks.push(transformed);
             } catch (error) {
-                console.error(`Error transforming task ${taskRef}:`, error);
+                console.error(`Error transforming task:`, error);
             }
         }
         
+        console.log(`[transformCustomTasks] Transformed ${transformedTasks.length} tasks`);
         return transformedTasks;
     }
 
     determineTaskType(task) {
+        // First, check if task has an explicit type field (most reliable)
+        if (task.type) {
+            return task.type;
+        }
+        
+        // Fallback to answerType-based logic for legacy tasks
         if (task.answerType === 'singleAnswer' && task.answer && ['a', 'b', 'c', 'd'].includes(task.answer.toLowerCase())) {
             return 'multiple-choice';
         } else if (task.answerType === 'multipleAnswers') {
             return 'quiz';
         } else if (task.answerType === 'metric') {
-            return 'github-api';
+            return 'get-issue-count'; // Default metric type
+        } else if (task.answerType === 'llm-validation') {
+            return 'llm-text-validation';
         } else {
             return 'text-input';
         }
@@ -184,19 +265,67 @@ class DynamicQuestConfigGenerator {
     buildTaskConfig(task) {
         const config = {};
         
-        if (task.answerType === 'singleAnswer' && task.answer && ['a', 'b', 'c', 'd'].includes(task.answer.toLowerCase())) {
+        // Handle based on actual task type first
+        const taskType = this.determineTaskType(task);
+        
+        if (taskType === 'multiple-choice') {
             // Parse options from the accept response
             const options = this.parseOptionsFromResponse(task.responses?.accept);
             
-            config.correctAnswer = task.answer.toLowerCase();
+            config.correctAnswer = task.answer?.toLowerCase() || 'a';
             config.optionA = options[0] || '';
             config.optionB = options[1] || '';
             config.optionC = options[2] || '';
             config.optionD = options[3] || '';
             config.question = this.extractQuestionFromResponse(task.responses?.accept);
-        } else if (task.answerType === 'metric') {
-            config.apiCallType = task.apiCallType || 'issue-count';
+        } else if (taskType === 'get-issue-count' || taskType === 'get-pr-count' || 
+                   taskType === 'get-open-issue' || taskType === 'get-top-contributor' || 
+                   taskType === 'get-issue-title') {
+            // Metric tasks
             config.ossRepository = task.ossRepository || '';
+            if (taskType === 'get-issue-title') {
+                config.issueNumber = task.issueNumber || '';
+            }
+        } else if (taskType === 'text-input') {
+            config.expectedAnswer = task.expectedAnswer || '';
+        } else if (taskType === 'quiz') {
+            config.questionCount = task.questionCount || 5;
+            config.correctAnswers = task.correctAnswers || '';
+        } else if (taskType === 'custom-api-call') {
+            console.log(`[buildTaskConfig] Building custom-api-call config for task:`, {
+                apiEndpoint: task.apiEndpoint,
+                responsePath: task.responsePath,
+                expectedAnswerType: task.expectedAnswerType,
+                repository: task.repository,
+                saveValidatedData: task.saveValidatedData,
+                savedDataName: task.savedDataName
+            });
+            config.apiEndpoint = task.apiEndpoint || '';
+            config.responsePath = task.responsePath || '';
+            config.expectedAnswerType = task.expectedAnswerType || 'Number';
+            config.repository = task.repository || '';
+            // New fields for per-user storage
+            if (typeof task.saveValidatedData !== 'undefined') {
+                config.saveValidatedData = !!task.saveValidatedData;
+            }
+            if (typeof task.savedDataName !== 'undefined') {
+                config.savedDataName = task.savedDataName;
+            }
+            console.log(`[buildTaskConfig] Final config:`, config);
+        } else if (taskType === 'llm-text-validation') {
+            console.log(`[buildTaskConfig] Building llm-text-validation config for task:`, {
+                question: task.llmTextValidation?.question,
+                validationParameters: task.llmTextValidation?.validationParameters,
+                temperature: task.llmTextValidation?.temperature,
+                enableDetailedFeedback: task.llmTextValidation?.enableDetailedFeedback
+            });
+            config.llmTextValidation = {
+                question: task.llmTextValidation?.question || '',
+                validationParameters: task.llmTextValidation?.validationParameters || [],
+                temperature: task.llmTextValidation?.temperature || 0.1,
+                enableDetailedFeedback: task.llmTextValidation?.enableDetailedFeedback || false
+            };
+            console.log(`[buildTaskConfig] Final config:`, config);
         }
         
         return config;
@@ -260,25 +389,117 @@ class DynamicQuestConfigGenerator {
                 }
             }
             
-            // Step 3: Create combined configuration
-            const dynamicConfig = {
+            // Step 3: Create legacy format configuration that the bot expects
+            const legacyConfig = {
+                map_repo_link: "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map"
+            };
+            
+            // Convert each quest to legacy format where quest ID is a direct property
+            for (const quest of quests.sort((a, b) => a.sequenceNumber - b.sequenceNumber)) {
+                const questId = quest.id;
+                
+                // Create quest object in legacy format
+                legacyConfig[questId] = {
                 metadata: {
+                        title: quest.title,
+                        description: quest.description,
+                        prerequisite: quest.prerequisites && quest.prerequisites.length > 0 ? quest.prerequisites[0] : null,
+                        type: quest.type
+                    }
+                };
+                
+                // Add tasks in legacy format (T1, T2, etc.)
+                if (quest.tasks && Array.isArray(quest.tasks)) {
+                    quest.tasks.forEach((task, index) => {
+                        const taskId = `T${index + 1}`;
+                        
+                        // Create base task object
+                        const legacyTask = {
+                            desc: task.description || task.title,
+                            points: task.points || 100,
+                            xp: task.xp || task.points || 100,
+                            type: task.type || 'general'
+                        };
+                        
+                        // For metric tasks, add ossRepository and issueNumber at task level
+                        if (task.type === 'get-issue-count' || task.type === 'get-pr-count' || 
+                            task.type === 'get-open-issue' || task.type === 'get-top-contributor') {
+                            legacyTask.ossRepository = task.ossRepository || task.config?.ossRepository || '';
+                            legacyTask.type = task.type; // Ensure the exact type is preserved
+                            // Persist per-user save controls for issue-count
+                            if (task.type === 'get-issue-count') {
+                                legacyTask.saveValidatedData = task.config?.saveValidatedData || false;
+                                legacyTask.savedDataName = task.config?.savedDataName || '';
+                            }
+                        }
+                        
+                        if (task.type === 'get-issue-title') {
+                            legacyTask.ossRepository = task.ossRepository || task.config?.ossRepository || '';
+                            legacyTask.issueNumber = task.issueNumber || task.config?.issueNumber || '';
+                            legacyTask.type = task.type;
+                        }
+                        
+                        if (task.type === 'issue-no') {
+                            legacyTask.repository = task.repository || task.config?.repository || '';
+                            legacyTask.type = task.type;
+                            legacyTask.saveValidatedData = task.config?.saveValidatedData || false;
+                            legacyTask.savedDataName = task.config?.savedDataName || '';
+                        }
+                        
+                        // For MCQ tasks, add options and answer
+                        if (task.type === 'multiple-choice' || task.type === 'mcq') {
+                            legacyTask.correctAnswer = task.config?.correctAnswer || 'a';
+                            legacyTask.options = [
+                                task.config?.optionA || '',
+                                task.config?.optionB || '',
+                                task.config?.optionC || '',
+                                task.config?.optionD || ''
+                            ];
+                            legacyTask.answer = task.config?.correctAnswer || 'a';
+                            legacyTask.type = 'multiple-choice';
+                        }
+                        
+                        // For text input tasks
+                        if (task.type === 'text-input') {
+                            legacyTask.expectedAnswer = task.config?.expectedAnswer || '';
+                        }
+                        
+                        // For quiz tasks
+                        if (task.type === 'quiz') {
+                            legacyTask.questionCount = task.config?.questionCount || 5;
+                            legacyTask.correctAnswers = task.config?.correctAnswers || '';
+                        }
+
+                        // For custom-api-call tasks
+                        if (task.type === 'custom-api-call') {
+                            legacyTask.saveValidatedData = task.config?.saveValidatedData || false;
+                            legacyTask.savedDataName = task.config?.savedDataName || '';
+                        }
+                        
+                        legacyConfig[questId][taskId] = legacyTask;
+                    });
+                }
+            }
+            
+            // Step 4: Save to file
+            await this.saveConfigToFile(legacyConfig);
+            
+            console.log(`✅ Dynamic config generated successfully in legacy format: ${this.outputPath}`);
+            console.log(`Generated quest IDs: ${Object.keys(legacyConfig).filter(k => k !== 'map_repo_link')}`);
+            
+            // Return metadata for API response (but save legacy format to file)
+            const metadata = {
                     generatedAt: new Date().toISOString(),
                     groupId: this.groupId,
                     totalQuests: quests.length,
                     fixedQuests: quests.filter(q => q.type === 'fixed').length,
                     customQuests: quests.filter(q => q.type === 'custom').length,
                     hasDynamicPrerequisites: true,
-                    source: 'dynamic_generator'
-                },
-                quests: quests.sort((a, b) => a.sequenceNumber - b.sequenceNumber)
+                source: 'dynamic_generator',
+                format: 'legacy_compatible'
             };
             
-            // Step 4: Save to file
-            await this.saveConfigToFile(dynamicConfig);
-            
-            console.log(`✅ Dynamic config generated successfully: ${this.outputPath}`);
-            return dynamicConfig;
+            return { ...legacyConfig, metadata };
             
         } catch (error) {
             console.error('❌ Error generating dynamic config:', error);

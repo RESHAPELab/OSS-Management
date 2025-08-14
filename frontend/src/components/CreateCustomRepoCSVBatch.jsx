@@ -193,12 +193,75 @@ export default function CreateCustomRepoCSVBatch({ customQuestConfig, classInfo 
         try {
           console.log(`⏳ [CSV-BATCH] Processing ${i + 1}/${usernames.length}: ${username}`);
           
+          // Generate quest config with real task data
+          const questConfigWithRealTasks = customQuestConfig; // Assuming customQuestConfig is the quest config
+          
           const requestBody = {
             users: [username], // Single user per request
-            customSequence: customQuestConfig,
+            customSequence: questConfigWithRealTasks,
             className: classInfo?.groupName,
             classId: classInfo?._id
           };
+
+          // 🎯 KEEP: Detailed custom quest logging for batch processing
+          console.log(`🎮 [BATCH-CUSTOM-QUESTS] Quest config for ${username}:`);
+          console.log(`🎮 [BATCH-CUSTOM-QUESTS] Full customQuestConfig:`, JSON.stringify(questConfigWithRealTasks, null, 2));
+          
+          if (questConfigWithRealTasks?.questSequence) {
+            console.log(`🎮 [BATCH-CUSTOM-QUESTS] Quest sequence breakdown for ${username}:`);
+            questConfigWithRealTasks.questSequence.forEach((quest, index) => {
+              console.log(`🎮 [BATCH-CUSTOM-QUESTS] Quest ${index + 1}:`, {
+                questId: quest.questId,
+                title: quest.title,
+                type: quest.questType,
+                isQ0: quest.isQ0,
+                sequenceNumber: quest.sequenceNumber,
+                hasMetadata: !!quest.metadata,
+                hasTasks: !!quest.tasks,
+                taskCount: quest.tasks ? Object.keys(quest.tasks).length : 0
+              });
+              
+              // Log custom quests in detail
+              if (quest.questType === 'custom') {
+                console.log(`🔥 [BATCH-CUSTOM-QUEST-DETAIL] Custom Quest "${quest.title}" for ${username}:`, {
+                  questId: quest.questId,
+                  badgeDescription: quest.badgeDescription,
+                  metadata: quest.metadata,
+                  tasks: quest.tasks
+                });
+                
+                if (quest.tasks) {
+                  console.log(`📋 [BATCH-CUSTOM-QUEST-TASKS] Tasks for "${quest.title}" (${username}):`);
+                  Object.entries(quest.tasks).forEach(([taskKey, task]) => {
+                    console.log(`📋 [BATCH-CUSTOM-QUEST-TASKS] ${taskKey}:`, {
+                      desc: task.desc,
+                      points: task.points,
+                      xp: task.xp,
+                      type: task.type,
+                      answer: task.answer,
+                      hasAccept: !!task.accept,
+                      hasSuccess: !!task.success,
+                      hasError: !!task.error,
+                      hintsCount: task.hints?.length || 0
+                    });
+                  });
+                }
+              }
+            });
+            
+            // Summary of what the bot will receive
+            const batchCustomQuests = questConfigWithRealTasks.questSequence.filter(q => q.questType === 'custom');
+            const batchFixedQuests = questConfigWithRealTasks.questSequence.filter(q => q.questType === 'fixed');
+            
+            console.log(`🎯 [BATCH-BOT-SUMMARY] Bot will receive for ${username}:`, {
+              totalQuests: questConfigWithRealTasks.questSequence.length,
+              customQuests: batchCustomQuests.length,
+              fixedQuests: batchFixedQuests.length,
+              customQuestTitles: batchCustomQuests.map(q => q.title),
+              map_repo_link: questConfigWithRealTasks.map_repo_link,
+              hasMetadata: !!questConfigWithRealTasks.metadata
+            });
+          }
 
           const response = await fetch("/api/repo/createCustomRepos", {
             method: "POST",
@@ -497,7 +560,7 @@ export default function CreateCustomRepoCSVBatch({ customQuestConfig, classInfo 
               {customQuestConfig?.questSequence?.length || 0} quests configured
             </Typography>
             <Typography variant="body2" sx={{ mt: 1 }}>
-              Repository naming pattern: <strong>{classInfo?.groupName ? `username-${classInfo.groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}` : 'username-custom-oss-doorway'}</strong>
+              Repository naming pattern: <strong>{classInfo?.groupName?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-username</strong>
             </Typography>
           </Alert>
 

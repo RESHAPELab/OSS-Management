@@ -27,8 +27,14 @@ async function getQuestRoadmapFromGitHub(classId = null) {
         
         // Get all repositories in the organization
         console.log('\n3. Fetching all repositories...');
+        let allRepos = [];
+        let page = 1;
+        const perPage = 100;
+        let keepFetching = true;
+        
+        while (keepFetching) {
         const reposResponse = await axios.get(
-            `https://api.github.com/orgs/${organizationGh}/repos`,
+                `https://api.github.com/orgs/${organizationGh}/repos?per_page=${perPage}&page=${page}`,
             {
                 headers: {
                     Authorization: `Bearer ${githubToken}`,
@@ -37,7 +43,17 @@ async function getQuestRoadmapFromGitHub(classId = null) {
             }
         );
         
-        const allRepos = reposResponse.data;
+            const fetched = reposResponse.data;
+            console.log(`📄 Page ${page}: fetched ${Array.isArray(fetched) ? fetched.length : 0} repos`);
+            allRepos = allRepos.concat(fetched);
+            
+            if (!Array.isArray(fetched) || fetched.length < perPage) {
+                keepFetching = false;
+            } else {
+                page++;
+            }
+        }
+        
         console.log(`✅ Total repositories: ${allRepos.length}`);
         
         // Filter student repositories (class-name-username pattern)

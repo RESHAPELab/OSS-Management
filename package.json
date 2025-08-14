@@ -17,7 +17,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.10.0",
     "nodemailer": "^6.9.16",
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "yargs": "^17.7.2"
   },
   "scripts": {
     "start": "cross-env NODE_ENV=production concurrently npm:frontend npm:backend",

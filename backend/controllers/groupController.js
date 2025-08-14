@@ -5,6 +5,10 @@ const Student = require("../models/StudentModel");
 const Professor = require('../models/ProfessorModel')
 const Group = require('../models/GroupModel')
 const Readme = require("../models/ReadmeModel");
+const fs = require('fs');
+const path = require('path');
+const { MongoClient } = require('mongodb');
+const UserStoredData = require('../models/UserStoredData');
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -78,6 +82,7 @@ const createGroup = async (req, res) =>  {
 
         if (newGroup) {
             res.status(201).json({
+                _id: newGroup._id, // Add the _id field
                 professorID: newGroup.professor, 
                 groupName: newGroup.groupName,
                 classCode: newGroup.classCode,
@@ -99,13 +104,24 @@ const getGroups = async (req, res) => {
     const { professorID } = req.params;
 
     try{ 
-        const prof = await Professor.findById(professorID).populate('ownedGroups');
+        const prof = await Professor.findById(professorID).populate({
+            path: 'ownedGroups',
+            select: 'groupName classCode active students createdAt updatedAt',
+            options: { sort: { createdAt: -1 } } // Sort by creation date descending
+        });
+        
         if (!prof) { 
             return res.status(400).json({error: "No professor provided"})
         }
 
+        // Add student count to each group
+        const groupsWithCount = prof.ownedGroups.map(group => ({
+            ...group.toObject(),
+            studentCount: group.students ? group.students.length : 0
+        }));
+
         res.status(200).json({
-            groups: prof.ownedGroups
+            groups: groupsWithCount
         });
         
     } catch(error) { 
@@ -299,7 +315,7 @@ const removeQuestFromGroup = async(req, res) => {
 
 // update a specific quest
 const updateQuest = async(req, res) => { 
-    const { professorID, questID } = req.params;
+    const { professorID, groupID, questID } = req.params;
     const { questTitle, prerequisites } = req.body; 
 
     try{ 
@@ -1092,42 +1108,339 @@ const getClassIdFromRepo = async (req, res) => {
         const match = repoName.match(/^cs-(\d+)-(\w+)-(\w+)-(.+)$/);
         
         if (!match) {
-            return res.status(404).json({
-                success: false,
-                message: 'Repository name does not match expected pattern'
-            });
+            // Fallback: resolve by group name suffix pattern '<anything>-<groupNameLower>'
+            const parts = String(repoName).split('-');
+            if (parts.length >= 2) {
+                const groupNameLower = parts[parts.length - 1];
+                // Try to find a group whose name matches case-insensitively
+                const group = await Group.findOne({ groupName: new RegExp(`^${groupNameLower}$`, 'i') }).select('_id groupName');
+                if (group) {
+                    return res.status(200).json({ success: true, data: { classId: group._id, groupName: group.groupName } });
+                }
+            }
+            return res.status(404).json({ success: false, message: 'Unable to resolve class from repository name' });
         }
         
         const [, courseNumber, subject, courseName] = match;
         const classCode = `${courseNumber}-${subject}-${courseName}`;
         
         // Find the group with this class code
-        const group = await Group.findOne({ classCode, isActive: true });
+        const group = await Group.findOne({ classCode });
+        if (!group) {
+            return res.status(404).json({ success: false, message: 'Class not found for repo' });
+        }
         
+        return res.status(200).json({ success: true, data: { classId: group._id, classCode } });
+    } catch (error) {
+        console.error('Error resolving class ID from repo:', error);
+        return res.status(500).json({ success: false, message: 'Error resolving class ID', error: error.message });
+    }
+};
+
+// Save quest JSON configuration for a class
+const saveQuestJsonConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const { questJsonConfig } = req.body;
+
+        console.log(`💾 [saveQuestJsonConfig] Saving quest JSON for class: ${classId}`);
+        console.log(`📊 [saveQuestJsonConfig] JSON size: ${JSON.stringify(questJsonConfig).length} characters`);
+
+        if (!questJsonConfig) {
+            return res.status(400).json({
+                success: false,
+                message: 'Quest JSON configuration is required'
+            });
+        }
+
+        // Validate JSON structure
+        if (!questJsonConfig.questSequence || !Array.isArray(questJsonConfig.questSequence)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid JSON structure: questSequence array is required'
+            });
+        }
+
+        // Find and update the group
+        const group = await Group.findById(classId);
         if (!group) {
             return res.status(404).json({
                 success: false,
-                message: 'No active class found for this repository pattern'
+                message: 'Class not found'
             });
         }
-        
+
+        // Update quest JSON configuration
+        group.questJsonConfig = questJsonConfig;
+        group.questJsonLastUpdated = new Date();
+        await group.save();
+
+        // Also write a legacy-compatible config file for the bot
+        try {
+            const outputDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
+            const outputPath = path.join(outputDir, `quest_config_${classId}.json`);
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            // Transform questJsonConfig.questSequence into legacy format expected by the bot
+            const legacyConfig = { map_repo_link: questJsonConfig.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map" };
+            for (const quest of questJsonConfig.questSequence) {
+                const questId = quest.questId;
+                const meta = quest.metadata || {};
+                const tasks = quest.tasks || {};
+                legacyConfig[questId] = { metadata: meta, ...tasks };
+            }
+
+            fs.writeFileSync(outputPath, JSON.stringify(legacyConfig, null, 2));
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            fs.writeFileSync(`${outputPath}.${timestamp}`, JSON.stringify(legacyConfig, null, 2));
+            console.log(`✅ [saveQuestJsonConfig] Wrote legacy config to ${outputPath}`);
+        } catch (fileErr) {
+            console.error('⚠️ Failed to write legacy config file:', fileErr.message);
+            // Do not fail the API response for file write issues
+        }
+
+        console.log(`✅ [saveQuestJsonConfig] Successfully saved quest JSON for class: ${group.groupName}`);
+
         res.status(200).json({
             success: true,
+            message: 'Quest JSON configuration saved successfully',
             data: {
                 classId: group._id,
-                classCode: group.classCode,
-                groupName: group.groupName,
-                hasDynamicConfig: true
+                className: group.groupName,
+                questCount: questJsonConfig.questSequence.length,
+                lastUpdated: group.questJsonLastUpdated
             }
         });
-        
+
     } catch (error) {
-        console.error('Error getting class ID from repo:', error);
+        console.error('Error saving quest JSON config:', error);
         res.status(500).json({
             success: false,
-            message: 'Error getting class ID from repository',
+            message: 'Error saving quest JSON configuration',
             error: error.message
         });
+    }
+};
+
+// Get quest JSON configuration for a class
+const getQuestJsonConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+
+        console.log(`📖 [getQuestJsonConfig] Retrieving quest JSON for class: ${classId}`);
+
+        // Find the group and return quest JSON config
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        if (!group.questJsonConfig) {
+            console.log(`📭 [getQuestJsonConfig] No quest JSON found for class: ${group.groupName}`);
+            return res.status(200).json({
+                success: true,
+                message: 'No quest JSON configuration found',
+                data: {
+                    questJsonConfig: null,
+                    lastUpdated: null,
+                    hasConfig: false
+                }
+            });
+        }
+
+        console.log(`✅ [getQuestJsonConfig] Successfully retrieved quest JSON for class: ${group.groupName}`);
+        console.log(`📊 [getQuestJsonConfig] Quest count: ${group.questJsonConfig.questSequence?.length || 0}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Quest JSON configuration retrieved successfully',
+            data: {
+                questJsonConfig: group.questJsonConfig,
+                lastUpdated: group.questJsonLastUpdated,
+                hasConfig: true,
+                questCount: group.questJsonConfig.questSequence?.length || 0,
+                className: group.groupName,
+                classCode: group.classCode
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting quest JSON config:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving quest JSON configuration',
+            error: error.message
+        });
+    }
+};
+
+// Upsert a stored value for a user in a class
+const upsertStoredValue = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const { githubUsername, key } = req.body;
+        let { value } = req.body;
+        if (!githubUsername || !key) {
+            return res.status(400).json({ success: false, message: 'githubUsername and key are required' });
+        }
+        const group = await Group.findById(classId);
+        if (!group) return res.status(404).json({ success: false, message: 'Class not found' });
+
+        // Coerce value type based on quest JSON config (expectedAnswerType for the savedDataName)
+        try {
+            const questJson = group.questJsonConfig || {};
+            const seq = Array.isArray(questJson.questSequence) ? questJson.questSequence : [];
+            let expectedType = null;
+            for (const quest of seq) {
+                const tasks = quest?.tasks || {};
+                for (const [taskId, task] of Object.entries(tasks)) {
+                    const save = task?.saveValidatedData || task?.config?.saveValidatedData;
+                    const name = task?.savedDataName || task?.config?.savedDataName;
+                    const typeHint = task?.expectedAnswerType || task?.config?.expectedAnswerType;
+                    if (save && name && name === key) {
+                        expectedType = typeHint || 'String';
+                        break;
+                    }
+                }
+                if (expectedType) break;
+            }
+            if (expectedType === 'Number') {
+                const coerced = Number(value);
+                if (!Number.isNaN(coerced)) value = coerced;
+            }
+        } catch (coerceErr) {
+            console.warn('[upsertStoredValue] Failed to coerce value type:', coerceErr?.message || coerceErr);
+        }
+
+        const doc = await UserStoredData.findOneAndUpdate(
+            { group: classId, githubUsername },
+            { $set: { [`storedValues.${key}`]: value } },
+            { upsert: true, new: true }
+        );
+        return res.status(200).json({ success: true, data: { githubUsername: doc.githubUsername, storedValues: doc.storedValues } });
+    } catch (error) {
+        console.error('Error upserting stored value:', error);
+        return res.status(500).json({ success: false, message: 'Error upserting stored value', error: error.message });
+    }
+};
+
+// Fetch stored values for a class from backend storage
+const getStoredValuesBackend = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const docs = await UserStoredData.find({ group: classId });
+        const valuesByUser = {};
+        for (const d of docs) {
+            valuesByUser[d.githubUsername] = Object.fromEntries(d.storedValues || []);
+        }
+        return res.status(200).json({ success: true, data: { valuesByUser } });
+    } catch (error) {
+        console.error('Error fetching backend stored values:', error);
+        return res.status(500).json({ success: false, message: 'Error fetching backend stored values', error: error.message });
+    }
+};
+
+// Fetch stored data keys from quest JSON and per-student values
+const getStoredValuesForClass = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const group = await Group.findById(classId).populate('students');
+        if (!group) {
+            return res.status(404).json({ success: false, message: 'Class not found' });
+        }
+        const questJson = group.questJsonConfig || {};
+        const keys = [];
+        // Walk questSequence to find custom-api-call tasks with saveValidatedData
+        const seq = Array.isArray(questJson.questSequence) ? questJson.questSequence : [];
+        for (const quest of seq) {
+            const tasks = quest?.tasks || {};
+            for (const [taskId, task] of Object.entries(tasks)) {
+                if (task?.taskType === 'custom-api-call' || task?.type === 'custom-api-call') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    const expected = task.expectedAnswerType || task.config?.expectedAnswerType || 'Number';
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: expected });
+                    }
+                } else if (task?.taskType === 'get-issue-count' || task?.type === 'get-issue-count') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: 'Number' });
+                    }
+                } else if (task?.taskType === 'issue-no' || task?.type === 'issue-no') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: 'Number' });
+                    }
+                }
+            }
+        }
+
+        // Attempt to fetch per-user values from bot DB (user_data collection)
+        const valuesByUser = {};
+        try {
+            const uri = process.env.URI;
+            const dbName = process.env.DB_NAME;
+            if (!uri || !dbName) {
+                console.warn('[getStoredValuesForClass] URI or DB_NAME env not set; skipping values fetch');
+            } else {
+                const client = new MongoClient(uri);
+                await client.connect();
+                const db = client.db(dbName);
+                const collection = db.collection('user_data');
+                let githubUsernames = (group.students || []).map(s => s.githubUsername).filter(Boolean);
+                if (githubUsernames.length > 0) {
+                    const docs = await collection.find({ _id: { $in: githubUsernames } }, { projection: { user_data: 1 } }).toArray();
+                    for (const doc of docs) {
+                        const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                        valuesByUser[doc._id] = stored;
+                    }
+                } else {
+                    // Fallback: find users by classId (customGroupId) if students not linked on backend
+                    const docs = await collection.find({ 'user_data.customGroupId': classId }, { projection: { user_data: 1, _id: 1 } }).toArray();
+                    for (const doc of docs) {
+                        const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                        valuesByUser[doc._id] = stored;
+                    }
+                    if (Object.keys(valuesByUser).length === 0 && group.groupName) {
+                        // Fallback 2: match by repo naming pattern (username-<groupNameLower>)
+                        const groupSuffix = `-${String(group.groupName).toLowerCase()}`;
+                        const regex = new RegExp(`${groupSuffix}$`, 'i');
+                        const docsByName = await collection.find({ _id: { $regex: regex } }, { projection: { user_data: 1, _id: 1 } }).toArray();
+                        for (const doc of docsByName) {
+                            const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                            valuesByUser[doc._id] = stored;
+                        }
+                    }
+                }
+                await client.close();
+            }
+        } catch (dbErr) {
+            console.error('[getStoredValuesForClass] Failed to fetch per-user values:', dbErr.message);
+        }
+
+        // Merge backend-stored values (from our own collection) for this class
+        try {
+            const backendDocs = await (require('../models/UserStoredData')).find({ group: classId });
+            for (const d of backendDocs) {
+                const obj = Object.fromEntries(d.storedValues || []);
+                valuesByUser[d.githubUsername] = { ...(valuesByUser[d.githubUsername] || {}), ...obj };
+            }
+        } catch (mergeErr) {
+            console.warn('[getStoredValuesForClass] Failed to merge backend stored values:', mergeErr?.message || mergeErr);
+        }
+
+        return res.status(200).json({ success: true, data: { keys, valuesByUser } });
+    } catch (error) {
+        console.error('Error fetching stored values for class:', error);
+        return res.status(500).json({ success: false, message: 'Error fetching stored values', error: error.message });
     }
 };
 
@@ -1161,5 +1474,10 @@ module.exports = {
     saveQuestOrder,
     getQuestOrder,
     resetQuestOrder,
-    getClassIdFromRepo
+    getClassIdFromRepo,
+    saveQuestJsonConfig,
+    getQuestJsonConfig,
+    getStoredValuesForClass,
+    upsertStoredValue,
+    getStoredValuesBackend
 }

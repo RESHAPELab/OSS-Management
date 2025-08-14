@@ -12,6 +12,7 @@ function singleAnswerValidation (realAnswer, userAnswer) {
 }
 
 function metricAnswerValidation (repoReference, metricUsed, userAnswer) {
+    console.log(`[validateAnswer] Metric validation: expected answer (metricUsed):`, metricUsed, '| user answer:', userAnswer);
     return true
 }
 

@@ -1,12 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { uploadMCQQuest, getQuestsByProfessor, deleteQuest, updateQuest } = require('../controllers/questController');
+const { uploadMCQQuest, getQuestsByProfessor, deleteQuest, updateQuest, getQuestById, getQuestTaskTypes } = require('../controllers/questController');
 
 // Upload MCQ Quest
 router.post('/upload-mcq', uploadMCQQuest);
 
 // Get quests by professor
 router.get('/professor/:professorId', getQuestsByProfessor);
+
+// Get quest task types analysis
+router.get('/:questId/task-types', getQuestTaskTypes);
+
+// Get individual quest by ID
+router.get('/:questId', getQuestById);
 
 // Update quest
 router.put('/:questId', updateQuest);

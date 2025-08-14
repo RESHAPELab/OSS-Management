@@ -294,11 +294,16 @@ const checkCollaboration = async (req, res) => {
 
 const listRepos = async (req, res) => {
     const { org } = req.body;
-    
     try {
         const githubToken = await getGithubAppInstallationAccessToken();
+        let allRepos = [];
+        let page = 1;
+        const perPage = 100;
+        let keepFetching = true;
+        
+        while (keepFetching) {
         const apiResponse = await axios.get(
-            `https://api.github.com/orgs/${org}/repos`,
+                `https://api.github.com/orgs/${org}/repos?per_page=${perPage}&page=${page}`,
             {
                 headers: {
                     Authorization: `Bearer ${githubToken}`,
@@ -306,8 +311,32 @@ const listRepos = async (req, res) => {
                 }
             }
         );
-
-        res.status(200).json(apiResponse.data);
+            const fetched = apiResponse.data;
+            console.log(`[BOT] Page ${page}: fetched ${Array.isArray(fetched) ? fetched.length : 0} repos`);
+            allRepos = allRepos.concat(fetched);
+            
+            if (!Array.isArray(fetched) || fetched.length < perPage) {
+                keepFetching = false;
+            } else {
+                page++;
+            }
+        }
+        
+        // After all pages are fetched, log all repo names and the total count
+        console.log('[BOT] Final repo list:');
+        allRepos.forEach(r => console.log('[BOT]   ', r.name));
+        console.log(`[BOT] Total repos fetched: ${allRepos.length}`);
+        console.log(`Fetched total ${allRepos.length} repositories for org: ${org}`);
+        
+        allRepos.forEach(repo => {
+            if (repo.name.includes('-')) {
+                console.log(`[CLASS?] ${repo.name}`);
+            } else {
+                console.log(repo.name);
+            }
+        });
+        
+        res.status(200).json(allRepos);
     } catch (error) {
         console.error("Error listing repositories:", error);
         res.status(500).json({ error: error.message });

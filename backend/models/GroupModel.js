@@ -92,6 +92,15 @@ const GroupSchema = mongoose.Schema({
     isActive: {
         type: Boolean,
         default: true
+    },
+    questJsonConfig: {
+        type: Object,
+        default: null,
+        description: 'Stores the complete quest JSON configuration for the generate JSON page'
+    },
+    questJsonLastUpdated: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

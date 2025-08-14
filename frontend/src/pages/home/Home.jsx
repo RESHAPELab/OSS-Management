@@ -4,7 +4,7 @@ import "./Home.css"
 import { useAuthContext } from '../../context/AuthContext';
 import HomeHeader from './components/HomeHeader';
 import GroupComponent from './components/GroupComponent';
-import CreateCustomRepoButton from '../../components/CreateCustomRepoButton';
+
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
 const Home = () => {
@@ -41,8 +41,10 @@ const Home = () => {
             const response = await axios.post(`${baseURL}/api/group/${authUser._id}/groups`, groupName);
             console.log('New group added:', response.data);
             setProfGroups(prevGroups => [...prevGroups, response.data]);
+            return response.data; // Return the created group data
         } catch (error) { 
             console.error('Error creating new group: ', error);
+            return null; // Return null on error
         }
     }
 
@@ -54,7 +56,6 @@ const Home = () => {
         <div>
             <HomeHeader className="header"/>
             <GroupComponent className="group" professor={authUser} groups={profGroups} createGroup={createGroup}/>
-            <CreateCustomRepoButton />
         </div>
     )
 }

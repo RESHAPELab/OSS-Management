@@ -6,7 +6,8 @@ import { useAuthContext } from '../../context/AuthContext';
 import {
   Container, Box, Typography, Button, Stack, Card, Dialog, DialogTitle, DialogContent, DialogActions, 
   Alert, TextField, Chip, List, ListItem, ListItemText, Divider, Paper, Grid, IconButton,
-  Accordion, AccordionSummary, AccordionDetails, FormControlLabel, Switch, LinearProgress
+  Accordion, AccordionSummary, AccordionDetails, FormControlLabel, Switch, LinearProgress,
+  MenuItem
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -21,14 +22,31 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Menu as MenuIcon,
+  Dashboard as DashboardIcon,
+  People as PeopleIcon,
+  Settings as SettingsIcon,
+  Assessment as AssessmentIcon,
+  Close as CloseIcon,
+  AccountCircle as AccountCircleIcon,
+  EmojiEvents as EmojiEventsIcon,
+  LocalFireDepartment as LocalFireDepartmentIcon
 } from '@mui/icons-material';
 import RepositoryStatusChecker from '../../components/RepositoryStatusChecker';
+import GenerateJson from './GenerateJson';
+import ManageStudents from './ManageStudents';
 
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
 const ClassView = () => {
     const { classId } = useParams();
+    
+    // Debug log to see what classId we're getting
+    console.log('🔍 [ClassView] classId from useParams:', classId);
+    console.log('🔍 [ClassView] classId type:', typeof classId);
+    console.log('🔍 [ClassView] classId length:', classId ? classId.length : 'null');
+    
     const [classInfo, setClassInfo] = useState({})
     const { authUser } = useAuthContext();
     const [activeIndex, setActiveIndex] = useState(null);
@@ -39,6 +57,9 @@ const ClassView = () => {
     const [showModal, setShowModal] = useState(false);
     const [showQuestModal, setShowQuestModal] = useState(false);
     const [showReadmeModal, setShowReadmeModal] = useState(false);
+    const [showInviteLinkModal, setShowInviteLinkModal] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'manage-quests', or 'manage-students'
     const [csvFile, setCsvFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentProcessingUser, setCurrentProcessingUser] = useState('');
@@ -113,17 +134,40 @@ const ClassView = () => {
         { id: 'Q3', title: 'Q3', content: 'Creating Pull Requests and Code Reviews', type: 'fixed' }
     ]);
     const navigate = useNavigate();
+    // 1. Add state for batch repo dialog
+    const [showBatchRepoDialog, setShowBatchRepoDialog] = useState(false);
+    const [batchCsvFile, setBatchCsvFile] = useState(null);
+    const [batchRepoStatus, setBatchRepoStatus] = useState('');
+    const [batchIsProcessing, setBatchIsProcessing] = useState(false);
+    const [batchResults, setBatchResults] = useState({ successful: [], unsuccessful: [] });
+    const [generateJsonConfig, setGenerateJsonConfig] = useState(null);
+    // Add state to track total repos fetched
+    const [totalReposFetched, setTotalReposFetched] = useState(null);
 
     useEffect(() => {
-        if (authUser) {
-            console.log("logged in user:", authUser.profName)
+        if (authUser && classId) {
+            // console.log("logged in user:", authUser.profName) // Removed
             fetchClassInfo();
             fetchOrganizationGh();
             fetchExistingReadme();
             // Load quests for the course outline
             loadQuestOrderFromDatabase();
         }
-    }, [authUser])
+    }, [authUser, classId])
+
+    useEffect(() => {
+        const fetchGenerateJsonConfig = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8080/api/group/${classId}/quest-json-config`);
+                if (response.data.success && response.data.data.hasConfig) {
+                    setGenerateJsonConfig(response.data.data.questJsonConfig);
+                }
+            } catch (error) {
+                console.error('Failed to load GenerateJson config', error);
+            }
+        };
+        if (classId) fetchGenerateJsonConfig();
+    }, [classId]);
 
     // Cleanup timeout on unmount
     useEffect(() => {
@@ -135,7 +179,7 @@ const ClassView = () => {
     }, [saveQuestOrderTimeout]);
 
     useEffect(() => {
-        console.log('existingReadme state changed:', existingReadme);
+        // console.log('existingReadme state changed:', existingReadme); // Removed
     }, [existingReadme]);
 
     useEffect(() => {
@@ -149,31 +193,31 @@ const ClassView = () => {
     };
     
     useEffect(() => {
-        console.log('studentData:', studentData);
+        // console.log('studentData:', studentData); // Removed
     }, [studentData]);
 
     // Fetch student scores whenever studentData changes
     useEffect(() => {
         if (studentData.length > 0 && classInfo?.groupName) {
-            console.log('🔄 [DEBUG] studentData changed, fetching scores...');
-            console.log('🔄 [DEBUG] Current studentData:', studentData);
-            console.log('🔄 [DEBUG] Current classInfo.groupName:', classInfo.groupName);
+            // console.log('🔄 [DEBUG] studentData changed, fetching scores...'); // Removed
+            // console.log('🔄 [DEBUG] Current studentData:', studentData); // Removed
+            // console.log('🔄 [DEBUG] Current classInfo.groupName:', classInfo.groupName); // Removed
             setTimeout(() => {
                 fetchStudentScores();
             }, 1000);
         } else {
-            console.log('⚠️ [DEBUG] Not fetching scores yet:', {
-                hasStudentData: studentData.length > 0,
-                hasClassName: !!classInfo?.groupName,
-                studentDataLength: studentData.length
-            });
+            // console.log('⚠️ [DEBUG] Not fetching scores yet:', { // Removed
+            //     hasStudentData: studentData.length > 0,
+            //     hasClassName: !!classInfo?.groupName,
+            //     studentDataLength: studentData.length
+            // });
         }
     }, [studentData, classInfo?.groupName]);
 
     // Debug studentScores state changes
     useEffect(() => {
-        console.log('🎯 [DEBUG] studentScores state changed:', studentScores);
-        console.log('🎯 [DEBUG] studentScores keys:', Object.keys(studentScores));
+        // console.log('🎯 [DEBUG] studentScores state changed:', studentScores); // Removed
+        // console.log('🎯 [DEBUG] studentScores keys:', Object.keys(studentScores)); // Removed
     }, [studentScores]);
 
     //karissa: 
@@ -193,10 +237,15 @@ const ClassView = () => {
     // good luck and reach out whenever you need anything!!!
 
     const fetchClassInfo = async () => {
+        if (!classId) {
+            console.error('No classId available for fetchClassInfo');
+            return;
+        }
+        
         try {
-            console.log('Fetching class info for classId:', classId);
+            // console.log('Fetching class info for classId:', classId); // Removed
             const response = await axios.get(`${baseURL}/api/group/class/${classId}`);
-            console.log('Class info response:', response.data);
+            // console.log('Class info response:', response.data); // Removed
             setClassInfo(response.data);
             // We're not using the students from the backend anymore
             // setStudentData(response.data.students || []);
@@ -207,35 +256,40 @@ const ClassView = () => {
     }
 
     const fetchExistingReadme = async () => {
+        if (!classId) {
+            console.error('No classId available for fetchExistingReadme');
+            return;
+        }
+        
         try {
-            console.log('📄 [FETCH-README] Starting to fetch existing README...');
-            console.log('📄 [FETCH-README] Class ID:', classId);
+            // console.log('📄 [FETCH-README] Starting to fetch existing README...'); // Removed
+            // console.log('📄 [FETCH-README] Class ID:', classId); // Removed
             
             const response = await axios.get(`${baseURL}/api/group/${classId}/readme`);
-            console.log('📄 [FETCH-README] API response received:', {
-                status: response.status,
-                hasData: !!response.data,
-                hasReadme: !!(response.data && response.data.readme)
-            });
+            // console.log('📄 [FETCH-README] API response received:', { // Removed
+            //     status: response.status,
+            //     hasData: !!response.data,
+            //     hasReadme: !!(response.data && response.data.readme)
+            // });
             
             if (response.data && response.data.readme) {
-                console.log('✅ [FETCH-README] Existing README found:', {
-                    fileName: response.data.readme.fileName,
-                    contentLength: response.data.readme.contentLength,
-                    hasContent: !!response.data.readme.content
-                });
+                // console.log('✅ [FETCH-README] Existing README found:', { // Removed
+                //     fileName: response.data.readme.fileName,
+                //     contentLength: response.data.readme.contentLength,
+                //     hasContent: !!response.data.readme.content
+                // });
                 setExistingReadme(response.data.readme);
-                console.log('✅ [FETCH-README] README state updated successfully');
+                // console.log('✅ [FETCH-README] README state updated successfully'); // Removed
             } else {
-                console.log('📄 [FETCH-README] No README found in response');
+                // console.log('📄 [FETCH-README] No README found in response'); // Removed
                 setExistingReadme(null);
             }
         } catch (error) {
             // README doesn't exist yet, which is fine
-            console.log('📄 [FETCH-README] No existing README found for this class:', {
-                status: error.response?.status,
-                message: error.message
-            });
+            // console.log('📄 [FETCH-README] No existing README found for this class:', { // Removed
+            //     status: error.response?.status,
+            //     message: error.message
+            // });
             setExistingReadme(null);
         }
     }
@@ -253,48 +307,51 @@ const ClassView = () => {
     const fetchOrganizationRepos = async () => {
         try {
             setIsLoading(true);
-            // Don't proceed if we don't have the class info yet
             if (!classInfo || !classInfo.groupName) {
-                console.log('Waiting for class info to load...');
                 return;
             }
-
-            console.log('🔍 [DEBUG] fetchOrganizationRepos called with:', {
-                organizationGh,
-                className: classInfo.groupName
-            });
-
+            
+            console.log('🔄 [ClassView] Fetching organization repositories...');
+            console.log('🔄 [ClassView] Organization:', organizationGh);
+            console.log('🔄 [ClassView] Class name:', classInfo.groupName);
+            
             const response = await axios.get(`${baseURL}/api/repo/listRepos`, {
                 params: { organizationGh }
             });
             
-            console.log('📋 [DEBUG] listRepos response:', response.data);
+            console.log('📥 [ClassView] Repository response received');
+            console.log('📥 [ClassView] Response structure:', {
+                hasData: !!response.data,
+                hasRepos: !!response.data.repos,
+                reposType: typeof response.data.repos,
+                reposLength: Array.isArray(response.data.repos) ? response.data.repos.length : 'not an array'
+            });
             
-            if (response.data.repos) {
+            if (response.data && Array.isArray(response.data.repos)) {
+                setTotalReposFetched(response.data.repos.length);
+                console.log(`📊 [ClassView] Total repositories fetched: ${response.data.repos.length}`);
+                
                 // Format class name to match repository naming convention
                 const formattedClassName = classInfo.groupName
                     .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, '-')  // Replace any non-alphanumeric chars with hyphens
-                    .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
-
-                console.log('🏷️ [DEBUG] formattedClassName:', formattedClassName);
-                console.log('📦 [DEBUG] All repos found:', response.data.repos.map(r => r.name));
-
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+                
+                console.log('🔍 [ClassView] Looking for repositories ending with:', `-${formattedClassName}`);
+                
                 // Filter repositories to only show ones for this class using new username-classname format
                 const classRepos = response.data.repos
-                    .filter(repo => {
-                        const matches = repo.name.endsWith(`-${formattedClassName}`);
-                        console.log(`🔍 [DEBUG] Checking repo "${repo.name}" - matches pattern: ${matches}`);
-                        return matches;
-                    })
+                    .filter(repo => repo.name.endsWith(`-${formattedClassName}`))
                     .map(repo => ({ 
-                        githubUsername: repo.name.replace(`-${formattedClassName}`, '') // Remove class suffix to get username
+                        githubUsername: repo.name.replace(`-${formattedClassName}`, '')
                     }));
-
-                console.log('👥 [DEBUG] Filtered classRepos:', classRepos);
+                
+                console.log(`✅ [ClassView] Found ${classRepos.length} repositories for this class`);
+                console.log('👥 [ClassView] Class repositories:', classRepos.map(r => r.githubUsername));
+                
                 setStudentData(classRepos);
                 
-                // Immediately check collaboration status
+                // Check collaboration status for these repositories
                 if (classRepos.length > 0) {
                     try {
                         const statusResponse = await axios.post(`${baseURL}/api/repo/collaborationStatus`, {
@@ -303,21 +360,18 @@ const ClassView = () => {
                             className: classInfo.groupName
                         });
                         if (statusResponse.data.results) {
-                            console.log('Initial collaboration status:', statusResponse.data.results);
+                            console.log('✅ [ClassView] Collaboration status updated:', statusResponse.data.results);
                             setCollaborationStatus(statusResponse.data.results);
-                        }
-                    } catch (error) {
-                        console.error('Error checking initial collaboration status:', error);
-                    }
-                    
-                    // Also fetch student scores
-                    setTimeout(() => {
-                        fetchStudentScores();
-                    }, 500);
-                }
             }
         } catch (error) {
-            console.error('Error fetching organization repositories:', error);
+                        console.error('❌ [ClassView] Error checking collaboration status:', error);
+                    }
+                }
+            } else {
+                console.error('❌ [ClassView] Invalid response structure:', response.data);
+            }
+        } catch (error) {
+            console.error('❌ [ClassView] Error fetching organization repositories:', error);
         } finally {
             setIsLoading(false);
         }
@@ -334,6 +388,8 @@ const ClassView = () => {
         const file = event.target.files[0];
         if (file && file.type === 'text/csv') {
             setCsvFile(file);
+            // Immediately clear the file input so user can re-upload if needed
+            event.target.value = '';
         } else {
             alert('Please upload a valid CSV file');
         }
@@ -391,8 +447,8 @@ const ClassView = () => {
 
                 for (let i = 0; i < usernames.length; i++) {
                     const username = usernames[i];
-                    console.log(`🔄 [CSV-UPLOAD] Processing ${i + 1}/${usernames.length}: ${username}`);
-                    console.log(`🔄 [CSV-UPLOAD] Building request for user: ${username}`);
+                    // console.log(`🔄 [CSV-UPLOAD] Processing ${i + 1}/${usernames.length}: ${username}`); // Removed
+                    // console.log(`🔄 [CSV-UPLOAD] Building request for user: ${username}`); // Removed
                     
                     // Update progress state for UI
                     setCurrentProcessingUser(username);
@@ -402,55 +458,128 @@ const ClassView = () => {
                     setCreateReposStatus(`Processing ${i + 1}/${usernames.length}: Creating repository for ${username}...`);
                     
                     try {
+                        // Ensure myQuests is loaded for task data
+                        if (myQuests.length === 0) {
+                            console.log('🔄 [QUEST-CONFIG] Loading myQuests for task data...');
+                            try {
+                                const response = await axios.get(`${baseURL}/api/quest/professor/${authUser._id}`);
+                                if (response.data.success) {
+                                    setMyQuests(response.data.data);
+                                    console.log('✅ [QUEST-CONFIG] Loaded myQuests:', response.data.data.length, 'quests');
+                                }
+                            } catch (error) {
+                                console.error('❌ [QUEST-CONFIG] Error loading myQuests:', error);
+                            }
+                        }
+                        
                         const requestBody = {
                             users: [username], // Single user per request
-                            customSequence: questConfig, // Use the same quest config as individual button
+                            customSequence: generateJsonConfig || questConfig, // Use GenerateJson config if available, else fallback
                             className: classInfo?.groupName,
                             classId: classInfo?._id
                         };
 
-                        console.log(`📤 [CSV-UPLOAD] Request details for ${username}:`, {
-                            users: requestBody.users,
-                            className: requestBody.className,
-                            classId: requestBody.classId,
-                            hasQuestConfig: !!requestBody.customSequence,
-                            questCount: requestBody.customSequence?.questSequence?.length || 0
-                        });
+                        if (!generateJsonConfig && !questConfig) {
+                            setCreateReposStatus('❌ No quest configuration found. Please set up quests in GenerateJson or ManageQuests.');
+                            return;
+                        }
 
-                        console.log(`🌐 [CSV-UPLOAD] Sending API request to createCustomRepos for ${username}...`);
+                        // 🎯 KEEP: Detailed custom quest logging
+                        console.log(`🎮 [CUSTOM-QUESTS] Quest configuration being sent to bot for ${username}:`);
+                        console.log(`🎮 [CUSTOM-QUESTS] Full questConfig:`, JSON.stringify(requestBody.customSequence, null, 2));
+                        
+                        if (requestBody.customSequence?.questSequence) {
+                            console.log(`🎮 [CUSTOM-QUESTS] Quest sequence breakdown:`);
+                            requestBody.customSequence.questSequence.forEach((quest, index) => {
+                                console.log(`🎮 [CUSTOM-QUESTS] Quest ${index + 1}:`, {
+                                    questId: quest.questId,
+                                    title: quest.title,
+                                    type: quest.questType,
+                                    isQ0: quest.isQ0,
+                                    sequenceNumber: quest.sequenceNumber,
+                                    hasMetadata: !!quest.metadata,
+                                    hasTasks: !!quest.tasks,
+                                    taskCount: quest.tasks ? Object.keys(quest.tasks).length : 0
+                                });
+                                
+                                // Log custom quests in detail
+                                if (quest.questType === 'custom') {
+                                    console.log(`🔥 [CUSTOM-QUEST-DETAIL] Custom Quest "${quest.title}":`, {
+                                        questId: quest.questId,
+                                        badgeDescription: quest.badgeDescription,
+                                        metadata: quest.metadata,
+                                        tasks: quest.tasks
+                                    });
+                                    
+                                    if (quest.tasks) {
+                                        console.log(`📋 [CUSTOM-QUEST-TASKS] Tasks for "${quest.title}":`);
+                                        Object.entries(quest.tasks).forEach(([taskKey, task]) => {
+                                            console.log(`📋 [CUSTOM-QUEST-TASKS] ${taskKey}:`, {
+                                                desc: task.desc,
+                                                points: task.points,
+                                                xp: task.xp,
+                                                type: task.type,
+                                                answer: task.answer,
+                                                hasAccept: !!task.accept,
+                                                hasSuccess: !!task.success,
+                                                hasError: !!task.error,
+                                                hintsCount: task.hints?.length || 0
+                                            });
+                                        });
+                                    }
+                                }
+                            });
+                            
+                            // Summary of what the bot will receive
+                            const customQuests = requestBody.customSequence.questSequence.filter(q => q.questType === 'custom');
+                            const fixedQuests = requestBody.customSequence.questSequence.filter(q => q.questType === 'fixed');
+                            
+                            console.log(`🎯 [BOT-SUMMARY] Bot will receive for ${username}:`, {
+                                totalQuests: requestBody.customSequence.questSequence.length,
+                                customQuests: customQuests.length,
+                                fixedQuests: fixedQuests.length,
+                                customQuestTitles: customQuests.map(q => q.title),
+                                map_repo_link: requestBody.customSequence.map_repo_link,
+                                hasMetadata: !!requestBody.customSequence.metadata
+                            });
+                        }
+
+                        // console.log(`🌐 [CSV-UPLOAD] Sending API request to createCustomRepos for ${username}...`); // Removed
                         const response = await axios.post(`${baseURL}/api/repo/createCustomRepos`, requestBody);
                         
-                        console.log(`📥 [CSV-UPLOAD] API response for ${username}:`, {
-                            status: response.status,
-                            statusText: response.statusText,
-                            hasResults: !!response.data.results,
-                            successful: response.data.results?.successful?.length || 0,
-                            unsuccessful: response.data.results?.unsuccessful?.length || 0
-                        });
+                        // console.log(`📥 [CSV-UPLOAD] API response for ${username}:`, { // Removed
+                        //     status: response.status,
+                        //     statusText: response.statusText,
+                        //     hasResults: !!response.data.results,
+                        //     successful: response.data.results?.successful?.length || 0,
+                        //     unsuccessful: response.data.results?.unsuccessful?.length || 0
+                        // });
                         
                         if (response.data.results && response.data.results.successful.length > 0) {
-                            console.log(`✅ [CSV-UPLOAD] Success for ${username}`);
-                            console.log(`✅ [CSV-UPLOAD] Success details:`, response.data.results.successful[0]);
-                            results.successful.push(username);
+                            // console.log(`✅ [CSV-UPLOAD] Success for ${username}`); // Removed
+                            // console.log(`✅ [CSV-UPLOAD] Success details:`, response.data.results.successful[0]); // Removed
+                            const successResult = response.data.results.successful[0];
+                            results.successful.push(successResult.user || username);
                             setProcessingResults(prev => ({
                                 ...prev,
-                                successful: [...prev.successful, username]
+                                successful: [...prev.successful, successResult.user || username]
                             }));
                         } else {
-                            console.error(`❌ [CSV-UPLOAD] Failed for ${username}:`, response.data);
-                            console.error(`❌ [CSV-UPLOAD] Failure reason:`, {
-                                message: response.data.message,
-                                results: response.data.results,
-                                error: response.data.error
-                            });
-                            results.unsuccessful.push(username);
+                            // console.error(`❌ [CSV-UPLOAD] Failed for ${username}:`, response.data); // Removed
+                            // console.error(`❌ [CSV-UPLOAD] Failure reason:`, { // Removed
+                            //     message: response.data.message,
+                            //     results: response.data.results,
+                            //     error: response.data.error
+                            // });
+                            const errorResult = response.data.results?.unsuccessful?.[0];
+                            results.unsuccessful.push(errorResult?.user || username);
                             setProcessingResults(prev => ({
                                 ...prev,
-                                unsuccessful: [...prev.unsuccessful, username]
+                                unsuccessful: [...prev.unsuccessful, errorResult?.user || username]
                             }));
                         }
                     } catch (error) {
-                        console.error(`💥 [CSV-UPLOAD] Error for ${username}:`, error.message);
+                        // console.error(`💥 [CSV-UPLOAD] Error for ${username}:`, error.message); // Removed
                         results.unsuccessful.push(username);
                         setProcessingResults(prev => ({
                             ...prev,
@@ -471,20 +600,20 @@ const ClassView = () => {
                 setCurrentProcessingUser('');
                 setIsProcessing(false);
 
-                setCreateReposStatus(
-                    `Repository creation completed.\n` +
+                    setCreateReposStatus(
+                        `Repository creation completed.\n` +
                     `Successful: ${results.successful.join(', ')}\n` +
                     `Failed: ${results.unsuccessful.join(', ')}`
-                );
+                    );
                 // Add a small delay to allow GitHub to process collaborator invitations
-                console.log('⏳ Waiting 3 seconds for GitHub to process invitations...');
+                // console.log('⏳ Waiting 3 seconds for GitHub to process invitations...'); // Removed
                 setTimeout(() => {
-                    console.log('🔄 Refreshing repository list and collaboration status...');
+                    // console.log('🔄 Refreshing repository list and collaboration status...'); // Removed
                     fetchOrganizationRepos();
                     // Close the modal after refresh
                     setTimeout(() => {
-                        setShowModal(false);
-                        setCsvFile(null);
+                    setShowModal(false);
+                    setCsvFile(null);
                         setIsProcessing(false);
                         setProcessingResults({ successful: [], unsuccessful: [] });
                     }, 1000);
@@ -506,20 +635,20 @@ const ClassView = () => {
     const checkCollaborationStatus = async () => {
         try {
             if (!organizationGh || studentData.length === 0 || !classInfo?.groupName) {
-                console.log('⚠️ [DEBUG] checkCollaborationStatus skipped:', {
-                    hasOrgGh: !!organizationGh,
-                    hasStudentData: studentData.length > 0,
-                    hasClassName: !!classInfo?.groupName
-                });
+                // console.log('⚠️ [DEBUG] checkCollaborationStatus skipped:', { // Removed
+                //     hasOrgGh: !!organizationGh,
+                //     hasStudentData: studentData.length > 0,
+                //     hasClassName: !!classInfo?.groupName
+                // });
                 return;
             }
 
-            console.log('🔍 [DEBUG] checkCollaborationStatus called:', {
-                organizationGh,
-                studentCount: studentData.length,
-                className: classInfo.groupName,
-                students: studentData.map(s => s.githubUsername)
-            });
+            // console.log('🔍 [DEBUG] checkCollaborationStatus called:', { // Removed
+            //     organizationGh,
+            //     studentCount: studentData.length,
+            //     className: classInfo.groupName,
+            //     students: studentData.map(s => s.githubUsername)
+            // });
 
             const response = await axios.post(`${baseURL}/api/repo/collaborationStatus`, {
                 organizationGh,
@@ -528,7 +657,7 @@ const ClassView = () => {
             });
 
             if (response.data.results) {
-                console.log('📊 [DEBUG] Collaboration status results:', response.data.results);
+                // console.log('📊 [DEBUG] Collaboration status results:', response.data.results); // Removed
                 setCollaborationStatus(response.data.results);
             }
         } catch (error) {
@@ -544,19 +673,19 @@ const ClassView = () => {
     const fetchStudentScores = async () => {
         try {
             if (!classInfo?.groupName || studentData.length === 0) {
-                console.log('⚠️ [DEBUG] fetchStudentScores skipped:', {
-                    hasClassName: !!classInfo?.groupName,
-                    hasStudentData: studentData.length > 0
-                });
+                // console.log('⚠️ [DEBUG] fetchStudentScores skipped:', { // Removed
+                //     hasClassName: !!classInfo?.groupName,
+                //     hasStudentData: studentData.length > 0
+                // });
                 return;
             }
 
             setIsLoadingScores(true);
-            console.log('📊 [DEBUG] fetchStudentScores called:', {
-                className: classInfo.groupName,
-                studentCount: studentData.length,
-                students: studentData.map(s => s.githubUsername)
-            });
+            // console.log('📊 [DEBUG] fetchStudentScores called:', { // Removed
+            //     className: classInfo.groupName,
+            //     studentCount: studentData.length,
+            //     students: studentData.map(s => s.githubUsername)
+            // });
 
             const response = await axios.post(`${baseURL}/api/repo/studentScores`, {
                 className: classInfo.groupName,
@@ -564,7 +693,7 @@ const ClassView = () => {
             });
 
             if (response.data.scores) {
-                console.log('🏆 [DEBUG] Student scores received:', response.data.scores);
+                // console.log('🏆 [DEBUG] Student scores received:', response.data.scores); // Removed
                 setStudentScores(response.data.scores);
             }
         } catch (error) {
@@ -641,8 +770,13 @@ const ClassView = () => {
         switch(taskType) {
             case 'multiple-choice':
                 return ['correctAnswer', 'optionA', 'optionB', 'optionC', 'optionD'];
-            case 'github-api':
-                return ['apiCallType', 'ossRepository'];
+            case 'get-issue-count':
+            case 'get-pr-count':
+            case 'get-open-issue':
+            case 'get-top-contributor':
+                return ['ossRepository'];
+            case 'get-issue-title':
+                return ['ossRepository', 'issueNumber'];
             case 'quiz':
                 return ['questionCount', 'correctAnswers'];
             case 'text-input':
@@ -751,6 +885,12 @@ const ClassView = () => {
     };
 
     const handleReuploadReadme = async () => {
+        if (!classId) {
+            console.error('No classId available for handleReuploadReadme');
+            alert('No class ID available');
+            return;
+        }
+        
         if (!readmeContent) {
             alert('Please upload a README file first.');
             return;
@@ -1000,63 +1140,94 @@ const ClassView = () => {
     };
 
     const handleEditQuest = (quest) => {
-        // Helper function to parse options from accept response
-        const parseOptionsFromResponse = (acceptResponse) => {
+        console.log('🔍 [EDIT-QUEST] Loading quest for editing:', quest);
+        
+        // Populate the form with existing quest data
+        const questData = {
+            title: quest.questTitle || quest.title || '',
+            type: 'Q1',
+            description: quest.description || '',
+            descriptionImage: null,
+            tasks: quest.tasks ? quest.tasks.map((task, taskIndex) => {
+                console.log(`📋 [EDIT-TASK-${taskIndex + 1}] Loading task data:`, task);
+                
+                // Map the saved task data back to form structure
+                const formTask = {
+                    type: 'multiple-choice',
+                    title: task.title || task.taskTitle || '',
+                    objective: task.objective || '',
+                    description: task.desc || task.description || '',
+                    outcome: task.outcome || '',
+                    helpText: task.helpText || '',
+                    points: task.points || 100,
+                    descriptionImage: null,
+                    config: {
+                        correctAnswer: task.answer || task.correctAnswer || 'a',
+                        optionA: '',
+                        optionB: '',
+                        optionC: '',
+                        optionD: ''
+                    }
+                };
+                
+                // Extract options from the saved data
+                if (task.options && Array.isArray(task.options)) {
+                    formTask.config.optionA = task.options[0] || '';
+                    formTask.config.optionB = task.options[1] || '';
+                    formTask.config.optionC = task.options[2] || '';
+                    formTask.config.optionD = task.options[3] || '';
+                } else if (task.responses && task.responses.accept) {
+                    // Fallback: try to parse options from accept response if options array is not available
             const options = [];
-            const lines = acceptResponse.split('\n');
+                    const lines = task.responses.accept.split('\n');
             for (const line of lines) {
                 if (line.trim().match(/^[A-D]\)/)) {
                     const option = line.trim().substring(2).trim();
                     options.push(option);
                 }
             }
-            return options;
-        };
-
-        // Helper function to extract objective, outcome, and helpText from responses
-        const extractFieldFromResponse = (acceptResponse, fieldName) => {
-            const lines = acceptResponse.split('\n');
+                    formTask.config.optionA = options[0] || '';
+                    formTask.config.optionB = options[1] || '';
+                    formTask.config.optionC = options[2] || '';
+                    formTask.config.optionD = options[3] || '';
+                }
+                
+                // Extract objective, outcome, and helpText from responses if not directly available
+                if (!formTask.objective && task.responses && task.responses.accept) {
+                    const lines = task.responses.accept.split('\n');
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
-                if (line.startsWith(`**${fieldName}:**`)) {
-                    return line.substring(fieldName.length + 4).trim();
-                }
-            }
-            return '';
-        };
-
-        // Populate the form with existing quest data
-        const questData = {
-            title: quest.questTitle,
-            type: 'Q1',
-            description: quest.description || '',
-            descriptionImage: null,
-            tasks: quest.tasks ? quest.tasks.map(task => {
-                // Parse options from the accept response
-                const options = parseOptionsFromResponse(task.responses?.accept || '');
-                
-                // Extract other fields from the accept response
-                const objective = extractFieldFromResponse(task.responses?.accept || '', 'Objective');
-                const outcome = extractFieldFromResponse(task.responses?.accept || '', 'Outcome');
-                const helpText = extractFieldFromResponse(task.responses?.accept || '', 'Help');
-                
-                return {
-                    type: 'multiple-choice',
-                    title: task.taskTitle || task.title || '',
-                    objective: objective,
-                    description: task.desc || task.description || '',
-                    outcome: outcome,
-                    helpText: helpText,
-                    points: task.points || 100,
-                    descriptionImage: null,
-                    config: {
-                        correctAnswer: task.answer || 'a',
-                        optionA: options[0] || '',
-                        optionB: options[1] || '',
-                        optionC: options[2] || '',
-                        optionD: options[3] || ''
+                        if (line.startsWith('**Objective:**')) {
+                            formTask.objective = line.substring(13).trim();
+                            break;
+                        }
                     }
-                };
+                }
+                
+                if (!formTask.outcome && task.responses && task.responses.accept) {
+                    const lines = task.responses.accept.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('**Outcome:**')) {
+                            formTask.outcome = line.substring(11).trim();
+                            break;
+                        }
+                    }
+                }
+                
+                if (!formTask.helpText && task.responses && task.responses.accept) {
+                    const lines = task.responses.accept.split('\n');
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (line.startsWith('**Help:**')) {
+                            formTask.helpText = line.substring(8).trim();
+                            break;
+                        }
+                    }
+                }
+                
+                console.log(`✅ [EDIT-TASK-${taskIndex + 1}] Mapped form data:`, formTask);
+                return formTask;
             }) : [{
                 type: 'multiple-choice',
                 title: '',
@@ -1066,7 +1237,13 @@ const ClassView = () => {
                 helpText: '',
                 points: 100,
                 descriptionImage: null,
-                config: {}
+                config: {
+                    correctAnswer: 'a',
+                    optionA: '',
+                    optionB: '',
+                    optionC: '',
+                    optionD: ''
+                }
             }],
             hints: {
                 enabled: quest.hints && quest.hints.length > 0,
@@ -1076,6 +1253,7 @@ const ClassView = () => {
             dueDate: ''
         };
 
+        console.log('✅ [EDIT-QUEST] Final form data:', questData);
         setQuestFormData(questData);
         setEditingQuest(quest);
         setIsEditMode(true);
@@ -1254,9 +1432,14 @@ const ClassView = () => {
             if (response.data.success) {
                 // Merge custom quests into the unified order
                 const customQuests = response.data.data.map(quest => ({
-                    ...quest,
+                    _id: quest._id,
+                    id: quest._id,
+                    title: quest.questTitle, // Use questTitle from the Quest model
+                    questTitle: quest.questTitle,
+                    content: quest.questTitle,
                     type: 'custom',
-                    isQ0: false
+                    isQ0: false,
+                    tasks: quest.tasks // Keep tasks for other functionality
                 }));
                 
                 // Start with the fixed quests
@@ -1285,33 +1468,68 @@ const ClassView = () => {
 
     // Load quest order from MongoDB
     const loadQuestOrderFromDatabase = async () => {
+        if (!classId) {
+            console.error('No classId available for loadQuestOrderFromDatabase');
+            return;
+        }
+        
         try {
-            console.log('Loading quest order from database for classId:', classId);
+            // console.log('🔍 [DEBUG] Loading quest order from database for classId:', classId); // Removed
             const response = await axios.get(`${baseURL}/api/group/${classId}/quest-order`);
-            console.log('Quest order response:', response.data);
+            // console.log('🔍 [DEBUG] Quest order API response:', response.data); // Removed
             
             if (response.data.questOrder) {
-                // Convert database format to frontend format
-                const questOrderFromDB = response.data.questOrder.map(quest => ({
+                // Get full quest data with tasks populated for custom quests
+                const fullQuestDataResponse = await axios.get(`${baseURL}/api/quest/professor/${authUser._id}`);
+                const fullQuestDataMap = new Map();
+                
+                if (fullQuestDataResponse.data.success) {
+                    fullQuestDataResponse.data.data.forEach(quest => {
+                        fullQuestDataMap.set(quest._id, quest);
+                    });
+                }
+                
+                // Convert database format to frontend format with full quest data
+                const questOrderFromDB = response.data.questOrder.map(quest => {
+                    if (quest.questType === 'custom') {
+                        // For custom quests, get full data including tasks
+                        const fullQuestData = fullQuestDataMap.get(quest.questId);
+                        return {
                     id: quest.questId,
-                    _id: quest.questType === 'custom' ? quest.questId : null,
+                            _id: quest.questId,
+                            title: quest.title,
+                            questTitle: quest.title,
+                            content: quest.title,
+                            type: quest.questType,
+                            isQ0: quest.isQ0,
+                            tasks: fullQuestData?.tasks || [] // Include the actual task data!
+                        };
+                    } else {
+                        // For fixed quests, just use the order data
+                        return {
+                            id: quest.questId,
+                            _id: null,
                     title: quest.title,
                     questTitle: quest.title,
                     content: quest.title,
                     type: quest.questType,
                     isQ0: quest.isQ0
-                }));
+                        };
+                    }
+                });
                 
-                console.log('Converted quest order from DB:', questOrderFromDB);
+                // console.log('🔍 [DEBUG] Converted quest order from DB:', questOrderFromDB); // Removed
+                // console.log('🔍 [DEBUG] Setting unifiedQuestOrder to:', questOrderFromDB); // Removed
                 setUnifiedQuestOrder(questOrderFromDB);
-                console.log('Loaded quest order from database:', questOrderFromDB);
+                // console.log('🔍 [DEBUG] unifiedQuestOrder should now be updated'); // Removed
             } else {
-                console.log('No quest order found in database, loading default order');
+                // console.log('⚠️ [DEBUG] No quest order found in database, loading default order'); // Removed
                 // If no custom order exists, load default order with custom quests
                 await loadQuestsForOutline();
             }
         } catch (error) {
-            console.error('Error loading quest order from database:', error);
+            console.error('❌ [DEBUG] Error loading quest order from database:', error);
+            console.error('❌ [DEBUG] Full error:', error.response?.data || error.message);
             // Fall back to default loading if database fails
             await loadQuestsForOutline();
         }
@@ -1334,6 +1552,12 @@ const ClassView = () => {
 
     // Save quest order to MongoDB
     const saveQuestOrderToDatabase = async (questOrder, retryCount = 0) => {
+        if (!classId) {
+            console.error('No classId available for saveQuestOrderToDatabase');
+            setQuestOrderSaveStatus('No class ID available');
+            return false;
+        }
+        
         setIsSavingQuestOrder(true);
         setQuestOrderSaveStatus('Saving quest order and prerequisites...');
         try {
@@ -1415,6 +1639,11 @@ const ClassView = () => {
 
     // Reset quest order to default
     const resetQuestOrderToDefault = async () => {
+        if (!classId) {
+            console.error('No classId available for resetQuestOrderToDefault');
+            return;
+        }
+        
         try {
             const response = await axios.post(`${baseURL}/api/group/${classId}/quest-order/reset`);
             if (response.data.success) {
@@ -1427,28 +1656,6 @@ const ClassView = () => {
     };
 
     // Generate dynamic quest configuration
-    const generateDynamicQuestConfig = async () => {
-        try {
-            const response = await axios.post(`${baseURL}/api/quest-config/generate/${classId}`);
-            if (response.data.success) {
-                console.log('Dynamic quest config generated:', response.data.data);
-                alert(`Dynamic quest configuration generated successfully!\n\nQuest Count: ${response.data.data.questCount}\nConfig Path: ${response.data.data.configPath}\n\nThis configuration includes dynamic prerequisites and can be used by the bot.`);
-                return response.data.data;
-            }
-        } catch (error) {
-            console.error('Error generating dynamic quest config:', error);
-            alert('Error generating dynamic quest configuration. Please try again.');
-        }
-    };
-
-    // Helper function to format prerequisites for display
-    const formatPrerequisites = (prerequisites) => {
-        if (!prerequisites || prerequisites.length === 0) {
-            return 'None';
-        }
-        return prerequisites.map(pre => pre.description || `Complete ${pre.questId}`).join(', ');
-    };
-
     const questConfig = {
       map_repo_link: "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
       questSequence: unifiedQuestOrder.map((quest, index) => {
@@ -1469,106 +1676,175 @@ const ClassView = () => {
           const previousQuest = unifiedQuestOrder[index - 1];
           questData.metadata.prerequisite = previousQuest.id || previousQuest._id;
         }
-        // For fixed quests, always use detailed task content based on quest ID
-        if (quest.type === 'fixed') {
-          if (quest.id === 'Q0') {
-            questData.tasks = {
-              T1: {
-                desc: "Environment Preferences",
-                points: 0,
-                xp: 0,
-                type: "general",
-                accept: "## Choosing Your Environment 🌟\n\nWelcome, adventurer! Before diving into the project, you get to customize your experience. Choose how you want to see your progress:\n\n**Options:**\n**A) Show Rank, Not Map** - Only keep track of your ranking, leaving the map a mystery. ✨\n**B) Show Map, Not Rank** - See where you're going, but let your rank remain a surprise! 🗺️\n**C) Show Both** - Get the best of both worlds! See your rank and the map as you go. 🌍\n**D) Show Neither** - For the thrill-seekers: navigate and rank without a guide! 🤫\n\nType the letter of your choice in the comment box, and let the adventure begin! 🎉",
-                error: "Q0T1 answer incorrect, please input a valid multi choice answer, only a single letter",
-                success: "### 🌟 Congratulations! Your environment preferences have been saved.\n\n",
-                answer: "a",
-                hints: []
-              }
-            };
-          } else if (quest.id === 'Q1') {
-            questData.tasks = {
-              T1: {
-                desc: "Explore the issue tracker",
-                points: 20,
-                xp: 20,
-                type: "general",
-                accept: "### 🎯 Task 1: Find the Issue Tracker\n\n**Objective:** The issue tracker is the hub for project discussions, bug reports, and feature requests. Your goal is to find the issue tracker within our GitHub repository.\n\n**Task:** Visit the GitHub repository in the link below and **COUNT** the number of open issues and provide that number in the comment box to complete the task.\n\n**Outcome:** This task will help you become familiar with how issues are reported, discussed, and tracked. Understanding the volume of discussions is crucial for grasping the project's activity level and areas that might need your contribution.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
-                error: "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** issues in our project. \n\nNo worries, though! Mistakes are just stepping stones on the path to learning.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nEach issue represents a story, a problem to solve, or a feature to improve. Finding the correct number is just the start of understanding the broader narrative of our project.\n\nReady for another try? Your correct answer awaits just a click away!",
-                success: "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of issues in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. \n\nReady for the next challenge? More experiences and rewards await!\n\nA new task has appeared in the issues tab.\n\nYour adventure awaits! 🌟\n\n",
-                answer: "a",
-                hints: []
-              }
-            };
-          } else if (quest.id === 'Q2') {
-            questData.tasks = {
-              T1: {
-                desc: "Identify the assigned user for the issue",
-                points: 25,
-                xp: 25,
-                type: "general",
-                accept: "### 🎯 Task 1: Identify the Assigned User for the Issue\n\n**Objective:** In open-source collaboration, tracking issue ownership is crucial for effective project management. Your mission is to **find the assigned user** for the following issue and confirm their GitHub username.\n\n **Issue Number:** 91 \n\n**Task:** Type the assigned user's GitHub username (e.g., `your-username`) in the comment box below.\n\n**Outcome:** By identifying the assigned user, you demonstrate your ability to track project ownership and ensure accountability in open-source collaboration. This skill is essential for maintaining clarity and preventing duplicate efforts in a project.\n\n**Help:** Need assistance? Type **\"help\"** in the comment box to receive hints, but remember, each hint will cost you **5 points** from your total score.",
-                error: "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the username you entered isn't the one assigned to this issue.\n\nNo worries—double-check the issue page, ensure you're looking at the correct issue, and try again!\n\nIf you need help, type **\"help\"** in the comment box, but remember, using hints will deduct **5 points** from your total score.\n\nWhen you're ready, submit the correct **GitHub username** of the assigned user and move forward in your contribution journey!",
-                success: "### 🌟 Congratulations! You Successfully Identified the Assigned User!\n\nGreat job! You've demonstrated an important skill in open-source collaboration: **tracking issue ownership.** This ensures clarity, accountability, and smooth teamwork in any project.\n\n🏆 **Current Progress:** With this achievement, you've earned **${experiencePoints} points**, bringing you **${pointsRemaining} points** closer to Level 2!\n\n🎯 **Quest Advancement:** You're mastering the fundamentals of GitHub issue management. Understanding **who is responsible for which task** is key to contributing effectively and ensuring the project moves forward efficiently.\n\n💡 Keep up the great work! Your next challenge is just around the corner—let's continue this journey together! 🚀",
-                answer: "a",
-                hints: []
-              }
-            };
-          } else if (quest.id === 'Q3') {
-            questData.tasks = {
-              T1: {
-                desc: "Solve the issue (upload a file/make commit)",
-                points: 50,
-                xp: 50,
-                type: "general",
-                accept: "### 🛠️ Task 1 - Solve the Issue (Non-Code Contribution) and Submit a Pull Request\n\n**Objective:** Your mission involves two key stages: identifying and resolving a non-code issue in our GitHub repository and submitting your solution through a pull request (PR). This task focuses on improving the project's quality and accessibility without writing code, such as enhancing documentation, designing graphics, or organizing content.\n\n**Task:** Using the link below, **complete** the task in the issue assigned to you, **submit** a pull request, and choose the correct file in the options and comment it below.\n\nWhich file did you have to interact with to solve the issue?\n\nA) CONTRIBUTING.md\nB) LICENSE\nC) README.md\nD) CHANGELOG.md\n\n**Outcome:** By identifying and resolving a non-code issue and submitting a pull request, you contribute to the project's improvement. This task demonstrates your initiative and commitment to enhancing the project, deepening your understanding of open-source collaboration, and supporting the project's growth.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
-                error: "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the file you've chosen doesn't match the one we were looking for to solve the non-code issue. \n\nRemember, each non-code contribution plays a crucial role in enhancing the project's quality and accessibility. Whether it's documentation, graphics, or organization, every aspect is important.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThis task is a bit like detective work 🔍.\n\nSolving a non-code issue by interacting with the right project file demonstrates your ability to contribute to and navigate the project effectively. It's an essential skill in open-source collaboration, showing that you're ready to contribute in a variety of ways.\n\nReady for another try? The correct file and solution to the issue are just a thought process away!\n\nPlease select the correct answer from the options below based on the issue you're addressing:\n\nA) README.md\nB) LICENSE\nC) CONTRIBUTING.md\nD) CHANGELOG.md\n\nType the letter in the comment box to complete this task.",
-                success: "### 🌟 Congratulations! You've Made Your First Contribution!\n\nBy solving a non-code issue within our project, you've demonstrated your ability to contribute to our community in diverse and meaningful ways. Your effort enhances the project's quality and accessibility, proving that contributions extend far beyond just code.\n\nFor your dedication and successful contribution, you've been awarded **${experiencePoints} experience points!**\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** These ${experiencePoints} points boost your total to **${currentPoints} points**, solidifying your status at Level 2. This achievement is a direct reflection of your commitment, learning, and active participation in our project.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate. To successfully complete the entire quest, you need to reach a 100% completion rate. Each contribution brings you closer to this next significant milestone.\n\n> 🌟 🌟 🌟\n\nFantastic work! Your journey through the project vividly illustrates your growth and the impact of your contributions.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon!\n\nThe adventure continues! 🌟\n\n",
-                answer: "a",
-                hints: []
-              }
-            };
-          } else {
-            // Fallback for other fixed quests
-            questData.tasks = {
-              T1: {
-                desc: "Complete the quest task",
-                points: 20,
-                xp: 20,
-                type: "general",
-                accept: "Complete this quest task to progress in your learning journey.",
-                success: "Great job! You've completed this quest task successfully!",
-                error: "Not quite right. Please try again!",
-                answer: "a",
-                hints: []
-              }
-            };
-          }
+            // For fixed quests, always use detailed task content based on quest ID
+            if (quest.type === 'fixed') {
+                if (quest.id === 'Q0') {
+                    questData.tasks = {
+                        T1: {
+                            desc: "Environment Preferences",
+                            points: 0,
+                            xp: 0,
+                            type: "general",
+                            accept: "## Choosing Your Environment 🌟\n\nWelcome, adventurer! Before diving into the project, you get to customize your experience. Choose how you want to see your progress:\n\n**Options:**\n**A) Show Rank, Not Map** - Only keep track of your ranking, leaving the map a mystery. ✨\n**B) Show Map, Not Rank** - See where you're going, but let your rank remain a surprise! 🗺️\n**C) Show Both** - Get the best of both worlds! See your rank and the map as you go. 🌍\n**D) Show Neither** - For the thrill-seekers: navigate and rank without a guide! 🤫\n\nType the letter of your choice in the comment box, and let the adventure begin! 🎉",
+                            error: "Q0T1 answer incorrect, please input a valid multi choice answer, only a single letter",
+                            success: "### 🌟 Congratulations! Your environment preferences have been saved.\n\n",
+                            answer: "a",
+                            hints: []
+                        }
+                    };
+                } else if (quest.id === 'Q1') {
+                    questData.tasks = {
+                        T1: {
+                            desc: "Explore the issue tracker",
+                            points: 20,
+                            xp: 20,
+                            type: "general",
+                            accept: "### 🎯 Task 1: Find the Issue Tracker\n\n**Objective:** The issue tracker is the hub for project discussions, bug reports, and feature requests. Your goal is to find the issue tracker within our GitHub repository.\n\n**Task:** Visit the GitHub repository in the link below and **COUNT** the number of open issues and provide that number in the comment box to complete the task.\n\n**Outcome:** This task will help you become familiar with how issues are reported, discussed, and tracked. Understanding the volume of discussions is crucial for grasping the project's activity level and areas that might need your contribution.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** issues in our project. \n\nNo worries, though! Mistakes are just stepping stones on the path to learning.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nEach issue represents a story, a problem to solve, or a feature to improve. Finding the correct number is just the start of understanding the broader narrative of our project.\n\nReady for another try? Your correct answer awaits just a click away!",
+                            success: "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of issues in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. \n\nReady for the next challenge? More experiences and rewards await!\n\nA new task has appeared in the issues tab.\n\nYour adventure awaits! 🌟\n\n",
+                            answer: "a",
+                            hints: []
+                        }
+                    };
+                } else if (quest.id === 'Q2') {
+                    questData.tasks = {
+                        T1: {
+                            desc: "Identify the assigned user for the issue",
+                            points: 25,
+                            xp: 25,
+                            type: "general",
+                            accept: "### 🎯 Task 1: Identify the Assigned User for the Issue\n\n**Objective:** In open-source collaboration, tracking issue ownership is crucial for effective project management. Your mission is to **find the assigned user** for the following issue and confirm their GitHub username.\n\n **Issue Number:** 91 \n\n**Task:** Type the assigned user's GitHub username (e.g., `your-username`) in the comment box below.\n\n**Outcome:** By identifying the assigned user, you demonstrate your ability to track project ownership and ensure accountability in open-source collaboration. This skill is essential for maintaining clarity and preventing duplicate efforts in a project.\n\n**Help:** Need assistance? Type **\"help\"** in the comment box to receive hints, but remember, each hint will cost you **5 points** from your total score.",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the username you entered isn't the one assigned to this issue.\n\nNo worries—double-check the issue page, ensure you're looking at the correct issue, and try again!\n\nIf you need help, type **\"help\"** in the comment box, but remember, using hints will deduct **5 points** from your total score.\n\nWhen you're ready, submit the correct **GitHub username** of the assigned user and move forward in your contribution journey!",
+                            success: "### 🌟 Congratulations! You Successfully Identified the Assigned User!\n\nGreat job! You've demonstrated an important skill in open-source collaboration: **tracking issue ownership.** This ensures clarity, accountability, and smooth teamwork in any project.\n\n🏆 **Current Progress:** With this achievement, you've earned **${experiencePoints} points**, bringing you **${pointsRemaining} points** closer to Level 2!\n\n🎯 **Quest Advancement:** You're mastering the fundamentals of GitHub issue management. Understanding **who is responsible for which task** is key to contributing effectively and ensuring the project moves forward efficiently.\n\n💡 Keep up the great work! Your next challenge is just around the corner—let's continue this journey together! 🚀",
+                            answer: "a",
+                            hints: []
+                        }
+                    };
+                } else if (quest.id === 'Q3') {
+                    questData.tasks = {
+                        T1: {
+                            desc: "Solve the issue (upload a file/make commit)",
+                            points: 50,
+                            xp: 50,
+                            type: "general",
+                            accept: "### 🛠️ Task 1 - Solve the Issue (Non-Code Contribution) and Submit a Pull Request\n\n**Objective:** Your mission involves two key stages: identifying and resolving a non-code issue in our GitHub repository and submitting your solution through a pull request (PR). This task focuses on improving the project's quality and accessibility without writing code, such as enhancing documentation, designing graphics, or organizing content.\n\n**Task:** Using the link below, **complete** the task in the issue assigned to you, **submit** a pull request, and choose the correct file in the options and comment it below.\n\nWhich file did you have to interact with to solve the issue?\n\nA) CONTRIBUTING.md\nB) LICENSE\nC) README.md\nD) CHANGELOG.md\n\n**Outcome:** By identifying and resolving a non-code issue and submitting a pull request, you contribute to the project's improvement. This task demonstrates your initiative and commitment to enhancing the project, deepening your understanding of open-source collaboration, and supporting the project's growth.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the file you've chosen doesn't match the one we were looking for to solve the non-code issue. \n\nRemember, each non-code contribution plays a crucial role in enhancing the project's quality and accessibility. Whether it's documentation, graphics, or organization, every aspect is important.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThis task is a bit like detective work 🔍.\n\nSolving a non-code issue by interacting with the right project file demonstrates your ability to contribute to and navigate the project effectively. It's an essential skill in open-source collaboration, showing that you're ready to contribute in a variety of ways.\n\nReady for another try? The correct file and solution to the issue are just a thought process away!\n\nPlease select the correct answer from the options below based on the issue you're addressing:\n\nA) README.md\nB) LICENSE\nC) CONTRIBUTING.md\nD) CHANGELOG.md\n\nType the letter in the comment box to complete this task.",
+                            success: "### 🌟 Congratulations! You've Made Your First Contribution!\n\nBy solving a non-code issue within our project, you've demonstrated your ability to contribute to our community in diverse and meaningful ways. Your effort enhances the project's quality and accessibility, proving that contributions extend far beyond just code.\n\nFor your dedication and successful contribution, you've been awarded **${experiencePoints} experience points!**\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** These ${experiencePoints} points boost your total to **${currentPoints} points**, solidifying your status at Level 2. This achievement is a direct reflection of your commitment, learning, and active participation in our project.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate. To successfully complete the entire quest, you need to reach a 100% completion rate. Each contribution brings you closer to this next significant milestone.\n\n> 🌟 🌟 🌟\n\nFantastic work! Your journey through the project vividly illustrates your growth and the impact of your contributions.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon!\n\nThe adventure continues! 🌟\n\n",
+                            answer: "a",
+                            hints: []
+                        }
+                    };
+                } else {
+                    // Fallback for other fixed quests
+                    questData.tasks = {
+                        T1: {
+                            desc: "Complete the quest task",
+                            points: 20,
+                            xp: 20,
+                            type: "general",
+                            accept: "Complete this quest task to progress in your learning journey.",
+                            success: "Great job! You've completed this quest task successfully!",
+                            error: "Not quite right. Please try again!",
+                            answer: "a",
+                            hints: []
+                        }
+                    };
+                }
+            } else {
+                // For custom quests, use real task data from the quest object or myQuests
+                console.log(`🔍 [QUEST-CONFIG] Processing custom quest ${quest._id}:`, quest);
+                
+        let realTasks = quest.tasks;
+                
+                // If no tasks in quest object, try to find in myQuests
+                if (!realTasks && quest.type === 'custom' && quest._id) {
+          const customQuest = myQuests.find(q => q._id === quest._id);
+                    if (customQuest && customQuest.tasks) {
+                        console.log(`✅ [QUEST-CONFIG] Found task data in myQuests for ${quest._id}:`, customQuest.tasks);
+                        realTasks = customQuest.tasks;
+                    }
+                }
+                
+                if (realTasks && Array.isArray(realTasks) && realTasks.length > 0) {
+                    console.log(`🎯 [QUEST-CONFIG] Using real task data for ${quest._id}:`, realTasks);
+                    
+                    // Transform array of tasks to object format
+                    const transformedTasks = {};
+                    realTasks.forEach((task, taskIndex) => {
+                        const taskKey = `T${taskIndex + 1}`;
+                        
+                        // Enhanced task data extraction - check multiple possible field names and data structures
+                        let taskDesc = 'Task description';
+                        let taskPoints = 100;
+                        let taskXp = 100;
+                        let taskType = 'multiple-choice';
+                        let taskAnswer = 'a';
+                        
+                        // Try to extract description from various possible field names
+                        if (task.desc && task.desc !== 'N/A') taskDesc = task.desc;
+                        else if (task.description && task.description !== 'N/A') taskDesc = task.description;
+                        else if (task.taskTitle && task.taskTitle !== 'N/A') taskDesc = task.taskTitle;
+                        else if (task.title && task.title !== 'N/A') taskDesc = task.title;
+                        
+                        // Extract other task properties
+                        if (task.points && task.points !== 'N/A') taskPoints = task.points;
+                        if (task.xp && task.xp !== 'N/A') taskXp = task.xp;
+                        else if (task.points && task.points !== 'N/A') taskXp = task.points;
+                        if (task.type && task.type !== 'N/A') taskType = task.type;
+                        if (task.answer && task.answer !== 'N/A') taskAnswer = task.answer;
+                        
+                        // Enhanced response data extraction
+                        const acceptResponse = task.responses?.accept || task.accept || 'Complete this task';
+                        const successResponse = task.responses?.success || task.success || 'Task completed successfully!';
+                        const errorResponse = task.responses?.error || task.error || 'Incorrect answer, please try again.';
+                        
+                        transformedTasks[taskKey] = {
+                            desc: taskDesc,
+                            points: taskPoints,
+                            xp: taskXp,
+                            type: taskType,
+                            accept: acceptResponse, // Always use responses.accept
+                            success: successResponse,
+                            error: errorResponse,
+                            answer: taskAnswer,
+                            hints: task.hints || []
+                        };
+                        
+                        // Log the actual task data being used
+                        console.log(`📋 [TASK-${taskKey}] Real data extracted:`, {
+                            desc: taskDesc,
+                            points: taskPoints,
+                            xp: taskXp,
+                            type: taskType,
+                            answer: taskAnswer,
+                            accept: acceptResponse,
+                            hasAccept: acceptResponse.length > 20,
+                            hasSuccess: successResponse.length > 20,
+                            hasError: errorResponse.length > 20
+                        });
+                    });
+                    questData.tasks = transformedTasks;
+                    console.log(`✅ [QUEST-CONFIG] Transformed tasks for ${quest._id}:`, transformedTasks);
+                } else if (realTasks && typeof realTasks === 'object' && Object.keys(realTasks).length > 0) {
+                    console.log(`🎯 [QUEST-CONFIG] Using object task data for ${quest._id}:`, realTasks);
+          questData.tasks = realTasks;
         } else {
-          // Always try to use real tasks from the quest object
-          let realTasks = quest.tasks;
-          // For custom quests, try to find in myQuests if not present
-          if ((!realTasks || Object.keys(realTasks).length === 0) && quest.type === 'custom' && quest._id) {
-            const customQuest = myQuests.find(q => q._id === quest._id);
-            if (customQuest && customQuest.tasks) realTasks = customQuest.tasks;
-          }
-          if (realTasks && typeof realTasks === 'object' && Object.keys(realTasks).length > 0) {
-            questData.tasks = realTasks;
-          } else {
-            // Generic fallback for custom quests or unknown types
-            questData.tasks = {
-              T1: {
-                desc: "Task description",
-                points: 20,
-                xp: 20,
-                type: "general",
-                accept: "Task description",
-                success: "Task completed successfully!",
-                error: "Incorrect answer, please try again.",
-                answer: "a",
-                hints: []
-              }
-            };
-          }
+                    console.warn(`⚠️ [QUEST-CONFIG] No task data found for custom quest ${quest._id}, using fallback`);
+                    // Generic fallback for custom quests
+          questData.tasks = {
+            T1: {
+                            desc: quest.title || "Custom quest task",
+                            points: 100,
+                            xp: 100,
+              type: "general",
+                            accept: quest.title || "Complete this custom quest task",
+                            success: "Custom quest task completed successfully!",
+              error: "Incorrect answer, please try again.",
+              answer: "a",
+              hints: []
+            }
+          };
+                }
         }
         return questData;
       }),
@@ -1581,19 +1857,164 @@ const ClassView = () => {
         fixedQuests: unifiedQuestOrder.filter(q => q.type === 'fixed').length
       }
     };
-    
-    console.log('📊 [QUEST-CONFIG] Generated quest configuration:', {
-      totalQuests: questConfig.questSequence.length,
-      customQuests: questConfig.metadata.customQuests,
-      fixedQuests: questConfig.metadata.fixedQuests,
-      version: questConfig.metadata.version
-    });
+
+    // Debug unifiedQuestOrder changes
+    useEffect(() => {
+        // console.log('🎯 [DEBUG] unifiedQuestOrder state changed:', unifiedQuestOrder); // Removed
+        // console.log('🎯 [DEBUG] unifiedQuestOrder length:', unifiedQuestOrder.length); // Removed
+        // console.log('🎯 [DEBUG] Quest types:', unifiedQuestOrder.map(q => `${q.title} (${q.type})`)); // Removed
+    }, [unifiedQuestOrder]);
+
+    // 2. Add handler for batch repo creation
+    const handleBatchCsvUpload = (event) => {
+      const file = event.target.files[0];
+      if (file && file.type === 'text/csv') {
+        setBatchCsvFile(file);
+      } else {
+        alert('Please upload a valid CSV file');
+      }
+    };
+
+    const handleBatchCreateRepos = async () => {
+      if (!csvFile) {
+        alert('Please upload a CSV file first');
+        return;
+      }
+      // Clear the file and close the dialog before starting processing
+      setShowModal(false);
+      setTimeout(async () => {
+        setIsProcessing(true);
+        setProcessedCount(0);
+        setProcessingResults({ successful: [], unsuccessful: [] });
+        setCreateReposStatus('');
+        // ... existing batch repo creation logic ...
+        // (move the main processing logic here)
+        // After processing, do NOT clear the dialog or file input until user closes it or after a delay
+      }, 300); // Small delay to allow dialog to close visually
+    };
+
+    // Add this before the quest breakdown table rendering
+    const questBreakdownQuests = generateJsonConfig && generateJsonConfig.questSequence ? generateJsonConfig.questSequence : unifiedQuestOrder;
+
+    // Calculate total possible points for the class
+    const totalPossiblePoints = (questBreakdownQuests || []).reduce((sum, quest) => {
+      if (quest.tasks) {
+        if (Array.isArray(quest.tasks)) {
+          return sum + quest.tasks.reduce((tSum, t) => tSum + (t.points || 0), 0);
+        } else {
+          return sum + Object.values(quest.tasks).reduce((tSum, t) => tSum + (t.points || 0), 0);
+        }
+      }
+      return sum;
+    }, 0);
+    console.log('DEBUG: totalPossiblePoints', totalPossiblePoints);
 
     return (
-        <div>
-            <HomeHeader className="header" />
-            <Container maxWidth="lg" sx={{ py: 4 }}>
-                {!classInfo || !classInfo.groupName ? (
+        <div style={{ display: 'flex', minHeight: '100vh' }}>
+            {/* Sidebar */}
+            <Box
+                sx={{
+                    width: sidebarOpen ? 280 : 70,
+                    bgcolor: 'white',
+                    borderRight: '1px solid #e0e0e0',
+                    transition: 'width 0.3s ease',
+                    position: 'fixed',
+                    height: '100vh',
+                    zIndex: 1000,
+                    overflow: 'hidden'
+                }}
+            >
+                {/* Sidebar Header */}
+                <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <IconButton
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        size="small"
+                    >
+                        {sidebarOpen ? <CloseIcon /> : <MenuIcon />}
+                    </IconButton>
+                </Box>
+
+                {/* Sidebar Menu Items */}
+                <Box sx={{ p: 1 }}>
+                    <Button
+                        fullWidth
+                        startIcon={<DashboardIcon />}
+                        onClick={() => setCurrentView('dashboard')}
+                        sx={{
+                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                            mb: 1,
+                            py: 1.5,
+                            px: 2,
+                            bgcolor: currentView === 'dashboard' ? '#fb5233' : 'transparent',
+                            color: currentView === 'dashboard' ? 'white' : 'text.primary',
+                            borderRadius: 3,
+                            '&:hover': { bgcolor: currentView === 'dashboard' ? '#e64a19' : 'rgba(0,0,0,0.04)' }
+                        }}
+                    >
+                        {sidebarOpen && 'Dashboard'}
+                    </Button>
+
+                    <Button
+                        fullWidth
+                        startIcon={<AssignmentIcon />}
+                        onClick={() => setCurrentView('manage-quests')}
+                        sx={{
+                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                            mb: 1,
+                            py: 1.5,
+                            px: 2,
+                            bgcolor: currentView === 'manage-quests' ? '#fb5233' : 'transparent',
+                            color: currentView === 'manage-quests' ? 'white' : 'text.primary',
+                            borderRadius: 3,
+                            '&:hover': { bgcolor: currentView === 'manage-quests' ? '#e64a19' : 'rgba(0,0,0,0.04)' }
+                        }}
+                    >
+                        {sidebarOpen && 'Manage Quests'}
+                    </Button>
+
+                    <Button
+                        fullWidth
+                        startIcon={<PeopleIcon />}
+                        onClick={() => setCurrentView('manage-students')}
+                        sx={{
+                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                            mb: 1,
+                            py: 1.5,
+                            px: 2,
+                            bgcolor: currentView === 'manage-students' ? '#fb5233' : 'transparent',
+                            color: currentView === 'manage-students' ? 'white' : 'text.primary',
+                            borderRadius: 3,
+                            '&:hover': { bgcolor: currentView === 'manage-students' ? '#e64a19' : 'rgba(0,0,0,0.04)' }
+                        }}
+                    >
+                        {sidebarOpen && 'Manage Students'}
+                    </Button>
+
+
+
+
+                </Box>
+            </Box>
+
+            {/* Main Content */}
+            <Box sx={{ 
+                flex: 1, 
+                ml: sidebarOpen ? '280px' : '70px', 
+                transition: 'margin-left 0.3s ease',
+                width: `calc(100vw - ${sidebarOpen ? '280px' : '70px'})`,
+                minWidth: 0,
+                bgcolor: '#f8f9fa'
+            }}>
+                <HomeHeader className="header" />
+                {currentView === 'dashboard' ? (
+                    <Container maxWidth="lg" sx={{ py: 4, width: '100%', textAlign: 'left' }}>
+                {!classId ? (
+                    <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                        <Typography variant="h6" color="text.secondary">
+                            Invalid class ID. Please check the URL.
+                        </Typography>
+                    </Box>
+                ) : !classInfo || !classInfo.groupName ? (
                     <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
                         <Typography variant="h6" color="text.secondary">
                             Loading class information...
@@ -1606,90 +2027,213 @@ const ClassView = () => {
                             <Typography variant="h3" component="h1" fontWeight={700} gutterBottom>
                                 {classInfo.groupName}
                             </Typography>
-                            <Typography variant="h5" color="text.secondary" gutterBottom>
-                                Class Code: {classInfo.classCode}
-                            </Typography>
                             <Stack direction="row" spacing={2} alignItems="center" mt={2}>
-                                <Chip label="Export Grades" variant="outlined" />
                                 <Box sx={{ 
                                     display: 'flex', 
+                                    flexDirection: 'column',
                                     alignItems: 'center', 
+                                    justifyContent: 'center',
                                     gap: 1, 
-                                    px: 2, 
-                                    py: 0.5, 
-                                    bgcolor: 'success.main', 
-                                    color: 'white', 
-                                    borderRadius: 2,
-                                    fontSize: '0.875rem'
+                                    px: 3, 
+                                    py: 1.5, 
+                                    bgcolor: 'white', 
+                                    color: 'text.primary', 
+                                    borderRadius: 4,
+                                    height: 150,
+                                    fontWeight: 500,
+                                    minWidth: 120
                                 }}>
-                                    <CheckCircleIcon sx={{ fontSize: '1rem' }} />
-                                    <span>Active Class</span>
+                                    <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                                        Average Score
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.5, justifyContent: 'center' }}>
+                                        <Typography variant="h3" sx={{ fontWeight: 700, fontSize: '2.5rem', color: '#1976d2' }}>
+                                            {(() => {
+                                                // Calculate average score across all students
+                                                const totalScore = Object.values(studentScores).reduce((sum, scores) => {
+                                                    return sum + (scores.points || 0);
+                                                }, 0);
+                                                
+                                                const averageScore = studentData.length > 0 
+                                                    ? Math.round(totalScore / studentData.length) 
+                                                    : 0;
+                                                
+                                                return averageScore;
+                                            })()}
+                                        </Typography>
+                                        <Typography variant="h6" sx={{ fontWeight: 400, fontSize: '1.2rem', color: '#1976d2' }}>
+                                            /{(() => {
+                                                // Calculate total possible points for the class
+                                                const totalPossiblePoints = (questBreakdownQuests || []).reduce((sum, quest) => {
+                                                    if (quest.tasks) {
+                                                        if (Array.isArray(quest.tasks)) {
+                                                            return sum + quest.tasks.reduce((tSum, t) => tSum + (t.points || 0), 0);
+                                                        } else {
+                                                            return sum + Object.values(quest.tasks).reduce((tSum, t) => tSum + (t.points || 0), 0);
+                                                        }
+                                                    }
+                                                    return sum;
+                                                }, 0);
+                                                
+                                                return totalPossiblePoints;
+                                            })()}
+                                        </Typography>
+                                    </Box>
+                                </Box>
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    flexDirection: 'column',
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    gap: 1, 
+                                    px: 3, 
+                                    py: 1.5, 
+                                    bgcolor: 'primary.main', 
+                                    color: 'white', 
+                                    borderRadius: 4,
+                                    height: 150,
+                                    fontWeight: 500,
+                                    minWidth: 120
+                                }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                                        Completion Rate
+                                    </Typography>
+                                    <Typography variant="h3" sx={{ fontWeight: 700, fontSize: '2.5rem' }}>
+                                        {(() => {
+                                            // Calculate total tasks for the class
+                                            const totalTasks = (questBreakdownQuests || []).reduce((sum, quest) => {
+                                                if (quest.tasks) {
+                                                    if (Array.isArray(quest.tasks)) {
+                                                        return sum + quest.tasks.length;
+                                                    } else {
+                                                        return sum + Object.keys(quest.tasks).length;
+                                                    }
+                                                }
+                                                return sum;
+                                            }, 0);
+                                            
+                                            // Calculate total completed tasks across all students
+                                            let totalCompletedTasks = 0;
+                                            
+                                            Object.values(studentScores).forEach(scores => {
+                                                const studentCompletedTaskIds = new Set(); // Use Set to avoid duplicates per student
+                                                
+                                                if (scores.questProgress) {
+                                                    Object.values(scores.questProgress).forEach(questProgress => {
+                                                        if (questProgress.tasks) {
+                                                            Object.entries(questProgress.tasks).forEach(([taskId, task]) => {
+                                                                if (task.completed && !studentCompletedTaskIds.has(taskId)) {
+                                                                    totalCompletedTasks++;
+                                                                    studentCompletedTaskIds.add(taskId);
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                            
+                                            // Calculate overall completion rate based on tasks
+                                            const totalPossibleTasks = totalTasks * studentData.length;
+                                            const overallCompletionRate = totalPossibleTasks > 0 
+                                                ? Math.round((totalCompletedTasks / totalPossibleTasks) * 100) 
+                                                : 0;
+                                            
+                                            return overallCompletionRate;
+                                        })()}%
+                                    </Typography>
+                                </Box>
+                                <Box sx={{ 
+                                    display: 'flex', 
+                                    flexDirection: 'column',
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    gap: 1, 
+                                    px: 3, 
+                                    py: 1.5, 
+                                    bgcolor: '#ff5722', 
+                                    color: 'white', 
+                                    borderRadius: 4,
+                                    height: 150,
+                                    fontWeight: 500,
+                                    minWidth: 120
+                                }}>
+                                    <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                                        Students
+                                    </Typography>
+                                    <Typography variant="h3" sx={{ fontWeight: 700, fontSize: '2.5rem' }}>
+                                        {studentData.length}
+                                    </Typography>
                                 </Box>
                             </Stack>
                         </Box>
 
                         {/* Students Section */}
-                        <Card sx={{ mb: 4 }}>
+                        <Card sx={{ 
+                            mb: 4, 
+                            borderRadius: 4, 
+                            boxShadow: 'none' 
+                        }}>
                             <Box p={3}>
-                                <Typography variant="h5" component="h3" gutterBottom display="flex" alignItems="center">
-                                    <GroupIcon sx={{ mr: 1 }} />
+                                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 700 }}>
                                     Students
                                 </Typography>
                                 
-                                {isLoading ? (
+                                    {isLoading ? (
                                     <Box textAlign="center" py={4}>
                                         <LinearProgress sx={{ mb: 2 }} />
                                         <Typography>Loading repositories...</Typography>
                                     </Box>
-                                ) : studentData.length === 0 ? (
+                                    ) : studentData.length === 0 ? (
                                     <Box textAlign="center" py={4}>
                                         <Typography color="text.secondary">
-                                            No student repositories found. Click "Add Students" to create repositories.
+                                            No student repositories found. Click "Add Students" to create repositories!!
                                         </Typography>
                                     </Box>
                                 ) : (
                                     <List>
-                                        <ListItem sx={{ bgcolor: 'primary.light', color: 'white' }}>
-                                            <ListItemText 
-                                                primary={`📚 Students (${studentData.length})`}
-                                                primaryTypographyProps={{ fontWeight: 600 }}
-                                            />
-                                        </ListItem>
-                                        {studentData.map((repo, index) => (
-                                            <ListItem key={index}>
-                                                <ListItemText primary={repo.githubUsername} />
-                                            </ListItem>
-                                        ))}
+                                        {studentData.map((repo, index) => {
+                                            // Define a set of colors for the icons
+                                            const colors = [
+                                                '#1976d2', // blue
+                                                '#9c27b0', // purple
+                                                '#f57c00', // orange
+                                                '#388e3c', // green
+                                                '#d32f2f', // red
+                                                '#7b1fa2', // deep purple
+                                                '#ff6f00', // amber
+                                                '#2e7d32'  // dark green
+                                            ];
+                                            const colorIndex = index % colors.length;
+                                            const iconColor = colors[colorIndex];
+                                            
+                                            return (
+                                                <ListItem key={index} sx={{ alignItems: 'flex-start' }}>
+                                                    <AccountCircleIcon 
+                                                        sx={{ 
+                                                            mr: 2, 
+                                                            color: iconColor,
+                                                            opacity: 0.6,
+                                                            fontSize: '1.5rem',
+                                                            mt: 0.5
+                                                        }} 
+                                                    />
+                                                            <ListItemText primary={repo.githubUsername} />
+                                                        </ListItem>
+                                            );
+                                        })}
                                     </List>
                                 )}
-                                
-                                <Box textAlign="center" mt={3}>
-                                    <Button 
-                                        variant="contained" 
-                                        startIcon={<AddIcon />}
-                                        onClick={() => setShowModal(true)}
-                                        sx={{ 
-                                            bgcolor: '#fb5233', 
-                                            '&:hover': { bgcolor: '#e04a2e' },
-                                            fontWeight: 'bold'
-                                        }}
-                                    >
-                                        Add Students
-                                    </Button>
-                                    {createReposStatus && (
-                                        <Alert severity="info" sx={{ mt: 2 }}>
-                                            {createReposStatus}
-                                        </Alert>
-                                    )}
-                                </Box>
                             </Box>
                         </Card>
 
                         {/* Quest Completion Section */}
-                        <Card sx={{ mb: 4 }}>
+                        <Card sx={{ 
+                            mb: 4, 
+                            borderRadius: 4, 
+                            boxShadow: 'none' 
+                        }}>
                             <Box p={3}>
-                                <Typography variant="h5" component="h3" gutterBottom display="flex" alignItems="center">
-                                    <SchoolIcon sx={{ mr: 1 }} />
+                                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 700 }}>
                                     Student Progress & Scores
                                 </Typography>
                                 
@@ -1705,18 +2249,29 @@ const ClassView = () => {
                                         </Typography>
                                     </Box>
                                 ) : (
-                                    <Box sx={{ overflowX: 'auto' }}>
-                                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                            <thead>
-                                                <tr style={{ backgroundColor: '#f5f5f5' }}>
-                                                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 600 }}>Student</th>
-                                                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 600 }}>Points</th>
-                                                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 600 }}>XP</th>
-                                                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 600 }}>Completion %</th>
-                                                    <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd', fontWeight: 600 }}>Current Streak</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
+                                    <Box>
+                                        {/* Header Section */}
+                                        <Box sx={{ 
+                                            display: 'grid', 
+                                            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                                            gap: 2,
+                                            p: 2,
+                                            bgcolor: '#f5f5f5',
+                                            borderRadius: 1,
+                                            mb: 1
+                                        }}>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Student</Typography>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Points</Typography>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>XP</Typography>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Completion %</Typography>
+                                            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Current Streak</Typography>
+                                        </Box>
+                                        
+                                        {/* Separator Line */}
+                                        <Divider sx={{ mb: 2 }} />
+                                        
+                                        {/* Body Section */}
+                                        <Box>
                                                 {studentData
                                                     .sort((a, b) => {
                                                         const scoreA = studentScores[a.githubUsername]?.points || 0;
@@ -1726,188 +2281,251 @@ const ClassView = () => {
                                                     .map((student, index) => {
                                                         const scores = studentScores[student.githubUsername] || {};
                                                         
+                                                        // Calculate total tasks for the class
+                                                        const totalTasks = (questBreakdownQuests || []).reduce((sum, quest) => {
+                                                          if (quest.tasks) {
+                                                            if (Array.isArray(quest.tasks)) {
+                                                              return sum + quest.tasks.length;
+                                                            } else {
+                                                              return sum + Object.keys(quest.tasks).length;
+                                                            }
+                                                          }
+                                                          return sum;
+                                                        }, 0);
+                                                        
+                                                        // Calculate completed tasks for this student
+                                                        let completedTasks = 0;
+                                                        const completedTaskIds = new Set(); // Use Set to avoid duplicates
+                                                        
+                                                        if (scores.questProgress) {
+                                                            Object.values(scores.questProgress).forEach(questProgress => {
+                                                                if (questProgress.tasks) {
+                                                                    Object.entries(questProgress.tasks).forEach(([taskId, task]) => {
+                                                                        if (task.completed && !completedTaskIds.has(taskId)) {
+                                                                            completedTasks++;
+                                                                            completedTaskIds.add(taskId);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                        
+                                                        const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+                                                        
                                                         return (
-                                                            <tr key={student.githubUsername} style={{
-                                                                backgroundColor: index % 2 === 0 ? '#fafafa' : 'white'
-                                                            }}>
-                                                                <td style={{ padding: '12px', border: '1px solid #ddd', fontWeight: 500 }}>
+                                                        <Box key={student.githubUsername} sx={{ 
+                                                            display: 'grid', 
+                                                            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                                                            gap: 2,
+                                                            p: 2,
+                                                            borderBottom: '1px solid #e0e0e0',
+                                                            '&:last-child': { borderBottom: 'none' }
+                                                        }}>
+                                                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                                                <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                                     {student.githubUsername}
                                                                     {index === 0 && scores.points > 0 && (
-                                                                        <span style={{ marginLeft: '8px', fontSize: '14px' }}>🏆</span>
+                                                                        <EmojiEventsIcon sx={{ ml: 1, fontSize: '1.2rem', color: '#ffd700' }} />
                                                                     )}
-                                                                </td>
-                                                                <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                                                                    <strong style={{ color: '#1976d2' }}>{scores.points || 0}</strong>
-                                                                </td>
-                                                                <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                                                                    <strong style={{ color: '#9c27b0' }}>{scores.xp || 0}</strong>
-                                                                </td>
-                                                                <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="body1" sx={{ color: '#1976d2', fontWeight: 600 }}>
+                                                                {scores.points || 0}
+                                                            </Typography>
+                                                            <Typography variant="body1" sx={{ color: '#9c27b0', fontWeight: 600 }}>
+                                                                {scores.xp || 0}
+                                                            </Typography>
+                                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
                                                                         <LinearProgress 
                                                                             variant="determinate" 
-                                                                            value={scores.completion || 0}
+                                                                            value={completionPercent}
                                                                             sx={{ 
-                                                                                width: '80px', 
+                                                                        width: '60px', 
                                                                                 height: '6px',
                                                                                 borderRadius: '3px'
                                                                             }}
                                                                         />
-                                                                        <span style={{ fontSize: '14px', fontWeight: 500 }}>
-                                                                            {scores.completion || 0}%
-                                                                        </span>
-                                                                    </div>
-                                                                </td>
-                                                                <td style={{ padding: '12px', border: '1px solid #ddd' }}>
-                                                                    <span style={{ color: '#ff5722', fontWeight: 500 }}>
-                                                                        🔥 {scores.currentStreak || 0}
-                                                                    </span>
-                                                                </td>
-                                                            </tr>
+                                                                <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'center' }}>
+                                                                            {completionPercent}%
+                                                                </Typography>
+                                                            </Box>
+                                                            <Typography variant="body1" sx={{ color: '#ff5722', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                <LocalFireDepartmentIcon sx={{ fontSize: '1.2rem' }} />
+                                                                {scores.currentStreak || 0}
+                                                            </Typography>
+                                                        </Box>
                                                         );
                                                     })}
-                                            </tbody>
-                                        </table>
-                                        
-                                        {/* Summary Statistics */}
-                                        <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-                                            <Typography variant="h6" gutterBottom>
-                                                📊 Class Statistics
-                                            </Typography>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={12} sm={6} md={4}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Total Students
-                                                    </Typography>
-                                                    <Typography variant="h6">
-                                                        {studentData.length}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6} md={4}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Average Points
-                                                    </Typography>
-                                                    <Typography variant="h6">
-                                                        {studentData.length > 0 ? Math.round(
-                                                            studentData.reduce((sum, student) => 
-                                                                sum + (studentScores[student.githubUsername]?.points || 0), 0
-                                                            ) / studentData.length
-                                                        ) : 0}
-                                                    </Typography>
-                                                </Grid>
-                                                <Grid item xs={12} sm={6} md={4}>
-                                                    <Typography variant="body2" color="text.secondary">
-                                                        Average Completion
-                                                    </Typography>
-                                                    <Typography variant="h6">
-                                                        {studentData.length > 0 ? Math.round(
-                                                            studentData.reduce((sum, student) => 
-                                                                sum + (studentScores[student.githubUsername]?.completion || 0), 0
-                                                            ) / studentData.length
-                                                        ) : 0}%
-                                                    </Typography>
-                                                </Grid>
-                                            </Grid>
                                         </Box>
                                     </Box>
                                 )}
-                            </Box>
-                        </Card>
-
-                        {/* Course Outline Section */}
-                        <Card>
-                            <Box p={3}>
-                                <Typography variant="h5" component="h3" gutterBottom display="flex" alignItems="center">
-                                    <AssignmentIcon sx={{ mr: 1 }} />
-                                    Course Outline
-                                </Typography>
-                                
-                                {/* Action Buttons */}
-                                <Stack direction="row" spacing={2} mb={3} flexWrap="wrap" useFlexGap>
-                                    <Button 
-                                        variant="contained" 
-                                        startIcon={<EditIcon />}
-                                onClick={() => setShowReadmeModal(true)}
-                                        sx={{ 
-                                            bgcolor: '#fb5233', 
-                                            '&:hover': { bgcolor: '#e04a2e' },
-                                            fontWeight: 'bold'
-                                }}
-                            >
-                                {existingReadme ? 'Edit README Instructions' : 'Add README Instructions'}
-                                    </Button>
-                                    <Button 
-                                        variant="contained" 
-                                        color="primary"
-                                        onClick={() => navigate(`/class/${classId}/manage-quests`)}
-                                        startIcon={<AssignmentIcon />}
-                                    >
-                                        Manage Quests
-                                    </Button>
-                                </Stack>
-
-                                {/* Status Messages */}
-                            {existingReadme && (
-                                    <Alert severity="success" sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle2" fontWeight={600}>
-                                            ✓ README Instructions Set
-                                        </Typography>
-                                        <Typography variant="body2">
-                                            File: {existingReadme.fileName} | Content Length: {existingReadme.contentLength} characters
-                                        </Typography>
-                                    </Alert>
-                            )}
-                            {!existingReadme && (
-                                    <Alert severity="info" sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle2" fontWeight={600}>
-                                            ℹ️ No README Instructions Set
-                                        </Typography>
-                                        <Typography variant="body2">
-                                            Click "Add README Instructions" to upload a README file for this class.
-                                        </Typography>
-                                    </Alert>
-                                )}
-                                
-                                {/* Quest Summary */}
-                                <Paper sx={{ p: 2, bgcolor: 'grey.50', mb: 2 }}>
-                                    <Typography variant="h6" gutterBottom>
-                                        Quest Summary
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" paragraph>
-                                        {unifiedQuestOrder.length} total quests configured for this class
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        • {unifiedQuestOrder.filter(q => q.type === 'fixed').length} fixed quests (Q0-Q3)
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        • {unifiedQuestOrder.filter(q => q.type === 'custom').length} custom quests
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                        Use the "Manage Quests" button to create, edit, delete, and reorder quests.
-                                    </Typography>
-                                </Paper>
-
-                                <Alert severity="info" sx={{ mb: 2 }}>
-                                    <Typography variant="subtitle2" fontWeight={600}>
-                                        🔄 Quest Management
-                                    </Typography>
-                                    <Typography variant="body2">
-                                        Use the "Manage Quests" button to create, edit, delete, and reorder quests for this class.
-                                    </Typography>
-                                </Alert>
-                                <Box sx={{ mt: 3 }}>
+                                        
+                                        {/* Quest Breakdown Section */}
+                                        <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
+                                    <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 700 }}>
+                                        Quest Breakdown
+                                            </Typography>
+                                            {(() => {
+                                                return unifiedQuestOrder.length > 0;
+                                            })() ? (
+                                        <Box>
+                                            {/* Header Section */}
+                                            <Box sx={{ 
+                                                display: 'grid', 
+                                                gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                                                gap: 2,
+                                                p: 2,
+                                                bgcolor: '#e3f2fd',
+                                                borderRadius: 1,
+                                                mb: 1
+                                            }}>
+                                                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Quest</Typography>
+                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, textAlign: 'center' }}>Completed</Typography>
+                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, textAlign: 'center' }}>Completion Rate</Typography>
+                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, textAlign: 'center' }}>Avg Score</Typography>
+                                                <Typography variant="subtitle1" sx={{ fontWeight: 600, textAlign: 'center' }}>Avg XP</Typography>
+                                            </Box>
+                                            
+                                            {/* Separator Line */}
+                                            <Divider sx={{ mb: 2 }} />
+                                            
+                                            {/* Body Section */}
+                                            <Box>
+                                                            {questBreakdownQuests.map((quest, questIndex) => {
+                                                                const questId = quest.id || quest._id || `Q${questIndex}`;
+                                                                const questTitle = quest.title || quest.questTitle || questId;
+                                                                
+                                                                // Calculate quest statistics
+                                                                let completedCount = 0;
+                                                                let totalScore = 0;
+                                                                let totalXP = 0;
+                                                                let studentsWithData = 0;
+                                                                let hasActualData = false;
+                                                                
+                                                                studentData.forEach(student => {
+                                                                    const scores = studentScores[student.githubUsername];
+                                                                    if (scores) {
+                                                                        // First try to get quest-specific data if available
+                                                                        const classQuestId = `${(classInfo.groupName || '').replace(/[^a-zA-Z0-9]+/g, '')}-${questId}`;
+                                                                        const possibleQuestKeys = [
+                                                                          questId,
+                                                                          `${(classInfo.groupName || '').replace(/[^a-zA-Z0-9]+/g, '')}-${questId}`,
+                                                                          questTitle,
+                                                                          (quest.questId || quest.id || quest._id),
+                                                                        ];
+                                                                        let questProgress = null;
+                                                                        if (scores.questProgress) {
+                                                                          for (const key of possibleQuestKeys) {
+                                                                            if (scores.questProgress[key]) {
+                                                                              questProgress = scores.questProgress[key];
+                                                                              break;
+                                                                            }
+                                                                          }
+                                                                        }
+                                                                        if (questProgress) {
+                                                                            hasActualData = true;
+                                                                            if (questProgress.completed) {
+                                                                                completedCount++;
+                                                                            }
+                                                                            if (questProgress.score !== undefined) {
+                                                                                totalScore += questProgress.score;
+                                                                                studentsWithData++;
+                                                                            }
+                                                                            if (questProgress.xp !== undefined) {
+                                                                                totalXP += questProgress.xp;
+                                                                            }
+                                                                        } else {
+                                                                            // Fallback: estimate based on overall completion and quest position
+                                                                            const overallCompletion = scores.completion || 0;
+                                                                            const questPosition = questIndex + 1;
+                                                                            const totalQuests = questBreakdownQuests.length;
+                                                                            
+                                                                            // Estimate if this quest is likely completed based on overall progress
+                                                                            const questThreshold = (questPosition / totalQuests) * 100;
+                                                                            if (overallCompletion >= questThreshold) {
+                                                                                completedCount++;
+                                                                                // Estimate scores based on overall points/xp divided by quests
+                                                                                if (scores.points) {
+                                                                                    totalScore += Math.round(scores.points / totalQuests);
+                                                                                    studentsWithData++;
+                                                                                }
+                                                                                if (scores.xp) {
+                                                                                    totalXP += Math.round(scores.xp / totalQuests);
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                });
+                                                                
+                                                                const completionRate = studentData.length > 0 ? Math.round((completedCount / studentData.length) * 100) : 0;
+                                                                const avgScore = studentsWithData > 0 ? Math.round(totalScore / studentsWithData) : 0;
+                                                                const avgXP = studentsWithData > 0 ? Math.round(totalXP / studentsWithData) : 0;
+                                                                
+                                                                return (
+                                                        <Box key={questId} sx={{ 
+                                                            display: 'grid', 
+                                                            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                                                            gap: 2,
+                                                            p: 2,
+                                                            borderBottom: '1px solid #e0e0e0',
+                                                            '&:last-child': { borderBottom: 'none' }
+                                                        }}>
+                                                            <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                                                                {questTitle}
+                                                            </Typography>
+                                                            <Typography variant="body1" sx={{ textAlign: 'center', fontWeight: 600 }}>
+                                                                {completedCount}
+                                                                <Typography component="span" variant="body2" sx={{ color: '#666', ml: 0.5 }}>
+                                                                    /{studentData.length}
+                                                                </Typography>
+                                                            </Typography>
+                                                            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                                                                                <LinearProgress 
+                                                                                    variant="determinate" 
+                                                                                    value={completionRate}
+                                                                                    sx={{ 
+                                                                                        width: '60px', 
+                                                                                        height: '6px',
+                                                                                        borderRadius: '3px'
+                                                                                    }}
+                                                                                />
+                                                                <Typography variant="body2" sx={{ fontWeight: 500, textAlign: 'center' }}>
+                                                                                    {completionRate}%
+                                                                </Typography>
+                                </Box>
+                                                            <Typography variant="body1" sx={{ color: '#1976d2', fontWeight: 600, textAlign: 'center' }}>
+                                                                {avgScore}
+                                                            </Typography>
+                                                            <Typography variant="body1" sx={{ color: '#9c27b0', fontWeight: 600, textAlign: 'center' }}>
+                                                                {avgXP}
+                                                            </Typography>
+                                                        </Box>
+                                                                );
+                                                            })}
+                                            </Box>
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                                                    No quests configured yet. Use "Manage Quests" to create quests for this class.
+                                                </Typography>
+                                            )}
                                 </Box>
                             </Box>
                         </Card>
                     </>
                 )}
-            </Container>
+                    </Container>
+                ) : currentView === 'manage-students' ? (
+                    <ManageStudents />
+                ) : (
+                    <GenerateJson />
+                )}
 
             {/* Add Students Modal */}
             <Dialog open={showModal} onClose={() => {
                 if (!isProcessing) {
-                    setShowModal(false);
-                    setCsvFile(null);
+                setShowModal(false);
+                setCsvFile(null);
                 }
             }} maxWidth="md" fullWidth>
                 <DialogTitle>
@@ -1971,59 +2589,59 @@ const ClassView = () => {
                         </Box>
                     ) : (
                         <Box>
-                            <Typography variant="body1" paragraph>
-                                This method will:
-                            </Typography>
-                            <List dense>
-                                <ListItem>
-                                    <ListItemText primary="Create student accounts for each GitHub username" />
-                                </ListItem>
-                                <ListItem>
+                    <Typography variant="body1" paragraph>
+                        This method will:
+                    </Typography>
+                    <List dense>
+                        <ListItem>
+                            <ListItemText primary="Create student accounts for each GitHub username" />
+                        </ListItem>
+                        <ListItem>
                                     <ListItemText primary="Create private repositories for each student with initial README" />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText primary="Send invitation emails to join the class" />
-                                </ListItem>
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText primary="Send invitation emails to join the class" />
+                        </ListItem>
                                 <ListItem>
                                     <ListItemText primary="Set up quest system and initial tasks" />
-                                </ListItem>
-                            </List>
-                            <Typography variant="body1" paragraph>
-                                Upload a CSV file containing GitHub usernames (one per line)
-                            </Typography>
-                            <List dense>
-                                <ListItem>
-                                    <ListItemText primary="File must be in .csv format" />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText primary="One GitHub username per line" />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText primary="First line can optionally be a header" />
-                                </ListItem>
-                                <ListItem>
-                                    <ListItemText primary="Usernames must match existing GitHub accounts" />
-                                </ListItem>
-                            </List>
-                            <Button 
-                                variant="outlined" 
-                                onClick={() => {
-                                    const csvContent = "github_username\njohndoe\njanesmith";
-                                    const blob = new Blob([csvContent], { type: 'text/csv' });
-                                    const url = window.URL.createObjectURL(blob);
-                                    const a = document.createElement('a');
-                                    a.href = url;
-                                    a.download = 'github_usernames_template.csv';
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    document.body.removeChild(a);
-                                    window.URL.revokeObjectURL(url);
-                                }}
-                                sx={{ mb: 2 }}
-                            >
-                                Download Template
-                            </Button>
-                            <Box>
+                        </ListItem>
+                    </List>
+                    <Typography variant="body1" paragraph>
+                        Upload a CSV file containing GitHub usernames (one per line)
+                    </Typography>
+                    <List dense>
+                        <ListItem>
+                            <ListItemText primary="File must be in .csv format" />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText primary="One GitHub username per line" />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText primary="First line can optionally be a header" />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText primary="Usernames must match existing GitHub accounts" />
+                        </ListItem>
+                    </List>
+                    <Button 
+                        variant="outlined" 
+                        onClick={() => {
+                            const csvContent = "github_username\njohndoe\njanesmith";
+                            const blob = new Blob([csvContent], { type: 'text/csv' });
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'github_usernames_template.csv';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        }}
+                        sx={{ mb: 2 }}
+                    >
+                        Download Template
+                    </Button>
+                    <Box>
                                                 <input 
                                                     type="file" 
                             id="csvFile"
@@ -2062,19 +2680,19 @@ const ClassView = () => {
                         </>
                     ) : (
                         <>
-                            <Button onClick={() => {
-                                setShowModal(false);
-                                setCsvFile(null);
-                            }}>
-                                Cancel
-                            </Button>
-                            <Button 
-                                variant="contained" 
-                                onClick={handleCreateRepos}
-                                disabled={!csvFile}
-                            >
-                                Create Repositories
-                            </Button>
+                    <Button onClick={() => {
+                        setShowModal(false);
+                        setCsvFile(null);
+                    }}>
+                                    Cancel
+                    </Button>
+                    <Button 
+                        variant="contained" 
+                        onClick={handleCreateRepos}
+                        disabled={!csvFile}
+                    >
+                        Create Repositories
+                    </Button>
                         </>
                     )}
                 </DialogActions>
@@ -2451,6 +3069,83 @@ Your current progress will be displayed here as you complete quests.
                     </Box>
                 )}
             </Dialog>
+
+            {/* Batch Repo Dialog */}
+            <Dialog open={showBatchRepoDialog} onClose={() => setShowBatchRepoDialog(false)} maxWidth="sm" fullWidth>
+              <DialogTitle>Batch Create Repositories from CSV</DialogTitle>
+              <DialogContent>
+                <Typography gutterBottom>
+                  Upload a CSV file with a list of GitHub usernames (one per line, or with a header 'github_username').
+                </Typography>
+                <input
+                  accept=".csv"
+                  type="file"
+                  onChange={handleBatchCsvUpload}
+                  style={{ marginBottom: 16 }}
+                />
+                {batchRepoStatus && <Alert severity="info" sx={{ mt: 2 }}>{batchRepoStatus}</Alert>}
+                {batchResults.successful.length > 0 && (
+                  <Alert severity="success" sx={{ mt: 2 }}>
+                    Successful: {batchResults.successful.join(', ')}
+                  </Alert>
+                )}
+                {batchResults.unsuccessful.length > 0 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    Failed: {batchResults.unsuccessful.join(', ')}
+                  </Alert>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setShowBatchRepoDialog(false)}>Cancel</Button>
+                <Button
+                  onClick={handleBatchCreateRepos}
+                  variant="contained"
+                  disabled={batchIsProcessing || !batchCsvFile}
+                >
+                  {batchIsProcessing ? 'Processing...' : 'Create Repositories'}
+                </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Invite Link Modal */}
+            <Dialog open={showInviteLinkModal} onClose={() => setShowInviteLinkModal(false)} maxWidth="sm" fullWidth>
+              <DialogTitle>Generate Invite Link</DialogTitle>
+              <DialogContent>
+                <Typography gutterBottom>
+                  Share this link with students to invite them to join your class:
+                </Typography>
+                <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, border: '1px solid #ddd' }}>
+                  <Typography 
+                    variant="body2" 
+                    component="code" 
+                    sx={{ 
+                      wordBreak: 'break-all',
+                      fontFamily: 'monospace',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {`${window.location.origin}/class/${classId}/invite`}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                  Students can use this link to access the invite page where they can enter their GitHub username to create a repository.
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setShowInviteLinkModal(false)}>Close</Button>
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/class/${classId}/invite`);
+                    // You could add a toast notification here
+                  }}
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                >
+                  Copy Link
+                </Button>
+              </DialogActions>
+            </Dialog>
+            </Box>
         </div>
     );
 };

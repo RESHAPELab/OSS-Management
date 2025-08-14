@@ -262,8 +262,8 @@ const ClassView = () => {
                     const { successful, unsuccessful } = response.data.results;
                     setCreateReposStatus(
                         `Repository creation completed.\n` +
-                        `Successful: ${successful.join(', ')}\n` +
-                        `Failed: ${unsuccessful.join(', ')}`
+                        `Successful: ${successful.map(s => typeof s === 'string' ? s : s.user).join(', ')}\n` +
+                        `Failed: ${unsuccessful.map(s => typeof s === 'string' ? s : s.user).join(', ')}`
                     );
                     // Refresh the repository list after creation
                     fetchOrganizationRepos();

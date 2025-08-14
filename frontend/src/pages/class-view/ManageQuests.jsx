@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthContext } from '../../context/AuthContext';
 import {
-  Container, Box, Typography, Button, Stack, Card, Dialog, DialogTitle, DialogContent, DialogActions, Alert, TextField, Grid, Chip
+  Container, Box, Typography, Button, Stack, Card, Dialog, DialogTitle, DialogContent, DialogActions, Alert, TextField, Grid, Chip, IconButton, FormControlLabel, Checkbox, AlertTitle
 } from '@mui/material';
-import { Assignment as AssignmentIcon } from '@mui/icons-material';
+import { Assignment as AssignmentIcon, Info as InfoIcon } from '@mui/icons-material';
+import TextEditor from '../../components/TextEditor';
 
 let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
@@ -38,7 +39,7 @@ const ManageQuests = () => {
     tasks: [{
       type: 'multiple-choice',
       title: '',
-      objective: '',
+
       description: '',
       outcome: '',
       helpText: '',
@@ -93,6 +94,11 @@ const ManageQuests = () => {
   }, [authUser]);
 
   const fetchClassInfo = async () => {
+    if (!classId) {
+      console.error('No classId available for fetchClassInfo');
+      return;
+    }
+    
     try {
       const response = await axios.get(`${baseURL}/api/group/class/${classId}`);
       setClassInfo(response.data);
@@ -102,6 +108,11 @@ const ManageQuests = () => {
   };
 
   const fetchExistingReadme = async () => {
+    if (!classId) {
+      console.error('No classId available for fetchExistingReadme');
+      return;
+    }
+    
     try {
       const response = await axios.get(`${baseURL}/api/group/${classId}/readme`);
       if (response.data && response.data.readme) {
@@ -114,10 +125,79 @@ const ManageQuests = () => {
 
   // --- Quest management handlers (move, edit, delete, etc.) ---
   const loadQuestOrderFromDatabase = async () => {
+    if (!classId) {
+      console.error('No classId available for loadQuestOrderFromDatabase');
+      return;
+    }
+    
     try {
-      const response = await axios.get(`${baseURL}/api/group/${classId}/quest-order`);
-      if (response.data.questOrder) {
-        const questOrderFromDB = response.data.questOrder.map(quest => ({
+      console.log('🔍 [DEBUG] Loading quest order from database...');
+      
+      // Step 1: Get the quest order (sequence and basic info)
+      const orderResponse = await axios.get(`${baseURL}/api/group/${classId}/quest-order`);
+      console.log('🔍 [DEBUG] Quest order response:', orderResponse.data);
+      
+      if (orderResponse.data.questOrder) {
+        // Step 2: Get full quest data with tasks populated
+        const questsResponse = await axios.get(`${baseURL}/api/quest/professor/${authUser._id}`);
+        console.log('🔍 [DEBUG] Full quests data response:', questsResponse.data);
+        
+        if (questsResponse.data.success) {
+          // Step 3: Create a map of quest ID to full quest data
+          const fullQuestDataMap = new Map();
+          questsResponse.data.data.forEach(quest => {
+            fullQuestDataMap.set(quest._id, quest);
+            console.log(`🔍 [DEBUG] Mapped quest ${quest._id}:`, {
+              questTitle: quest.questTitle,
+              taskCount: quest.tasks?.length || 0
+            });
+          });
+          
+          // Step 4: Merge quest order with full quest data
+          const questOrderFromDB = orderResponse.data.questOrder.map(questOrder => {
+            console.log(`🔍 [DEBUG] Processing quest order item:`, questOrder);
+            
+            if (questOrder.questType === 'custom') {
+              // For custom quests, get full data from the map
+              const fullQuestData = fullQuestDataMap.get(questOrder.questId);
+              console.log(`🔍 [DEBUG] Found full data for custom quest ${questOrder.questId}:`, {
+                found: !!fullQuestData,
+                taskCount: fullQuestData?.tasks?.length || 0
+              });
+              
+              return {
+                id: questOrder.questId,
+                _id: questOrder.questId,
+                title: questOrder.title,
+                questTitle: questOrder.title,
+                content: questOrder.title,
+                type: questOrder.questType,
+                isQ0: questOrder.isQ0,
+                tasks: fullQuestData?.tasks || [], // Include the actual task data!
+                professor: fullQuestData?.professor,
+                createdAt: fullQuestData?.createdAt,
+                updatedAt: fullQuestData?.updatedAt
+              };
+            } else {
+              // For fixed quests, just use the order data
+              return {
+                id: questOrder.questId,
+                _id: questOrder.questType === 'custom' ? questOrder.questId : null,
+                title: questOrder.title,
+                questTitle: questOrder.title,
+                content: questOrder.title,
+                type: questOrder.questType,
+                isQ0: questOrder.isQ0
+              };
+            }
+          });
+          
+          console.log('🔍 [DEBUG] Final merged quest order:', questOrderFromDB);
+          setUnifiedQuestOrder(questOrderFromDB);
+        } else {
+          console.log('⚠️ [DEBUG] Failed to get full quest data, using basic order');
+          // Fallback to basic quest order conversion
+          const basicQuestOrder = orderResponse.data.questOrder.map(quest => ({
           id: quest.questId,
           _id: quest.questType === 'custom' ? quest.questId : null,
           title: quest.title,
@@ -126,11 +206,14 @@ const ManageQuests = () => {
           type: quest.questType,
           isQ0: quest.isQ0
         }));
-        setUnifiedQuestOrder(questOrderFromDB);
+          setUnifiedQuestOrder(basicQuestOrder);
+        }
       } else {
+        console.log('⚠️ [DEBUG] No quest order found, loading default with full data');
         await loadQuestsForOutline();
       }
     } catch (error) {
+      console.error('❌ [DEBUG] Error loading quest order:', error);
       await loadQuestsForOutline();
     }
   };
@@ -139,11 +222,30 @@ const ManageQuests = () => {
     try {
       const response = await axios.get(`${baseURL}/api/quest/professor/${authUser._id}`);
       if (response.data.success) {
-        const customQuests = response.data.data.map(quest => ({
-          ...quest,
+        console.log('🔍 [DEBUG] Raw quest data from API:', response.data.data);
+        
+        const customQuests = response.data.data.map(quest => {
+          console.log(`🔍 [DEBUG] Processing quest ${quest._id}:`, {
+            questTitle: quest.questTitle,
+            tasks: quest.tasks,
+            taskCount: quest.tasks?.length || 0,
+            taskTypes: quest.tasks?.map(t => typeof t) || []
+          });
+          
+          return {
+            _id: quest._id,
+            id: quest._id,
+            title: quest.questTitle, // Use questTitle from the Quest model
+            questTitle: quest.questTitle,
+            content: quest.questTitle,
           type: 'custom',
-          isQ0: false
-        }));
+            isQ0: false,
+            tasks: quest.tasks, // Keep tasks for display
+            professor: quest.professor,
+            createdAt: quest.createdAt,
+            updatedAt: quest.updatedAt
+          };
+        });
         const newUnifiedOrder = [
           { id: 'Q0', title: 'Q0: Introduction to Open Source', content: 'Introduction to Open Source Software', type: 'fixed', isQ0: true },
           { id: 'Q1', title: 'Q1', content: 'Understanding OSS Projects and GitHub Basics', type: 'fixed' },
@@ -182,6 +284,12 @@ const ManageQuests = () => {
   };
 
   const resetQuestOrderToDefault = async () => {
+    if (!classId) {
+      console.error('No classId available for resetQuestOrderToDefault');
+      setQuestOrderSaveStatus('No class ID available');
+      return;
+    }
+    
     try {
       setQuestOrderSaveStatus('Resetting quest order to default...');
       const response = await axios.post(`${baseURL}/api/group/${classId}/quest-order/reset`);
@@ -349,21 +457,38 @@ const ManageQuests = () => {
               optionD: ''
             };
           }
-        } else if (task.type === 'github-api') {
+        } else if (task.type === 'get-issue-count' || task.type === 'get-pr-count' || task.type === 'get-open-issue' || task.type === 'get-top-contributor') {
           taskData.config = {
-            apiCallType: task.apiCallType || 'issue-count',
-            ossRepository: task.ossRepository || '',
-            issueNumber: task.issueNumber || ''
+            ossRepository: ''
           };
+          taskData.answer = '';
+        } else if (task.type === 'get-issue-title') {
+          taskData.config = {
+            ossRepository: '',
+            issueNumber: ''
+          };
+          taskData.answer = '';
         } else if (task.type === 'text-input') {
           taskData.config = {
-            expectedAnswer: task.expectedAnswer || ''
+            expectedAnswer: ''
           };
+          taskData.answer = '';
         } else if (task.type === 'quiz') {
           taskData.config = {
-            questionCount: task.questionCount || 5,
-            correctAnswers: task.correctAnswers || ''
+            questionCount: 5,
+            correctAnswers: ''
           };
+          taskData.answer = '';
+        } else if (task.type === 'custom-api-call') {
+          taskData.config = {
+            apiEndpoint: '',
+            responsePath: '',
+            expectedAnswerType: 'Number'
+          };
+          taskData.answer = '';
+        } else if (task.type === 'issue-selection' || task.type === 'pr-creation') {
+          taskData.config = {};
+          taskData.answer = '';
         }
 
         return taskData;
@@ -564,10 +689,7 @@ const ManageQuests = () => {
         alert(`Task ${i + 1} is missing a description.`);
         return;
       }
-      if (!task.objective.trim()) {
-        alert(`Task ${i + 1} is missing an objective.`);
-        return;
-      }
+
       if (!task.outcome.trim()) {
         alert(`Task ${i + 1} is missing an outcome.`);
         return;
@@ -599,16 +721,17 @@ const ManageQuests = () => {
           alert(`Task ${i + 1} is missing option D.`);
           return;
         }
-      } else if (task.type === 'github-api') {
-        if (!task.config?.apiCallType) {
-          alert(`Task ${i + 1} is missing an API call type.`);
-          return;
-        }
+      } else if (task.type === 'get-issue-count' || task.type === 'get-pr-count' || task.type === 'get-open-issue' || task.type === 'get-top-contributor') {
         if (!task.config?.ossRepository?.trim()) {
           alert(`Task ${i + 1} is missing an OSS repository.`);
           return;
         }
-        if (task.config?.apiCallType === 'issue-title' && !task.config?.issueNumber) {
+      } else if (task.type === 'get-issue-title') {
+        if (!task.config?.ossRepository?.trim()) {
+          alert(`Task ${i + 1} is missing an OSS repository.`);
+          return;
+        }
+        if (!task.config?.issueNumber) {
           alert(`Task ${i + 1} is missing an issue number for the issue-title API call.`);
           return;
         }
@@ -624,6 +747,19 @@ const ManageQuests = () => {
         }
         if (!task.config?.correctAnswers?.trim()) {
           alert(`Task ${i + 1} is missing correct answers.`);
+          return;
+        }
+      } else if (task.type === 'custom-api-call') {
+        if (!task.config?.apiEndpoint?.trim()) {
+          alert(`Task ${i + 1} is missing an API endpoint.`);
+          return;
+        }
+        if (!task.config?.responsePath?.trim()) {
+          alert(`Task ${i + 1} is missing a response path.`);
+          return;
+        }
+        if (!task.config?.expectedAnswerType?.trim()) {
+          alert(`Task ${i + 1} is missing an expected answer type.`);
           return;
         }
       } else if (task.type === 'issue-selection' || task.type === 'pr-creation') {
@@ -656,21 +792,17 @@ const ManageQuests = () => {
             title: task.title,
             desc: task.desc || task.description,
             description: task.description,
-            objective: task.objective,
+
             outcome: task.outcome,
             helpText: task.helpText,
             points: task.points || 100,
             xp: task.xp || task.points || 100,
             type: task.type || 'multiple-choice',
-            // Response messages
             responses: {
               accept: task.accept || '',
               success: task.success || '',
               error: task.error || ''
             },
-            // Answer field
-            answer: task.answer || 'a',
-            // Task-level hints with proper structure
             hints: task.hints && task.hints.length > 0 ? task.hints.map((hint, hintIndex) => ({
               sequence: hint.sequence || hintIndex + 1,
               content: hint.content || '',
@@ -678,7 +810,6 @@ const ManageQuests = () => {
             })) : []
           };
 
-          // Add type-specific configurations
           if (task.type === 'multiple-choice' || !task.type) {
             return {
               ...baseTask,
@@ -688,31 +819,53 @@ const ManageQuests = () => {
                 task.config?.optionB || '',
                 task.config?.optionC || '',
                 task.config?.optionD || ''
-              ]
+              ],
+              answer: task.answer || 'a',
+              answerType: 'singleAnswer'
             };
-          } else if (task.type === 'github-api') {
+          } else if (task.type === 'get-issue-count' || task.type === 'get-pr-count' || task.type === 'get-open-issue' || task.type === 'get-top-contributor') {
             return {
               ...baseTask,
-              apiCallType: task.config?.apiCallType,
-              ossRepository: task.config?.ossRepository,
-              // Set the actual task type based on the API call type
-              type: task.config?.apiCallType === 'issue-count' ? 'issuecount' : 
-                    task.config?.apiCallType === 'pr-count' ? 'prcount' : 
-                    task.config?.apiCallType === 'top-contributor' ? 'topcontributor' : 
-                    task.config?.apiCallType === 'issue-title' ? 'issuetitle' : 'github-api',
-              // Include issue number for issue-title tasks
-              ...(task.config?.apiCallType === 'issue-title' && { issueNumber: task.config?.issueNumber })
+              type: task.type,
+              ossRepository: task.config?.ossRepository || '',
+              answer: '',
+              answerType: 'metric'
+            };
+          } else if (task.type === 'get-issue-title') {
+            return {
+              ...baseTask,
+              type: task.type,
+              ossRepository: task.config?.ossRepository || '',
+              issueNumber: task.config?.issueNumber || '',
+              answer: '',
+              answerType: 'metric'
             };
           } else if (task.type === 'text-input') {
             return {
               ...baseTask,
-              expectedAnswer: task.config?.expectedAnswer
+              expectedAnswer: task.config?.expectedAnswer,
+              answer: task.answer || '',
+              answerType: 'singleAnswer'
             };
           } else if (task.type === 'quiz') {
             return {
               ...baseTask,
               questionCount: task.config?.questionCount,
-              correctAnswers: task.config?.correctAnswers
+              correctAnswers: task.config?.correctAnswers,
+              answer: task.answer || '',
+              answerType: 'multipleAnswers'
+            };
+          } else if (task.type === 'custom-api-call') {
+            return {
+              ...baseTask,
+              apiEndpoint: task.config?.apiEndpoint || '',
+              responsePath: task.config?.responsePath || '',
+              expectedAnswerType: task.config?.expectedAnswerType || 'Number',
+              repository: task.config?.repository || '',
+              enableTolerance: task.config?.enableTolerance || false,
+              tolerancePercentage: task.config?.tolerancePercentage || 10,
+              answer: task.answer || '',
+              answerType: 'custom'
             };
           } else if (task.type === 'issue-selection' || task.type === 'pr-creation') {
             return {
@@ -720,7 +873,6 @@ const ManageQuests = () => {
               answer: task.answer
             };
           }
-          
           return baseTask;
         })
       };
@@ -731,7 +883,7 @@ const ManageQuests = () => {
         response = await axios.post(`${baseURL}/api/quest/upload-mcq`, questData);
       }
       if (response.data.success) {
-        setUploadQuestStatus(`✅ MCQ Quest "${questFormData.title}" ${isEditMode ? 'updated' : 'uploaded'} successfully! Quest ID: ${response.data.data.questId || editingQuest._id}`);
+        setUploadQuestStatus(`✅ Quest "${questFormData.title}" ${isEditMode ? 'updated' : 'uploaded'} successfully! Quest ID: ${response.data.data.questId || editingQuest._id}`);
         setShowQuestModal(false);
         if (!isEditMode) {
           const newQuestId = response.data.data.questId || response.data.data._id;
@@ -798,6 +950,35 @@ const ManageQuests = () => {
     }
   };
 
+  // Helper function to determine quest type based on tasks
+  const getQuestTypeInfo = () => {
+    if (questFormData.tasks.length === 0) {
+      return { type: 'mixed', label: 'Upload Quest to Database', hasMultipleChoice: false, hasMetric: false, hasOther: false };
+    }
+
+    const mcqTypes = ['multiple-choice'];
+    const metricTypes = ['get-issue-count', 'get-pr-count', 'get-open-issue', 'get-top-contributor', 'get-issue-title'];
+    const otherTypes = ['text-input', 'quiz', 'issue-selection', 'pr-creation'];
+
+    const hasMultipleChoice = questFormData.tasks.some(task => mcqTypes.includes(task.type) || !task.type);
+    const hasMetric = questFormData.tasks.some(task => metricTypes.includes(task.type));
+    const hasOther = questFormData.tasks.some(task => otherTypes.includes(task.type));
+
+    const typeCount = [hasMultipleChoice, hasMetric, hasOther].filter(Boolean).length;
+
+    if (typeCount > 1) {
+      return { type: 'mixed', label: 'Upload Mixed Quest to Database', hasMultipleChoice, hasMetric, hasOther };
+    } else if (hasMultipleChoice) {
+      return { type: 'mcq', label: 'Upload MCQ Quest to Database', hasMultipleChoice, hasMetric, hasOther };
+    } else if (hasMetric) {
+      return { type: 'metric', label: 'Upload Metric Quest to Database', hasMultipleChoice, hasMetric, hasOther };
+    } else if (hasOther) {
+      return { type: 'other', label: 'Upload Quest to Database', hasMultipleChoice, hasMetric, hasOther };
+    } else {
+      return { type: 'mixed', label: 'Upload Quest to Database', hasMultipleChoice, hasMetric, hasOther };
+    }
+  };
+
   // --- UI ---
   const debouncedSaveQuestOrder = (questOrder) => {
     if (saveQuestOrderTimeout) {
@@ -810,6 +991,12 @@ const ManageQuests = () => {
   };
 
   const saveQuestOrderToDatabase = async (questOrder, retryCount = 0) => {
+    if (!classId) {
+      console.error('No classId available for saveQuestOrderToDatabase');
+      setQuestOrderSaveStatus('No class ID available');
+      return false;
+    }
+    
     setIsSavingQuestOrder(true);
     setQuestOrderSaveStatus('Saving quest order and prerequisites...');
     try {
@@ -1099,27 +1286,8 @@ const ManageQuests = () => {
               };
             });
             questData.tasks = formattedTasks;
-          } else {
-            // Fallback only when no tasks found
-            questData.tasks = {
-              T1: {
-                desc: "Task description",
-                points: 20,
-                xp: 20,
-                type: "general",
-                accept: "Task description",
-                success: "Task completed successfully!",
-                error: "Incorrect answer, please try again.",
-                answer: "a",
-                hints: []
-              }
-            };
-          }
         } else {
-          // Fallback when custom quest not found in myQuests
-          questData.badgeDescription = "Custom Quest 🎯";
-          questData.metadata.title = quest.title || quest.questTitle;
-          questData.metadata.description = quest.content || quest.description || '';
+            // Fallback only when no tasks found
           questData.tasks = {
             T1: {
               desc: "Task description",
@@ -1133,6 +1301,25 @@ const ManageQuests = () => {
               hints: []
             }
           };
+        }
+        } else {
+          // Fallback when custom quest not found in myQuests
+          questData.badgeDescription = "Custom Quest 🎯";
+          questData.metadata.title = quest.title || quest.questTitle;
+          questData.metadata.description = quest.content || quest.description || '';
+        questData.tasks = {
+          T1: {
+            desc: "Task description",
+            points: 20,
+            xp: 20,
+            type: "general",
+            accept: "Task description",
+            success: "Task completed successfully!",
+            error: "Incorrect answer, please try again.",
+            answer: "a",
+            hints: []
+          }
+        };
         }
       } else if (quest.type === 'fixed') {
         // For fixed quests, use detailed task content based on quest ID
@@ -1186,7 +1373,7 @@ const ManageQuests = () => {
               xp: 50,
               type: "general",
               accept: "### 🛠️ Task 1 - Solve the Issue (Non-Code Contribution) and Submit a Pull Request\n\n**Objective:** Your mission involves two key stages: identifying and resolving a non-code issue in our GitHub repository and submitting your solution through a pull request (PR). This task focuses on improving the project's quality and accessibility without writing code, such as enhancing documentation, designing graphics, or organizing content.\n\n**Task:** Using the link below, **complete** the task in the issue assigned to you, **submit** a pull request, and choose the correct file in the options and comment it below.\n\nWhich file did you have to interact with to solve the issue?\n\nA) CONTRIBUTING.md\nB) LICENSE\nC) README.md\nD) CHANGELOG.md\n\n**Outcome:** By identifying and resolving a non-code issue and submitting a pull request, you contribute to the project's improvement. This task demonstrates your initiative and commitment to enhancing the project, deepening your understanding of open-source collaboration, and supporting the project's growth.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
-              error: "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the file you've chosen doesn't match the one we were looking for to solve the non-code issue. \n\nRemember, each non-code contribution plays a crucial role in enhancing the project's quality and accessibility. Whether it's documentation, graphics, or organization, every aspect is important.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThis task is a bit like detective work ��.\n\nSolving a non-code issue by interacting with the right project file demonstrates your ability to contribute to and navigate the project effectively. It's an essential skill in open-source collaboration, showing that you're ready to contribute in a variety of ways.\n\nReady for another try? The correct file and solution to the issue are just a thought process away!\n\nPlease select the correct answer from the options below based on the issue you're addressing:\n\nA) README.md\nB) LICENSE\nC) CONTRIBUTING.md\nD) CHANGELOG.md\n\nType the letter in the comment box to complete this task.",
+              error: "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the file you've chosen doesn't match the one we were looking for to solve the non-code issue. \n\nRemember, each non-code contribution plays a crucial role in enhancing the project's quality and accessibility. Whether it's documentation, graphics, or organization, every aspect is important.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThis task is a bit like detective work 🔍.\n\nSolving a non-code issue by interacting with the right project file demonstrates your ability to contribute to and navigate the project effectively. It's an essential skill in open-source collaboration, showing that you're ready to contribute in a variety of ways.\n\nReady for another try? The correct file and solution to the issue are just a thought process away!\n\nPlease select the correct answer from the options below based on the issue you're addressing:\n\nA) README.md\nB) LICENSE\nC) CONTRIBUTING.md\nD) CHANGELOG.md\n\nType the letter in the comment box to complete this task.",
               success: "### 🌟 Congratulations! You've Made Your First Contribution!\n\nBy solving a non-code issue within our project, you've demonstrated your ability to contribute to our community in diverse and meaningful ways. Your effort enhances the project's quality and accessibility, proving that contributions extend far beyond just code.\n\nFor your dedication and successful contribution, you've been awarded **${experiencePoints} experience points!**\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** These ${experiencePoints} points boost your total to **${currentPoints} points**, solidifying your status at Level 2. This achievement is a direct reflection of your commitment, learning, and active participation in our project.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate. To successfully complete the entire quest, you need to reach a 100% completion rate. Each contribution brings you closer to this next significant milestone.\n\n> 🌟 🌟 🌟\n\nFantastic work! Your journey through the project vividly illustrates your growth and the impact of your contributions.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon!\n\nThe adventure continues! 🌟\n\n",
               answer: "a",
               hints: []
@@ -1261,7 +1448,20 @@ const ManageQuests = () => {
             <Box>
               <Typography variant="subtitle1" fontWeight={600}>{quest.title || quest.questTitle}</Typography>
               <Typography variant="body2" color="text.secondary">
-                {quest.type === 'fixed' ? quest.content : quest.tasks ? `${Array.isArray(quest.tasks) ? quest.tasks.length : Object.keys(quest.tasks).length} tasks` : 'No tasks'}
+                {(() => {
+                  console.log(`🔍 [DEBUG] Rendering quest ${quest._id || quest.id}:`, {
+                    type: quest.type,
+                    tasks: quest.tasks,
+                    taskCount: quest.tasks ? (Array.isArray(quest.tasks) ? quest.tasks.length : Object.keys(quest.tasks).length) : 0,
+                    hasTasks: !!quest.tasks
+                  });
+                  
+                  if (quest.type === 'fixed') {
+                    return quest.content;
+                  } else {
+                    return quest.tasks ? `${Array.isArray(quest.tasks) ? quest.tasks.length : Object.keys(quest.tasks).length} tasks` : 'No tasks';
+                  }
+                })()}
               </Typography>
               <Stack direction="row" spacing={1} mt={1}>
                 {quest.type === 'custom' && (
@@ -1277,14 +1477,19 @@ const ManageQuests = () => {
                           <Chip
                             label={
                               task.type === 'multiple-choice' ? 'Multiple Choice'
-                              : task.type === 'github-api' && task.apiCallType === 'issue-count' ? 'Get Issue Count'
-                              : task.type === 'github-api' && task.apiCallType === 'pr-count' ? 'Get PR Count'
-                              : task.type === 'github-api' && task.apiCallType === 'top-contributor' ? 'Top Contributor'
-                              : task.type === 'github-api' && task.apiCallType === 'issue-title' ? 'Get Issue Title'
+                              : task.type === 'get-issue-count' && task.ossRepository ? 'Get Issue Count'
+                              : task.type === 'get-pr-count' && task.ossRepository ? 'Get PR Count'
+                              : task.type === 'get-open-issue' && task.ossRepository ? 'Get Open Issue'
+                              : task.type === 'get-top-contributor' && task.ossRepository ? 'Get Top Contributor'
+                              : task.type === 'get-issue-title' && task.ossRepository ? 'Get Issue Title'
                               : task.type === 'quiz' ? 'Quiz'
                               : task.type === 'issue-selection' ? 'Issue Selection'
                               : task.type === 'pr-creation' ? 'Pull Request Creation'
                               : task.type === 'text-input' ? 'Text Input'
+                              : task.type === 'custom-api-call' ? 'Custom API Call'
+                              : task.type === 'assigned' ? 'Assignment Validation'
+                              : task.type === 'issue-no' ? 'Issue Number Validation'
+                              : task.type === 'comment' ? 'Comment Validation'
                               : (task.type || 'Task')
                             }
                             color="info"
@@ -1303,14 +1508,19 @@ const ManageQuests = () => {
                           <Chip
                             label={
                               task.type === 'multiple-choice' ? 'Multiple Choice'
-                              : task.type === 'github-api' && task.apiCallType === 'issue-count' ? 'Get Issue Count'
-                              : task.type === 'github-api' && task.apiCallType === 'pr-count' ? 'Get PR Count'
-                              : task.type === 'github-api' && task.apiCallType === 'top-contributor' ? 'Top Contributor'
-                              : task.type === 'github-api' && task.apiCallType === 'issue-title' ? 'Get Issue Title'
+                              : task.type === 'get-issue-count' && task.ossRepository ? 'Get Issue Count'
+                              : task.type === 'get-pr-count' && task.ossRepository ? 'Get PR Count'
+                              : task.type === 'get-open-issue' && task.ossRepository ? 'Get Open Issue'
+                              : task.type === 'get-top-contributor' && task.ossRepository ? 'Get Top Contributor'
+                              : task.type === 'get-issue-title' && task.ossRepository ? 'Get Issue Title'
                               : task.type === 'quiz' ? 'Quiz'
                               : task.type === 'issue-selection' ? 'Issue Selection'
                               : task.type === 'pr-creation' ? 'Pull Request Creation'
                               : task.type === 'text-input' ? 'Text Input'
+                              : task.type === 'custom-api-call' ? 'Custom API Call'
+                              : task.type === 'assigned' ? 'Assignment Validation'
+                              : task.type === 'issue-no' ? 'Issue Number Validation'
+                              : task.type === 'comment' ? 'Comment Validation'
                               : (task.type || 'Task')
                             }
                             color="info"
@@ -1422,7 +1632,7 @@ const ManageQuests = () => {
 
       {/* Quest Creation/Edit Modal */}
       <Dialog open={showQuestModal} onClose={isEditMode ? handleCancelEdit : () => setShowQuestModal(false)} maxWidth="md" fullWidth>
-        <DialogTitle>{isEditMode ? 'Edit Quest' : 'Create New Quest'}</DialogTitle>
+        <DialogTitle>{isEditMode ? 'Edit Quest' : 'Add New Class Quest'}</DialogTitle>
         <DialogContent>
           <Box component="form" sx={{ mt: 1 }}>
             {/* Basic Quest Information */}
@@ -1483,6 +1693,24 @@ const ManageQuests = () => {
             </Typography>
             
             <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Tasks</Typography>
+            
+            {/* Quest Type Information */}
+            {questFormData.tasks.length > 0 && (
+              <Box sx={{ mb: 2, p: 2, bgcolor: 'background.paper', border: 1, borderColor: 'divider', borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Quest Type: <strong>{getQuestTypeInfo().type === 'mixed' ? 'Mixed Types' : getQuestTypeInfo().type.toUpperCase()}</strong>
+                </Typography>
+                {getQuestTypeInfo().type === 'mixed' && (
+                  <Typography variant="caption" color="text.secondary">
+                    This quest contains multiple task types: 
+                    {getQuestTypeInfo().hasMultipleChoice && ' Multiple Choice'}
+                    {getQuestTypeInfo().hasMetric && ' • Metric Tasks'}
+                    {getQuestTypeInfo().hasOther && ' • Other Tasks'}
+                  </Typography>
+                )}
+              </Box>
+            )}
+            
             {questFormData.tasks.map((task, taskIndex) => (
               <Card key={taskIndex} sx={{ mb: 3, p: 2 }}>
                 <Stack direction="row" spacing={2} alignItems="center" mb={2}>
@@ -1527,7 +1755,7 @@ const ManageQuests = () => {
                   onChange={e => {
                     const tasks = [...questFormData.tasks];
                     tasks[taskIndex].type = e.target.value;
-                    // Reset config based on new type
+                    // Reset config and fields based on new type
                     if (e.target.value === 'multiple-choice') {
                       tasks[taskIndex].config = {
                         correctAnswer: 'a',
@@ -1537,69 +1765,104 @@ const ManageQuests = () => {
                         optionD: ''
                       };
                       tasks[taskIndex].answer = 'a';
-                    } else if (e.target.value === 'github-api') {
+                      // Remove metric fields
+                      delete tasks[taskIndex].ossRepository;
+                      delete tasks[taskIndex].issueNumber;
+                    } else if (e.target.value === 'get-issue-count' || e.target.value === 'get-pr-count' || e.target.value === 'get-open-issue' || e.target.value === 'get-top-contributor') {
                       tasks[taskIndex].config = {
-                        apiCallType: 'issue-count',
                         ossRepository: ''
                       };
+                      tasks[taskIndex].ossRepository = '';
                       tasks[taskIndex].answer = '';
+                      tasks[taskIndex].answerType = 'metric';
+                      // Remove MCQ fields
+                      delete tasks[taskIndex].correctAnswer;
+                      delete tasks[taskIndex].options;
+                      delete tasks[taskIndex].issueNumber;
+                    } else if (e.target.value === 'get-issue-title') {
+                      tasks[taskIndex].config = {
+                        ossRepository: '',
+                        issueNumber: ''
+                      };
+                      tasks[taskIndex].ossRepository = '';
+                      tasks[taskIndex].issueNumber = '';
+                      tasks[taskIndex].answer = '';
+                      tasks[taskIndex].answerType = 'metric';
+                      // Remove MCQ fields
+                      delete tasks[taskIndex].correctAnswer;
+                      delete tasks[taskIndex].options;
                     } else if (e.target.value === 'text-input') {
                       tasks[taskIndex].config = {
                         expectedAnswer: ''
                       };
                       tasks[taskIndex].answer = '';
+                      tasks[taskIndex].answerType = 'singleAnswer';
+                      // Remove metric fields
+                      delete tasks[taskIndex].ossRepository;
+                      delete tasks[taskIndex].issueNumber;
                     } else if (e.target.value === 'quiz') {
                       tasks[taskIndex].config = {
                         questionCount: 5,
                         correctAnswers: ''
                       };
                       tasks[taskIndex].answer = '';
-                    } else if (e.target.value === 'issue-selection') {
+                      tasks[taskIndex].answerType = 'multipleAnswers';
+                      // Remove metric fields
+                      delete tasks[taskIndex].ossRepository;
+                      delete tasks[taskIndex].issueNumber;
+                    } else if (e.target.value === 'custom-api-call') {
+                      tasks[taskIndex].config = {
+                        apiEndpoint: '',
+                        responsePath: '',
+                        expectedAnswerType: 'Number'
+                      };
+                      tasks[taskIndex].answer = '';
+                      tasks[taskIndex].answerType = 'custom';
+                      // Remove metric fields
+                      delete tasks[taskIndex].ossRepository;
+                      delete tasks[taskIndex].issueNumber;
+                    } else if (e.target.value === 'issue-selection' || e.target.value === 'pr-creation') {
                       tasks[taskIndex].config = {};
                       tasks[taskIndex].answer = '';
-                    } else if (e.target.value === 'pr-creation') {
-                      tasks[taskIndex].config = {};
-                      tasks[taskIndex].answer = '';
-                    } else {
-                      tasks[taskIndex].config = {};
-                      tasks[taskIndex].answer = '';
+                      // Remove metric fields
+                      delete tasks[taskIndex].ossRepository;
+                      delete tasks[taskIndex].issueNumber;
                     }
                     setQuestFormData({ ...questFormData, tasks });
                   }}
                   margin="normal"
                   SelectProps={{ native: true }}
                 >
-                  <option value="multiple-choice">🔘 Multiple Choice Question</option>
-                  <option value="github-api">🔗 GitHub API Call</option>
-                  <option value="text-input">📝 Text Input</option>
-                  <option value="quiz">📊 Quiz</option>
-                  <option value="issue-selection">🎯 Issue Selection</option>
-                  <option value="pr-creation">🔀 Pull Request Creation</option>
+                  <option value="custom-api-call" style={{ backgroundColor: '#e3f2fd', fontWeight: 'bold' }}>Custom API Call</option>
+                  <option disabled style={{ backgroundColor: '#f5f5f5', fontWeight: 'bold', color: '#666' }}>Default Task Types</option>
+                                      <option value="multiple-choice">Multiple Choice Question</option>
+                    <option value="get-issue-count">Get Issue Count</option>
+                    <option value="get-pr-count">Get PR Count</option>
+                    <option value="get-open-issue">Get Open Issue</option>
+                    <option value="get-issue-title">Get Issue Title</option>
+                    <option value="get-top-contributor">Get Top Contributor</option>
+                    <option value="text-input">Text Input</option>
+                  <option value="quiz">Quiz</option>
+                  <option value="issue-selection">Issue Selection</option>
+                  <option value="pr-creation">Pull Request Creation</option>
+                  <option value="assigned">Assignment Validation</option>
+                  <option value="issue-no">Issue Number Validation</option>
+                  <option value="comment">Comment Validation</option>
+                  <option value="custom-api-call">Custom API Call</option>
                 </TextField>
                 
-                <TextField
-                  fullWidth
-                  label="Objective"
-                  value={task.objective}
-                  onChange={e => {
-                    const tasks = [...questFormData.tasks];
-                    tasks[taskIndex].objective = e.target.value;
-                    setQuestFormData({ ...questFormData, tasks });
-                  }}
-                  margin="normal"
-                />
-                <TextField
-                  fullWidth
-                  label="Task Description"
+
+                <TextEditor
                   value={task.description}
-                  onChange={e => {
+                  onChange={value => {
                     const tasks = [...questFormData.tasks];
-                    tasks[taskIndex].description = e.target.value;
+                    tasks[taskIndex].description = value;
                     setQuestFormData({ ...questFormData, tasks });
                   }}
-                  margin="normal"
-                  multiline
-                  rows={2}
+                  label="Task Description"
+                  placeholder="Enter the task description here"
+                  helperText="This is the main task description that students will see."
+                  acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
                 />
                 <TextField
                   fullWidth
@@ -1723,27 +1986,25 @@ const ManageQuests = () => {
                   </>
                 )}
                 
-                {task.type === 'github-api' && (
-                  <>
+                {(task.type === 'get-issue-count' || task.type === 'get-pr-count' || task.type === 'get-open-issue' || task.type === 'get-top-contributor') && (
                     <TextField
-                      select
-                      label="API Call Type"
-                      value={task.config?.apiCallType || 'issue-count'}
+                    fullWidth
+                    label="OSS Repository"
+                    value={task.config?.ossRepository || ''}
                       onChange={e => {
                         const tasks = [...questFormData.tasks];
                         if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
-                        tasks[taskIndex].config.apiCallType = e.target.value;
+                      tasks[taskIndex].config.ossRepository = e.target.value;
                         setQuestFormData({ ...questFormData, tasks });
                       }}
-                      SelectProps={{ native: true }}
-                      sx={{ width: 250, mt: 2 }}
-                    >
-                      <option value="issue-count">Get Issue Count</option>
-                      <option value="pr-count">Get PR Count</option>
-                      <option value="top-contributor">Get Top Contributor</option>
-                      <option value="issue-title">Get Issue Title</option>
-                      <option value="open-issues">Get Open Issues</option>
-                    </TextField>
+                    margin="normal"
+                    placeholder="owner/repo-name"
+                    helperText="GitHub repository in format: owner/repo-name"
+                  />
+                )}
+                
+                {task.type === 'get-issue-title' && (
+                  <>
                     <TextField
                       fullWidth
                       label="OSS Repository"
@@ -1758,7 +2019,6 @@ const ManageQuests = () => {
                       placeholder="owner/repo-name"
                       helperText="GitHub repository in format: owner/repo-name"
                     />
-                    {task.config?.apiCallType === 'issue-title' && (
                       <TextField
                         fullWidth
                         label="Issue Number"
@@ -1767,14 +2027,13 @@ const ManageQuests = () => {
                         onChange={e => {
                           const tasks = [...questFormData.tasks];
                           if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
-                          tasks[taskIndex].config.issueNumber = parseInt(e.target.value) || '';
+                        tasks[taskIndex].config.issueNumber = e.target.value;
                           setQuestFormData({ ...questFormData, tasks });
                         }}
                         margin="normal"
                         placeholder="123"
                         helperText="The issue number to get the title for"
                       />
-                    )}
                   </>
                 )}
                 
@@ -1811,7 +2070,7 @@ const ManageQuests = () => {
                         inputProps={{ min: 1, max: 10 }}
                       />
                       <TextField
-                        label="Correct Answers (comma-separated)"
+                        label="Correct Answers"
                         value={task.config?.correctAnswers || ''}
                         onChange={e => {
                           const tasks = [...questFormData.tasks];
@@ -1820,10 +2079,147 @@ const ManageQuests = () => {
                           setQuestFormData({ ...questFormData, tasks });
                         }}
                         sx={{ flex: 1 }}
-                        placeholder="b,a,c,b,d"
-                        helperText="Format: b,a,c,b,d (one letter per question)"
+                        placeholder="a,b,c,d,e"
+                        helperText="Comma-separated answers (e.g., a,b,c,d,e)"
                       />
                     </Stack>
+                  </Box>
+                )}
+                
+                {task.type === 'custom-api-call' && (
+                  <Box mt={2}>
+                    <Box sx={{ 
+                      backgroundColor: '#e3f2fd', 
+                      p: 2, 
+                      borderRadius: 1, 
+                      border: '2px solid #2196f3',
+                      mb: 2
+                    }}>
+                      <Typography variant="h6" color="primary" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        Custom API Call Task
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Create dynamic tasks that call GitHub APIs to retrieve real-time data
+                      </Typography>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      label="Repository"
+                      value={task.config?.repository || ''}
+                      onChange={e => {
+                        const tasks = [...questFormData.tasks];
+                        if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
+                        tasks[taskIndex].config.repository = e.target.value;
+                        setQuestFormData({ ...questFormData, tasks });
+                      }}
+                      margin="normal"
+                      placeholder="JabRef/jabref"
+                      helperText="Repository to analyze (e.g., JabRef/jabref) - leave empty to use student's assigned repo"
+                    />
+                    <TextField
+                      fullWidth
+                      label="API Endpoint"
+                      value={task.config?.apiEndpoint || ''}
+                      onChange={e => {
+                        const tasks = [...questFormData.tasks];
+                        if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
+                        tasks[taskIndex].config.apiEndpoint = e.target.value;
+                        setQuestFormData({ ...questFormData, tasks });
+                      }}
+                      margin="normal"
+                      placeholder="/repos/{owner}/{repo}/stargazers"
+                      helperText="GitHub API endpoint with {owner} and {repo} placeholders"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Response Path"
+                      value={task.config?.responsePath || ''}
+                      onChange={e => {
+                        const tasks = [...questFormData.tasks];
+                        if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
+                        tasks[taskIndex].config.responsePath = e.target.value;
+                        setQuestFormData({ ...questFormData, tasks });
+                      }}
+                      margin="normal"
+                      placeholder="length, language, description"
+                      helperText="JSON path to extract the answer from API response"
+                    />
+                    <TextField
+                      select
+                      fullWidth
+                      label="Expected Answer Type"
+                      value={task.config?.expectedAnswerType || 'Number'}
+                      onChange={e => {
+                        const tasks = [...questFormData.tasks];
+                        if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
+                        tasks[taskIndex].config.expectedAnswerType = e.target.value;
+                        setQuestFormData({ ...questFormData, tasks });
+                      }}
+                      margin="normal"
+                      SelectProps={{ native: true }}
+                    >
+                      <option value="Number">Number</option>
+                      <option value="Text">Text</option>
+                    </TextField>
+                    
+                    {/* Additional options for Number type */}
+                    {(task.config?.expectedAnswerType === 'Number' || (task.type === 'custom-api-call' && (!task.config?.expectedAnswerType || task.config?.expectedAnswerType === 'Number'))) && (
+                      <Box key={`tolerance-options-${taskIndex}-${task.config?.expectedAnswerType}`} sx={{ mt: 2 }}>
+                        {/* Info box for number visibility */}
+                        <Alert 
+                          severity="info" 
+                          sx={{ mb: 2 }}
+                          action={
+                            <IconButton
+                              aria-label="close"
+                              color="inherit"
+                              size="small"
+                            >
+                              <InfoIcon />
+                            </IconButton>
+                          }
+                        >
+                          <AlertTitle>Number Visibility</AlertTitle>
+                          Ensure the number can be seen by students in the GitHub repository. 
+                          For example, if asking for issue count, make sure students can access 
+                          the repository and see the issues tab.
+                        </Alert>
+                        
+                        {/* Tolerance checkbox */}
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={task.config?.enableTolerance || false}
+                              onChange={e => {
+                                const tasks = [...questFormData.tasks];
+                                if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
+                                tasks[taskIndex].config.enableTolerance = e.target.checked;
+                                setQuestFormData({ ...questFormData, tasks });
+                              }}
+                            />
+                          }
+                          label="Enable tolerance for dynamic numbers (10% default)"
+                        />
+                        
+                        {task.config?.enableTolerance && (
+                          <TextField
+                            fullWidth
+                            label="Tolerance Percentage"
+                            type="number"
+                            value={task.config?.tolerancePercentage || 10}
+                            onChange={e => {
+                              const tasks = [...questFormData.tasks];
+                              if (!tasks[taskIndex].config) tasks[taskIndex].config = {};
+                              tasks[taskIndex].config.tolerancePercentage = parseInt(e.target.value) || 10;
+                              setQuestFormData({ ...questFormData, tasks });
+                            }}
+                            margin="normal"
+                            helperText="Percentage tolerance for numbers that might change while in use (e.g., 10 for 10%)"
+                            sx={{ mt: 1 }}
+                          />
+                        )}
+                      </Box>
+                    )}
                   </Box>
                 )}
                 
@@ -1840,6 +2236,41 @@ const ManageQuests = () => {
                     margin="normal"
                     helperText={`What the user should do to complete this ${task.type === 'issue-selection' ? 'issue selection' : 'pull request creation'} task (e.g., 'DONE', issue number, etc.)`}
                   />
+                )}
+                
+                {(task.type === 'assigned' || task.type === 'issue-no' || task.type === 'comment') && (
+                  <Box sx={{ mt: 2 }}>
+                    <TextField
+                      fullWidth
+                      label="Repository (owner/repo)"
+                      value={task.ossRepository || ''}
+                      onChange={e => {
+                        const tasks = [...questFormData.tasks];
+                        tasks[taskIndex].ossRepository = e.target.value;
+                        setQuestFormData({ ...questFormData, tasks });
+                      }}
+                      margin="normal"
+                      placeholder="e.g., microsoft/vscode"
+                      helperText="Format: owner/repository-name"
+                    />
+                    
+                    {(task.type === 'assigned' || task.type === 'comment') && (
+                      <TextField
+                        fullWidth
+                        label="Issue Number"
+                        type="number"
+                        value={task.issueNumber || ''}
+                        onChange={e => {
+                          const tasks = [...questFormData.tasks];
+                          tasks[taskIndex].issueNumber = e.target.value;
+                          setQuestFormData({ ...questFormData, tasks });
+                        }}
+                        margin="normal"
+                        placeholder="e.g., 123"
+                        helperText={`The specific issue number for ${task.type === 'assigned' ? 'assignment validation' : 'comment validation'}`}
+                      />
+                    )}
+                  </Box>
                 )}
                 
                 {/* Task Response Messages */}
@@ -2077,7 +2508,7 @@ const ManageQuests = () => {
             {isEditMode ? 'Cancel Edit' : 'Cancel'}
           </Button>
           <Button onClick={handleUploadMCQQuest} color="primary" variant="contained" disabled={isUploadingQuest || questFormData.tasks.length === 0 || questFormData.tasks.every(task => !task.title.trim() || !task.desc.trim() || !task.description.trim())} sx={{ fontWeight: 'bold' }}>
-            {isUploadingQuest ? (isEditMode ? 'Updating...' : 'Uploading...') : (isEditMode ? 'Update Quest' : 'Upload MCQ Quest to Database')}
+            {isUploadingQuest ? (isEditMode ? 'Updating...' : 'Uploading...') : (isEditMode ? 'Update Quest' : getQuestTypeInfo().label)}
           </Button>
         </DialogActions>
         {uploadQuestStatus && (

@@ -13,11 +13,11 @@ const initializeModules = async () => {
         console.log('🎯 BOT: Import path: ../../OSS-Doorway/src/gamification.js');
         
         // Fix the import path to correctly point to OSS-Doorway
-        const gamificationModule = await import("../../OSS-Doorway/src/gamification.js");
+        const gamificationModule = await import("../../../OSS-Doorway/src/gamification.js");
         console.log('✅ BOT: Gamification module loaded successfully');
         console.log('✅ BOT: Available exports:', Object.keys(gamificationModule));
         
-        const databaseModule = await import("../../OSS-Doorway/src/database.js");
+        const databaseModule = await import("../../../OSS-Doorway/src/database.js");
         console.log('✅ BOT: Database module loaded successfully');
         
         gameFunction = gamificationModule.gameFunction;
@@ -85,11 +85,22 @@ const initializeModules = async () => {
                         
                         console.log(`✅ FALLBACK: Closed setup issue for ${username} - quest system should now be triggered`);
                         
-                        results.successful.push(username);
+                        results.successful.push({
+                            user: username,
+                            repoName: `${username}-${className}`,
+                            repoUrl: `https://github.com/${org}/${username}-${className}`,
+                            status: 'success',
+                            message: 'Quest setup completed successfully'
+                        });
                         console.log(`✅ FALLBACK: Quest setup completed for ${username}`);
                     } catch (error) {
                         console.error(`❌ FALLBACK: Error setting up quest system for ${username}:`, error);
-                        results.unsuccessful.push(username);
+                        results.unsuccessful.push({
+                            user: username,
+                            error: error.message,
+                            details: 'Quest setup failed',
+                            status: 'error'
+                        });
                     }
                 }
                 
@@ -99,7 +110,7 @@ const initializeModules = async () => {
         
         // Create a simple database connection
         try {
-            const { MongoDB } = await import("../../OSS-Doorway/src/database.js");
+            const { MongoDB } = await import("../../../OSS-Doorway/src/database.js");
             db = new MongoDB();
             console.log('✅ Fallback database connection established');
         } catch (dbError) {
@@ -382,11 +393,22 @@ Your current progress will be displayed here as you complete quests.
                 const result = await gameFunction.createRepos(context, org, [username], db);
                 
                 console.log(`✅ BOT: Quest system created for ${username}:`, result);
-                results.successful.push(username);
+                results.successful.push({
+                    user: username,
+                    repoName: repoName,
+                    repoUrl: `https://github.com/${org}/${repoName}`,
+                    status: 'success',
+                    message: 'Repository and quest system created successfully'
+                });
                 
             } catch (error) {
                 console.error(`❌ BOT: Error creating repository and quest system for ${username}:`, error);
-                results.unsuccessful.push(username);
+                results.unsuccessful.push({
+                    user: username,
+                    error: error.message,
+                    details: 'Repository creation failed',
+                    status: 'error'
+                });
             }
         }
         

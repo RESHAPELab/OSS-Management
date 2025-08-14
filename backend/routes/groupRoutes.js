@@ -1,7 +1,8 @@
 const express = require("express");
-const router = express.Router(); 
+const router = express.Router();
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend } = require("../controllers/groupController")
+const { generateHint } = require("../controllers/aiController")
 const { getStudents } = require("../controllers/studentController")
 
 
@@ -33,5 +34,14 @@ router.route("/:groupId/quest-order/reset").post(resetQuestOrder);
 
 // Get class ID from repository name
 router.get('/repo/:repoName/class', getClassIdFromRepo);
+
+// Quest JSON Configuration Routes
+router.route("/:classId/quest-json-config").post(saveQuestJsonConfig).get(getQuestJsonConfig);
+router.route("/:classId/stored-values").get(getStoredValuesForClass);
+router.route("/:classId/stored-values/backend").get(getStoredValuesBackend);
+router.route("/:classId/stored-values").post(upsertStoredValue);
+
+// AI hint generation
+router.post('/:classId/ai/generate-hint', generateHint);
 
 module.exports = router;
