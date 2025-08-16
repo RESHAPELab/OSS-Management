@@ -5,19 +5,38 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-let privateKeyPath = null;
 let privateKey;
 let GITHUB_APP_ID;
 let USER_AGENT;
 
+// Use environment variables for private key in Railway, fallback to files for local development
 if (process.env.NODE_ENV === "production") {
-    privateKeyPath = path.resolve(__dirname, '../../github-app-private-key-prod.pem');
-    privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    // In Railway, use environment variable
+    privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+    if (!privateKey) {
+        // Fallback to file if env var not set
+        try {
+            const privateKeyPath = path.resolve(__dirname, '../../github-app-private-key-prod.pem');
+            privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+        } catch (fileError) {
+            console.error('❌ Failed to read private key file:', fileError.message);
+            console.error('❌ Please set GITHUB_APP_PRIVATE_KEY environment variable in Railway');
+            throw new Error('GitHub App private key not available. Set GITHUB_APP_PRIVATE_KEY in Railway environment variables.');
+        }
+    }
     GITHUB_APP_ID = process.env.APP_ID_PROD;
     USER_AGENT = process.env.USER_AGENT_PROD;
 } else {
-    privateKeyPath = path.resolve(__dirname, '../../github-app-private-key-dev.pem');
-    privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    // Local development - try file first, then env var
+    try {
+        const privateKeyPath = path.resolve(__dirname, '../../github-app-private-key-dev.pem');
+        privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+    } catch (fileError) {
+        privateKey = process.env.GITHUB_APP_PRIVATE_KEY;
+        if (!privateKey) {
+            throw new Error('GitHub App private key not available. Either create the .pem file or set GITHUB_APP_PRIVATE_KEY environment variable.');
+        }
+    }
     GITHUB_APP_ID = process.env.APP_ID_DEV;
     USER_AGENT = process.env.USER_AGENT_DEV;
 }

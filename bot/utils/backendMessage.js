@@ -13,9 +13,16 @@ function signPayload(payload) {
 
 async function sendMessageToBackend(url, payload) {
     const signature = signPayload(payload);
+    
+    // Use Railway backend URL in production, localhost in development
+    const baseURL = process.env.NODE_ENV === 'production' 
+        ? "https://oss-michael-production.up.railway.app" 
+        : "http://localhost:8080";
+    
+    const fullUrl = url.startsWith('http') ? url : `${baseURL}${url}`;
 
     try {
-        const response = await axios.post(url, payload, {
+        const response = await axios.post(fullUrl, payload, {
             headers: {
                 "Content-Type": "application/json",
                 "x-bot-signature": signature,

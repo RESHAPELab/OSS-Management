@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
-const baseURL = 'http://localhost:8080';
+const baseURL = 'https://oss-michael-production.up.railway.app';
 
 async function testDynamicQuestIntegration() {
     console.log('🧪 Testing Dynamic Quest Integration...\n');

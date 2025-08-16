@@ -2,7 +2,7 @@ const axios = require("axios");
 
 async function debugRepoIssue() {
   // Change this to test against production or keep localhost for local testing
-  const baseURL = "https://oss-timi.up.railway.app"; // or keep 'http://localhost:8080'
+  const baseURL = "https://oss-michael-production.up.railway.app"; // or keep 'http://localhost:8080'
 
   try {
     console.log("🔍 DEBUGGING REPOSITORY ISSUE");

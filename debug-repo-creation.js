@@ -2,7 +2,7 @@ const axios = require('axios');
 
 // Debug script to test repository creation
 async function debugRepoCreation() {
-    const baseURL = 'http://localhost:8080';
+    const baseURL = 'https://oss-michael-production.up.railway.app';
     
     try {
         console.log('🔍 DEBUGGING REPOSITORY CREATION');

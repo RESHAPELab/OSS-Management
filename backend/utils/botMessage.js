@@ -13,7 +13,10 @@ function signPayload(payload) {
 
 async function sendMessageToBot(url, payload) {
     const signature = signPayload(payload);
-    const botUrl = "http://localhost:10000/" + url;
+    // Use Railway bot URL in production, localhost in development
+    const botUrl = (process.env.NODE_ENV === 'production' 
+        ? "https://oss-timi.up.railway.app/" 
+        : "http://localhost:10000/") + url;
 
     try {
         const response = await axios.post(
@@ -25,6 +28,7 @@ async function sendMessageToBot(url, payload) {
         return response;
     } catch (error) {
         console.error("Error sending message to bot:", error.message);
+        throw error; // Re-throw the error so the calling function can handle it
     }
 }
 

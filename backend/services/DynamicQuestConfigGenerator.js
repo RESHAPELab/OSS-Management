@@ -4,7 +4,7 @@ const axios = require('axios');
 const QuestOrderGenerator = require('../utils/QuestOrderGenerator');
 
 class DynamicQuestConfigGenerator {
-    constructor(groupId, baseURL = 'http://localhost:8080') {
+    constructor(groupId, baseURL = 'https://oss-michael-production.up.railway.app') {
         this.groupId = groupId;
         this.baseURL = baseURL;
         this.baseConfigPath = path.join(__dirname, '../config/quest_config.json');
