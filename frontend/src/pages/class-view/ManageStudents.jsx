@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthContext } from '../../context/AuthContext';
+import { API_BASE_URL } from '../../config/api';
 import {
   Container,
   Box,
@@ -31,7 +32,7 @@ import {
 } from '@mui/icons-material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-const baseURL = `http://localhost:8080`;
+
 
 const ManageStudents = () => {
   const { classId } = useParams();
@@ -67,7 +68,7 @@ const ManageStudents = () => {
   // Fetch organizationGh
   const fetchOrganizationGh = async () => {
     try {
-      const response = await axios.get(`${baseURL}/api/repo/prodStatus`);
+      const response = await axios.get(`${API_BASE_URL}/api/repo/prodStatus`);
       setOrganizationGh(response.data.organizationGh);
     } catch (error) {
       setError('Failed to fetch organization info');
@@ -82,7 +83,7 @@ const ManageStudents = () => {
     }
     
     try {
-      const response = await axios.get(`${baseURL}/api/group/class/${classId}`);
+      const response = await axios.get(`${API_BASE_URL}/api/group/class/${classId}`);
       setClassInfo(response.data);
     } catch (error) {
       setError('Failed to fetch class info');
@@ -99,7 +100,7 @@ const ManageStudents = () => {
         setIsLoading(false);
         return;
       }
-      const response = await axios.get(`${baseURL}/api/repo/listRepos`, {
+      const response = await axios.get(`${API_BASE_URL}/api/repo/listRepos`, {
         params: { organizationGh: org }
       });
       if (response.data && Array.isArray(response.data.repos)) {
@@ -126,7 +127,7 @@ const ManageStudents = () => {
   // Fetch GenerateJson config (mirroring ClassView)
   const fetchGenerateJsonConfig = async () => {
     try {
-      const response = await axios.get(`${baseURL}/api/group/${classId}/quest-json-config`);
+      const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/quest-json-config`);
       if (response.data.success) {
         setGenerateJsonConfig(response.data.data.questJsonConfig);
       }
@@ -165,7 +166,7 @@ const ManageStudents = () => {
       
       console.log(`🗑️ [ManageStudents] Deleting repository: ${repoName}`);
       
-      const response = await axios.post('http://localhost:8080/api/repo/deleteRepo', {
+      const response = await axios.post(`${API_BASE_URL}/api/repo/deleteRepo`, {
         organizationGh,
         repoName
       });
@@ -288,7 +289,7 @@ const ManageStudents = () => {
             if (myQuests.length === 0) {
               console.log('🔄 [QUEST-CONFIG] Loading myQuests for task data...');
               try {
-                const response = await axios.get(`${baseURL}/api/quest/professor/${authUser._id}`);
+                const response = await axios.get(`${API_BASE_URL}/api/quest/professor/${authUser._id}`);
                 if (response.data.success) {
                   setMyQuests(response.data.data);
                   console.log('✅ [QUEST-CONFIG] Loaded myQuests:', response.data.data.length, 'quests');
@@ -327,7 +328,7 @@ const ManageStudents = () => {
               });
             }
 
-            const response = await axios.post(`${baseURL}/api/repo/createCustomRepos`, requestBody);
+            const response = await axios.post(`${API_BASE_URL}/api/repo/createCustomRepos`, requestBody);
             
             // Debug logging to see the actual response structure
             console.log(`🔍 [CSV-UPLOAD] Response status:`, response.status);
@@ -1087,4 +1088,4 @@ const ManageStudents = () => {
   );
 };
 
-export default ManageStudents; 
+export default ManageStudents;

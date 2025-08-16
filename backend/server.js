@@ -3,6 +3,14 @@ const path = require("path");
 const dotenv = require("dotenv").config({
   path: path.join(__dirname, "..", ".env"),
 });
+
+// Add environment variable validation
+if (!process.env.URI) {
+  console.error('❌ Missing required environment variable: URI');
+  console.error('Please set the URI environment variable in your Render dashboard');
+  process.exit(1);
+}
+
 const { errorHandler } = require("./middleware/errorMiddleware");
 const { connectDB, closeDB } = require("./config/db");
 const port = process.env.PORT || 8080;
