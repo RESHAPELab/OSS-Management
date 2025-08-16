@@ -61,8 +61,8 @@ const GroupComponent = ({ professor, groups, createGroup }) => {
         if (newGroupName.trim() !== "") {
             const newGroup = await createGroup({ groupName: newGroupName });
             if (newGroup && newGroup._id) {
-                setNewGroupName("");
-                setCreateGroupOpen(false);
+            setNewGroupName("");
+            setCreateGroupOpen(false);
                 // Navigate to the newly created class
                 navigate(`/class/${newGroup._id}`);
             }

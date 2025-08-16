@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const { MongoClient } = require('mongodb');
 const UserStoredData = require('../models/UserStoredData');
+const { v4: uuidv4 } = require('uuid');
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -941,52 +942,24 @@ const getQuestOrder = async (req, res) => {
             // Return default quest order with prerequisites
             const defaultQuestOrder = [
                 { 
-                    questId: 'Q0', 
+                    questId: 'Q1', 
                     questType: 'fixed', 
                     sequenceNumber: 0, 
-                    title: 'Q0: Introduction to Open Source', 
-                    isQ0: true,
+                    title: 'Q1: Understanding OSS Projects and GitHub Basics', 
+                    isQ0: false,
                     prerequisites: []
                 },
                 { 
-                    questId: 'Q1', 
-                    questType: 'fixed', 
-                    sequenceNumber: 1, 
-                    title: 'Q1: Understanding OSS Projects and GitHub Basics', 
-                    isQ0: false,
-                    prerequisites: [{
-                        questId: 'Q0',
-                        type: 'completion',
-                        required: true,
-                        description: 'Complete Q0: Introduction to Open Source first',
-                        minScore: 0
-                    }]
-                },
-                { 
                     questId: 'Q2', 
-                    questType: 'fixed', 
-                    sequenceNumber: 2, 
-                    title: 'Q2: Forking and Contributing to Repositories', 
+                    questType: 'custom', 
+                    sequenceNumber: 1, 
+                    title: 'Q2: Assignment Validation', 
                     isQ0: false,
                     prerequisites: [{
                         questId: 'Q1',
                         type: 'completion',
                         required: true,
                         description: 'Complete Q1: Understanding OSS Projects and GitHub Basics first',
-                        minScore: 0
-                    }]
-                },
-                { 
-                    questId: 'Q3', 
-                    questType: 'fixed', 
-                    sequenceNumber: 3, 
-                    title: 'Q3: Creating Pull Requests and Code Reviews', 
-                    isQ0: false,
-                    prerequisites: [{
-                        questId: 'Q2',
-                        type: 'completion',
-                        required: true,
-                        description: 'Complete Q2: Forking and Contributing to Repositories first',
                         minScore: 0
                     }]
                 }
@@ -1011,52 +984,24 @@ const resetQuestOrder = async (req, res) => {
         // Reset to default quest order using findByIdAndUpdate to avoid version conflicts
         const defaultQuestOrder = [
             { 
-                questId: 'Q0', 
+                questId: 'Q1', 
                 questType: 'fixed', 
                 sequenceNumber: 0, 
-                title: 'Q0: Introduction to Open Source', 
-                isQ0: true,
+                title: 'Q1: Understanding OSS Projects and GitHub Basics', 
+                isQ0: false,
                 prerequisites: []
             },
             { 
-                questId: 'Q1', 
-                questType: 'fixed', 
-                sequenceNumber: 1, 
-                title: 'Q1: Understanding OSS Projects and GitHub Basics', 
-                isQ0: false,
-                prerequisites: [{
-                    questId: 'Q0',
-                    type: 'completion',
-                    required: true,
-                    description: 'Complete Q0: Introduction to Open Source first',
-                    minScore: 0
-                }]
-            },
-            { 
                 questId: 'Q2', 
-                questType: 'fixed', 
-                sequenceNumber: 2, 
-                title: 'Q2: Forking and Contributing to Repositories', 
+                questType: 'custom', 
+                sequenceNumber: 1, 
+                title: 'Q2: Assignment Validation', 
                 isQ0: false,
                 prerequisites: [{
                     questId: 'Q1',
                     type: 'completion',
                     required: true,
                     description: 'Complete Q1: Understanding OSS Projects and GitHub Basics first',
-                    minScore: 0
-                }]
-            },
-            { 
-                questId: 'Q3', 
-                questType: 'fixed', 
-                sequenceNumber: 3, 
-                title: 'Q3: Creating Pull Requests and Code Reviews', 
-                isQ0: false,
-                prerequisites: [{
-                    questId: 'Q2',
-                    type: 'completion',
-                    required: true,
-                    description: 'Complete Q2: Forking and Contributing to Repositories first',
                     minScore: 0
                 }]
             }
@@ -1221,6 +1166,134 @@ const saveQuestJsonConfig = async (req, res) => {
             message: 'Error saving quest JSON configuration',
             error: error.message
         });
+    }
+};
+
+// Deploy a new MCQ quest to an already created GitHub repo for a specific class
+// POST /api/group/:classId/deploy-quest-to-repo
+const deployQuestToRepo = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const { repo } = req.body; // e.g. "OSS-Doorway-Dev/MisanEtchie-financing"
+
+        if (!repo || typeof repo !== 'string' || !repo.includes('/')) {
+            return res.status(400).json({ success: false, message: 'Invalid repo. Expected format "owner/repo".' });
+        }
+
+        const [owner, repoName] = repo.split('/');
+
+        // 1) Load class/group and its current quest JSON config
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({ success: false, message: 'Class not found' });
+        }
+
+        const currentConfig = group.questJsonConfig && Array.isArray(group.questJsonConfig.questSequence)
+            ? group.questJsonConfig
+            : { map_repo_link: 'https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map', questSequence: [] };
+
+        // 2) Create a new MCQ quest (appended to sequence), prerequisite Q0
+        const nextSeq = currentConfig.questSequence.length;
+        const generatedQuestId = `Q${nextSeq + 1}`; // simple next ID
+        const mcqQuest = {
+            questId: generatedQuestId,
+            title: 'Bonus MCQ: Quick Check',
+            isQ0: false,
+            questType: 'custom',
+            sequenceNumber: nextSeq,
+            metadata: {
+                title: 'Bonus MCQ: Quick Check',
+                description: 'A quick multiple-choice check appended to the current sequence',
+                prerequisite: 'Q0',
+                type: 'custom'
+            },
+            badgeDescription: 'MCQ Bonus 🧠',
+            tasks: {
+                T1: {
+                    desc: 'Which of the following describes open-source software?',
+                    points: 10,
+                    xp: 10,
+                    type: 'multiple-choice',
+                    accept: '**Question:** What is open-source software?\n\nA) Software that is free of charge\n\nB) Software whose source code is publicly available to use, modify, and distribute\n\nC) Software that only runs on Linux\n\nD) Software that is owned by a single company',
+                    options: [
+                        { label: 'A', value: 'Software that is free of charge' },
+                        { label: 'B', value: 'Source code is publicly available to use, modify, and distribute' },
+                        { label: 'C', value: 'Only runs on Linux' },
+                        { label: 'D', value: 'Owned by a single company' }
+                    ],
+                    answer: 'B',
+                    success: '✅ Correct! Nice work.',
+                    error: '❌ Not quite. Revisit the definition of open-source.',
+                    hints: [],
+                    detailedHints: []
+                }
+            }
+        };
+
+        currentConfig.questSequence.push(mcqQuest);
+
+        // 3) Persist quest JSON back to DB and legacy file (reuse saveQuestJsonConfig flow)
+        group.questJsonConfig = currentConfig;
+        group.questJsonLastUpdated = new Date();
+        await group.save();
+
+        try {
+            const outputDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
+            const outputPath = path.join(outputDir, `quest_config_${classId}.json`);
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+            const legacyConfig = { map_repo_link: currentConfig.map_repo_link || 'https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map' };
+            for (const quest of currentConfig.questSequence) {
+                const questId = quest.questId;
+                const meta = quest.metadata || {};
+                const tasks = quest.tasks || {};
+                legacyConfig[questId] = { metadata: meta, ...tasks };
+            }
+            fs.writeFileSync(outputPath, JSON.stringify(legacyConfig, null, 2));
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            fs.writeFileSync(`${outputPath}.${timestamp}`, JSON.stringify(legacyConfig, null, 2));
+        } catch (fileErr) {
+            console.error('[deployQuestToRepo] Failed to write legacy config:', fileErr.message);
+            // continue; this should not block
+        }
+
+        // 4) Create an issue in the target repo for T1
+        try {
+            // Authenticate as GitHub App and get installation for owner
+            const { Octokit } = await import('@octokit/rest');
+            const { createAppAuth } = await import('@octokit/auth-app');
+
+            let privateKey = process.env.OSS_DOORWAY_PRIVATE_KEY;
+            if (privateKey && privateKey.includes('\n')) privateKey = privateKey.replace(/\n/g, '\n');
+
+            const auth = createAppAuth({ appId: process.env.OSS_DOORWAY_APP_ID, privateKey });
+            const { token } = await auth({ type: 'app' });
+            const octokitApp = new Octokit({ auth: token });
+
+            // Find installation for provided owner
+            const { data: installations } = await octokitApp.apps.listInstallations();
+            const installation = installations.find(inst => inst.account.login.toLowerCase() === owner.toLowerCase());
+            if (!installation) {
+                return res.status(500).json({ success: false, message: `GitHub App not installed for org/user: ${owner}` });
+            }
+
+            const { token: installationToken } = await auth({ type: 'installation', installationId: installation.id });
+            const orgOctokit = new Octokit({ auth: installationToken });
+
+            const task = mcqQuest.tasks.T1;
+            const issueTitle = `${generatedQuestId} T1: ${task.desc}`;
+            const issueBody = `${task.accept}\n\n(Answer by commenting with the option letter, e.g., "B")`;
+            const created = await orgOctokit.issues.create({ owner, repo: repoName, title: issueTitle, body: issueBody, labels: ['quest', 'task'] });
+
+            return res.status(200).json({ success: true, message: 'Quest deployed and issue created', data: { questId: generatedQuestId, repo: `${owner}/${repoName}`, issueUrl: created.data.html_url } });
+        } catch (ghErr) {
+            console.error('[deployQuestToRepo] Failed to create issue:', ghErr.message);
+            return res.status(500).json({ success: false, message: 'Quest saved, but failed to create GitHub issue', error: ghErr.message });
+        }
+    } catch (err) {
+        console.error('[deployQuestToRepo] Error:', err);
+        return res.status(500).json({ success: false, message: err.message });
     }
 };
 
@@ -1479,5 +1552,6 @@ module.exports = {
     getQuestJsonConfig,
     getStoredValuesForClass,
     upsertStoredValue,
-    getStoredValuesBackend
+    getStoredValuesBackend,
+    deployQuestToRepo
 }
