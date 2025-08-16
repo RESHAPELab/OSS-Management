@@ -1,5 +1,11 @@
 {
+  "name": "oss-management",
+  "version": "1.0.0",
   "main": "backend/server.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "dependencies": {
     "@google-cloud/local-auth": "^2.1.0",
     "@octokit/auth-app": "^8.0.2",
@@ -21,7 +27,7 @@
     "yargs": "^17.7.2"
   },
   "scripts": {
-    "start": "cross-env NODE_ENV=production concurrently npm:frontend npm:backend",
+    "start": "node backend/server.js",
     "start:validation": "concurrently npm:frontend npm:backend:validation",
     "frontend": "cd frontend && npm start",
     "backend": "cross-env NODE_ENV=production node backend/server.js",
