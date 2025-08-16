@@ -9,6 +9,11 @@ const port = process.env.PORT || 8080;
 const cors = require("cors");
 const generatejsonRoutes = require("./routes/generatejsonRoutes");
 
+// Prevent multiple instances
+if (process.env.NODE_ENV !== "test") {
+  console.log(`Starting server with PID: ${process.pid}`);
+}
+
 connectDB();
 
 const app = express();
@@ -26,24 +31,36 @@ app.use("/api/quest-config", require("./routes/questConfigRoutes"));
 app.use("/api/generatejson", generatejsonRoutes);
 app.use(errorHandler);
 
-// Health check endpoint for Railway
+// Health check
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', port: port });
+  res.status(200).json({ 
+    status: 'OK', 
+    port: port,
+    pid: process.pid,
+    uptime: process.uptime()
+  });
 });
 
 // Export app for testing purposes
 if (process.env.NODE_ENV !== "test") {
   const server = app.listen(port, '0.0.0.0', () => {
-    console.log(`Server has started on port ${port}`);
+    console.log(`Server has started on port ${port} with PID ${process.pid}`);
   });
   
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM received, shutting down gracefully');
+  // Handle graceful shutdown
+  const gracefulShutdown = () => {
+    console.log('Received shutdown signal, closing server...');
     server.close(() => {
-      console.log('Process terminated');
+      console.log('Server closed');
+      closeDB().then(() => {
+        console.log('Database connection closed');
+        process.exit(0);
+      });
     });
-  });
+  };
+  
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 }
 
 module.exports = app;
