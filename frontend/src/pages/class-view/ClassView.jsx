@@ -215,7 +215,7 @@ const ClassView = () => {
     const fetchGenerateJsonConfig = async () => {
       try {
         const response = await axios.get(
-          `http://${API_BASE_URL}/api/group/${classId}/quest-json-config`
+          `${API_BASE_URL}/api/group/${classId}/quest-json-config`
         );
         if (response.data.success && response.data.data.hasConfig) {
           setGenerateJsonConfig(response.data.data.questJsonConfig);

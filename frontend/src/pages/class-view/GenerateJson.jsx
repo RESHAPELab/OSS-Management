@@ -831,7 +831,7 @@ const GenerateJson = () => {
       const validatedConfig = validateAndFixQuestConfig(jsonContent);
 
       const response = await axios.post(
-        `http://${API_BASE_URL}/api/group/${classId}/quest-json-config`,
+        `${API_BASE_URL}/api/group/${classId}/quest-json-config`,
         {
           questJsonConfig: validatedConfig,
         }
