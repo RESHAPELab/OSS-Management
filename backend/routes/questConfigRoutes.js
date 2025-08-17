@@ -6,7 +6,7 @@ const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGener
 router.post('/generate/:groupId', async (req, res) => {
     try {
         const { groupId } = req.params;
-        const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+        const baseURL = req.get('host') ? `https://${req.get('host')}` : 'https://oss-michael-production.up.railway.app';
         
         const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
         const config = await generator.generateDynamicConfig();
@@ -35,7 +35,7 @@ router.post('/generate/:groupId', async (req, res) => {
 router.get('/:groupId', async (req, res) => {
     try {
         const { groupId } = req.params;
-        const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+        const baseURL = req.get('host') ? `https://${req.get('host')}` : 'https://oss-michael-production.up.railway.app';
         
         const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
         const config = await generator.generateDynamicConfig();

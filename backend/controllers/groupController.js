@@ -864,7 +864,7 @@ const saveQuestOrder = async (req, res) => {
         // Automatically generate dynamic config after saving quest order
         try {
             const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
-            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const baseURL = req.get('host') ? `https://${req.get('host')}` : 'https://oss-michael-production.up.railway.app';
             const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
             const config = await generator.generateDynamicConfig();
             
@@ -1023,7 +1023,7 @@ const resetQuestOrder = async (req, res) => {
         // Automatically generate dynamic config after resetting quest order
         try {
             const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
-            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const baseURL = req.get('host') ? `https://${req.get('host')}` : 'https://oss-michael-production.up.railway.app';
             const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
             const config = await generator.generateDynamicConfig();
             

@@ -294,8 +294,13 @@ const checkCollaboration = async (req, res) => {
 
 const listRepos = async (req, res) => {
     const { org } = req.body;
+    console.log(`[BOT] listRepos called for organization: ${org}`);
+    console.log(`[BOT] Request body:`, req.body);
+    
     try {
+        console.log(`[BOT] Getting GitHub App installation access token...`);
         const githubToken = await getGithubAppInstallationAccessToken();
+        console.log(`[BOT] GitHub token received: ${githubToken ? githubToken.substring(0, 10) + '...' : 'null'}`);
         let allRepos = [];
         let page = 1;
         const perPage = 100;

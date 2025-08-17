@@ -4,7 +4,7 @@ const path = require('path');
 
 // Script to get quest roadmap from the database
 async function getQuestRoadmap() {
-    const baseURL = 'http://localhost:8080';
+    const baseURL = 'https://oss-michael-production.up.railway.app';
     
     try {
         console.log('🗺️ FETCHING QUEST ROADMAP');
