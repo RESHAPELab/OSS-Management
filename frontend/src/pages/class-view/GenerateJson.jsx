@@ -4429,6 +4429,13 @@ Good luck! 🚀"
                       alert("Invalid class.");
                       return;
                     }
+
+                    // const targetRepo = "OSS-Doorway-Dev/MisanEtchie-financing";
+                    // const { data } = await axios.post(
+                    //   `http://localhost:8080/api/group/${classId}/deploy-quest-to-repo`,
+                    //   { repo: targetRepo }
+                    // );
+
                     const targetRepo = "OSS-Doorway-Dev/MisanEtchie-financing";
                     const { data } = await axios.post(
                       `${API_BASE_URL}/api/group/${classId}/deploy-quest-to-repo`,
