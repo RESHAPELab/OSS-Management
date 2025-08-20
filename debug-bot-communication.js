@@ -1,5 +1,7 @@
 const axios = require('axios');
 const crypto = require('crypto');
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 // Debug script to test bot communication
 async function debugBotCommunication() {
@@ -112,4 +114,4 @@ function signPayload(payload) {
 }
 
 // Run the debug script
-debugBotCommunication(); 
+debugBotCommunication();

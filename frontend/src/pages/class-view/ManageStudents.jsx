@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthContext } from '../../context/AuthContext';
+import API_CONFIG from '../../config/api';
 import {
   Container,
   Box,
@@ -31,11 +32,12 @@ import {
 } from '@mui/icons-material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
-const baseURL = `http://localhost:8080`;
+
 
 const ManageStudents = () => {
   const { classId } = useParams();
   const { authUser } = useAuthContext();
+  const baseURL = API_CONFIG.getBaseURL();
   const [studentData, setStudentData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -100,8 +102,8 @@ const ManageStudents = () => {
         return;
       }
       const response = await axios.get(`${baseURL}/api/repo/listRepos`, {
-        params: { organizationGh: org }
-      });
+          params: { organizationGh: org }
+        });
       if (response.data && Array.isArray(response.data.repos)) {
         // Format class name to match repository naming convention
         const formattedClassName = classInfoObj.groupName
@@ -165,7 +167,7 @@ const ManageStudents = () => {
       
       console.log(`🗑️ [ManageStudents] Deleting repository: ${repoName}`);
       
-      const response = await axios.post('http://localhost:8080/api/repo/deleteRepo', {
+      const response = await axios.post(`${baseURL}/api/repo/deleteRepo`, {
         organizationGh,
         repoName
       });
@@ -1087,4 +1089,4 @@ const ManageStudents = () => {
   );
 };
 
-export default ManageStudents; 
+export default ManageStudents;

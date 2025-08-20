@@ -9,11 +9,11 @@ require("dotenv").config();
 
 
 const axios = require('axios');
-const { sendMessageToBot } = require('../utils/botMessage');
+const { sendMessageToBot, getGithubAppInstallationAccessToken } = require('../utils/botMessage');
 const { recoverPassword } = require("./authController");
-const { getGithubAppInstallationAccessToken } = require('../../../bot/controllers/githubAppAuth');
 const fs = require('fs');
 const path = require('path');
+
 
 function generateCustomQuestConfig(customSequence, groupId) {
   console.log('[DEBUG] [generateCustomQuestConfig] Incoming customSequence.questSequence:', JSON.stringify(customSequence.questSequence, null, 2));
@@ -296,9 +296,6 @@ Your current progress will be displayed here as you complete quests.
         // Import GitHub App authentication
         let githubToken;
         try {
-            // Use dynamic import for GitHub App authentication
-            const { getGithubAppInstallationAccessToken } = await import('../../../bot/controllers/githubAppAuth');
-            
             // Get GitHub access token
             console.log('🔑 Getting GitHub App installation access token...');
             githubToken = await getGithubAppInstallationAccessToken();
@@ -807,9 +804,6 @@ const checkRepoReadme = async (req, res) => {
         // Try to get GitHub access token
         let githubToken;
         try {
-            // Use dynamic import for GitHub App authentication
-            const { getGithubAppInstallationAccessToken } = await import('../../../bot/controllers/githubAppAuth');
-            
             // Get GitHub access token
             console.log('🔑 Getting GitHub App installation access token...');
             githubToken = await getGithubAppInstallationAccessToken();

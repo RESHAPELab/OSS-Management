@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_CONFIG from '../../config/api';
 import TextEditor from '../../components/TextEditor';
 import {
   Container,
@@ -66,6 +67,7 @@ import { useAuthContext } from '../../context/AuthContext';
 const GenerateJson = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
+  const baseURL = API_CONFIG.getBaseURL();
   const [downloadStatus, setDownloadStatus] = useState('');
   const [showAddQuestModal, setShowAddQuestModal] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
@@ -358,7 +360,7 @@ const GenerateJson = () => {
         setIsLoading(true);
         console.log('🔄 Loading saved quest JSON configuration for class:', classId);
         
-        const response = await axios.get(`http://localhost:8080/api/group/${classId}/quest-json-config`);
+        const response = await axios.get(`${baseURL}/api/group/${classId}/quest-json-config`);
         
         console.log('🔍 Debug response data:', response.data);
         console.log('🔍 hasConfig:', response.data.data?.hasConfig);
@@ -420,7 +422,7 @@ const GenerateJson = () => {
         // Validate and fix quest configuration before saving
         const validatedConfig = validateAndFixQuestConfig(jsonContent);
         
-        const response = await axios.post(`http://localhost:8080/api/group/${classId}/quest-json-config`, {
+        const response = await axios.post(`${baseURL}/api/group/${classId}/quest-json-config`, {
           questJsonConfig: validatedConfig
         });
         
@@ -472,7 +474,7 @@ const GenerateJson = () => {
       // Validate and fix quest configuration before saving
       const validatedConfig = validateAndFixQuestConfig(jsonContent);
       
-      const response = await axios.post(`http://localhost:8080/api/group/${classId}/quest-json-config`, {
+      const response = await axios.post(`${baseURL}/api/group/${classId}/quest-json-config`, {
         questJsonConfig: validatedConfig
       });
       
@@ -520,7 +522,7 @@ const GenerateJson = () => {
       console.log('🚀 Creating custom repos for user:', githubUsername);
       console.log('📄 Using JSON configuration:', jsonContent);
 
-      const response = await axios.post('http://localhost:8080/api/repo/createCustomRepos', {
+      const response = await axios.post(`${baseURL}/api/repo/createCustomRepos`, {
         users: [githubUsername],
         customSequence: jsonContent,
         className: `custom-quest-${Date.now()}`,
@@ -1325,7 +1327,7 @@ Student can now start their quest journey!`);
     if (!classId) return;
     try {
       // Do not toggle global loading for stored values fetch; it's minor
-      const res = await axios.get(`http://localhost:8080/api/group/${classId}/stored-values`);
+      const res = await axios.get(`${baseURL}/api/group/${classId}/stored-values`);
       const keys = res.data?.data?.keys || [];
       const valuesByUser = res.data?.data?.valuesByUser || {};
       setStoredKeys(keys);
@@ -2744,7 +2746,7 @@ Student can now start their quest journey!`);
                                 expectedAnswerType: task.expectedAnswerType,
                                 llmTextValidation: task.llmTextValidation
                               };
-                              const { data } = await axios.post(`http://localhost:8080/api/group/${classId}/ai/generate-hint`, payload, { headers: { 'Content-Type': 'application/json' } });
+                              const { data } = await axios.post(`${baseURL}/api/group/${classId}/ai/generate-hint`, payload, { headers: { 'Content-Type': 'application/json' } });
                               const aiHint = (data && data.data && data.data.hint) ? data.data.hint : 'Try focusing on the key requirement and the relevant tab in the repository.';
                               handleAddHint(editingQuestIndex || 0, taskIdx);
                               const newIdx = (task.detailedHints?.length || 0);

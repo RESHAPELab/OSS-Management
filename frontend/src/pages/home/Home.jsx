@@ -4,8 +4,12 @@ import "./Home.css"
 import { useAuthContext } from '../../context/AuthContext';
 import HomeHeader from './components/HomeHeader';
 import GroupComponent from './components/GroupComponent';
+import API_CONFIG from '../../config/api';
 
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+// Replace this line:
+// let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+// With:
+const baseURL = API_CONFIG.getBaseURL();
 
 const Home = () => {
     const [profGroups, setProfGroups] = useState([])

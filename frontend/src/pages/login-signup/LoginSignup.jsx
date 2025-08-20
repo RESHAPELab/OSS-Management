@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import "./LoginSignup.css"; 
 import axios from 'axios'
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+import API_CONFIG from '../../config/api';
+
+// Replace this line:
+// let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+// With:
+const baseURL = API_CONFIG.getBaseURL();
 
 const LoginSignup = () => {
     const [isSignup, setIsSignup] = useState(false);

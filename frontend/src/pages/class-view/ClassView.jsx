@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import HomeHeader from '../home/components/HomeHeader'
 import axios from 'axios'
 import { useAuthContext } from '../../context/AuthContext';
+import API_CONFIG from '../../config/api';
 import {
   Container, Box, Typography, Button, Stack, Card, Dialog, DialogTitle, DialogContent, DialogActions, 
   Alert, TextField, Chip, List, ListItem, ListItemText, Divider, Paper, Grid, IconButton,
@@ -37,7 +38,7 @@ import RepositoryStatusChecker from '../../components/RepositoryStatusChecker';
 import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
 
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+const baseURL = API_CONFIG.getBaseURL();
 
 const ClassView = () => {
     const { classId } = useParams();
@@ -158,7 +159,7 @@ const ClassView = () => {
     useEffect(() => {
         const fetchGenerateJsonConfig = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/group/${classId}/quest-json-config`);
+                const response = await axios.get(`${baseURL}/api/group/${classId}/quest-json-config`);
                 if (response.data.success && response.data.data.hasConfig) {
                     setGenerateJsonConfig(response.data.data.questJsonConfig);
                 }

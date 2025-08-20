@@ -11,9 +11,20 @@ function signPayload(payload) {
     return "sha256=" + hmac.update(JSON.stringify(payload)).digest("hex");
 }
 
+// Get bot service URL based on environment
+function getBotServiceUrl() {
+    // Check if we're in production
+    if (process.env.NODE_ENV === 'production' || process.env.BOT_SERVICE_URL) {
+        return process.env.BOT_SERVICE_URL || 'https://oss-timi.up.railway.app';
+    }
+    // Default to localhost for development
+    return 'http://localhost:10000';
+}
+
 async function sendMessageToBot(url, payload) {
     const signature = signPayload(payload);
-    const botUrl = "http://localhost:10000/" + url; // Bot now runs as standalone service
+    const botBaseUrl = getBotServiceUrl();
+    const botUrl = `${botBaseUrl}/${url}`;
 
     try {
         const response = await axios.post(
@@ -25,9 +36,33 @@ async function sendMessageToBot(url, payload) {
         return response;
     } catch (error) {
         console.error("Error sending message to bot:", error.message);
+        throw error;
+    }
+}
+
+// New function to get GitHub App installation token from bot service
+async function getGithubAppInstallationAccessToken() {
+    const botBaseUrl = getBotServiceUrl();
+    const tokenUrl = `${botBaseUrl}/github/installation-token`;
+    
+    try {
+        const response = await axios.get(tokenUrl, {
+            headers: {
+                'Authorization': `Bearer ${process.env.BACKEND_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        return response.data.token;
+    } catch (error) {
+        console.error('Error getting GitHub App installation token:', error.message);
+        throw new Error('Failed to get GitHub App installation token');
     }
 }
 
 module.exports = {
-    sendMessageToBot, signPayload
-}
+    sendMessageToBot, 
+    signPayload,
+    getGithubAppInstallationAccessToken,
+    getBotServiceUrl
+};
