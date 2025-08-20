@@ -244,15 +244,21 @@ const ClassView = () => {
         }
         
         try {
-            // console.log('Fetching class info for classId:', classId); // Removed
+            console.log('🔍 [DEBUG] Fetching class info for classId:', classId);
             const response = await axios.get(`${baseURL}/api/group/class/${classId}`);
-            // console.log('Class info response:', response.data); // Removed
+            console.log('🔍 [DEBUG] Class info response:', response.data);
+            console.log('🔍 [DEBUG] Response structure:', {
+                hasData: !!response.data,
+                hasGroupName: !!response.data.groupName,
+                groupName: response.data.groupName,
+                keys: Object.keys(response.data || {})
+            });
             setClassInfo(response.data);
             // We're not using the students from the backend anymore
             // setStudentData(response.data.students || []);
         } catch (error) {
-            console.error('Error fetching class info:', error.response?.data || error.message);
-            console.error('Full error:', error);
+            console.error('❌ [DEBUG] Error fetching class info:', error.response?.data || error.message);
+            console.error('❌ [DEBUG] Full error:', error);
         }
     }
 
@@ -2028,6 +2034,16 @@ const ClassView = () => {
                             <Typography variant="h3" component="h1" fontWeight={700} gutterBottom>
                                 {classInfo.groupName}
                             </Typography>
+                            {classInfo.professorID && (
+                                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                                    Professor: {classInfo.professorName || 'Loading...'}
+                                </Typography>
+                            )}
+                            {classInfo.professorName && (
+                                <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic', mb: 2 }}>
+                                    Professor {classInfo.professorName} has invited you to join this exciting learning journey! 🚀
+                                </Typography>
+                            )}
                             <Stack direction="row" spacing={2} alignItems="center" mt={2}>
                                 <Box sx={{ 
                                     display: 'flex', 

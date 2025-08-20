@@ -28,6 +28,49 @@ import API_CONFIG from "../../config/api";
 const InviteByName = () => {
   const baseURL = API_CONFIG.getBaseURL();
 
+  // Convert technical errors to user-friendly messages
+  const getUserFriendlyError = (error) => {
+    const errorStr = error?.toLowerCase() || '';
+    
+    // GitHub username not found
+    if (errorStr.includes('user not found') || errorStr.includes('404') || errorStr.includes('does not exist')) {
+      return "This GitHub username doesn't exist. Please check the spelling and try again.";
+    }
+    
+    // Repository already exists
+    if (errorStr.includes('already exists') || errorStr.includes('repository exists')) {
+      return "You've already been invited to this class! Check your GitHub repositories.";
+    }
+    
+    // Permission/access issues
+    if (errorStr.includes('permission') || errorStr.includes('access') || errorStr.includes('forbidden')) {
+      return "There was a permission issue. Please contact your professor for assistance.";
+    }
+    
+    // Network/connection issues
+    if (errorStr.includes('network') || errorStr.includes('timeout') || errorStr.includes('connection')) {
+      return "There was a connection issue. Please check your internet and try again.";
+    }
+    
+    // Rate limiting
+    if (errorStr.includes('rate limit') || errorStr.includes('too many requests')) {
+      return "We're processing too many requests right now. Please wait a minute and try again.";
+    }
+    
+    // Invalid username format
+    if (errorStr.includes('invalid') && errorStr.includes('username')) {
+      return "Please enter a valid GitHub username (letters, numbers, and hyphens only).";
+    }
+    
+    // Server errors
+    if (errorStr.includes('500') || errorStr.includes('internal server error')) {
+      return "Our system is experiencing technical difficulties. Please try again in a few minutes.";
+    }
+    
+    // Default friendly message for unknown errors
+    return "Something went wrong while setting up your account. Please contact your professor for help.";
+  };
+
   const { classId } = useParams();
   const navigate = useNavigate();
   const [githubUsername, setGithubUsername] = useState("");
@@ -37,6 +80,7 @@ const InviteByName = () => {
   const [classInfo, setClassInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [recentInvites, setRecentInvites] = useState([]);
+  const [usernameError, setUsernameError] = useState("");
 
   // Load quest configuration and class info on component mount
   useEffect(() => {
@@ -60,7 +104,7 @@ const InviteByName = () => {
         } else {
           console.log("❌ No quest configuration found");
           setRepoCreationStatus(
-            "❌ No quest configuration found for this class. Please set up quests first."
+            "❌ This class isn't ready for new students yet. Please contact your professor."
           );
         }
 
@@ -74,7 +118,7 @@ const InviteByName = () => {
         }
       } catch (error) {
         console.error("❌ Error loading data:", error);
-        setRepoCreationStatus("❌ Error loading data. Please try again.");
+        setRepoCreationStatus("❌ Unable to load class information. Please refresh the page or contact your professor.");
       } finally {
         setIsLoading(false);
       }
@@ -85,16 +129,52 @@ const InviteByName = () => {
     }
   }, [classId]);
 
+  // Validate GitHub username format
+  const validateUsername = (username) => {
+    const trimmed = username.trim();
+    
+    if (!trimmed) {
+      return "Please enter your GitHub username";
+    }
+    
+    // GitHub username rules: 
+    // - May only contain alphanumeric characters or single hyphens
+    // - Cannot begin or end with a hyphen
+    // - Maximum 39 characters
+    if (!/^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(trimmed)) {
+      return "GitHub usernames can only contain letters, numbers, and hyphens (no spaces or special characters)";
+    }
+    
+    if (trimmed.length > 39) {
+      return "GitHub usernames must be 39 characters or less";
+    }
+    
+    if (trimmed.includes('--')) {
+      return "GitHub usernames cannot have consecutive hyphens";
+    }
+    
+    return "";
+  };
+
+  // Handle username input change with validation
+  const handleUsernameChange = (e) => {
+    const value = e.target.value;
+    setGithubUsername(value);
+    setUsernameError(validateUsername(value));
+  };
+
   // Create repository for student
   const handleInviteStudent = async () => {
-    if (!githubUsername.trim()) {
-      setRepoCreationStatus("❌ Please enter a GitHub username");
+    const usernameValidationError = validateUsername(githubUsername);
+    if (usernameValidationError) {
+      setRepoCreationStatus(`❌ ${usernameValidationError}`);
+      setUsernameError(usernameValidationError);
       return;
     }
 
     if (!questConfig) {
       setRepoCreationStatus(
-        "❌ No quest configuration available. Please set up quests first."
+        "❌ This class isn't ready for new students yet. Please contact your professor."
       );
       return;
     }
@@ -159,15 +239,15 @@ You can now start your quest journey!`;
         // Check for unsuccessful repository creation
         else if (unsuccessful && unsuccessful.length > 0) {
           const errorInfo = unsuccessful[0];
-          const error = errorInfo.error || errorInfo.message || "Unknown error";
-          const errorMessage = `❌ Repository creation failed: ${error}`;
-          setRepoCreationStatus(errorMessage);
+          const technicalError = errorInfo.error || errorInfo.message || "Unknown error";
+          const friendlyError = getUserFriendlyError(technicalError);
+          setRepoCreationStatus(`❌ ${friendlyError}`);
 
           // Add to recent invites as failed
           setRecentInvites((prev) => [
             {
               username: githubUsername,
-              error: error,
+              error: friendlyError,
               timestamp: new Date().toLocaleString(),
               status: "error",
             },
@@ -178,7 +258,7 @@ You can now start your quest journey!`;
         }
         // No results in either array
         else {
-          setRepoCreationStatus("❌ No repository creation results returned");
+          setRepoCreationStatus("❌ Something went wrong while setting up your account. Please try again or contact your professor.");
           console.error("❌ No results in response:", response.data);
         }
       }
@@ -189,21 +269,20 @@ You can now start your quest journey!`;
       }
       // Unexpected response structure
       else {
-        setRepoCreationStatus("❌ Unexpected response from server");
+        setRepoCreationStatus("❌ Something went wrong while setting up your account. Please try again or contact your professor.");
         console.error("❌ Unexpected response structure:", response.data);
       }
     } catch (error) {
       console.error("❌ Error creating repository:", error);
-      const errorMessage = `❌ Error creating repository: ${
-        error.response?.data?.message || error.message
-      }`;
-      setRepoCreationStatus(errorMessage);
+      const technicalError = error.response?.data?.message || error.message;
+      const friendlyError = getUserFriendlyError(technicalError);
+      setRepoCreationStatus(`❌ ${friendlyError}`);
 
       // Add to recent invites as failed
       setRecentInvites((prev) => [
         {
           username: githubUsername,
-          error: error.response?.data?.message || error.message,
+          error: friendlyError,
           timestamp: new Date().toLocaleString(),
           status: "error",
         },
@@ -316,11 +395,12 @@ You can now start your quest journey!`;
               <TextField
                 label="Your GitHub Username"
                 value={githubUsername}
-                onChange={(e) => setGithubUsername(e.target.value)}
+                onChange={handleUsernameChange}
                 onKeyPress={handleKeyPress}
                 placeholder="your-github-username"
                 fullWidth
-                helperText="Enter your GitHub username to get started (Press Enter to join)"
+                helperText={usernameError || "Enter your GitHub username to get started (Press Enter to join)"}
+                error={!!usernameError}
                 disabled={isCreatingRepo || !questConfig}
                 InputProps={{
                   startAdornment: (
@@ -353,7 +433,7 @@ You can now start your quest journey!`;
                   whiteSpace: "nowrap",
                 }}
               >
-                {isCreatingRepo ? "Setting up..." : "Start Quest"}
+                {isCreatingRepo ? "Setting up..." : "Join Class"}
               </Button>
             </Box>
 
