@@ -11,7 +11,7 @@ require("dotenv").config();
 const axios = require('axios');
 const { sendMessageToBot } = require('../utils/botMessage');
 const { recoverPassword } = require("./authController");
-const { getGithubAppInstallationAccessToken } = require('../../bot/controllers/githubAppAuth');
+const { getGithubAppInstallationAccessToken } = require('../../../bot/controllers/githubAppAuth');
 const fs = require('fs');
 const path = require('path');
 
@@ -132,12 +132,18 @@ Repository for ${studentGithubUsername} in ${groupName}.`;
 };
 
 const getProductionStatus = async (req, res) => { 
-    console.log(process.env.NODE_ENV);
-    if (process.env.NODE_ENV === 'production') {
-        res.status(200).json({organizationGh: process.env.USER_AGENT_PROD});
-    } else { 
-       res.status(200).json({organizationGh: process.env.USER_AGENT_DEV});
-   }
+    try {
+        const env = process.env.NODE_ENV;
+        const orgFromEnv = process.env.GITHUB_ORG;
+        const devOrg = process.env.USER_AGENT_DEV;
+        const prodOrg = process.env.USER_AGENT_PROD;
+        const fallback = 'OSS-Doorway-Dev';
+        
+        const organizationGh = orgFromEnv || (env === 'production' ? prodOrg : devOrg) || fallback;
+        return res.status(200).json({ organizationGh });
+    } catch (e) {
+        return res.status(200).json({ organizationGh: 'OSS-Doorway-Dev' });
+    }
 }
 
 const createMultipleRepos = async (req, res) => {
@@ -763,10 +769,10 @@ const getRepoCollaborationStatus = async (req, res) => {
 
 const listOrganizationRepos = async (req, res) => {
     try {
-        const { organizationGh } = req.query;
-        
+        let { organizationGh } = req.query;
         if (!organizationGh) {
-            return res.status(400).json({ message: "Invalid request. Required: organizationGh" });
+            // Fallback to env if frontend didn't pass it
+            organizationGh = process.env.GITHUB_ORG || process.env.USER_AGENT_DEV || 'OSS-Doorway-Dev';
         }
 
         const response = await sendMessageToBot(
@@ -774,12 +780,16 @@ const listOrganizationRepos = async (req, res) => {
             { org: organizationGh }
         );
 
+        if (!response || !response.data) {
+            return res.status(502).json({ message: "Bot did not return data" });
+        }
+
         res.status(200).json({
             message: "Repositories retrieved successfully",
             repos: response.data
         });
     } catch (error) {
-        console.error("Error in listOrganizationRepos:", error);
+        console.error("Error in listOrganizationRepos:", error.message);
         res.status(500).json({ message: "Error listing repositories", error: error.message });
     }
 };

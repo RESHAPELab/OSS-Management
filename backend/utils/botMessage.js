@@ -13,7 +13,7 @@ function signPayload(payload) {
 
 async function sendMessageToBot(url, payload) {
     const signature = signPayload(payload);
-    const botUrl = "http://localhost:10000/" + url;
+    const botUrl = "http://localhost:10000/" + url; // Bot now runs as standalone service
 
     try {
         const response = await axios.post(
