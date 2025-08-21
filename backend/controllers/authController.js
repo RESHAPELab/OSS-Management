@@ -52,12 +52,14 @@ const signup = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         let verificationCode = await generateAndSendCode(email)
+        console.log(`[signup] Generated verification code for ${email.toLowerCase()}: ${verificationCode} (type: ${typeof verificationCode})`);
 
         let professor = new Professor({
-            email, name, password:hashedPassword, verificationCode
+            email: email.toLowerCase(), name, password:hashedPassword, verificationCode
         })
 
         await professor.save();
+        console.log(`[signup] Saved professor with email: ${professor.email}, verificationCode: ${professor.verificationCode} (type: ${typeof professor.verificationCode})`);
 
         generateTokenSetCookie(professor._id, res);
 
@@ -75,16 +77,26 @@ const signup = async (req, res) => {
 
 const verifyEmail = async (req, res) => {
     const {verificationCode, email} = req.body;
+    console.log(`[verifyEmail] Attempting verification for email: ${email}, code: ${verificationCode}`);
+    
     try{ 
-        const professor = await Professor.findOne({email})
+        // Ensure case-insensitive email lookup
+        const professor = await Professor.findOne({email: email.toLowerCase()});
         if (!professor) { 
+            console.log(`[verifyEmail] Professor not found for email: ${email}`);
             return res.status(400).json({error: "Invalid email"})
         }
 
-        if (professor.verificationCode === verificationCode) {
+        console.log(`[verifyEmail] Professor found. Stored code: ${professor.verificationCode}, Provided code: ${verificationCode}`);
+        console.log(`[verifyEmail] Code types - Stored: ${typeof professor.verificationCode}, Provided: ${typeof verificationCode}`);
+
+        // Convert both codes to strings for comparison
+        if (professor.verificationCode.toString() === verificationCode.toString()) {
             professor.verified = true; 
             await professor.save();
+            console.log(`[verifyEmail] Email successfully verified for: ${email}`);
         } else { 
+            console.log(`[verifyEmail] Code mismatch for ${email}. Expected: ${professor.verificationCode}, Got: ${verificationCode}`);
             return res.status(400).send("Professor email and code do not match")
         }
         return res.status(200).json(professor)
@@ -267,4 +279,55 @@ const registerStudent = async (req, res) => {
     }
 }
 
-module.exports = {signup, verifyCode, login, generatePasswordRecoveringCode, recoverPassword, registerStudent, verifyEmail}
+const debugProfessor = async (req, res) => {
+    const { email } = req.query;
+    console.log(`[debugProfessor] Looking up professor with email: ${email}`);
+    
+    try {
+        // Try exact match first
+        const exactMatch = await Professor.findOne({ email: email });
+        console.log(`[debugProfessor] Exact match result:`, exactMatch ? 'FOUND' : 'NOT FOUND');
+        
+        // Try lowercase match
+        const lowercaseMatch = await Professor.findOne({ email: email.toLowerCase() });
+        console.log(`[debugProfessor] Lowercase match result:`, lowercaseMatch ? 'FOUND' : 'NOT FOUND');
+        
+        // Find all professors with similar emails
+        const similarEmails = await Professor.find({ 
+            email: { $regex: email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' }
+        });
+        
+        const debugInfo = {
+            searchEmail: email,
+            searchEmailLower: email.toLowerCase(),
+            exactMatch: exactMatch ? {
+                _id: exactMatch._id,
+                email: exactMatch.email,
+                verificationCode: exactMatch.verificationCode,
+                verified: exactMatch.verified
+            } : null,
+            lowercaseMatch: lowercaseMatch ? {
+                _id: lowercaseMatch._id,
+                email: lowercaseMatch.email,
+                verificationCode: lowercaseMatch.verificationCode,
+                verified: lowercaseMatch.verified
+            } : null,
+            similarEmails: similarEmails.map(prof => ({
+                _id: prof._id,
+                email: prof.email,
+                verificationCode: prof.verificationCode,
+                verified: prof.verified
+            })),
+            totalProfessors: await Professor.countDocuments()
+        };
+        
+        console.log(`[debugProfessor] Debug info:`, JSON.stringify(debugInfo, null, 2));
+        res.status(200).json(debugInfo);
+        
+    } catch (error) {
+        console.error(`[debugProfessor] Error:`, error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = {signup, verifyCode, login, generatePasswordRecoveringCode, recoverPassword, registerStudent, verifyEmail, debugProfessor}
