@@ -943,6 +943,17 @@ Student can now start their quest journey!`);
           error: task.errorText,
           answer: ''
         };
+      } else if (task.taskType === 'comment') {
+        taskData = {
+          ...taskData,
+          type: 'comment',
+          repository: task.repository || '',
+          issueNumber: task.issueNumber || '',
+          accept: task.acceptText,
+          success: task.successText.replace('{points}', task.points),
+          error: task.errorText,
+          answer: ''
+        };
       }
       tasksObj[`T${idx + 1}`] = taskData;
     });
@@ -1143,7 +1154,7 @@ Student can now start their quest journey!`);
       // Map all possible fields for all task types
       const baseTask = {
         ...task,
-        taskType: task.type,
+        taskType: task.type || task.taskType,
         taskDesc: task.desc || '',
         points: task.points ?? 0,
         acceptText: task.accept || task.responses?.accept || '',
@@ -1232,18 +1243,24 @@ Student can now start their quest journey!`);
       }
       
       // Fallbacks for comment validation tasks
-      if (baseTask.taskType === 'comment') {
-        console.log('🔍 [editQuest] Processing comment task:', baseTask);
+      if (baseTask.taskType === 'comment' || task.type === 'comment') {
+        console.log('🔍 [editQuest] Processing comment task - Original task:', task);
+        console.log('🔍 [editQuest] Processing comment task - BaseTask before:', baseTask);
+        
+        // Ensure taskType is set correctly first
+        baseTask.taskType = 'comment';
+        
         // Map repository field from various possible sources
-        baseTask.repository = baseTask.repository || baseTask.ossRepository || '';
-        // Map issue number field
-        baseTask.issueNumber = baseTask.issueNumber || '';
+        baseTask.repository = task.repository || task.ossRepository || '';
+        
+        // Map issue number field  
+        baseTask.issueNumber = task.issueNumber || '';
+        
         // Ensure accept, success, and error texts are preserved from various sources
-        baseTask.acceptText = baseTask.acceptText || baseTask.accept || baseTask.responses?.accept || '';
-        baseTask.successText = baseTask.successText || baseTask.success || baseTask.responses?.success || '';
-        baseTask.errorText = baseTask.errorText || baseTask.error || baseTask.responses?.error || '';
-        // Ensure taskType is preserved
-        baseTask.taskType = baseTask.taskType || baseTask.type || 'comment';
+        baseTask.acceptText = task.accept || task.responses?.accept || '';
+        baseTask.successText = task.success || task.responses?.success || '';
+        baseTask.errorText = task.error || task.responses?.error || '';
+        
         console.log('🔍 [editQuest] Comment task after processing:', baseTask);
       }
       return baseTask;
@@ -2532,10 +2549,12 @@ Student can now start their quest journey!`);
                           <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: 'secondary.main' }}>
                             Comment Validation Task
                           </Typography>
+                          {console.log(`🔍 [Form Display] Comment task ${taskIdx} repository:`, task.repository)}
+                          {console.log(`🔍 [Form Display] Comment task ${taskIdx} issueNumber:`, task.issueNumber)}
                         
                         <TextField
                           label="Repository (owner/repo)"
-                          value={task.repository}
+                          value={task.repository || ''}
                           onChange={(e) => handleTaskChange(taskIdx, 'repository', e.target.value)}
                           placeholder="e.g., microsoft/vscode"
                           fullWidth
@@ -2546,7 +2565,7 @@ Student can now start their quest journey!`);
                         <TextField
                             label="Issue Number"
                             type="number"
-                            value={task.issueNumber}
+                            value={task.issueNumber || ''}
                             onChange={(e) => handleTaskChange(taskIdx, 'issueNumber', e.target.value)}
                             placeholder="e.g., 123"
                           fullWidth
