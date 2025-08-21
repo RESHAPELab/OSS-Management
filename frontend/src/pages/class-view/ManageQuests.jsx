@@ -7,8 +7,9 @@ import {
 } from '@mui/material';
 import { Assignment as AssignmentIcon, Info as InfoIcon } from '@mui/icons-material';
 import TextEditor from '../../components/TextEditor';
+import API_CONFIG from '../../config/api';
 
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+const baseURL = API_CONFIG.getBaseURL();
 
 const ManageQuests = () => {
   const { classId } = useParams();

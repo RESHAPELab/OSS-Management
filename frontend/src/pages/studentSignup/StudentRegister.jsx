@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import axios from 'axios'
 import './StudentRegister.css'
+import API_CONFIG from '../../config/api';
 
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+const baseURL = API_CONFIG.getBaseURL();
 
 const StudentRegister = () => {
     const [studentRegisterData, setStudentRegisterData] = useState ({ 
