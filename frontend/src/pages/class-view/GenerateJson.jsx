@@ -43,11 +43,7 @@ import {
   Grid,
   CardContent,
   InputBase,
-  FormHelperText,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText
+  FormHelperText
 } from '@mui/material';
 import {
   Download as DownloadIcon,
@@ -64,7 +60,8 @@ import {
   LibraryBooks as LibraryBooksIcon,
   AddCircleOutline as AddCircleOutlineIcon,
   AutoAwesome as AutoAwesomeIcon,
-  Info as InfoIcon
+  Info as InfoIcon,
+  Upload as UploadIcon
 } from '@mui/icons-material';
 import { useAuthContext } from '../../context/AuthContext';
 
@@ -76,8 +73,8 @@ const GenerateJson = () => {
   const [showAddQuestModal, setShowAddQuestModal] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
   const [showReadmeModal, setShowReadmeModal] = useState(false);
+  const [showReadmeEmptyDialog, setShowReadmeEmptyDialog] = useState(false);
   const [readmeContent, setReadmeContent] = useState('');
-  const [showAddReadmeDialog, setShowAddReadmeDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
@@ -1735,19 +1732,10 @@ Student can now start their quest journey!`);
                 {/* README Upload */}
                 <Box>
                   {!jsonContent.readme ? (
-                    <>
-                  <input
-                    accept=".md"
-                    style={{ display: 'none' }}
-                    id="readme-upload"
-                    type="file"
-                    onChange={handleReadmeFileUpload}
-                  />
-                  <label htmlFor="readme-upload">
                     <Button
                       variant="outlined"
-                      component="span"
                       startIcon={<DescriptionIcon />}
+                      onClick={() => setShowReadmeEmptyDialog(true)}
                       sx={{
                         borderColor: '#2196f3',
                         color: '#2196f3',
@@ -1760,8 +1748,6 @@ Student can now start their quest journey!`);
                     >
                       Add README (.md)
                     </Button>
-                  </label>
-                    </>
                   ) : (
                     <Button
                       variant="outlined"
@@ -1784,24 +1770,6 @@ Student can now start their quest journey!`);
                     </Button>
                   )}
                 </Box>
-
-                {/* Add README Template Button */}
-                <Button
-                  variant="outlined"
-                  startIcon={<DescriptionIcon />}
-                  onClick={() => setShowAddReadmeDialog(true)}
-                  sx={{
-                    borderColor: '#9c27b0',
-                    color: '#9c27b0',
-                    borderRadius: 4,
-                    '&:hover': {
-                      borderColor: '#7b1fa2',
-                      backgroundColor: '#f3e5f5'
-                    }
-                  }}
-                >
-                  Add README Template
-                </Button>
 
                 {/* Add Quest Button */}
                 <Button
@@ -3129,6 +3097,163 @@ Student can now start their quest journey!`);
           </DialogActions>
         </Dialog>
 
+        {/* README Empty Dialog */}
+        <Dialog 
+          open={showReadmeEmptyDialog} 
+          onClose={() => setShowReadmeEmptyDialog(false)} 
+          maxWidth="md" 
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              boxShadow: 'none',
+              border: '1px solid #e0e0e0'
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            borderBottom: '1px solid #e0e0e0',
+            pb: 2,
+            mb: 0
+          }}>
+            <Typography variant="h5" component="h3" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              📚 Create Class README
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Create a welcoming README for your class. This will be the first thing students see when they visit their repository.
+            </Typography>
+            
+            <Box sx={{ mb: 3, p: 3, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: 'secondary.main' }}>
+                💡 Important Note
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Quest progress will be automatically appended to the end of this README</strong> as students complete tasks. 
+                You only need to write the initial welcome content and class information.
+              </Typography>
+            </Box>
+
+            <TextEditor
+              value={readmeContent}
+              onChange={setReadmeContent}
+              label="README Content (Markdown)"
+              placeholder="# Welcome to [Class Name]! 🎓
+
+## About This Class
+
+This repository contains your personalized learning journey for [Class Name]. Here you'll find interactive quests, hands-on exercises, and real-world projects to help you master the fundamentals.
+
+## What You'll Learn
+
+- **GitHub Basics**: Understanding repositories, issues, and collaboration
+- **Open Source Concepts**: Contributing to projects and community engagement
+- **Practical Skills**: Real-world application of theoretical knowledge
+- **Project Management**: Working with issues, pull requests, and feedback
+
+## Getting Started
+
+1. **Check the Issues Tab**: Your first quest awaits there
+2. **Complete Tasks Sequentially**: Follow the quest progression
+3. **Submit Answers**: Use comments to provide your responses
+4. **Ask for Help**: Type 'help' if you need guidance (costs 5 points)
+
+## Quest Progress
+
+Your quest completion status and achievements will appear below automatically as you progress through the course.
+
+---
+
+**Good luck on your learning journey! 🚀**
+
+*Remember: Every expert was once a beginner. Take it one step at a time.*"
+            />
+            
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="caption" color="text.secondary">
+                💡 Tip: Use standard Markdown formatting. This content will be created as README.md in each student repository.
+              </Typography>
+            </Box>
+
+          </DialogContent>
+          <DialogActions sx={{ p: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
+            {/* Hidden input for uploading README file */}
+            <input
+              accept=".md"
+              style={{ display: 'none' }}
+              id="readme-empty-upload"
+              type="file"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file && file.name.endsWith('.md')) {
+                  const reader = new FileReader();
+                  reader.onload = (evt) => {
+                    setReadmeContent(evt.target.result);
+                  };
+                  reader.readAsText(file);
+                }
+                e.target.value = '';
+              }}
+            />
+            
+            {/* Upload README File */}
+            <label htmlFor="readme-empty-upload">
+              <Button 
+                variant="outlined" 
+                startIcon={<UploadIcon />}
+                sx={{ 
+                  textTransform: 'none', 
+                  borderRadius: 4, 
+                  fontWeight: 'bold', 
+                  px: 3, 
+                  py: 1, 
+                  boxShadow: 'none', 
+                  '&:hover': { boxShadow: 'none' } 
+                }}
+              >
+                Upload README File
+              </Button>
+            </label>
+            
+            {/* Create README */}
+            <Button 
+              onClick={() => {
+                if (readmeContent.trim()) {
+                  handleReadmeSave();
+                  setShowReadmeEmptyDialog(false);
+                }
+              }} 
+              variant="contained"
+              disabled={!readmeContent.trim()}
+              sx={{
+                bgcolor: '#2196f3',
+                borderRadius: 4,
+                fontWeight: 'bold',
+                px: 3,
+                py: 1,
+                boxShadow: 'none',
+                '&:hover': { bgcolor: '#1976d2', boxShadow: 'none' }
+              }}
+            >
+              Create README
+            </Button>
+            
+            {/* Cancel */}
+            <Button 
+              onClick={() => setShowReadmeEmptyDialog(false)} 
+              sx={{ 
+                borderRadius: 4, 
+                fontWeight: 'bold', 
+                px: 3, 
+                py: 1 
+              }}
+            >
+              Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         {/* README Preview/Edit Modal */}
         <Dialog 
           open={showReadmeModal} 
@@ -3239,185 +3364,6 @@ Good luck! 🚀"
             )}
             {/* Cancel last */}
             <Button onClick={() => setShowReadmeModal(false)} sx={{ borderRadius: 4, fontWeight: 'bold', px: 3, py: 1 }}>Cancel</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Add README Template Dialog */}
-        <Dialog 
-          open={showAddReadmeDialog} 
-          onClose={() => setShowAddReadmeDialog(false)} 
-          maxWidth="md" 
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: 4,
-              boxShadow: 'none',
-              border: '1px solid #e0e0e0'
-            }
-          }}
-        >
-          <DialogTitle sx={{ 
-            borderBottom: '1px solid #e0e0e0',
-            pb: 2,
-            mb: 0
-          }}>
-            <Typography variant="h5" component="h3" sx={{ fontWeight: 700 }}>
-              Add README Template
-            </Typography>
-          </DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
-            <Typography variant="body1" paragraph>
-              This will create a professional README template for your class that includes:
-            </Typography>
-            <List dense>
-              <ListItem>
-                <ListItemIcon>
-                  <CheckCircleIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary="Class introduction and welcome message" />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <CheckCircleIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary="Getting started instructions" />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <CheckCircleIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary="Quest system explanation" />
-              </ListItem>
-              <ListItem>
-                <ListItemIcon>
-                  <CheckCircleIcon color="primary" />
-                </ListItemIcon>
-                <ListItemText primary="How to submit answers and get help" />
-              </ListItem>
-            </List>
-            
-            <Alert severity="info" sx={{ mt: 2, mb: 3 }}>
-              <AlertTitle>Automatic Quest Progress</AlertTitle>
-              <Typography variant="body2">
-                <strong>Important:</strong> Quest progress will be automatically appended to the end of this README as students complete tasks. 
-                You don't need to manually update it!
-              </Typography>
-            </Alert>
-
-            <Typography variant="body1" paragraph>
-              The template will be automatically applied to all student repositories and will serve as the foundation for their learning journey.
-            </Typography>
-
-            <Box sx={{ 
-              backgroundColor: '#f8f9fa', 
-              p: 3, 
-              borderRadius: 2, 
-              border: '1px solid #e0e0e0',
-              mt: 2
-            }}>
-              <Typography variant="h6" gutterBottom>
-                Template Preview:
-              </Typography>
-              <Typography variant="body2" component="pre" sx={{ 
-                fontFamily: 'monospace', 
-                fontSize: '0.875rem',
-                whiteSpace: 'pre-wrap',
-                color: 'text.secondary'
-              }}>
-{`# Welcome to Your Learning Journey! 🚀
-
-## About This Class
-
-This repository contains your personalized learning experience for [Class Name]. 
-You'll be working through a series of quests designed to help you master key concepts.
-
-## Getting Started
-
-1. **Check the Issues tab** - Your first quest awaits!
-2. **Read the task description** carefully
-3. **Complete the required actions** (visit links, answer questions, etc.)
-4. **Submit your answer** in the comment section
-5. **Type "help"** if you need hints (costs 5 points)
-
-## Quest System
-
-- Each quest contains multiple tasks
-- Complete tasks to earn points and XP
-- Progress is tracked automatically
-- Your README will update as you advance
-
-## Need Help?
-
-- Type "help" in any task comment for hints
-- Check the Issues tab for current tasks
-- Review completed tasks in closed issues
-
-Good luck on your learning adventure! 🌟`}
-              </Typography>
-            </Box>
-          </DialogContent>
-          <DialogActions sx={{ p: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
-            <Button 
-              onClick={() => setShowAddReadmeDialog(false)}
-              sx={{ 
-                borderRadius: 4, 
-                fontWeight: 'bold', 
-                px: 3, 
-                py: 1 
-              }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={() => {
-                const templateContent = `# Welcome to Your Learning Journey! 🚀
-
-## About This Class
-
-This repository contains your personalized learning experience for ${jsonContent.questSequence[0]?.title || 'this class'}. 
-You'll be working through a series of quests designed to help you master key concepts.
-
-## Getting Started
-
-1. **Check the Issues tab** - Your first quest awaits!
-2. **Read the task description** carefully
-3. **Complete the required actions** (visit links, answer questions, etc.)
-4. **Submit your answer** in the comment section
-5. **Type "help"** if you need hints (costs 5 points)
-
-## Quest System
-
-- Each quest contains multiple tasks
-- Complete tasks to earn points and XP
-- Progress is tracked automatically
-- Your README will update as you advance
-
-## Need Help?
-
-- Type "help" in any task comment for hints
-- Check the Issues tab for current tasks
-- Review completed tasks in closed issues
-
-Good luck on your learning adventure! 🌟`;
-
-                setReadmeContent(templateContent);
-                setShowAddReadmeDialog(false);
-                setShowReadmeModal(true);
-              }}
-              variant="contained"
-              sx={{
-                bgcolor: '#9c27b0',
-                '&:hover': { bgcolor: '#7b1fa2' },
-                borderRadius: 4,
-                fontWeight: 'bold',
-                px: 4,
-                py: 1,
-                boxShadow: 'none',
-                '&:hover': { boxShadow: 'none' }
-              }}
-            >
-              Use Template
-            </Button>
           </DialogActions>
         </Dialog>
 
