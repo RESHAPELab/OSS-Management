@@ -12,7 +12,7 @@ import {
   Stack,
 } from "@mui/material";
 import {
-  PersonAdd as PersonAddIcon,
+  GitHub as GitHubIcon,
 } from "@mui/icons-material";
 import HomeHeader from "../home/components/HomeHeader";
 import API_CONFIG from "../../config/api";
@@ -406,7 +406,7 @@ You can now start your quest journey!`;
               display="flex"
               alignItems="center"
             >
-              <PersonAddIcon sx={{ mr: 1 }} />
+              <GitHubIcon sx={{ mr: 1 }} />
               Join {classInfo?.groupName || "Class"}
             </Typography>
 
@@ -463,7 +463,7 @@ You can now start your quest journey!`;
                     isCreatingRepo ? (
                       <CircularProgress size={18} color="inherit" />
                     ) : (
-                      <PersonAddIcon />
+                      <GitHubIcon />
                     )
                   }
                   sx={{
