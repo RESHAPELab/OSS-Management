@@ -20,12 +20,14 @@ const verifyCode = async(req, res) => {
         if (!codeExists) {
             return res.status(400).send("Invalid invite code")
         }
-        if (codeExists.status != "unused") {
+        if (codeExists.status && codeExists.status !== "unused") {
             return res.status(400).send("This code has already been used")
         }
 
-        codeExists.status = "used"; 
-        await codeExists.save(); 
+        if (codeExists.status !== undefined) {
+            codeExists.status = "used"; 
+            await codeExists.save(); 
+        }
         return res.status(200).send("Code successfully verified"); 
     }catch(error){ 
         console.log("Error in verify code function", error);

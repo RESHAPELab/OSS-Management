@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import "./EmailVerification.css"; 
 import axios from 'axios'
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+import API_CONFIG from '../../config/api';
+const baseURL = API_CONFIG.getBaseURL();
 
 
 const EmailVerification = () => {
