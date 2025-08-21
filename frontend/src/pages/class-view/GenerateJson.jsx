@@ -108,7 +108,7 @@ const GenerateJson = () => {
         questType: "fixed",
         sequenceNumber: 0,
         metadata: {
-          title: "Q1: Understanding OSS Projects and GitHub Basics",
+          title: "Understanding OSS Projects and GitHub Basics",
           description:
             "Learn the fundamentals of open source software and GitHub workflow",
           prerequisite: null,
@@ -312,7 +312,7 @@ const GenerateJson = () => {
         questType: "custom",
         sequenceNumber: 1,
         metadata: {
-          title: "Q2: Assignment Validation",
+          title: "Assignment Validation",
           description: "Validate user assignments to specific issues",
           prerequisite: "Q1",
           type: "custom",
@@ -1005,6 +1005,7 @@ Student can now start their quest journey!`);
           responsePath: task.responsePath || '',
           expectedAnswerType: task.expectedAnswerType || 'Number',
           repository: task.repository || '',
+          issueNumber: task.issueNumber || '',
           saveValidatedData: Boolean(task.saveValidatedData),
           savedDataName: task.savedDataName || '',
           // Tolerance fields
@@ -1137,6 +1138,7 @@ Student can now start their quest journey!`);
   // 2. Update editQuest to open modal with quest data
   const editQuest = (questIndex) => {
     const quest = jsonContent.questSequence[questIndex];
+    console.log('🔍 [editQuest] Loading quest:', quest);
     const tasksArr = Object.entries(quest.tasks).map(([taskId, task]) => {
       // Map all possible fields for all task types
       const baseTask = {
@@ -1228,7 +1230,28 @@ Student can now start their quest journey!`);
       if (baseTask.taskType === 'get-issue-title' && !baseTask.issueNumber) {
         baseTask.issueNumber = '';
       }
+      
+      // Fallbacks for comment validation tasks
+      if (baseTask.taskType === 'comment') {
+        console.log('🔍 [editQuest] Processing comment task:', baseTask);
+        // Map repository field from various possible sources
+        baseTask.repository = baseTask.repository || baseTask.ossRepository || '';
+        // Map issue number field
+        baseTask.issueNumber = baseTask.issueNumber || '';
+        // Ensure accept, success, and error texts are preserved from various sources
+        baseTask.acceptText = baseTask.acceptText || baseTask.accept || baseTask.responses?.accept || '';
+        baseTask.successText = baseTask.successText || baseTask.success || baseTask.responses?.success || '';
+        baseTask.errorText = baseTask.errorText || baseTask.error || baseTask.responses?.error || '';
+        // Ensure taskType is preserved
+        baseTask.taskType = baseTask.taskType || baseTask.type || 'comment';
+        console.log('🔍 [editQuest] Comment task after processing:', baseTask);
+      }
       return baseTask;
+    });
+    console.log('🔍 [editQuest] Final questFormData:', {
+      title: quest.title,
+      description: quest.metadata?.description || '',
+      tasks: tasksArr
     });
     setQuestFormData({
       title: quest.title,
@@ -1908,7 +1931,9 @@ Student can now start their quest journey!`);
                   Tasks ({questFormData.tasks.length})
                 </Typography>
               
-              {questFormData.tasks.map((task, taskIdx) => (
+              {questFormData.tasks.map((task, taskIdx) => {
+                console.log(`🔍 [Form Render] Task ${taskIdx}:`, task);
+                return (
                   <Card 
                     key={taskIdx} 
                     sx={{ 
@@ -3007,7 +3032,8 @@ Student can now start their quest journey!`);
                 </Box>
                     </Stack>
                   </Card>
-              ))}
+                );
+              })}
               
                 {/* Add Task Button - Moved to bottom */}
               <Button 
