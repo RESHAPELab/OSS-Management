@@ -18,7 +18,7 @@ async function generateAndSendCode (email) {
         //console.log(`Email sent to ${email} with code ${final_code}`)
     } catch(error) { 
         //console.debug(`Error in generateAndSendCode function: ${error}`)
-        return res.status(500).json({error})
+        throw error; // Let the calling function handle the error
     }
 
     return final_code;

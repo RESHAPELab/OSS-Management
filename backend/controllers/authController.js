@@ -51,7 +51,21 @@ const signup = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        let verificationCode = await generateAndSendCode(email)
+        let verificationCode;
+        try {
+            verificationCode = await generateAndSendCode(email);
+        } catch (emailError) {
+            console.debug(`Email error in signup: ${emailError.message}`);
+            
+            // Provide user-friendly error messages based on the email error
+            if (emailError.code === 'ENOTFOUND' || emailError.code === 'ECONNREFUSED') {
+                return res.status(500).json({error: "Email service is currently unavailable. Please try again later."});
+            } else if (emailError.message.includes('Invalid login') || emailError.message.includes('authentication')) {
+                return res.status(500).json({error: "Email service configuration error. Please contact support."});
+            } else {
+                return res.status(500).json({error: "Failed to send verification email. Please try again."});
+            }
+        }
 
         let professor = new Professor({
             email, name, password:hashedPassword, verificationCode
@@ -69,7 +83,7 @@ const signup = async (req, res) => {
 
     } catch(error) { 
         console.debug(`Error in signup function: ${error}`)
-        return res.status(500).json({error})
+        return res.status(500).json({error: "An unexpected error occurred during signup."})
     }
 }
 
