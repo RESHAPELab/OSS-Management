@@ -623,6 +623,27 @@ const GenerateJson = () => {
           setSaveStatusType('success');
           setSaveStatus(`Last saved: ${new Date(response.data.data.lastUpdated).toLocaleString()}`);
           setLastSavedAt(new Date(response.data.data.lastUpdated));
+          
+          // If this is a default configuration that hasn't been explicitly saved through the UI,
+          // trigger an automatic save to ensure it's properly stored
+          if (!response.data.data.lastUpdated || response.data.data.questCount === 2) {
+            console.log('🔄 Auto-saving default configuration to ensure it\'s properly stored');
+            setTimeout(async () => {
+              try {
+                const saveResponse = await axios.post(`${baseURL}/api/group/${classId}/quest-json-config`, {
+                  questJsonConfig: configWithSequentialIds
+                });
+                if (saveResponse.data.success) {
+                  console.log('✅ Default configuration auto-saved successfully');
+                  setSaveStatusType('success');
+                  setSaveStatus(`Auto-saved: ${new Date().toLocaleString()}`);
+                  setLastSavedAt(new Date());
+                }
+              } catch (saveError) {
+                console.error('❌ Failed to auto-save default configuration:', saveError);
+              }
+            }, 1000);
+          }
         } else {
           console.log('📭 No existing quest JSON configuration found, loading default quest configuration');
           // Load default quest configuration for new classes
