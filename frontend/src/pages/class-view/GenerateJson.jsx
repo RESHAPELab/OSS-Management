@@ -305,47 +305,50 @@ const GenerateJson = () => {
           },
         },
       },
-      {
-        questId: "Q2",
-        title: "Assignment Validation",
-        isQ0: false,
-        questType: "custom",
-        sequenceNumber: 1,
-        metadata: {
-          title: "Assignment Validation",
-          description: "Validate user assignments to specific issues",
-          prerequisite: "Q1",
-          type: "custom",
-        },
-        badgeDescription: "Custom Quest 🎯",
-        tasks: {
-          T1: {
-            desc: "Identify the assigned user for the issue #88",
-            points: 25,
-            xp: 25,
-            hints: [],
-            detailedHints: [],
-          },
-          T2: {
-            desc: "Choose an issue that you would like to work with",
-            points: 25,
-            xp: 25,
-            type: "issue-no",
-            ossRepository: "probot-test-org/test-repo",
-            accept:
-              "### 🎯 Task 1: Choose an Issue to Work On\n\n**Objective:** ${objective || 'The lifeblood of any Open Source Software (OSS) project is its community and the contributions that come from addressing issues. Your mission is to identify an issue within our GitHub repository that aligns with your skills, interests, or areas you wish to learn more about.'}\n\n**Task:** Go to the GitHub repository using the link below, find an issue that you would like to work on, and type its issue number in the comment box below.\n\n**Outcome:** By selecting an issue to work on, you are taking the first step towards contributing to the project and becoming part of the OSS community. This task helps you engage with the project's needs actively and lays the groundwork for your upcoming contributions.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
-            success:
-              "### 🌟 Congratulations! You've Selected Your First Issue!\n\nBy choosing an issue to focus on, you've taken a significant step in your journey of contribution to our project. Your willingness to engage and make a difference showcases your commitment to the community and project advancement.\n\n**Points earned:** {points}\n\n🌟 🌟 🌟\n\n🏆 **Current Progress:** Good work! You currently have {points} points and you've started your journey towards achieving greater milestones.\n\n🎯 **Quest Advancement:** This task not only brings you closer to mastering the collaboration process within GitHub but also highlights your growing role within our community.\n\n🌟 🌟 🌟\n\nFantastic effort! You're proving to be an essential part of our journey towards developing a project that we can all be proud of. 🌟",
-            error:
-              "### ❌ Issue Not Found\n\nThe issue number you provided does not exist in the ${repository || '[repository]'} repository.\n\n**Please ensure:**\n1. You're checking the right repository\n2. You're typing a valid issue number\n3. The issue actually exists\n\n[Click here to view all issues](https://github.com/${repository || '[repository]'}/issues)",
-            answer: "",
-            hints: [],
-          },
-        },
-      },
+      
     ],
     readme: "",
   });
+
+
+  // {
+  //   questId: "Q2",
+  //   title: "Assignment Validation",
+  //   isQ0: false,
+  //   questType: "custom",
+  //   sequenceNumber: 1,
+  //   metadata: {
+  //     title: "Assignment Validation",
+  //     description: "Validate user assignments to specific issues",
+  //     prerequisite: "Q1",
+  //     type: "custom",
+  //   },
+  //   badgeDescription: "Custom Quest 🎯",
+  //   tasks: {
+  //     T1: {
+  //       desc: "Identify the assigned user for the issue #88",
+  //       points: 25,
+  //       xp: 25,
+  //       hints: [],
+  //       detailedHints: [],
+  //     },
+  //     T2: {
+  //       desc: "Choose an issue that you would like to work with",
+  //       points: 25,
+  //       xp: 25,
+  //       type: "issue-no",
+  //       ossRepository: "probot-test-org/test-repo",
+  //       accept:
+  //         "### 🎯 Task 1: Choose an Issue to Work On\n\n**Objective:** ${objective || 'The lifeblood of any Open Source Software (OSS) project is its community and the contributions that come from addressing issues. Your mission is to identify an issue within our GitHub repository that aligns with your skills, interests, or areas you wish to learn more about.'}\n\n**Task:** Go to the GitHub repository using the link below, find an issue that you would like to work on, and type its issue number in the comment box below.\n\n**Outcome:** By selecting an issue to work on, you are taking the first step towards contributing to the project and becoming part of the OSS community. This task helps you engage with the project's needs actively and lays the groundwork for your upcoming contributions.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+  //       success:
+  //         "### 🌟 Congratulations! You've Selected Your First Issue!\n\nBy choosing an issue to focus on, you've taken a significant step in your journey of contribution to our project. Your willingness to engage and make a difference showcases your commitment to the community and project advancement.\n\n**Points earned:** {points}\n\n🌟 🌟 🌟\n\n🏆 **Current Progress:** Good work! You currently have {points} points and you've started your journey towards achieving greater milestones.\n\n🎯 **Quest Advancement:** This task not only brings you closer to mastering the collaboration process within GitHub but also highlights your growing role within our community.\n\n🌟 🌟 🌟\n\nFantastic effort! You're proving to be an essential part of our journey towards developing a project that we can all be proud of. 🌟",
+  //       error:
+  //         "### ❌ Issue Not Found\n\nThe issue number you provided does not exist in the ${repository || '[repository]'} repository.\n\n**Please ensure:**\n1. You're checking the right repository\n2. You're typing a valid issue number\n3. The issue actually exists\n\n[Click here to view all issues](https://github.com/${repository || '[repository]'}/issues)",
+  //       answer: "",
+  //       hints: [],
+  //     },
+  //   },
+  // },
 
   // Add a quest ID counter to ensure consistent timestamps
   const [questIdCounter, setQuestIdCounter] = useState(0);
@@ -626,7 +629,7 @@ const GenerateJson = () => {
           
           // If this is a default configuration that hasn't been explicitly saved through the UI,
           // trigger an automatic save to ensure it's properly stored
-          if (!response.data.data.lastUpdated || response.data.data.questCount === 2) {
+          if (!response.data.data.lastUpdated || response.data.data.questCount === 1) {
             console.log('🔄 Auto-saving default configuration to ensure it\'s properly stored');
             setTimeout(async () => {
               try {
