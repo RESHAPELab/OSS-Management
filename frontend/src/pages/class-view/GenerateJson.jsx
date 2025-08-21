@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_CONFIG from '../../config/api';
@@ -89,6 +89,9 @@ const GenerateJson = () => {
     description: '',
     tasks: [], // <-- array of task objects
   });
+  
+  // Auto-save timeout reference
+  const autoSaveTimeout = useRef(null);
   // 1. Add state for editing quest
   const [editingQuestIndex, setEditingQuestIndex] = useState(null);
   const { authUser } = useAuthContext();
@@ -575,7 +578,229 @@ const GenerateJson = () => {
       });
       return { ...prev, tasks: updatedTasks };
     });
+    
+    // Auto-save if editing a quest (debounced to avoid excessive saves)
+    if (editingQuestIndex !== null) {
+      clearTimeout(autoSaveTimeout.current);
+      autoSaveTimeout.current = setTimeout(() => {
+        autoSaveQuest();
+      }, 1000); // 1 second delay
+    }
   };
+  
+  // Auto-save function for editing quests
+  const autoSaveQuest = async () => {
+    if (editingQuestIndex === null) return;
+    
+    try {
+      console.log('🔄 Auto-saving quest changes...');
+      
+      // Build the updated quest data
+      const tasksObj = {};
+      questFormData.tasks.forEach((task, idx) => {
+        // Build taskData based on type (reuse your existing logic for each type)
+        let taskData = {
+          desc: task.taskDesc,
+          points: parseInt(task.points),
+          xp: parseInt(task.points),
+          hints: [],
+          detailedHints: task.detailedHints || []
+        };
+        
+        if (task.taskType === 'multiple-choice') {
+          // Store question and options separately, but combine for display
+          let acceptText = task.acceptText || '';
+          if (task.question) {
+            acceptText = `**Question:** ${task.question}\n\n`;
+            task.options.forEach(opt => {
+              if (opt.value) acceptText += `${opt.label}) ${opt.value}\n`;
+            });
+            acceptText += `\n**Instructions:** Select the correct answer.`;
+          }
+          taskData = {
+            ...taskData,
+            type: 'multiple-choice',
+            accept: acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: task.correctAnswer,
+            question: task.question,
+            options: task.options
+          };
+        } else if (task.taskType === 'quiz') {
+          // Build complete quiz content for the accept field
+          let quizContent = `### 🧠 Quiz\n\n`;
+          quizContent += `Quest: ${questFormData.title}\n\n`;
+          quizContent += `Description: ${questFormData.description}\n\n`;
+          quizContent += `Instructions: Answer all questions and submit your answers in the format [a,b,c,d,e] where each letter corresponds to your answer for each question.\n\n`;
+          quizContent += `Example: If you think the answers are A, C, B, D, E, type: [a,c,b,d,e]\n\n`;
+          
+          task.questions.forEach((q, index) => {
+            if (q.question) {
+              quizContent += `Question ${index + 1}: ${q.question}\n\n`;
+              if (q.optionA) quizContent += `A) ${q.optionA}\n`;
+              if (q.optionB) quizContent += `B) ${q.optionB}\n`;
+              if (q.optionC) quizContent += `C) ${q.optionC}\n`;
+              if (q.optionD) quizContent += `D) ${q.optionD}\n`;
+              quizContent += `\n`;
+            }
+          });
+          
+          quizContent += `Submit your answers in the format [a,b,c,d,e] where each letter is your answer choice.`;
+          
+          let successText = task.successText
+            .replace('{points}', task.points)
+            .replace('[X]', '{correctCount}')
+            .replace('[Y]', task.questions.length);
+          taskData = {
+            ...taskData,
+            type: 'quiz',
+            questions: task.questions.filter(q => q.question),
+            accept: quizContent,
+            success: successText,
+            error: task.errorText,
+            answer: ''
+          };
+        } else if (task.taskType === 'get-issue-count' || task.taskType === 'get-pr-count' || task.taskType === 'get-top-contributor' || task.taskType === 'get-open-issue') {
+          taskData = {
+            ...taskData,
+            type: task.taskType,
+            repository: task.repository,
+            accept: task.acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: '',
+            // per-user save (supported for get-issue-count)
+            ...(task.taskType === 'get-issue-count' ? {
+              saveValidatedData: Boolean(task.saveValidatedData),
+              savedDataName: task.savedDataName || ''
+            } : {})
+          };
+        } else if (task.taskType === 'get-issue-title') {
+          taskData = {
+            ...taskData,
+            type: 'get-issue-title',
+            repository: task.repository,
+            issueNumber: task.issueNumber,
+            accept: task.acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: '',
+            saveValidatedData: Boolean(task.saveValidatedData),
+            savedDataName: task.savedDataName || ''
+          };
+        } else if (task.taskType === 'issue-no') {
+          taskData = {
+            ...taskData,
+            type: 'issue-no',
+            repository: task.repository,
+            accept: task.acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: '',
+            saveValidatedData: Boolean(task.saveValidatedData),
+            savedDataName: task.savedDataName || ''
+          };
+        } else if (task.taskType === 'custom-api-call') {
+          taskData = {
+            ...taskData,
+            type: 'custom-api-call',
+            apiEndpoint: task.apiEndpoint,
+            responsePath: task.responsePath,
+            expectedAnswerType: task.expectedAnswerType,
+            repository: task.repository,
+            enableTolerance: task.enableTolerance || false,
+            toleranceRange: task.toleranceRange || 10,
+            accept: task.acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: '',
+            saveValidatedData: Boolean(task.saveValidatedData),
+            savedDataName: task.savedDataName || ''
+          };
+        } else if (task.taskType === 'llm-text-validation') {
+          taskData = {
+            ...taskData,
+            type: 'llm-text-validation',
+            llmTextValidation: {
+              question: task.llmTextValidation?.question || '',
+              validationParameters: task.llmTextValidation?.validationParameters || [],
+              temperature: task.llmTextValidation?.temperature || 0.1,
+              enableDetailedFeedback: task.llmTextValidation?.enableDetailedFeedback || false
+            },
+            accept: task.acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: ''
+          };
+        } else if (task.taskType === 'comment') {
+          taskData = {
+            ...taskData,
+            type: 'comment',
+            repository: task.repository || '',
+            issueNumber: task.issueNumber || '',
+            accept: task.acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: ''
+          };
+        } else if (task.taskType === 'assigned') {
+          taskData = {
+            ...taskData,
+            type: 'assigned',
+            repository: task.repository || '',
+            issueNumber: task.issueNumber || '',
+            accept: task.acceptText,
+            success: task.successText.replace('{points}', task.points),
+            error: task.errorText,
+            answer: ''
+          };
+        }
+        tasksObj[`T${idx + 1}`] = taskData;
+      });
+      
+      // Create updated quest
+      const updatedQuest = {
+        ...jsonContent.questSequence[editingQuestIndex],
+        title: questFormData.title,
+        metadata: {
+          ...jsonContent.questSequence[editingQuestIndex].metadata,
+          title: questFormData.title,
+          description: questFormData.description
+        },
+        tasks: tasksObj
+      };
+      
+      // Update the quest in jsonContent
+      setJsonContent(prev => {
+        const newSequence = [...prev.questSequence];
+        newSequence[editingQuestIndex] = updatedQuest;
+        return { ...prev, questSequence: newSequence };
+      });
+      
+      // Save to Quest Bank
+      const questBankPayload = {
+        ...updatedQuest,
+        professorId: authUser?._id,
+        questTitle: updatedQuest.title
+      };
+      
+      await saveQuestToBank(questBankPayload);
+      
+      // Update save status
+      setSaveStatusType('success');
+      setSaveStatus(`Auto-saved: ${new Date().toLocaleString()}`);
+      setLastSavedAt(new Date());
+      
+      console.log('✅ Quest auto-saved successfully');
+      
+    } catch (error) {
+      console.error('❌ Auto-save failed:', error);
+      setSaveStatusType('error');
+      setSaveStatus('Auto-save failed. Please save manually.');
+    }
+  };
+  
   const handleDeleteTask = (taskIdx) => {
     setQuestFormData(prev => ({
       ...prev,
@@ -1477,6 +1702,14 @@ Student can now start their quest journey!`);
 
       return updated;
     });
+    
+    // Auto-save if editing a quest (debounced to avoid excessive saves)
+    if (editingQuestIndex !== null) {
+      clearTimeout(autoSaveTimeout.current);
+      autoSaveTimeout.current = setTimeout(() => {
+        autoSaveQuest();
+      }, 1000); // 1 second delay
+    }
   };
 
   const handleDownloadJson = () => {
@@ -1944,6 +2177,11 @@ Student can now start their quest journey!`);
             <Typography variant="h5" component="h3" sx={{ fontWeight: 700 }}>
               {editingQuestIndex !== null ? 'Edit Quest' : 'Add New Quest'}
             </Typography>
+            {editingQuestIndex !== null && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontStyle: 'italic' }}>
+                ✨ Auto-save enabled - changes are saved automatically
+              </Typography>
+            )}
           </DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
             <Stack spacing={4}>
@@ -3120,22 +3358,24 @@ Student can now start their quest journey!`);
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleAddQuest} 
-              variant="contained"
-              disabled={isAddQuestDisabled}
-              sx={{
-                bgcolor: '#4caf50',
-                '&:hover': { bgcolor: '#388e3c' },
-                fontWeight: 'bold',
-                px: 4,
-                borderRadius: 4,
-                boxShadow: 'none',
-                '&:hover': { boxShadow: 'none' }
-              }}
-            >
-              {editingQuestIndex !== null ? 'Save Changes' : 'Add New Quest'}
-            </Button>
+            {editingQuestIndex === null && (
+              <Button 
+                onClick={handleAddQuest} 
+                variant="contained"
+                disabled={isAddQuestDisabled}
+                sx={{
+                  bgcolor: '#4caf50',
+                  '&:hover': { bgcolor: '#388e3c' },
+                  fontWeight: 'bold',
+                  px: 4,
+                  borderRadius: 4,
+                  boxShadow: 'none',
+                  '&:hover': { boxShadow: 'none' }
+                }}
+              >
+                Add New Quest
+              </Button>
+            )}
           </DialogActions>
         </Dialog>
 
