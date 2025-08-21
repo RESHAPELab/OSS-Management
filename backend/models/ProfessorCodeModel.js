@@ -19,11 +19,6 @@ const ProfessorCodeSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
-    status: {
-        type: String,
-        enum: ['unused', 'used'],
-        default: 'unused'
-    },
     createdAt: { 
         type: Date,
         default: Date.now,

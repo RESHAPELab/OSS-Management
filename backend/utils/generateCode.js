@@ -18,21 +18,7 @@ async function generateAndSendCode (email) {
         //console.log(`Email sent to ${email} with code ${final_code}`)
     } catch(error) { 
         //console.debug(`Error in generateAndSendCode function: ${error}`)
-        // Continue even if email fails, but surface error to caller
-        throw error; // Let the calling function handle the error
-    }
-
-    // Upsert the code in the database (create or replace for this email)
-    try {
-        const ProfessorCode = require("../models/ProfessorCodeModel");
-        await ProfessorCode.findOneAndUpdate(
-            { email: email.toLowerCase() },
-            { email: email.toLowerCase(), uniqueCode: final_code, status: 'unused' },
-            { upsert: true, new: true }
-        );
-    } catch (dbError) {
-        // If DB write fails, propagate; verification would fail later anyway
-        throw dbError;
+        return res.status(500).json({error})
     }
 
     return final_code;

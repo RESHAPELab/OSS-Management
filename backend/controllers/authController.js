@@ -20,14 +20,12 @@ const verifyCode = async(req, res) => {
         if (!codeExists) {
             return res.status(400).send("Invalid invite code")
         }
-        if (codeExists.status && codeExists.status !== "unused") {
+        if (codeExists.status != "unused") {
             return res.status(400).send("This code has already been used")
         }
 
-        if (codeExists.status !== undefined) {
-            codeExists.status = "used"; 
-            await codeExists.save(); 
-        }
+        codeExists.status = "used"; 
+        await codeExists.save(); 
         return res.status(200).send("Code successfully verified"); 
     }catch(error){ 
         console.log("Error in verify code function", error);
@@ -53,21 +51,7 @@ const signup = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        let verificationCode;
-        try {
-            verificationCode = await generateAndSendCode(email);
-        } catch (emailError) {
-            console.debug(`Email error in signup: ${emailError.message}`);
-            
-            // Provide user-friendly error messages based on the email error
-            if (emailError.code === 'ENOTFOUND' || emailError.code === 'ECONNREFUSED') {
-                return res.status(500).json({error: "Email service is currently unavailable. Please try again later."});
-            } else if (emailError.message.includes('Invalid login') || emailError.message.includes('authentication')) {
-                return res.status(500).json({error: "Email service configuration error. Please contact support."});
-            } else {
-                return res.status(500).json({error: "Failed to send verification email. Please try again."});
-            }
-        }
+        let verificationCode = await generateAndSendCode(email)
 
         let professor = new Professor({
             email, name, password:hashedPassword, verificationCode
@@ -85,7 +69,7 @@ const signup = async (req, res) => {
 
     } catch(error) { 
         console.debug(`Error in signup function: ${error}`)
-        return res.status(500).json({error: "An unexpected error occurred during signup."})
+        return res.status(500).json({error})
     }
 }
 
