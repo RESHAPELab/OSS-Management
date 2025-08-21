@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
   Container,
@@ -7,20 +7,12 @@ import {
   Typography,
   Button,
   Card,
-  TextField,
   Alert,
   CircularProgress,
-  Paper,
-  Divider,
-  Chip,
   Stack,
 } from "@mui/material";
 import {
-  ArrowBack as ArrowBackIcon,
   PersonAdd as PersonAddIcon,
-  GitHub as GitHubIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
 } from "@mui/icons-material";
 import HomeHeader from "../home/components/HomeHeader";
 import API_CONFIG from "../../config/api";
@@ -72,14 +64,12 @@ const InviteByName = () => {
   };
 
   const { classId } = useParams();
-  const navigate = useNavigate();
   const [githubUsername, setGithubUsername] = useState("");
   const [isCreatingRepo, setIsCreatingRepo] = useState(false);
   const [repoCreationStatus, setRepoCreationStatus] = useState("");
   const [questConfig, setQuestConfig] = useState(null);
   const [classInfo, setClassInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [recentInvites, setRecentInvites] = useState([]);
   const [usernameError, setUsernameError] = useState("");
 
   // Load quest configuration and class info on component mount
@@ -104,7 +94,7 @@ const InviteByName = () => {
         } else {
           console.log("❌ No quest configuration found");
           setRepoCreationStatus(
-            "❌ This class isn't ready for new students yet. Please contact your professor."
+            "This class isn't ready for new students yet. Please contact your professor."
           );
         }
 
@@ -118,7 +108,7 @@ const InviteByName = () => {
         }
       } catch (error) {
         console.error("❌ Error loading data:", error);
-        setRepoCreationStatus("❌ Unable to load class information. Please refresh the page or contact your professor.");
+        setRepoCreationStatus("Unable to load class information. Please refresh the page or contact your professor.");
       } finally {
         setIsLoading(false);
       }
@@ -127,7 +117,7 @@ const InviteByName = () => {
     if (classId) {
       loadData();
     }
-  }, [classId]);
+  }, [classId, baseURL]);
 
   // Validate GitHub username format
   const validateUsername = (username) => {
@@ -167,21 +157,21 @@ const InviteByName = () => {
   const handleInviteStudent = async () => {
     const usernameValidationError = validateUsername(githubUsername);
     if (usernameValidationError) {
-      setRepoCreationStatus(`❌ ${usernameValidationError}`);
+      setRepoCreationStatus(usernameValidationError);
       setUsernameError(usernameValidationError);
       return;
     }
 
     if (!questConfig) {
       setRepoCreationStatus(
-        "❌ This class isn't ready for new students yet. Please contact your professor."
+        "This class isn't ready for new students yet. Please contact your professor."
       );
       return;
     }
 
     try {
       setIsCreatingRepo(true);
-      setRepoCreationStatus("🔄 Creating your repository...");
+      setRepoCreationStatus("Creating your repository...");
       console.log("🚀 Student joining class:", githubUsername);
       console.log("📄 Using quest configuration:", questConfig);
 
@@ -214,22 +204,11 @@ const InviteByName = () => {
         if (successful && successful.length > 0) {
           const repoInfo = successful[0];
           const repoUrl = repoInfo.repoUrl;
-          const successMessage = `✅ Welcome to the class! 
+          const successMessage = `Welcome to the class! 
 Repository: ${repoUrl}
 You can now start your quest journey!`;
 
           setRepoCreationStatus(successMessage);
-
-          // Add to recent invites
-          setRecentInvites((prev) => [
-            {
-              username: githubUsername,
-              repoUrl: repoUrl,
-              timestamp: new Date().toLocaleString(),
-              status: "success",
-            },
-            ...prev.slice(0, 4),
-          ]); // Keep only last 5
 
           // Clear the input
           setGithubUsername("");
@@ -238,56 +217,66 @@ You can now start your quest journey!`;
         }
         // Check for unsuccessful repository creation
         else if (unsuccessful && unsuccessful.length > 0) {
+          // Check if the error is actually a successful creation that was misreported
           const errorInfo = unsuccessful[0];
           const technicalError = errorInfo.error || errorInfo.message || "Unknown error";
-          const friendlyError = getUserFriendlyError(technicalError);
-          setRepoCreationStatus(`❌ ${friendlyError}`);
+          
+          // If the main message indicates success, treat it as success
+          if (response.data.message && response.data.message.includes("completed")) {
+            const successMessage = `Welcome to the class! 
+Your repository has been created successfully.
+You can now start your quest journey!`;
 
-          // Add to recent invites as failed
-          setRecentInvites((prev) => [
-            {
-              username: githubUsername,
-              error: friendlyError,
-              timestamp: new Date().toLocaleString(),
-              status: "error",
-            },
-            ...prev.slice(0, 4),
-          ]);
+            setRepoCreationStatus(successMessage);
 
-          console.error("❌ Repository creation failed:", response.data);
+            // Clear the input
+            setGithubUsername("");
+
+            console.log("✅ Repository creation completed (treated as success):", response.data);
+          } else {
+            // Actually failed
+            const friendlyError = getUserFriendlyError(technicalError);
+            setRepoCreationStatus(`❌ ${friendlyError}`);
+
+
+
+            console.error("❌ Repository creation failed:", response.data);
+          }
         }
         // No results in either array
         else {
-          setRepoCreationStatus("❌ Something went wrong while setting up your account. Please try again or contact your professor.");
-          console.error("❌ No results in response:", response.data);
+                  setRepoCreationStatus("Something went wrong while setting up your account. Please try again or contact your professor.");
+        console.error("❌ No results in response:", response.data);
         }
       }
-      // Check for direct message response
+      // Check for direct message response indicating success
+      else if (response.data.message && response.data.message.includes("completed")) {
+        const successMessage = `Welcome to the class! 
+Your repository has been created successfully.
+You can now start your quest journey!`;
+
+        setRepoCreationStatus(successMessage);
+
+        // Clear the input
+        setGithubUsername("");
+
+        console.log("✅ Repository creation completed:", response.data);
+      }
+      // Other message responses
       else if (response.data.message) {
-        setRepoCreationStatus(`✅ ${response.data.message}`);
+        setRepoCreationStatus(response.data.message);
         console.log("✅ Repository creation completed:", response.data);
       }
       // Unexpected response structure
       else {
-        setRepoCreationStatus("❌ Something went wrong while setting up your account. Please try again or contact your professor.");
+        setRepoCreationStatus("Something went wrong while setting up your account. Please try again or contact your professor.");
         console.error("❌ Unexpected response structure:", response.data);
       }
     } catch (error) {
       console.error("❌ Error creating repository:", error);
       const technicalError = error.response?.data?.message || error.message;
       const friendlyError = getUserFriendlyError(technicalError);
-      setRepoCreationStatus(`❌ ${friendlyError}`);
-
-      // Add to recent invites as failed
-      setRecentInvites((prev) => [
-        {
-          username: githubUsername,
-          error: friendlyError,
-          timestamp: new Date().toLocaleString(),
-          status: "error",
-        },
-        ...prev.slice(0, 4),
-      ]);
+      setRepoCreationStatus(friendlyError);
     } finally {
       setIsCreatingRepo(false);
     }
@@ -356,15 +345,52 @@ You can now start your quest journey!`;
         {questConfig && (
           <Card sx={{ mb: 4 }}>
             <Box p={3}>
-              <Stack
-                direction="row"
-                spacing={2}
-                mb={3}
-                flexWrap="wrap"
-                useFlexGap
-              >
-                <Chip label={`${questCount} Quests`} color="primary" />
-                <Chip label={`${totalTasks} Total Tasks`} color="secondary" />
+              <Stack direction="row" spacing={2} alignItems="center" mt={2}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  gap: 1, 
+                  px: 3, 
+                  py: 1.5, 
+                  bgcolor: '#ff5722', 
+                  color: 'white', 
+                  borderRadius: 4,
+                  height: 150,
+                  fontWeight: 500,
+                  minWidth: 120
+                }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                    Quests
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, fontSize: '2.5rem', color: 'white' }}>
+                    {questCount}
+                  </Typography>
+                </Box>
+                
+                <Box sx={{ 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  gap: 1, 
+                  px: 3, 
+                  py: 1.5, 
+                  bgcolor: 'primary.main', 
+                  color: 'white', 
+                  borderRadius: 4,
+                  height: 150,
+                  fontWeight: 500,
+                  minWidth: 120
+                }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                    Total Tasks
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, fontSize: '2.5rem' }}>
+                    {totalTasks}
+                  </Typography>
+                </Box>
               </Stack>
             </Box>
           </Card>
@@ -389,72 +415,125 @@ You can now start your quest journey!`;
               quest repository and start your learning journey.
             </Typography>
 
-            <Box
-              sx={{ display: "flex", gap: 2, alignItems: "flex-start", mb: 3 }}
-            >
-              <TextField
-                label="Your GitHub Username"
-                value={githubUsername}
-                onChange={handleUsernameChange}
-                onKeyPress={handleKeyPress}
-                placeholder="your-github-username"
-                fullWidth
-                helperText={usernameError || "Enter your GitHub username to get started (Press Enter to join)"}
-                error={!!usernameError}
-                disabled={isCreatingRepo || !questConfig}
-                InputProps={{
-                  startAdornment: (
-                    <GitHubIcon sx={{ mr: 1, color: "text.secondary" }} />
-                  ),
-                }}
-              />
-
-              <Button
-                variant="contained"
-                size="large"
-                onClick={handleInviteStudent}
-                disabled={
-                  isCreatingRepo || !githubUsername.trim() || !questConfig
-                }
-                startIcon={
-                  isCreatingRepo ? (
-                    <CircularProgress size={20} />
-                  ) : (
-                    <PersonAddIcon />
-                  )
-                }
-                sx={{
-                  bgcolor: "#4caf50",
-                  "&:hover": { bgcolor: "#388e3c" },
-                  fontWeight: "bold",
-                  py: 1.5,
-                  px: 3,
-                  minWidth: "180px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {isCreatingRepo ? "Setting up..." : "Join Class"}
-              </Button>
+            <Box sx={{ mb: 3 }}>
+              {/* Modern Input Field */}
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1.5,
+                p: 2,
+                border: usernameError ? '2px solid #f44336' : '2px solid #e0e0e0',
+                borderRadius: 3,
+                bgcolor: 'white',
+                transition: 'border-color 0.2s ease',
+                '&:focus-within': {
+                  borderColor: '#1976d2',
+                  boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)'
+                },
+                mb: 1
+              }}>
+                <Box sx={{ flex: 1 }}>
+                   <input
+                     type="text"
+                     value={githubUsername}
+                     onChange={handleUsernameChange}
+                     onKeyPress={handleKeyPress}
+                     placeholder="your-github-username"
+                     disabled={isCreatingRepo || !questConfig}
+                     style={{
+                       width: '100%',
+                       border: 'none',
+                       outline: 'none',
+                       fontSize: '1.1rem',
+                       fontWeight: 500,
+                       fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+                       color: '#2c3e50',
+                       backgroundColor: 'transparent',
+                       padding: '2px 0'
+                     }}
+                   />
+                 </Box>
+                <Button
+                  variant="contained"
+                  onClick={handleInviteStudent}
+                  disabled={
+                    isCreatingRepo || !githubUsername.trim() || !questConfig
+                  }
+                  startIcon={
+                    isCreatingRepo ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      <PersonAddIcon />
+                    )
+                  }
+                  sx={{
+                    bgcolor: "#4caf50",
+                    "&:disabled": { bgcolor: "#e0e0e0" },
+                    fontWeight: "600",
+                    py: 1.5,
+                    px: 3,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '0.95rem',
+                    minWidth: "140px",
+                    whiteSpace: "nowrap",
+                    boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: "#388e3c",
+                      boxShadow: '0 4px 12px rgba(76, 175, 80, 0.4)',
+                      transform: 'translateY(-1px)'
+                    }
+                  }}
+                >
+                  {isCreatingRepo ? "Setting up..." : "Join Class"}
+                </Button>
+              </Box>
+              
+              {/* Helper Text */}
+              <Typography variant="body2" sx={{ 
+                color: usernameError ? '#f44336' : 'text.secondary',
+                ml: 1,
+                fontSize: '0.875rem'
+              }}>
+                {usernameError || "Enter your GitHub username and press the button or Enter key to join"}
+              </Typography>
             </Box>
 
             {repoCreationStatus && (
-              <Alert
-                severity={
-                  repoCreationStatus.startsWith("✅")
-                    ? "success"
-                    : repoCreationStatus.startsWith("🔄")
-                    ? "info"
-                    : "error"
-                }
-                sx={{ mt: 2 }}
-              >
+              <Box sx={{ 
+                mt: 2, 
+                p: 2, 
+                borderRadius: 2,
+                bgcolor: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                  ? '#e8f5e8'
+                  : repoCreationStatus.includes("Creating your repository")
+                  ? '#e3f2fd'
+                  : '#ffebee',
+                border: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                  ? '1px solid #4caf50'
+                  : repoCreationStatus.includes("Creating your repository")
+                  ? '1px solid #2196f3'
+                  : '1px solid #f44336',
+                color: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                  ? '#2e7d32'
+                  : repoCreationStatus.includes("Creating your repository")
+                  ? '#1976d2'
+                  : '#c62828'
+              }}>
                 <Typography
                   component="pre"
-                  sx={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}
+                  sx={{ 
+                    whiteSpace: "pre-wrap", 
+                    fontFamily: "inherit",
+                    fontWeight: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                      ? 700
+                      : 400
+                  }}
                 >
                   {repoCreationStatus}
                 </Typography>
-              </Alert>
+              </Box>
             )}
           </Box>
         </Card>
