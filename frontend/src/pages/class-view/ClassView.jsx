@@ -2409,7 +2409,7 @@ const ClassView = () => {
                                             {/* Body Section */}
                                             <Box>
                                                             {questBreakdownQuests.map((quest, questIndex) => {
-                                                                const questId = quest.id || quest._id || `Q${questIndex}`;
+                                                                const questId = quest.id || quest._id || `Q${questIndex + 1}`;
                                                                 const questTitle = quest.title || quest.questTitle || questId;
                                                                 
                                                                 // Calculate quest statistics

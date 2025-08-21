@@ -3571,7 +3571,7 @@ const QuestBlock = ({
                 borderRadius: '4px',
                 border: '1px solid #ffcc02'
               }}>
-                Q{questIndex}
+                Q{questIndex + 1}
               </Typography>
               {quest.title}
             </Typography>
