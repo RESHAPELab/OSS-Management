@@ -60,8 +60,7 @@ import {
   LibraryBooks as LibraryBooksIcon,
   AddCircleOutline as AddCircleOutlineIcon,
   AutoAwesome as AutoAwesomeIcon,
-  Info as InfoIcon,
-  Upload as UploadIcon
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { useAuthContext } from '../../context/AuthContext';
 
@@ -73,7 +72,6 @@ const GenerateJson = () => {
   const [showAddQuestModal, setShowAddQuestModal] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
   const [showReadmeModal, setShowReadmeModal] = useState(false);
-  const [showReadmeEmptyDialog, setShowReadmeEmptyDialog] = useState(false);
   const [readmeContent, setReadmeContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -956,6 +954,17 @@ Student can now start their quest journey!`);
           error: task.errorText,
           answer: ''
         };
+      } else if (task.taskType === 'assigned') {
+        taskData = {
+          ...taskData,
+          type: 'assigned',
+          repository: task.repository || '',
+          issueNumber: task.issueNumber || '',
+          accept: task.acceptText,
+          success: task.successText.replace('{points}', task.points),
+          error: task.errorText,
+          answer: ''
+        };
       }
       tasksObj[`T${idx + 1}`] = taskData;
     });
@@ -1264,6 +1273,28 @@ Student can now start their quest journey!`);
         baseTask.errorText = task.error || task.responses?.error || '';
         
         console.log('🔍 [editQuest] Comment task after processing:', baseTask);
+      }
+      
+      // Fallbacks for assignment validation tasks
+      if (baseTask.taskType === 'assigned' || task.type === 'assigned') {
+        console.log('🔍 [editQuest] Processing assigned task - Original task:', task);
+        console.log('🔍 [editQuest] Processing assigned task - BaseTask before:', baseTask);
+        
+        // Ensure taskType is set correctly first
+        baseTask.taskType = 'assigned';
+        
+        // Map repository field from various possible sources
+        baseTask.repository = task.repository || task.ossRepository || '';
+        
+        // Map issue number field  
+        baseTask.issueNumber = task.issueNumber || '';
+        
+        // Ensure accept, success, and error texts are preserved from various sources
+        baseTask.acceptText = task.accept || task.responses?.accept || '';
+        baseTask.successText = task.success || task.responses?.success || '';
+        baseTask.errorText = task.error || task.responses?.error || '';
+        
+        console.log('🔍 [editQuest] Assigned task after processing:', baseTask);
       }
       return baseTask;
     });
@@ -1732,10 +1763,19 @@ Student can now start their quest journey!`);
                 {/* README Upload */}
                 <Box>
                   {!jsonContent.readme ? (
+                    <>
+                  <input
+                    accept=".md"
+                    style={{ display: 'none' }}
+                    id="readme-upload"
+                    type="file"
+                    onChange={handleReadmeFileUpload}
+                  />
+                  <label htmlFor="readme-upload">
                     <Button
                       variant="outlined"
+                      component="span"
                       startIcon={<DescriptionIcon />}
-                      onClick={() => setShowReadmeEmptyDialog(true)}
                       sx={{
                         borderColor: '#2196f3',
                         color: '#2196f3',
@@ -1748,6 +1788,8 @@ Student can now start their quest journey!`);
                     >
                       Add README (.md)
                     </Button>
+                  </label>
+                    </>
                   ) : (
                     <Button
                       variant="outlined"
@@ -2457,7 +2499,7 @@ Student can now start their quest journey!`);
                         
                         <TextField
                           label="Repository (owner/repo)"
-                          value={task.repository}
+                          value={task.repository || ''}
                           onChange={(e) => handleTaskChange(taskIdx, 'repository', e.target.value)}
                           placeholder="e.g., microsoft/vscode"
                           fullWidth
@@ -2468,7 +2510,7 @@ Student can now start their quest journey!`);
                         <TextField
                           label="Issue Number"
                           type="number"
-                          value={task.issueNumber}
+                          value={task.issueNumber || ''}
                           onChange={(e) => handleTaskChange(taskIdx, 'issueNumber', e.target.value)}
                           placeholder="e.g., 123"
                           fullWidth
@@ -3093,163 +3135,6 @@ Student can now start their quest journey!`);
               }}
             >
               {editingQuestIndex !== null ? 'Save Changes' : 'Add New Quest'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* README Empty Dialog */}
-        <Dialog 
-          open={showReadmeEmptyDialog} 
-          onClose={() => setShowReadmeEmptyDialog(false)} 
-          maxWidth="md" 
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: 4,
-              boxShadow: 'none',
-              border: '1px solid #e0e0e0'
-            }
-          }}
-        >
-          <DialogTitle sx={{ 
-            borderBottom: '1px solid #e0e0e0',
-            pb: 2,
-            mb: 0
-          }}>
-            <Typography variant="h5" component="h3" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              📚 Create Class README
-            </Typography>
-          </DialogTitle>
-          <DialogContent sx={{ pt: 3 }}>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              Create a welcoming README for your class. This will be the first thing students see when they visit their repository.
-            </Typography>
-            
-            <Box sx={{ mb: 3, p: 3, backgroundColor: '#f8f9fa', borderRadius: 2, border: '1px solid #e0e0e0' }}>
-              <Typography variant="h6" sx={{ fontWeight: 600, mb: 2, color: 'secondary.main' }}>
-                💡 Important Note
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Quest progress will be automatically appended to the end of this README</strong> as students complete tasks. 
-                You only need to write the initial welcome content and class information.
-              </Typography>
-            </Box>
-
-            <TextEditor
-              value={readmeContent}
-              onChange={setReadmeContent}
-              label="README Content (Markdown)"
-              placeholder="# Welcome to [Class Name]! 🎓
-
-## About This Class
-
-This repository contains your personalized learning journey for [Class Name]. Here you'll find interactive quests, hands-on exercises, and real-world projects to help you master the fundamentals.
-
-## What You'll Learn
-
-- **GitHub Basics**: Understanding repositories, issues, and collaboration
-- **Open Source Concepts**: Contributing to projects and community engagement
-- **Practical Skills**: Real-world application of theoretical knowledge
-- **Project Management**: Working with issues, pull requests, and feedback
-
-## Getting Started
-
-1. **Check the Issues Tab**: Your first quest awaits there
-2. **Complete Tasks Sequentially**: Follow the quest progression
-3. **Submit Answers**: Use comments to provide your responses
-4. **Ask for Help**: Type 'help' if you need guidance (costs 5 points)
-
-## Quest Progress
-
-Your quest completion status and achievements will appear below automatically as you progress through the course.
-
----
-
-**Good luck on your learning journey! 🚀**
-
-*Remember: Every expert was once a beginner. Take it one step at a time.*"
-            />
-            
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                💡 Tip: Use standard Markdown formatting. This content will be created as README.md in each student repository.
-              </Typography>
-            </Box>
-
-          </DialogContent>
-          <DialogActions sx={{ p: 3, pt: 2, borderTop: '1px solid #e0e0e0' }}>
-            {/* Hidden input for uploading README file */}
-            <input
-              accept=".md"
-              style={{ display: 'none' }}
-              id="readme-empty-upload"
-              type="file"
-              onChange={(e) => {
-                const file = e.target.files[0];
-                if (file && file.name.endsWith('.md')) {
-                  const reader = new FileReader();
-                  reader.onload = (evt) => {
-                    setReadmeContent(evt.target.result);
-                  };
-                  reader.readAsText(file);
-                }
-                e.target.value = '';
-              }}
-            />
-            
-            {/* Upload README File */}
-            <label htmlFor="readme-empty-upload">
-              <Button 
-                variant="outlined" 
-                startIcon={<UploadIcon />}
-                sx={{ 
-                  textTransform: 'none', 
-                  borderRadius: 4, 
-                  fontWeight: 'bold', 
-                  px: 3, 
-                  py: 1, 
-                  boxShadow: 'none', 
-                  '&:hover': { boxShadow: 'none' } 
-                }}
-              >
-                Upload README File
-              </Button>
-            </label>
-            
-            {/* Create README */}
-            <Button 
-              onClick={() => {
-                if (readmeContent.trim()) {
-                  handleReadmeSave();
-                  setShowReadmeEmptyDialog(false);
-                }
-              }} 
-              variant="contained"
-              disabled={!readmeContent.trim()}
-              sx={{
-                bgcolor: '#2196f3',
-                borderRadius: 4,
-                fontWeight: 'bold',
-                px: 3,
-                py: 1,
-                boxShadow: 'none',
-                '&:hover': { bgcolor: '#1976d2', boxShadow: 'none' }
-              }}
-            >
-              Create README
-            </Button>
-            
-            {/* Cancel */}
-            <Button 
-              onClick={() => setShowReadmeEmptyDialog(false)} 
-              sx={{ 
-                borderRadius: 4, 
-                fontWeight: 'bold', 
-                px: 3, 
-                py: 1 
-              }}
-            >
-              Cancel
             </Button>
           </DialogActions>
         </Dialog>
