@@ -85,7 +85,7 @@ const ManageQuests = () => {
     ],
     hints: {
       enabled: false,
-      penalty: 10,
+      penalty: 0,
       hints: [],
     },
     dueDate: "",
@@ -624,7 +624,7 @@ const ManageQuests = () => {
           ],
       hints: {
         enabled: quest.hints && quest.hints.length > 0,
-        penalty: quest.hints?.[0]?.penalty || 10,
+        penalty: quest.hints?.[0]?.penalty || 0,
         hints: quest.hints ? quest.hints.map((hint) => hint.content || "") : [],
       },
       dueDate: "",
@@ -768,7 +768,7 @@ const ManageQuests = () => {
       ],
       hints: {
         enabled: false,
-        penalty: 10,
+        penalty: 0,
         hints: [],
       },
       dueDate: "",
@@ -792,7 +792,7 @@ const ManageQuests = () => {
 
     if (validTasks.length === 0) {
       alert(
-        "Please add at least one task with a title, description, and task description."
+        "Please add at least one task with a title, description, and quest notes."
       );
       return;
     }
@@ -811,7 +811,7 @@ const ManageQuests = () => {
         return;
       }
       if (!task.desc.trim()) {
-        alert(`Task ${i + 1} is missing a task description (for JSON).`);
+        alert(`Task ${i + 1} is missing quest notes.`);
         return;
       }
       if (!task.description.trim()) {
@@ -949,7 +949,7 @@ const ManageQuests = () => {
                 ? task.hints.map((hint, hintIndex) => ({
                     sequence: hint.sequence || hintIndex + 1,
                     content: hint.content || "",
-                    penalty: hint.penalty || 5,
+                    penalty: hint.penalty || 0,
                   }))
                 : [],
           };
@@ -1098,7 +1098,7 @@ const ManageQuests = () => {
           ],
           hints: {
             enabled: false,
-            penalty: 10,
+            penalty: 0,
             hints: [],
           },
           dueDate: "",
@@ -2233,7 +2233,7 @@ const ManageQuests = () => {
                 {/* Task Basic Info */}
                 <TextField
                   fullWidth
-                  label="Task Description (for JSON)"
+                  label="Quest Notes (not displayed to student)"
                   value={task.desc}
                   onChange={(e) => {
                     const tasks = [...questFormData.tasks];
@@ -2241,7 +2241,7 @@ const ManageQuests = () => {
                     setQuestFormData({ ...questFormData, tasks });
                   }}
                   margin="normal"
-                  helperText="Short description used in JSON format"
+                  helperText="Notes for task (not shown to students)"
                 />
 
                 {/* Task Type Selector */}
@@ -2415,24 +2415,38 @@ const ManageQuests = () => {
                   <TextField
                     label="Points"
                     type="number"
-                    value={task.points}
+                    value={task.points || 1}
                     onChange={(e) => {
+                      const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                      if (value < 1) {
+                        // Prevent setting points below 1
+                        return;
+                      }
                       const tasks = [...questFormData.tasks];
-                      tasks[taskIndex].points = parseInt(e.target.value) || 0;
+                      tasks[taskIndex].points = value;
                       setQuestFormData({ ...questFormData, tasks });
                     }}
+                    inputProps={{ min: 1 }}
                     sx={{ width: 120 }}
+                    helperText="Min: 1"
                   />
                   <TextField
                     label="XP Points"
                     type="number"
-                    value={task.xp}
+                    value={task.xp || 1}
                     onChange={(e) => {
+                      const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                      if (value < 1) {
+                        // Prevent setting XP below 1
+                        return;
+                      }
                       const tasks = [...questFormData.tasks];
-                      tasks[taskIndex].xp = parseInt(e.target.value) || 0;
+                      tasks[taskIndex].xp = value;
                       setQuestFormData({ ...questFormData, tasks });
                     }}
+                    inputProps={{ min: 1 }}
                     sx={{ width: 120 }}
+                    helperText="Min: 1"
                   />
                 </Stack>
 
@@ -2924,7 +2938,7 @@ const ManageQuests = () => {
                         tasks[taskIndex].hints.push({
                           sequence: 1,
                           content: "",
-                          penalty: 5,
+                          penalty: 0,
                         });
                       }
                       setQuestFormData({ ...questFormData, tasks });
@@ -2964,15 +2978,20 @@ const ManageQuests = () => {
                           <TextField
                             label="Penalty (Points)"
                             type="number"
-                            value={hint.penalty || 5}
+                            value={hint.penalty || 0}
                             onChange={(e) => {
+                              const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                              if (value < 0) {
+                                // Prevent setting penalty below 0
+                                return;
+                              }
                               const tasks = [...questFormData.tasks];
-                              tasks[taskIndex].hints[hintIndex].penalty =
-                                parseInt(e.target.value) || 0;
+                              tasks[taskIndex].hints[hintIndex].penalty = value;
                               setQuestFormData({ ...questFormData, tasks });
                             }}
                             sx={{ width: 150 }}
                             inputProps={{ min: 0 }}
+                            helperText="Min: 0"
                           />
                           <Button
                             color="error"
@@ -3012,7 +3031,7 @@ const ManageQuests = () => {
                           tasks[taskIndex].hints.push({
                             sequence: tasks[taskIndex].hints.length + 1,
                             content: "",
-                            penalty: 5,
+                            penalty: 0,
                           });
                           setQuestFormData({ ...questFormData, tasks });
                         }}
@@ -3092,17 +3111,24 @@ const ManageQuests = () => {
                   <TextField
                     label="Hint Penalty"
                     type="number"
-                    value={questFormData.hints.penalty}
-                    onChange={(e) =>
+                    value={questFormData.hints.penalty || 0}
+                    onChange={(e) => {
+                      const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                      if (value < 0) {
+                        // Prevent setting penalty below 0
+                        return;
+                      }
                       setQuestFormData({
                         ...questFormData,
                         hints: {
                           ...questFormData.hints,
-                          penalty: parseInt(e.target.value) || 0,
+                          penalty: value,
                         },
-                      })
-                    }
+                      });
+                    }}
+                    inputProps={{ min: 0 }}
                     sx={{ width: 160 }}
+                    helperText="Min: 0"
                   />
                 )}
               </Stack>
@@ -3167,6 +3193,56 @@ const ManageQuests = () => {
             </Box>
           </Box>
         </DialogContent>
+        
+        {/* Hint Penalty Validation Errors */}
+        {(() => {
+          const hintPenaltyErrors = [];
+          
+          // Check individual task hints
+          questFormData.tasks.forEach((task, taskIndex) => {
+            if (task.hints && task.hints.length > 0) {
+              const totalPenalty = task.hints.reduce((sum, hint) => {
+                const penalty = parseInt(hint.penalty) || 0;
+                return sum + penalty;
+              }, 0);
+              const taskPoints = parseInt(task.points) || 1;
+              if (totalPenalty > taskPoints) {
+                hintPenaltyErrors.push(`Task ${taskIndex + 1}: Hint penalties (${totalPenalty}) exceed task points (${taskPoints})`);
+              }
+            }
+          });
+          
+          // Check main hints penalty
+          if (questFormData.hints && questFormData.hints.enabled) {
+            const mainPenalty = parseInt(questFormData.hints.penalty) || 0;
+            const totalTaskPoints = questFormData.tasks.reduce((sum, task) => sum + (parseInt(task.points) || 1), 0);
+            if (mainPenalty > totalTaskPoints) {
+              hintPenaltyErrors.push(`Main Hints: Penalty (${mainPenalty}) exceeds total task points (${totalTaskPoints})`);
+            }
+          }
+          
+          return hintPenaltyErrors.length > 0 ? (
+            <Box sx={{ p: 3, pt: 0 }}>
+              <Alert severity="error" sx={{ borderRadius: 2 }}>
+                <AlertTitle>Invalid Hint Penalties</AlertTitle>
+                <Typography variant="body2" component="div">
+                  The following tasks have hint penalties that exceed the task points:
+                </Typography>
+                <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                  {hintPenaltyErrors.map((error, index) => (
+                    <Typography key={index} component="li" variant="body2">
+                      {error}
+                    </Typography>
+                  ))}
+                </Box>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Please reduce hint penalties or increase task points to continue.
+                </Typography>
+              </Alert>
+            </Box>
+          ) : null;
+        })()}
+        
         <DialogActions>
           <Button
             onClick={
@@ -3188,7 +3264,29 @@ const ManageQuests = () => {
                   !task.title.trim() ||
                   !task.desc.trim() ||
                   !task.description.trim()
-              )
+              ) ||
+              // Check hint penalty validation
+              questFormData.tasks.some((task) => {
+                if (task.hints && task.hints.length > 0) {
+                  const totalPenalty = task.hints.reduce((sum, hint) => {
+                    const penalty = parseInt(hint.penalty) || 0;
+                    return sum + penalty;
+                  }, 0);
+                  const taskPoints = parseInt(task.points) || 1;
+                  return totalPenalty > taskPoints;
+                }
+                return false;
+              }) ||
+              // Check main hints penalty
+              (() => {
+                if (questFormData.hints && questFormData.hints.enabled) {
+                  const mainPenalty = parseInt(questFormData.hints.penalty) || 0;
+                  // For main hints, we need to check against the total points of all tasks
+                  const totalTaskPoints = questFormData.tasks.reduce((sum, task) => sum + (parseInt(task.points) || 1), 0);
+                  return mainPenalty > totalTaskPoints;
+                }
+                return false;
+              })()
             }
             sx={{ fontWeight: "bold" }}
           >

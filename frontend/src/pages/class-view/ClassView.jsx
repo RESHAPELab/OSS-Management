@@ -98,7 +98,7 @@ const ClassView = () => {
         }],
         hints: {
             enabled: false,
-            penalty: 10,
+            penalty: 0,
             hints: []
         },
         dueDate: ''
@@ -1104,7 +1104,7 @@ const ClassView = () => {
                     }],
                     hints: {
                         enabled: false,
-                        penalty: 10,
+                        penalty: 0,
                         hints: []
                     },
                     dueDate: ''
@@ -1258,7 +1258,7 @@ const ClassView = () => {
             }],
             hints: {
                 enabled: quest.hints && quest.hints.length > 0,
-                penalty: 10,
+                penalty: 0,
                 hints: quest.hints ? quest.hints.map(hint => hint.content || '') : []
             },
             dueDate: ''
@@ -1303,7 +1303,7 @@ const ClassView = () => {
             }],
             hints: {
                 enabled: false,
-                penalty: 10,
+                penalty: 0,
                 hints: []
             },
             dueDate: ''

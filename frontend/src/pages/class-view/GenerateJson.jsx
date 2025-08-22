@@ -1770,9 +1770,30 @@ Student can now start their quest journey!`);
   };
 
   // Add this before the return statement in GenerateJson:
+  const getHintPenaltyValidationErrors = () => {
+    const errors = [];
+    questFormData.tasks.forEach((task, taskIndex) => {
+      if (task.detailedHints && task.detailedHints.length > 0) {
+        const totalPenalty = task.detailedHints.reduce((sum, hint) => {
+          const penalty = parseInt(hint.penalty) || 0;
+          return sum + penalty;
+        }, 0);
+        const taskPoints = parseInt(task.points) || 1;
+        if (totalPenalty > taskPoints) {
+          errors.push(`Task ${taskIndex + 1}: Hint penalties (${totalPenalty}) exceed task points (${taskPoints})`);
+        }
+      }
+    });
+    return errors;
+  };
+
+  const hintPenaltyErrors = getHintPenaltyValidationErrors();
+  const hasHintPenaltyErrors = hintPenaltyErrors.length > 0;
+
   const isAddQuestDisabled =
     !questFormData.title.trim() ||
     questFormData.tasks.length === 0 ||
+    hasHintPenaltyErrors ||
     questFormData.tasks.some((task) => {
       if (task.taskType === "multiple-choice") {
         return (
@@ -1793,7 +1814,7 @@ Student can now start their quest journey!`);
     image: "",
     video: null,
     sequence: 1,
-    penalty: 5,
+    penalty: 0,
   });
 
   const handleAddHint = (questIdx, taskIdx) => {
@@ -2458,12 +2479,12 @@ Student can now start their quest journey!`);
                       </FormControl>
 
                       <TextField
-                        label="Task Description"
+                        label="Quest Notes (not displayed to student)"
                         value={task.taskDesc}
                         onChange={(e) =>
                           handleTaskChange(taskIdx, "taskDesc", e.target.value)
                         }
-                        placeholder="Brief description of the task"
+                        placeholder="notes for task"
                         fullWidth
                         sx={{ borderRadius: 2 }}
                       />
@@ -2471,12 +2492,19 @@ Student can now start their quest journey!`);
                       <TextField
                         label="Points/XP"
                         type="number"
-                        value={task.points}
-                        onChange={(e) =>
-                          handleTaskChange(taskIdx, "points", e.target.value)
-                        }
+                        value={task.points || 1}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                          if (value < 1) {
+                            // Prevent setting points below 1
+                            return;
+                          }
+                          handleTaskChange(taskIdx, "points", value);
+                        }}
+                        inputProps={{ min: 1 }}
                         fullWidth
                         sx={{ borderRadius: 2 }}
+                        helperText="Minimum value: 1"
                       />
 
                       <Divider />
@@ -3884,18 +3912,24 @@ Student can now start their quest journey!`);
                               <TextField
                                 label="Penalty (Points)"
                                 type="number"
-                                value={hint.penalty || 5}
-                                onChange={(e) =>
+                                value={hint.penalty || 0}
+                                onChange={(e) => {
+                                  const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                  if (value < 0) {
+                                    // Prevent setting penalty below 0
+                                    return;
+                                  }
                                   handleUpdateHint(
                                     editingQuestIndex || 0,
                                     taskIdx,
                                     hintIdx,
                                     "penalty",
-                                    e.target.value
-                                  )
-                                }
+                                    value
+                                  );
+                                }}
+                                inputProps={{ min: 0 }}
                                 sx={{ width: 150, borderRadius: 2 }}
-                                helperText="Points deducted when this hint is used"
+                                helperText="Points deducted when this hint is used (Min: 0)"
                               />
                             </Stack>
                           </Card>
@@ -4003,6 +4037,29 @@ Student can now start their quest journey!`);
               </Box>
             </Stack>
           </DialogContent>
+          
+          {/* Hint Penalty Validation Errors */}
+          {hasHintPenaltyErrors && (
+            <Box sx={{ p: 3, pt: 0 }}>
+              <Alert severity="error" sx={{ borderRadius: 2 }}>
+                <AlertTitle>Invalid Hint Penalties</AlertTitle>
+                <Typography variant="body2" component="div">
+                  The following tasks have hint penalties that exceed the task points:
+                </Typography>
+                <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
+                  {hintPenaltyErrors.map((error, index) => (
+                    <Typography key={index} component="li" variant="body2">
+                      {error}
+                    </Typography>
+                  ))}
+                </Box>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Please reduce hint penalties or increase task points to continue.
+                </Typography>
+              </Alert>
+            </Box>
+          )}
+          
           <DialogActions sx={{ p: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
             <Button
               onClick={() => setShowAddQuestModal(false)}
@@ -4420,58 +4477,7 @@ Good luck! 🚀"
 
             {/* Deploy MCQ Quest to Existing Repo */}
             <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={async () => {
-                  try {
-                    if (!classId) {
-                      alert("Invalid class.");
-                      return;
-                    }
 
-                    // const targetRepo = "OSS-Doorway-Dev/MisanEtchie-financing";
-                    // const { data } = await axios.post(
-                    //   `http://localhost:8080/api/group/${classId}/deploy-quest-to-repo`,
-                    //   { repo: targetRepo }
-                    // );
-
-                    const targetRepo = "OSS-Doorway-Dev/MisanEtchie-financing";
-                    const { data } = await axios.post(
-                      `${API_BASE_URL}/api/group/${classId}/deploy-quest-to-repo`,
-                      { repo: targetRepo }
-                    );
-                    if (data && data.success) {
-                      alert(
-                        `Deployed ${data.data.questId} to ${targetRepo}. Issue: ${data.data.issueUrl}`
-                      );
-                      await loadStoredValues();
-                    } else {
-                      alert("Deployment did not succeed.");
-                    }
-                  } catch (e) {
-                    console.error("Deploy quest failed:", e);
-                    alert(
-                      "Failed to deploy quest to repo. Check backend logs."
-                    );
-                  }
-                }}
-                sx={{
-                  borderRadius: 3,
-                  color: "#ff5722",
-                  borderColor: "#ff5722",
-                  "&:hover": {
-                    borderColor: "#e64a19",
-                    backgroundColor: "#fff3e0",
-                  },
-                }}
-              >
-                Deploy MCQ Quest to Repo
-              </Button>
-              <Typography variant="caption" color="text.secondary">
-                Adds a bonus MCQ quest (prereq Q0) to
-                OSS-Doorway-Dev/MisanEtchie-financing
-              </Typography>
             </Box>
 
             {/* Per-user values placeholder */}
