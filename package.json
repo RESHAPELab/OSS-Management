@@ -21,7 +21,7 @@
     "yargs": "^17.7.2"
   },
   "scripts": {
-    "start": "cross-env NODE_ENV=production concurrently npm:frontend npm:backend",
+        "start": "cross-env NODE_ENV=production concurrently npm:frontend npm:backend",
     "start:validation": "concurrently npm:frontend npm:backend:validation",
     "frontend": "cd frontend && npm start",
     "backend": "cross-env NODE_ENV=production node backend/server.js",
