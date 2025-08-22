@@ -522,7 +522,6 @@ You can now start your quest journey!`;
                   : '#c62828'
               }}>
                 <Typography
-                  component="pre"
                   sx={{ 
                     whiteSpace: "pre-wrap", 
                     fontFamily: "inherit",
@@ -531,7 +530,36 @@ You can now start your quest journey!`;
                       : 400
                   }}
                 >
-                  {repoCreationStatus}
+                  {repoCreationStatus.split('\n').map((line, index) => {
+                    // Check if line contains a GitHub URL
+                    if (line.includes('https://github.com/')) {
+                      const urlMatch = line.match(/(https:\/\/github\.com\/[^\s]+)/);
+                      if (urlMatch) {
+                        const url = urlMatch[1];
+                        const beforeUrl = line.substring(0, line.indexOf(url));
+                        const afterUrl = line.substring(line.indexOf(url) + url.length);
+                        return (
+                          <div key={index}>
+                            {beforeUrl}
+                            <a 
+                              href={url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              style={{ 
+                                color: '#1976d2', 
+                                textDecoration: 'underline',
+                                fontWeight: 'bold'
+                              }}
+                            >
+                              {url}
+                            </a>
+                            {afterUrl}
+                          </div>
+                        );
+                      }
+                    }
+                    return <div key={index}>{line}</div>;
+                  })}
                 </Typography>
               </Box>
             )}

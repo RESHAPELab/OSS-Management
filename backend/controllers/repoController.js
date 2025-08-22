@@ -5,6 +5,7 @@ implement the logic. Time costs :(
 */
 const UserRepo = require("../models/UserRepoModel");
 const Readme = require("../models/ReadmeModel");
+const Group = require("../models/GroupModel");
 require("dotenv").config();
 
 
@@ -1467,10 +1468,14 @@ Repository for students in ${className}.`;
     
     const results = { successful: [], unsuccessful: [] };
     for (const user of users) {
+      let repoResponse = null; // Declare outside try-catch
+      let repoName, dbUser, groupId; // Declare variables outside try-catch
+      
       try {
         // Use strictly username-class format for repo and dbUser
-        const dbUser = `${user}-${repoIdentifier}`;
-        const repoName = `${user}-${repoIdentifier}`;
+        dbUser = `${user}-${repoIdentifier}`;
+        repoName = `${user}-${repoIdentifier}`;
+        groupId = classId; // Set groupId for later use
         const repoDescription = `Repository for ${user} in ${className}`;
         
         console.log(`📝 [createCustomRepos] Creating repo: ${repoName} (dbUser: ${dbUser})`);
@@ -1478,11 +1483,11 @@ Repository for students in ${className}.`;
         // Create the repository
         try {
             console.log(`🚀 [REPO-CREATION] Creating repository: ${process.env.GITHUB_ORG}/${repoName}`);
-            const repoResponse = await orgOctokit.repos.createInOrg({
+            repoResponse = await orgOctokit.repos.createInOrg({
               org: process.env.GITHUB_ORG,
               name: repoName,
               description: repoDescription,
-              private: false,
+              private: true,
               auto_init: readmeContent ? false : true, // Don't auto-init if we have custom README
               gitignore_template: readmeContent ? null : "Node" // Don't use template if we're manually creating files
             });
@@ -1508,6 +1513,40 @@ Repository for students in ${className}.`;
         } catch (collabError) {
             console.error(`❌ [COLLABORATOR] Failed to add ${user} as collaborator to ${repoName}:`, collabError.message);
             // Continue even if collaborator addition fails
+        }
+
+        // Add all admins as collaborators
+        try {
+            console.log(`👥 [ADMIN-COLLABORATORS] Fetching admins for class ${classId}`);
+            const group = await Group.findById(classId);
+            
+            if (group && group.admins && group.admins.length > 0) {
+                console.log(`👥 [ADMIN-COLLABORATORS] Found ${group.admins.length} admins to add to ${repoName}`);
+                
+                for (const admin of group.admins) {
+                    try {
+                        console.log(`👥 [ADMIN-COLLABORATORS] Adding admin ${admin.githubUsername} to ${repoName}`);
+                        await orgOctokit.repos.addCollaborator({
+                            owner: process.env.GITHUB_ORG,
+                            repo: repoName,
+                            username: admin.githubUsername,
+                            permission: "push"  // Same permission as students
+                        });
+                        console.log(`✅ [ADMIN-COLLABORATORS] Admin ${admin.githubUsername} added as collaborator to ${repoName}`);
+                        
+                        // Small delay to avoid rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    } catch (adminCollabError) {
+                        console.error(`❌ [ADMIN-COLLABORATORS] Failed to add admin ${admin.githubUsername} to ${repoName}:`, adminCollabError.message);
+                        // Continue with other admins even if one fails
+                    }
+                }
+            } else {
+                console.log(`ℹ️ [ADMIN-COLLABORATORS] No admins found for class ${classId} or group not found`);
+            }
+        } catch (adminError) {
+            console.error(`❌ [ADMIN-COLLABORATORS] Error fetching/adding admins for ${repoName}:`, adminError.message);
+            // Don't fail the whole operation if admin addition fails
         }
 
         // 🔧 NEW: Add README file if available from class setup
@@ -1858,7 +1897,13 @@ typings/
             console.error('❌ [ISSUE-CREATION] Failed to create first quest issue:', issueError);
             // Continue even if issue creation fails
         }
-        results.successful.push({ user, repoName, dbUser, groupId, repoUrl: repoResponse.data.html_url });
+        results.successful.push({ 
+          user, 
+          repoName, 
+          dbUser, 
+          groupId, 
+          repoUrl: repoResponse ? repoResponse.data.html_url : `https://github.com/${process.env.GITHUB_ORG}/${repoName}` 
+        });
       } catch (error) {
         console.error(`❌ [REPO-CREATION] Failed to create repo for ${user}:`, error);
         console.error(`❌ [REPO-CREATION] Error details:`, {

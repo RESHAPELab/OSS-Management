@@ -50,6 +50,7 @@ app.use("/api/repo", require("./routes/repoRoutes"));
 app.use("/api/gamification", require("./routes/gamificationRoutes"));
 app.use("/api/quest", require("./routes/questRoutes"));
 app.use("/api/quest-config", require("./routes/questConfigRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/generatejson", generatejsonRoutes);
 app.use(errorHandler);
 

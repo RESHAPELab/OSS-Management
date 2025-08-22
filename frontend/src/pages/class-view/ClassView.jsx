@@ -32,11 +32,13 @@ import {
   Close as CloseIcon,
   AccountCircle as AccountCircleIcon,
   EmojiEvents as EmojiEventsIcon,
-  LocalFireDepartment as LocalFireDepartmentIcon
+  LocalFireDepartment as LocalFireDepartmentIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon
 } from '@mui/icons-material';
 import RepositoryStatusChecker from '../../components/RepositoryStatusChecker';
 import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
+import ManageAdmins from './ManageAdmins';
 
 const baseURL = API_CONFIG.getBaseURL();
 
@@ -60,7 +62,7 @@ const ClassView = () => {
     const [showReadmeModal, setShowReadmeModal] = useState(false);
     const [showInviteLinkModal, setShowInviteLinkModal] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'manage-quests', or 'manage-students'
+    const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'manage-quests', 'manage-admins', or 'manage-students'
     const [csvFile, setCsvFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [currentProcessingUser, setCurrentProcessingUser] = useState('');
@@ -155,6 +157,8 @@ const ClassView = () => {
             loadQuestOrderFromDatabase();
         }
     }, [authUser, classId])
+
+
 
     useEffect(() => {
         const fetchGenerateJsonConfig = async () => {
@@ -1981,6 +1985,24 @@ const ClassView = () => {
 
                     <Button
                         fullWidth
+                        startIcon={<AdminPanelSettingsIcon />}
+                        onClick={() => setCurrentView('manage-admins')}
+                        sx={{
+                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                            mb: 1,
+                            py: 1.5,
+                            px: 2,
+                            bgcolor: currentView === 'manage-admins' ? '#fb5233' : 'transparent',
+                            color: currentView === 'manage-admins' ? 'white' : 'text.primary',
+                            borderRadius: 3,
+                            '&:hover': { bgcolor: currentView === 'manage-admins' ? '#e64a19' : 'rgba(0,0,0,0.04)' }
+                        }}
+                    >
+                        {sidebarOpen && 'Manage Admins'}
+                    </Button>
+
+                    <Button
+                        fullWidth
                         startIcon={<PeopleIcon />}
                         onClick={() => setCurrentView('manage-students')}
                         sx={{
@@ -2532,6 +2554,8 @@ const ClassView = () => {
                     </>
                 )}
                     </Container>
+                ) : currentView === 'manage-admins' ? (
+                    <ManageAdmins />
                 ) : currentView === 'manage-students' ? (
                     <ManageStudents />
                 ) : (
