@@ -15,10 +15,10 @@ import {
   GitHub as GitHubIcon,
 } from "@mui/icons-material";
 import HomeHeader from "../home/components/HomeHeader";
-import API_CONFIG from "../../config/api";
+import { API_BASE_URL, BOT_BASE_URL } from "../../config/api";
 
 const InviteByName = () => {
-  const baseURL = API_CONFIG.getBaseURL();
+  const baseURL = API_BASE_URL;
 
   // Convert technical errors to user-friendly messages
   const getUserFriendlyError = (error) => {

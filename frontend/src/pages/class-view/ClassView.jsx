@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import HomeHeader from '../home/components/HomeHeader'
 import axios from 'axios'
 import { useAuthContext } from '../../context/AuthContext';
-import API_CONFIG from '../../config/api';
+import { API_BASE_URL, BOT_BASE_URL } from '../../config/api';
 import {
   Container, Box, Typography, Button, Stack, Card, Dialog, DialogTitle, DialogContent, DialogActions, 
   Alert, TextField, Chip, List, ListItem, ListItemText, Divider, Paper, Grid, IconButton,
@@ -40,7 +40,7 @@ import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
 import ManageAdmins from './ManageAdmins';
 
-const baseURL = API_CONFIG.getBaseURL();
+const baseURL = API_BASE_URL;
 
 const ClassView = () => {
     const { classId } = useParams();
