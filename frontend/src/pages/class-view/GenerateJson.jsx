@@ -105,6 +105,11 @@ const GenerateJson = () => {
   });
   // 1. Add state for editing quest
   const [editingQuestIndex, setEditingQuestIndex] = useState(null);
+  // Add state for editing individual tasks
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false);
+  const [editingTaskData, setEditingTaskData] = useState(null);
+  const [editingTaskQuestIndex, setEditingTaskQuestIndex] = useState(null);
+  const [editingTaskId, setEditingTaskId] = useState(null);
   const { authUser } = useAuthContext();
   const [showLibraryDialog, setShowLibraryDialog] = useState(false);
   const [libraryQuests, setLibraryQuests] = useState([]);
@@ -954,15 +959,25 @@ Student can now start their quest journey!`);
         : jsonContent.questSequence.length;
     // Build tasks object
     const tasksObj = {};
-    questFormData.tasks.forEach((task, idx) => {
-      // Build taskData based on type (reuse your existing logic for each type)
-      let taskData = {
-        desc: task.taskDesc,
-        points: parseInt(task.points),
-        xp: parseInt(task.points),
-        hints: [],
-        detailedHints: task.detailedHints || [],
-      };
+    
+    // When editing a quest, preserve existing tasks
+    if (editingQuestIndex !== null) {
+      const existingQuest = jsonContent.questSequence[editingQuestIndex];
+      Object.entries(existingQuest.tasks).forEach(([taskId, task]) => {
+        tasksObj[taskId] = task;
+      });
+    } else {
+      // When adding a new quest, build tasks from form data
+      questFormData.tasks.forEach((task, idx) => {
+        // Build taskData based on type (reuse your existing logic for each type)
+        let taskData = {
+          title: task.title || "", // Add task title
+          desc: task.taskDesc,
+          points: parseInt(task.points),
+          xp: parseInt(task.points),
+          hints: [],
+          detailedHints: task.detailedHints || [],
+        };
       if (task.taskType === "multiple-choice") {
         // Store question and options separately, but combine for display
         let acceptText = task.acceptText || "";
@@ -1098,9 +1113,10 @@ Student can now start their quest journey!`);
           error: task.errorText,
           answer: "",
         };
-      }
-      tasksObj[`T${idx + 1}`] = taskData;
-    });
+              }
+        tasksObj[`T${idx + 1}`] = taskData;
+      });
+    }
     // Create new quest with temporary ID (will be updated by updateQuestIds)
     const newQuest = {
       questId: `TEMP_${Date.now()}`, // Temporary ID, will be replaced
@@ -1326,10 +1342,10 @@ Student can now start their quest journey!`);
       
       // Schedule auto-centering after the state update and DOM re-render
       setTimeout(() => {
-        const movedQuestId = movedQuest.questId || `Q${newIndex}`;
-        const questElement = document.querySelector(`[data-quest-id="${movedQuestId}"]`);
-        if (questElement) {
-          questElement.scrollIntoView({
+        // Find the quest by its new position in the sequence
+        const questElements = document.querySelectorAll('[data-quest-id]');
+        if (questElements[newIndex]) {
+          questElements[newIndex].scrollIntoView({
             behavior: 'smooth',
             block: 'center',
             inline: 'nearest'
@@ -1341,118 +1357,14 @@ Student can now start their quest journey!`);
     });
   };
 
-  // 2. Update editQuest to open modal with quest data
+    // Edit quest modal - only for quest title and description (no tasks)
   const editQuest = (questIndex) => {
     const quest = jsonContent.questSequence[questIndex];
-    const tasksArr = Object.entries(quest.tasks).map(([taskId, task]) => {
-      // Map all possible fields for all task types
-      const baseTask = {
-        ...task,
-        taskType: task.type,
-        taskDesc: task.desc || "",
-        points: task.points ?? 0,
-        acceptText: task.accept || task.responses?.accept || "",
-        successText: task.success || task.responses?.success || "",
-        errorText: task.error || task.responses?.error || "",
-        answer: task.answer || "",
-        answerType: task.answerType || "",
-        repository: task.repository || task.ossRepository || "",
-        issueNumber: task.issueNumber || "",
-        options: Array.isArray(task.options)
-          ? task.options
-          : [
-              { label: "A", value: task.optionA || "" },
-              { label: "B", value: task.optionB || "" },
-              ...(task.optionC ? [{ label: "C", value: task.optionC }] : []),
-              ...(task.optionD ? [{ label: "D", value: task.optionD }] : []),
-              ...(task.optionE ? [{ label: "E", value: task.optionE }] : []),
-            ],
-        correctAnswer: task.correctAnswer || task.answer || "",
-        question: task.question || "",
-        questions: Array.isArray(task.questions) ? task.questions : [],
-        hints: Array.isArray(task.hints) ? task.hints : [],
-        detailedHints: Array.isArray(task.detailedHints)
-          ? task.detailedHints
-          : [],
-        // Tolerance fields
-        enableTolerance: task.enableTolerance || false,
-        toleranceRange: task.toleranceRange || 10,
-      };
-      // Fallbacks for MCQ
-      if (baseTask.taskType === "multiple-choice") {
-        // Try to recover options and correct answer if missing
-        if (
-          (!baseTask.options || baseTask.options.length < 2) &&
-          baseTask.acceptText
-        ) {
-          // More robust regex: tolerate extra spaces/line breaks
-          const optionRegex = /^\s*([A-E])\)\s+(.+)$/gm;
-          let match;
-          const options = [];
-          while ((match = optionRegex.exec(baseTask.acceptText)) !== null) {
-            options.push({ label: match[1], value: match[2].trim() });
-          }
-          if (options.length >= 2) baseTask.options = options;
-        }
-        if (!baseTask.options || baseTask.options.length < 2) {
-          baseTask.options = [
-            { label: "A", value: "" },
-            { label: "B", value: "" },
-          ];
-        }
-        // Always set correctAnswer from answer if present
-        if (typeof task.answer === "string" && task.answer.length === 1) {
-          baseTask.correctAnswer = task.answer.toUpperCase();
-        }
-        if (!baseTask.correctAnswer) baseTask.correctAnswer = "A";
-        if (!baseTask.question && baseTask.acceptText) {
-          const questionMatch = baseTask.acceptText.match(
-            /\*\*Question:\*\* ([\s\S]+?)(?=\n\n|$)/
-          );
-          if (questionMatch) {
-            baseTask.question = questionMatch[1].trim();
-          }
-        }
-      }
-      // Fallbacks for quiz
-      if (baseTask.taskType === "quiz") {
-        if (!baseTask.questions || !Array.isArray(baseTask.questions)) {
-          baseTask.questions = [];
-        }
-        // Always set each question's correctAnswer from the question object, or from a global answer array if present
-        baseTask.questions = baseTask.questions.map((q, idx) => ({
-          question: q.question || "",
-          optionA: q.optionA || "",
-          optionB: q.optionB || "",
-          optionC: q.optionC || "",
-          optionD: q.optionD || "",
-          correctAnswer:
-            q.correctAnswer ||
-            (Array.isArray(task.answer) ? task.answer[idx] : ""),
-          explanation: q.explanation || "",
-        }));
-      }
-      // Fallbacks for repo analysis
-      if (
-        [
-          "get-issue-count",
-          "get-pr-count",
-          "get-top-contributor",
-          "get-open-issue",
-          "get-issue-title",
-        ].includes(baseTask.taskType)
-      ) {
-        if (!baseTask.repository) baseTask.repository = "";
-      }
-      if (baseTask.taskType === "get-issue-title" && !baseTask.issueNumber) {
-        baseTask.issueNumber = "";
-      }
-      return baseTask;
-    });
+    
     setQuestFormData({
       title: quest.title,
       description: quest.metadata?.description || "",
-      tasks: tasksArr,
+      tasks: [], // Don't load tasks for quest-only editing
     });
     setEditingQuestIndex(questIndex);
     setShowAddQuestModal(true);
@@ -1511,8 +1423,90 @@ Student can now start their quest journey!`);
   };
 
   const editTask = (questIndex, taskId) => {
-    // TODO: Implement task editing
-    console.log("Edit task", questIndex, taskId);
+    // Open the edit task modal for the specific task
+    const quest = jsonContent.questSequence[questIndex];
+    const task = quest.tasks[taskId];
+    
+    // Map task data to form format
+    const taskData = {
+      ...task,
+      taskType: task.type,
+      taskDesc: task.desc || "",
+      points: task.points ?? 0,
+      xp: task.xp ?? 0,
+      acceptText: task.accept || task.responses?.accept || "",
+      successText: task.success || task.responses?.success || "",
+      errorText: task.error || task.responses?.error || "",
+      answer: task.answer || "",
+      answerType: task.answerType || "",
+      repository: task.repository || task.ossRepository || "",
+      issueNumber: task.issueNumber || "",
+      options: Array.isArray(task.options)
+        ? task.options
+        : [
+            { label: "A", value: task.optionA || "" },
+            { label: "B", value: task.optionB || "" },
+            ...(task.optionC ? [{ label: "C", value: task.optionC }] : []),
+            ...(task.optionD ? [{ label: "D", value: task.optionD }] : []),
+            ...(task.optionE ? [{ label: "E", value: task.optionE }] : []),
+          ],
+      correctAnswer: task.correctAnswer || task.answer || "",
+      question: task.question || "",
+      questions: Array.isArray(task.questions) ? task.questions : [],
+      hints: Array.isArray(task.hints) ? task.hints : [],
+      detailedHints: Array.isArray(task.detailedHints)
+        ? task.detailedHints
+        : [],
+      enableTolerance: task.enableTolerance || false,
+      toleranceRange: task.toleranceRange || 10,
+    };
+    
+    setEditingTaskData(taskData);
+    setEditingTaskQuestIndex(questIndex);
+    setEditingTaskId(taskId);
+    setShowEditTaskModal(true);
+  };
+
+  const saveEditedTask = () => {
+    if (!editingTaskData || editingTaskQuestIndex === null || editingTaskId === null) return;
+    
+    setJsonContent((prev) => {
+      const newQuestSequence = [...prev.questSequence];
+      const quest = newQuestSequence[editingTaskQuestIndex];
+      
+      // Update the task with edited data
+      quest.tasks[editingTaskId] = {
+        ...quest.tasks[editingTaskId],
+        title: editingTaskData.taskDesc, // Use taskDesc as title for consistency
+        desc: editingTaskData.taskDesc,
+        points: editingTaskData.points,
+        xp: editingTaskData.xp,
+        type: editingTaskData.taskType,
+        accept: editingTaskData.acceptText,
+        success: editingTaskData.successText,
+        error: editingTaskData.errorText,
+        answer: editingTaskData.answer,
+        answerType: editingTaskData.answerType,
+        repository: editingTaskData.repository,
+        issueNumber: editingTaskData.issueNumber,
+        options: editingTaskData.options,
+        correctAnswer: editingTaskData.correctAnswer,
+        question: editingTaskData.question,
+        questions: editingTaskData.questions,
+        hints: editingTaskData.hints,
+        detailedHints: editingTaskData.detailedHints,
+        enableTolerance: editingTaskData.enableTolerance,
+        toleranceRange: editingTaskData.toleranceRange,
+      };
+      
+      return { ...prev, questSequence: newQuestSequence };
+    });
+    
+    // Close modal and reset state
+    setShowEditTaskModal(false);
+    setEditingTaskData(null);
+    setEditingTaskQuestIndex(null);
+    setEditingTaskId(null);
   };
 
   const deleteTask = (questIndex, taskId) => {
@@ -1832,11 +1826,13 @@ Student can now start their quest journey!`);
   const hintPenaltyErrors = getHintPenaltyValidationErrors();
   const hasHintPenaltyErrors = hintPenaltyErrors.length > 0;
 
-  const isAddQuestDisabled =
-    !questFormData.title.trim() ||
-    questFormData.tasks.length === 0 ||
-    hasHintPenaltyErrors ||
-    questFormData.tasks.some((task) => {
+      const isAddQuestDisabled =
+      !questFormData.title.trim() ||
+      // When editing a quest, don't require tasks (we're only editing title/description)
+      // When adding a new quest, require at least one task
+      (editingQuestIndex === null && questFormData.tasks.length === 0) ||
+      hasHintPenaltyErrors ||
+      questFormData.tasks.some((task) => {
       if (task.taskType === "multiple-choice") {
         return (
           !task.question?.trim() ||
@@ -2252,7 +2248,7 @@ Student can now start their quest journey!`);
             }}
           >
             <Typography variant="h5" component="h3" sx={{ fontWeight: 700 }}>
-              {editingQuestIndex !== null ? "Edit Quest" : "Add New Quest"}
+              {editingQuestIndex !== null ? "Edit Quest (Title & Description Only)" : "Add New Quest"}
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
@@ -2263,7 +2259,7 @@ Student can now start their quest journey!`);
                   variant="h6"
                   sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
                 >
-                  Quest Information
+                  {editingQuestIndex !== null ? "Quest Information (Edit Mode)" : "Quest Information"}
                 </Typography>
 
                 <TextField
@@ -2288,18 +2284,21 @@ Student can now start their quest journey!`);
                 />
               </Box>
 
-              <Divider />
+              {/* Only show tasks section when adding a new quest, not when editing */}
+              {editingQuestIndex === null && (
+                <>
+                  <Divider />
 
-              {/* Task Configuration */}
-              <Box>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
-                >
-                  Tasks ({questFormData.tasks.length})
-                </Typography>
+                  {/* Task Configuration */}
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
+                    >
+                      Tasks ({questFormData.tasks.length})
+                    </Typography>
 
-                {questFormData.tasks.map((task, taskIdx) => (
+                    {questFormData.tasks.map((task, taskIdx) => (
                   <Card
                     key={taskIdx}
                     data-form-task-id={taskIdx}
@@ -2520,6 +2519,17 @@ Student can now start their quest journey!`);
                           </MenuItem>
                         </Select>
                       </FormControl>
+
+                      <TextField
+                        label="Task Title"
+                        value={task.title || ""}
+                        onChange={(e) =>
+                          handleTaskChange(taskIdx, "title", e.target.value)
+                        }
+                        placeholder="e.g., Understanding GitHub Issues"
+                        fullWidth
+                        sx={{ borderRadius: 2, mb: 2 }}
+                      />
 
                       <TextField
                         label="Quest Notes (not displayed to student)"
@@ -4059,25 +4069,29 @@ Student can now start their quest journey!`);
                   </Card>
                 ))}
 
-                {/* Add Task Button - Moved to bottom */}
-                <Button
-                  variant="outlined"
-                  onClick={handleAddTaskToQuest}
-                  startIcon={<AddIcon />}
-                  sx={{
-                    borderRadius: 4,
-                    fontWeight: "bold",
-                    borderColor: "primary.main",
-                    color: "primary.main",
-                    "&:hover": {
-                      borderColor: "primary.dark",
-                      backgroundColor: "#e3f2fd",
-                    },
-                  }}
-                >
-                  Add Task
-                </Button>
+                {/* Add Task Button - Only show when adding new quests */}
+                {editingQuestIndex === null && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleAddTaskToQuest}
+                    startIcon={<AddIcon />}
+                    sx={{
+                      borderRadius: 4,
+                      fontWeight: "bold",
+                      borderColor: "primary.main",
+                      color: "primary.main",
+                      "&:hover": {
+                        borderColor: "primary.dark",
+                        backgroundColor: "#e3f2fd",
+                      },
+                    }}
+                  >
+                    Add Task
+                  </Button>
+                )}
               </Box>
+                </>
+              )}
             </Stack>
           </DialogContent>
           
@@ -4130,6 +4144,294 @@ Student can now start their quest journey!`);
               }}
             >
               {editingQuestIndex !== null ? "Save Changes" : "Add New Quest"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Task Modal */}
+        <Dialog
+          open={showEditTaskModal}
+          onClose={() => {
+            setShowEditTaskModal(false);
+            setEditingTaskData(null);
+            setEditingTaskQuestIndex(null);
+            setEditingTaskId(null);
+          }}
+          maxWidth="lg"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 4,
+              boxShadow: "none",
+              border: "1px solid #e0e0e0",
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              borderBottom: "1px solid #e0e0e0",
+              pb: 2,
+              mb: 0,
+            }}
+          >
+            <Typography variant="h5" component="h3" sx={{ fontWeight: 700 }}>
+              Edit Task
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3 }}>
+            {editingTaskData && (
+              <Stack spacing={4}>
+                {/* Task Basic Info */}
+                <Box>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
+                  >
+                    Task Information
+                  </Typography>
+
+                  <TextField
+                    label="Task Title"
+                    value={editingTaskData.taskDesc}
+                    onChange={(e) =>
+                      setEditingTaskData({
+                        ...editingTaskData,
+                        taskDesc: e.target.value,
+                      })
+                    }
+                    placeholder="e.g., Understanding GitHub Issues"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+
+                  <Stack direction="row" spacing={2}>
+                    <TextField
+                      label="Points"
+                      type="number"
+                      value={editingTaskData.points || 1}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                        if (value < 1) return;
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          points: value,
+                        });
+                      }}
+                      inputProps={{ min: 1 }}
+                      sx={{ width: 120 }}
+                      helperText="Min: 1"
+                    />
+                    <TextField
+                      label="XP Points"
+                      type="number"
+                      value={editingTaskData.xp || 1}
+                      onChange={(e) => {
+                        const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                        if (value < 1) return;
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          xp: value,
+                        });
+                      }}
+                      inputProps={{ min: 1 }}
+                      sx={{ width: 120 }}
+                      helperText="Min: 1"
+                    />
+                  </Stack>
+                </Box>
+
+                <Divider />
+
+                {/* Task Type Specific Fields */}
+                <Box>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
+                  >
+                    Task Configuration
+                  </Typography>
+
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Task Type</InputLabel>
+                    <Select
+                      value={editingTaskData.taskType || "multiple-choice"}
+                      onChange={(e) =>
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          taskType: e.target.value,
+                        })
+                      }
+                      label="Task Type"
+                    >
+                      <MenuItem value="multiple-choice">Multiple Choice</MenuItem>
+                      <MenuItem value="quiz">Quiz</MenuItem>
+                      <MenuItem value="get-issue-count">Get Issue Count</MenuItem>
+                      <MenuItem value="get-pr-count">Get PR Count</MenuItem>
+                      <MenuItem value="get-top-contributor">Get Top Contributor</MenuItem>
+                      <MenuItem value="get-issue-title">Get Issue Title</MenuItem>
+                      <MenuItem value="get-open-issue">Get Open Issue</MenuItem>
+                      <MenuItem value="assigned">Assignment Validation</MenuItem>
+                      <MenuItem value="text-input">Text Input</MenuItem>
+                      <MenuItem value="custom-api-call">Custom API Call</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  {/* Multiple Choice Options */}
+                  {editingTaskData.taskType === "multiple-choice" && (
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        Multiple Choice Options
+                      </Typography>
+                      {editingTaskData.options?.map((option, index) => (
+                        <TextField
+                          key={index}
+                          label={`Option ${option.label}`}
+                          value={option.value}
+                          onChange={(e) => {
+                            const newOptions = [...editingTaskData.options];
+                            newOptions[index].value = e.target.value;
+                            setEditingTaskData({
+                              ...editingTaskData,
+                              options: newOptions,
+                            });
+                          }}
+                          fullWidth
+                          sx={{ mb: 2 }}
+                        />
+                      ))}
+                      <TextField
+                        label="Correct Answer"
+                        value={editingTaskData.correctAnswer || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            correctAnswer: e.target.value.toUpperCase(),
+                          })
+                        }
+                        placeholder="A, B, C, D, or E"
+                        sx={{ width: 150 }}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Repository and Issue Fields */}
+                  {["get-issue-count", "get-pr-count", "get-top-contributor", "get-open-issue", "get-issue-title"].includes(editingTaskData.taskType) && (
+                    <Box>
+                      <TextField
+                        label="Repository"
+                        value={editingTaskData.repository || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            repository: e.target.value,
+                          })
+                        }
+                        placeholder="owner/repo-name"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                      />
+                      {editingTaskData.taskType === "get-issue-title" && (
+                        <TextField
+                          label="Issue Number"
+                          value={editingTaskData.issueNumber || ""}
+                          onChange={(e) =>
+                            setEditingTaskData({
+                              ...editingTaskData,
+                              issueNumber: e.target.value,
+                            })
+                          }
+                          placeholder="123"
+                          sx={{ width: 150 }}
+                        />
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Response Texts */}
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                      Response Messages
+                    </Typography>
+                    <TextField
+                      label="Accept Text (Instructions)"
+                      value={editingTaskData.acceptText || ""}
+                      onChange={(e) =>
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          acceptText: e.target.value,
+                        })
+                      }
+                      placeholder="Instructions shown to students"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      sx={{ mb: 2 }}
+                    />
+                    <TextField
+                      label="Success Text"
+                      value={editingTaskData.successText || ""}
+                      onChange={(e) =>
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          successText: e.target.value,
+                        })
+                      }
+                      placeholder="Message shown on success"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      sx={{ mb: 2 }}
+                    />
+                    <TextField
+                      label="Error Text"
+                      value={editingTaskData.errorText || ""}
+                      onChange={(e) =>
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          errorText: e.target.value,
+                        })
+                      }
+                      placeholder="Message shown on error"
+                      fullWidth
+                      multiline
+                      rows={3}
+                    />
+                  </Box>
+                </Box>
+              </Stack>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
+            <Button
+              onClick={() => {
+                setShowEditTaskModal(false);
+                setEditingTaskData(null);
+                setEditingTaskQuestIndex(null);
+                setEditingTaskId(null);
+              }}
+              sx={{
+                borderRadius: 4,
+                fontWeight: "bold",
+                px: 3,
+                py: 1,
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={saveEditedTask}
+              variant="contained"
+              sx={{
+                bgcolor: "#4caf50",
+                "&:hover": { bgcolor: "#388e3c" },
+                fontWeight: "bold",
+                px: 4,
+                borderRadius: 4,
+                boxShadow: "none",
+                "&:hover": { boxShadow: "none" },
+              }}
+            >
+              Save Changes
             </Button>
           </DialogActions>
         </Dialog>
@@ -4681,7 +4983,7 @@ const QuestBlock = ({
   onEditTask,
   onDeleteTask,
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const taskEntries = Object.entries(quest.tasks);
   return (
     <Accordion
@@ -4690,9 +4992,10 @@ const QuestBlock = ({
       onChange={() => setExpanded(!expanded)}
       sx={{
         mb: 2,
-        bgcolor: quest.isQ0 ? "#f8f9fa" : "white",
+        bgcolor: quest.isQ0 ? "#f8f9fa" : (expanded ? "white" : "#f5f5f5"),
         borderRadius: 4,
         boxShadow: "none",
+        transition: "background-color 0.2s ease-in-out",
       }}
     >
       <AccordionSummary>
