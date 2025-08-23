@@ -672,6 +672,19 @@ const GenerateJson = () => {
         newTasks[newIndex],
         newTasks[taskIdx],
       ];
+      
+      // Schedule auto-centering after the state update and DOM re-render
+      setTimeout(() => {
+        const taskElement = document.querySelector(`[data-form-task-id="${newIndex}"]`);
+        if (taskElement) {
+          taskElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 100); // Small delay to ensure DOM has updated
+      
       return { ...prev, tasks: newTasks };
     });
   };
@@ -1309,7 +1322,22 @@ Student can now start their quest journey!`);
       newQuestSequence.splice(newIndex, 0, movedQuest);
 
       // Update quest IDs to be sequential based on new positions
-      return { ...prev, questSequence: updateQuestIds(newQuestSequence) };
+      const updatedSequence = updateQuestIds(newQuestSequence);
+      
+      // Schedule auto-centering after the state update and DOM re-render
+      setTimeout(() => {
+        const movedQuestId = movedQuest.questId || `Q${newIndex}`;
+        const questElement = document.querySelector(`[data-quest-id="${movedQuestId}"]`);
+        if (questElement) {
+          questElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 100); // Small delay to ensure DOM has updated
+      
+      return { ...prev, questSequence: updatedSequence };
     });
   };
 
@@ -1464,6 +1492,20 @@ Student can now start their quest journey!`);
       });
 
       quest.tasks = newTasks;
+      
+      // Schedule auto-centering after the state update and DOM re-render
+      setTimeout(() => {
+        const movedTaskId = direction === "up" ? taskEntries[newIndex][0] : taskEntries[currentIndex][0];
+        const taskElement = document.querySelector(`[data-task-id="${movedTaskId}"][data-quest-index="${questIndex}"]`);
+        if (taskElement) {
+          taskElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 100); // Small delay to ensure DOM has updated
+      
       return { ...prev, questSequence: newQuestSequence };
     });
   };
@@ -2260,6 +2302,7 @@ Student can now start their quest journey!`);
                 {questFormData.tasks.map((task, taskIdx) => (
                   <Card
                     key={taskIdx}
+                    data-form-task-id={taskIdx}
                     sx={{
                       border: "1px solid #e0e0e0",
                       borderRadius: 4,
@@ -4642,6 +4685,7 @@ const QuestBlock = ({
   const taskEntries = Object.entries(quest.tasks);
   return (
     <Accordion
+      data-quest-id={quest.questId || `Q${questIndex}`}
       expanded={expanded}
       onChange={() => setExpanded(!expanded)}
       sx={{
@@ -4818,6 +4862,8 @@ const TaskBlock = ({
 }) => {
   return (
     <Card
+      data-task-id={taskId}
+      data-quest-index={questIndex}
       sx={{
         mb: 2,
         borderRadius: 4,
@@ -4946,6 +4992,23 @@ const TaskBlock = ({
                 }}
               >
                 <ArrowDownwardIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          <Tooltip title="Edit Task">
+            <span>
+              <IconButton
+                size="small"
+                onClick={() => onEditTask(questIndex, taskId)}
+                sx={{
+                  border: "1px solid #4caf50",
+                  borderRadius: 4,
+                  backgroundColor: "#4caf50",
+                  color: "white",
+                  "&:hover": { backgroundColor: "#388e3c" },
+                }}
+              >
+                <EditIcon fontSize="small" />
               </IconButton>
             </span>
           </Tooltip>

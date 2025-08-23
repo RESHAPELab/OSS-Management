@@ -5,15 +5,16 @@ implement the logic. Time costs :(
 */
 const UserRepo = require("../models/UserRepoModel");
 const Readme = require("../models/ReadmeModel");
+const Group = require("../models/GroupModel");
 require("dotenv").config();
 
 
 const axios = require('axios');
-const { sendMessageToBot } = require('../utils/botMessage');
+const { sendMessageToBot, getGithubAppInstallationAccessToken } = require('../utils/botMessage');
 const { recoverPassword } = require("./authController");
-const { getGithubAppInstallationAccessToken } = require('../../bot/controllers/githubAppAuth');
 const fs = require('fs');
 const path = require('path');
+
 
 function generateCustomQuestConfig(customSequence, groupId) {
   console.log('[DEBUG] [generateCustomQuestConfig] Incoming customSequence.questSequence:', JSON.stringify(customSequence.questSequence, null, 2));
@@ -132,12 +133,18 @@ Repository for ${studentGithubUsername} in ${groupName}.`;
 };
 
 const getProductionStatus = async (req, res) => { 
-    console.log(process.env.NODE_ENV);
-    if (process.env.NODE_ENV === 'production') {
-        res.status(200).json({organizationGh: process.env.USER_AGENT_PROD});
-    } else { 
-       res.status(200).json({organizationGh: process.env.USER_AGENT_DEV});
-   }
+    try {
+        const env = process.env.NODE_ENV;
+        const orgFromEnv = process.env.GITHUB_ORG;
+        const devOrg = process.env.USER_AGENT_DEV;
+        const prodOrg = process.env.USER_AGENT_PROD;
+        const fallback = 'OSS-Doorway-Dev';
+        
+        const organizationGh = orgFromEnv || (env === 'production' ? prodOrg : devOrg) || fallback;
+        return res.status(200).json({ organizationGh });
+    } catch (e) {
+        return res.status(200).json({ organizationGh: 'OSS-Doorway-Dev' });
+    }
 }
 
 const createMultipleRepos = async (req, res) => {
@@ -290,9 +297,6 @@ Your current progress will be displayed here as you complete quests.
         // Import GitHub App authentication
         let githubToken;
         try {
-            // Use dynamic import for GitHub App authentication
-            const { getGithubAppInstallationAccessToken } = await import('../../../bot/controllers/githubAppAuth');
-            
             // Get GitHub access token
             console.log('🔑 Getting GitHub App installation access token...');
             githubToken = await getGithubAppInstallationAccessToken();
@@ -763,10 +767,10 @@ const getRepoCollaborationStatus = async (req, res) => {
 
 const listOrganizationRepos = async (req, res) => {
     try {
-        const { organizationGh } = req.query;
-        
+        let { organizationGh } = req.query;
         if (!organizationGh) {
-            return res.status(400).json({ message: "Invalid request. Required: organizationGh" });
+            // Fallback to env if frontend didn't pass it
+            organizationGh = process.env.GITHUB_ORG || process.env.USER_AGENT_DEV || 'OSS-Doorway-Dev';
         }
 
         const response = await sendMessageToBot(
@@ -774,12 +778,16 @@ const listOrganizationRepos = async (req, res) => {
             { org: organizationGh }
         );
 
+        if (!response || !response.data) {
+            return res.status(502).json({ message: "Bot did not return data" });
+        }
+
         res.status(200).json({
             message: "Repositories retrieved successfully",
             repos: response.data
         });
     } catch (error) {
-        console.error("Error in listOrganizationRepos:", error);
+        console.error("Error in listOrganizationRepos:", error.message);
         res.status(500).json({ message: "Error listing repositories", error: error.message });
     }
 };
@@ -797,9 +805,6 @@ const checkRepoReadme = async (req, res) => {
         // Try to get GitHub access token
         let githubToken;
         try {
-            // Use dynamic import for GitHub App authentication
-            const { getGithubAppInstallationAccessToken } = await import('../../../bot/controllers/githubAppAuth');
-            
             // Get GitHub access token
             console.log('🔑 Getting GitHub App installation access token...');
             githubToken = await getGithubAppInstallationAccessToken();
@@ -1405,7 +1410,13 @@ Repository for students in ${className}.`;
           Object.entries(firstQuest.tasks).forEach(([taskKey, taskVal]) => {
             if (taskKey === 'metadata') return;
             const taskDesc = taskVal.desc || taskVal.description || taskVal.name || '';
-            progressSection += `  - ${taskKey} - ${taskDesc}\n`;
+            
+            // For the first task (T1), add a clickable link to issue #1
+            if (taskKey === 'T1') {
+              progressSection += `  - ${taskKey} - ${taskDesc} [[Click here to start](https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues/1)]\n`;
+            } else {
+              progressSection += `  - ${taskKey} - ${taskDesc}\n`;
+            }
           });
         }
       }
@@ -1463,10 +1474,14 @@ Repository for students in ${className}.`;
     
     const results = { successful: [], unsuccessful: [] };
     for (const user of users) {
+      let repoResponse = null; // Declare outside try-catch
+      let repoName, dbUser, groupId; // Declare variables outside try-catch
+      
       try {
         // Use strictly username-class format for repo and dbUser
-        const dbUser = `${user}-${repoIdentifier}`;
-        const repoName = `${user}-${repoIdentifier}`;
+        dbUser = `${user}-${repoIdentifier}`;
+        repoName = `${user}-${repoIdentifier}`;
+        groupId = classId; // Set groupId for later use
         const repoDescription = `Repository for ${user} in ${className}`;
         
         console.log(`📝 [createCustomRepos] Creating repo: ${repoName} (dbUser: ${dbUser})`);
@@ -1474,11 +1489,11 @@ Repository for students in ${className}.`;
         // Create the repository
         try {
             console.log(`🚀 [REPO-CREATION] Creating repository: ${process.env.GITHUB_ORG}/${repoName}`);
-            const repoResponse = await orgOctokit.repos.createInOrg({
+            repoResponse = await orgOctokit.repos.createInOrg({
               org: process.env.GITHUB_ORG,
               name: repoName,
               description: repoDescription,
-              private: false,
+              private: true,
               auto_init: readmeContent ? false : true, // Don't auto-init if we have custom README
               gitignore_template: readmeContent ? null : "Node" // Don't use template if we're manually creating files
             });
@@ -1506,6 +1521,40 @@ Repository for students in ${className}.`;
             // Continue even if collaborator addition fails
         }
 
+        // Add all admins as collaborators
+        try {
+            console.log(`👥 [ADMIN-COLLABORATORS] Fetching admins for class ${classId}`);
+            const group = await Group.findById(classId);
+            
+            if (group && group.admins && group.admins.length > 0) {
+                console.log(`👥 [ADMIN-COLLABORATORS] Found ${group.admins.length} admins to add to ${repoName}`);
+                
+                for (const admin of group.admins) {
+                    try {
+                        console.log(`👥 [ADMIN-COLLABORATORS] Adding admin ${admin.githubUsername} to ${repoName}`);
+                        await orgOctokit.repos.addCollaborator({
+                            owner: process.env.GITHUB_ORG,
+                            repo: repoName,
+                            username: admin.githubUsername,
+                            permission: "push"  // Same permission as students
+                        });
+                        console.log(`✅ [ADMIN-COLLABORATORS] Admin ${admin.githubUsername} added as collaborator to ${repoName}`);
+                        
+                        // Small delay to avoid rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    } catch (adminCollabError) {
+                        console.error(`❌ [ADMIN-COLLABORATORS] Failed to add admin ${admin.githubUsername} to ${repoName}:`, adminCollabError.message);
+                        // Continue with other admins even if one fails
+                    }
+                }
+            } else {
+                console.log(`ℹ️ [ADMIN-COLLABORATORS] No admins found for class ${classId} or group not found`);
+            }
+        } catch (adminError) {
+            console.error(`❌ [ADMIN-COLLABORATORS] Error fetching/adding admins for ${repoName}:`, adminError.message);
+            // Don't fail the whole operation if admin addition fails
+        }
+
         // 🔧 NEW: Add README file if available from class setup
         if (readmeContent) {
           console.log(`📤 [createCustomRepos] ===== README UPLOAD START =====`);
@@ -1521,7 +1570,11 @@ Repository for students in ${className}.`;
             console.log(`🚀 [createCustomRepos] Initiating GitHub API call to upload README...`);
             console.log(`🚀 [createCustomRepos] Converting content to base64...`);
             
-            const base64Content = Buffer.from(readmeContent).toString('base64');
+            // Replace REPO_NAME placeholder with actual repository name
+            let finalReadmeContent = readmeContent.replace(/REPO_NAME/g, repoName);
+            console.log(`🔧 [createCustomRepos] Replaced REPO_NAME placeholder with: ${repoName}`);
+            
+            const base64Content = Buffer.from(finalReadmeContent).toString('base64');
             console.log(`🚀 [createCustomRepos] Base64 content length: ${base64Content.length} characters`);
             console.log(`🚀 [createCustomRepos] Base64 preview: "${base64Content.substring(0, 50)}..."`);
             
@@ -1854,7 +1907,13 @@ typings/
             console.error('❌ [ISSUE-CREATION] Failed to create first quest issue:', issueError);
             // Continue even if issue creation fails
         }
-        results.successful.push({ user, repoName, dbUser, groupId, repoUrl: repoResponse.data.html_url });
+        results.successful.push({ 
+          user, 
+          repoName, 
+          dbUser, 
+          groupId, 
+          repoUrl: repoResponse ? repoResponse.data.html_url : `https://github.com/${process.env.GITHUB_ORG}/${repoName}` 
+        });
       } catch (error) {
         console.error(`❌ [REPO-CREATION] Failed to create repo for ${user}:`, error);
         console.error(`❌ [REPO-CREATION] Error details:`, {

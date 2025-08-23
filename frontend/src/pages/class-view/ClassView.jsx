@@ -1351,6 +1351,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move up - already at top of movable quests list');
             }
@@ -1376,6 +1388,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move down - already at bottom of quests list');
             }
@@ -1401,6 +1425,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move up - already at top of movable quests list');
             }
@@ -1426,6 +1462,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move down - already at bottom of quests list');
             }

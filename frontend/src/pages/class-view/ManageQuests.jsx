@@ -450,6 +450,18 @@ const ManageQuests = () => {
         newOrder[currentIndex] = newOrder[currentIndex - 1];
         newOrder[currentIndex - 1] = temp;
         debouncedSaveQuestOrder(newOrder);
+        
+        // Schedule auto-centering after the state update and DOM re-render
+        setTimeout(() => {
+          const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+          if (questElement) {
+            questElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'nearest'
+            });
+          }
+        }, 100); // Small delay to ensure DOM has updated
       }
       return newOrder;
     });
@@ -480,6 +492,18 @@ const ManageQuests = () => {
         newOrder[currentIndex] = newOrder[currentIndex + 1];
         newOrder[currentIndex + 1] = temp;
         debouncedSaveQuestOrder(newOrder);
+        
+        // Schedule auto-centering after the state update and DOM re-render
+        setTimeout(() => {
+          const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+          if (questElement) {
+            questElement.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'nearest'
+            });
+          }
+        }, 100); // Small delay to ensure DOM has updated
       }
       return newOrder;
     });
@@ -1743,6 +1767,7 @@ const ManageQuests = () => {
         {unifiedQuestOrder.map((quest, index) => (
           <Card
             key={quest._id || quest.id}
+            data-quest-id={quest._id || quest.id}
             sx={{
               mb: 2,
               p: 2,
