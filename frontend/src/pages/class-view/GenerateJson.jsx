@@ -137,6 +137,8 @@ const GenerateJson = () => {
         badgeDescription: "Explorer 🚀",
         tasks: {
           T1: {
+            title: "Explore the issue tracker",
+            taskTitle: "Explore the issue tracker",
             desc: "Explore the issue tracker",
             points: 20,
             xp: 20,
@@ -152,6 +154,8 @@ const GenerateJson = () => {
             hints: [],
           },
           T2: {
+            title: "Explore the pull-request menu",
+            taskTitle: "Explore the pull-request menu",
             desc: "Explore the pull-request menu",
             points: 20,
             xp: 20,
@@ -167,6 +171,8 @@ const GenerateJson = () => {
             hints: [],
           },
           T3: {
+            title: "Explore the fork button",
+            taskTitle: "Explore the fork button",
             desc: "Explore the fork button",
             points: 20,
             xp: 20,
@@ -201,6 +207,8 @@ const GenerateJson = () => {
             hints: [],
           },
           T4: {
+            title: "Explore the readme file",
+            taskTitle: "Explore the readme file",
             desc: "Explore the readme file",
             points: 20,
             xp: 20,
@@ -235,6 +243,8 @@ const GenerateJson = () => {
             hints: [],
           },
           T5: {
+            title: "Explore the contributors",
+            taskTitle: "Explore the contributors",
             desc: "Explore the contributors",
             points: 20,
             xp: 20,
@@ -250,6 +260,8 @@ const GenerateJson = () => {
             hints: [],
           },
           T6: {
+            title: "Quiz",
+            taskTitle: "Quiz",
             desc: "Quiz",
             points: 20,
             xp: 20,
@@ -340,6 +352,8 @@ const GenerateJson = () => {
         badgeDescription: "Custom Quest 🎯",
         tasks: {
           T1: {
+            title: "Identify the assigned user for the issue #88",
+            taskTitle: "Identify the assigned user for the issue #88",
             desc: "Identify the assigned user for the issue #88",
             points: 25,
             xp: 25,
@@ -347,6 +361,8 @@ const GenerateJson = () => {
             detailedHints: [],
           },
           T2: {
+            title: "Choose an issue that you would like to work with",
+            taskTitle: "Choose an issue that you would like to work with",
             desc: "Choose an issue that you would like to work with",
             points: 25,
             xp: 25,
@@ -591,6 +607,8 @@ const GenerateJson = () => {
 
   // 2. Add a function to create a blank task (with all fields)
   const createBlankTask = () => ({
+    title: "",
+    taskTitle: "",
     desc: "",
     points: 20,
     xp: 20,
@@ -599,7 +617,10 @@ const GenerateJson = () => {
     success: "",
     error: "",
     answer: "",
-    options: [],
+    options: [
+      { label: "A", value: "" },
+      { label: "B", value: "" }
+    ],
     detailedHints: [],
     taskType: "multiple-choice",
     taskDesc: "",
@@ -624,7 +645,7 @@ const GenerateJson = () => {
     },
   });
 
-  // 3. Add a function to add a new blank task
+  // 3. Add a function to add a new blank task to questFormData (for Add New Quest modal)
   const handleAddTaskToQuest = () => {
     setQuestFormData((prev) => {
       const newTask = createBlankTask();
@@ -635,6 +656,49 @@ const GenerateJson = () => {
         ...prev,
         tasks: [...prev.tasks, newTask],
       };
+    });
+  };
+
+  // 4. Add a function to add a new blank task to existing quests in the sequence builder
+  const handleAddTaskToExistingQuest = (questIndex) => {
+    // Generate the next task ID before creating the task
+    const existingTaskIds = Object.keys(jsonContent.questSequence[questIndex].tasks);
+    const nextTaskNumber = existingTaskIds.length + 1;
+    const newTaskId = `T${nextTaskNumber}`;
+    
+    setJsonContent((prev) => {
+      const newQuestSequence = [...prev.questSequence];
+      const quest = newQuestSequence[questIndex];
+      
+      // Create a template MCQ task
+      const templateTask = {
+        title: `Task ${nextTaskNumber}`,
+        taskTitle: `Task ${nextTaskNumber}`,
+        desc: `Task ${nextTaskNumber}`,
+        points: 20,
+        xp: 20,
+        type: "multiple-choice",
+        accept: "**Question:** [Your question here]\n\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n**Instructions:** Select the correct answer.",
+        success: "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 20\n\nGreat work! 🎉",
+        error: "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        answer: "A",
+        answerType: "singleAnswer",
+        question: "[Your question here]",
+        options: [
+          { label: "A", value: "Option A" },
+          { label: "B", value: "Option B" },
+          { label: "C", value: "Option C" },
+          { label: "D", value: "Option D" }
+        ],
+        correctAnswer: "A",
+        hints: [],
+        detailedHints: []
+      };
+      
+      // Add the template task to the quest
+      quest.tasks[newTaskId] = templateTask;
+      
+      return { ...prev, questSequence: newQuestSequence };
     });
   };
 
@@ -972,7 +1036,8 @@ Student can now start their quest journey!`);
         // Build taskData based on type (reuse your existing logic for each type)
         let taskData = {
           title: task.title || "", // Add task title
-          desc: task.taskDesc,
+          taskTitle: task.title || "", // Add taskTitle field
+          desc: task.title || task.taskDesc || task.acceptText || "Complete this task", // Use title as primary, fallback to others
           points: parseInt(task.points),
           xp: parseInt(task.points),
           hints: [],
@@ -1162,7 +1227,7 @@ Student can now start their quest journey!`);
         return {
           // Required fields for TaskModel
           taskTitle: task.title || task.taskTitle || `Task ${idx + 1}`,
-          desc: task.taskDesc || task.desc || "",
+          desc: task.title || task.taskDesc || task.desc || task.accept || task.acceptText || "Complete this task",
           points:
             typeof task.points === "number"
               ? task.points
@@ -1431,7 +1496,8 @@ Student can now start their quest journey!`);
     const taskData = {
       ...task,
       taskType: task.type,
-      taskDesc: task.desc || "",
+      title: task.title || task.taskTitle || "",
+      taskDesc: task.title || task.taskTitle || task.desc || "",
       points: task.points ?? 0,
       xp: task.xp ?? 0,
       acceptText: task.accept || task.responses?.accept || "",
@@ -1449,6 +1515,12 @@ Student can now start their quest journey!`);
             ...(task.optionC ? [{ label: "C", value: task.optionC }] : []),
             ...(task.optionD ? [{ label: "D", value: task.optionD }] : []),
             ...(task.optionE ? [{ label: "E", value: task.optionE }] : []),
+            // Support for additional options beyond E (legacy format)
+            ...(task.optionF ? [{ label: "F", value: task.optionF }] : []),
+            ...(task.optionG ? [{ label: "G", value: task.optionG }] : []),
+            ...(task.optionH ? [{ label: "H", value: task.optionH }] : []),
+            ...(task.optionI ? [{ label: "I", value: task.optionI }] : []),
+            ...(task.optionJ ? [{ label: "J", value: task.optionJ }] : []),
           ],
       correctAnswer: task.correctAnswer || task.answer || "",
       question: task.question || "",
@@ -1459,6 +1531,13 @@ Student can now start their quest journey!`);
         : [],
       enableTolerance: task.enableTolerance || false,
       toleranceRange: task.toleranceRange || 10,
+      // Ensure llmTextValidation is properly initialized
+      llmTextValidation: task.llmTextValidation || {
+        question: "",
+        validationParameters: [],
+        temperature: 0.1,
+        enableDetailedFeedback: false,
+      },
     };
     
     setEditingTaskData(taskData);
@@ -1477,15 +1556,16 @@ Student can now start their quest journey!`);
       // Update the task with edited data
       quest.tasks[editingTaskId] = {
         ...quest.tasks[editingTaskId],
-        title: editingTaskData.taskDesc, // Use taskDesc as title for consistency
-        desc: editingTaskData.taskDesc,
+        title: editingTaskData.taskDesc || editingTaskData.title,
+        taskTitle: editingTaskData.taskDesc || editingTaskData.title,
+        desc: editingTaskData.taskDesc || editingTaskData.title, // Use taskDesc as primary value
         points: editingTaskData.points,
         xp: editingTaskData.xp,
         type: editingTaskData.taskType,
         accept: editingTaskData.acceptText,
         success: editingTaskData.successText,
         error: editingTaskData.errorText,
-        answer: editingTaskData.answer,
+        answer: editingTaskData.correctAnswer || editingTaskData.answer, // Use correctAnswer for MCQ
         answerType: editingTaskData.answerType,
         repository: editingTaskData.repository,
         issueNumber: editingTaskData.issueNumber,
@@ -1497,6 +1577,12 @@ Student can now start their quest journey!`);
         detailedHints: editingTaskData.detailedHints,
         enableTolerance: editingTaskData.enableTolerance,
         toleranceRange: editingTaskData.toleranceRange,
+        // Save Custom API Call fields
+        apiEndpoint: editingTaskData.apiEndpoint,
+        responsePath: editingTaskData.responsePath,
+        expectedAnswerType: editingTaskData.expectedAnswerType,
+        // Save LLM Text Validation fields
+        llmTextValidation: editingTaskData.llmTextValidation,
       };
       
       return { ...prev, questSequence: newQuestSequence };
@@ -1756,8 +1842,8 @@ Student can now start their quest journey!`);
     setQuestFormData((prev) => {
       const updatedTasks = prev.tasks.map((task, idx) => {
         if (idx !== taskIdx) return task;
-        if (task.options.length >= 5) return task;
-        const nextLabel = String.fromCharCode(65 + task.options.length); // 'C', 'D', 'E'
+        // Remove the 5 option limit - allow unlimited options
+        const nextLabel = String.fromCharCode(65 + task.options.length); // 'C', 'D', 'E', 'F', 'G', etc.
         return {
           ...task,
           options: [...task.options, { label: nextLabel, value: "" }],
@@ -1770,7 +1856,7 @@ Student can now start their quest journey!`);
     setQuestFormData((prev) => {
       const updatedTasks = prev.tasks.map((task, idx) => {
         if (idx !== taskIdx) return task;
-        if (optionIdx < 2) return task; // Don't allow removing A or B
+        if (optionIdx < 2) return task; // Don't allow removing A or B (default options)
         const newOptions = task.options.filter((_, i) => i !== optionIdx);
         // If correctAnswer is now out of range, reset to 'a'
         let correctAnswer = task.correctAnswer;
@@ -2183,6 +2269,7 @@ Student can now start their quest journey!`);
                   onMoveTask={moveTask}
                   onEditTask={editTask}
                   onDeleteTask={deleteTask}
+                  onAddTask={() => handleAddTaskToExistingQuest(questIndex)}
                 />
               ))}
             </Box>
@@ -2648,7 +2735,7 @@ Student can now start their quest journey!`);
                                   onClick={() =>
                                     handleRemoveOption(taskIdx, optIdx)
                                   }
-                                  disabled={task.options.length <= 2}
+                                  disabled={false}
                                   sx={{ borderRadius: 2 }}
                                 >
                                   <DeleteIcon fontSize="small" />
@@ -2656,14 +2743,12 @@ Student can now start their quest journey!`);
                               )}
                             </Box>
                           ))}
-                          {task.options.length < 5 && (
-                            <Button
-                              onClick={() => handleAddOption(taskIdx)}
-                              sx={{ mt: 1, borderRadius: 4 }}
-                            >
-                              Add Option
-                            </Button>
-                          )}
+                          <Button
+                            onClick={() => handleAddOption(taskIdx)}
+                            sx={{ mt: 1, borderRadius: 4 }}
+                          >
+                            Add Option
+                          </Button>
                           <FormControl fullWidth sx={{ mt: 2 }}>
                             <InputLabel>Correct Answer</InputLabel>
                             <Select
@@ -4192,7 +4277,7 @@ Student can now start their quest journey!`);
 
                   <TextField
                     label="Task Title"
-                    value={editingTaskData.taskDesc}
+                    value={editingTaskData.taskDesc || ""}
                     onChange={(e) =>
                       setEditingTaskData({
                         ...editingTaskData,
@@ -4262,7 +4347,33 @@ Student can now start their quest journey!`);
                         })
                       }
                       label="Task Type"
+                      sx={{ borderRadius: 2 }}
                     >
+                      {/* Custom API Call - Most Prominent */}
+                      <MenuItem
+                        value="custom-api-call"
+                        sx={{
+                          backgroundColor: "#e3f2fd",
+                          fontWeight: "bold",
+                          borderBottom: "2px solid #2196f3",
+                          "&:hover": {
+                            backgroundColor: "#bbdefb",
+                          },
+                        }}
+                      >
+                        Custom API Call
+                      </MenuItem>
+
+                      {/* Default Task Types */}
+                      <ListSubheader
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          fontWeight: "bold",
+                          color: "#666",
+                        }}
+                      >
+                        Default Task Types
+                      </ListSubheader>
                       <MenuItem value="multiple-choice">Multiple Choice</MenuItem>
                       <MenuItem value="quiz">Quiz</MenuItem>
                       <MenuItem value="get-issue-count">Get Issue Count</MenuItem>
@@ -4272,7 +4383,32 @@ Student can now start their quest journey!`);
                       <MenuItem value="get-open-issue">Get Open Issue</MenuItem>
                       <MenuItem value="assigned">Assignment Validation</MenuItem>
                       <MenuItem value="text-input">Text Input</MenuItem>
-                      <MenuItem value="custom-api-call">Custom API Call</MenuItem>
+                      <MenuItem value="issue-no">Issue Number</MenuItem>
+
+                      {/* AI-Powered Task Types */}
+                      <ListSubheader
+                        sx={{
+                          backgroundColor: "#f5f5f5",
+                          fontWeight: "bold",
+                          color: "#666",
+                        }}
+                      >
+                        AI-Powered Task Types
+                      </ListSubheader>
+
+                      <MenuItem
+                        value="llm-text-validation"
+                        sx={{
+                          backgroundColor: "#fff3e0",
+                          fontWeight: "bold",
+                          borderBottom: "2px solid #ff9800",
+                          "&:hover": {
+                            backgroundColor: "#ffe0b2",
+                          },
+                        }}
+                      >
+                        LLM Text Validation
+                      </MenuItem>
                     </Select>
                   </FormControl>
 
@@ -4282,35 +4418,93 @@ Student can now start their quest journey!`);
                       <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                         Multiple Choice Options
                       </Typography>
+                      
+                      {/* Options List */}
                       {editingTaskData.options?.map((option, index) => (
-                        <TextField
-                          key={index}
-                          label={`Option ${option.label}`}
-                          value={option.value}
-                          onChange={(e) => {
-                            const newOptions = [...editingTaskData.options];
-                            newOptions[index].value = e.target.value;
+                        <Box key={index} sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'flex-start' }}>
+                          <TextField
+                            label={`Option ${option.label}`}
+                            value={option.value}
+                            onChange={(e) => {
+                              const newOptions = [...editingTaskData.options];
+                              newOptions[index].value = e.target.value;
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                options: newOptions,
+                              });
+                            }}
+                            fullWidth
+                          />
+                          {/* Delete button - show only if more than 2 options and not A or B */}
+                          {editingTaskData.options.length > 2 && index >= 2 && (
+                            <IconButton
+                              onClick={() => {
+                                const newOptions = [...editingTaskData.options];
+                                newOptions.splice(index, 1);
+                                
+                                // Update correct answer if it was the deleted option
+                                let newCorrectAnswer = editingTaskData.correctAnswer;
+                                if (editingTaskData.correctAnswer === option.label) {
+                                  newCorrectAnswer = "A"; // Default to A if deleted option was selected
+                                }
+                                
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  options: newOptions,
+                                  correctAnswer: newCorrectAnswer,
+                                });
+                              }}
+                              color="error"
+                              sx={{ mt: 1 }}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          )}
+                        </Box>
+                      ))}
+                      
+                      {/* Add Option Button */}
+                      {editingTaskData.options?.length < 26 && (
+                        <Button
+                          onClick={() => {
+                            const nextLetter = String.fromCharCode(65 + editingTaskData.options.length); // A=65, B=66, etc.
+                            const newOptions = [
+                              ...editingTaskData.options,
+                              { label: nextLetter, value: "" }
+                            ];
                             setEditingTaskData({
                               ...editingTaskData,
                               options: newOptions,
                             });
                           }}
-                          fullWidth
+                          startIcon={<span>+</span>}
+                          variant="outlined"
                           sx={{ mb: 2 }}
-                        />
-                      ))}
-                      <TextField
-                        label="Correct Answer"
-                        value={editingTaskData.correctAnswer || ""}
-                        onChange={(e) =>
-                          setEditingTaskData({
-                            ...editingTaskData,
-                            correctAnswer: e.target.value.toUpperCase(),
-                          })
-                        }
-                        placeholder="A, B, C, D, or E"
-                        sx={{ width: 150 }}
-                      />
+                        >
+                          Add Option {String.fromCharCode(65 + editingTaskData.options?.length)}
+                        </Button>
+                      )}
+                      
+                      {/* Correct Answer Dropdown */}
+                      <FormControl sx={{ width: 200 }}>
+                        <InputLabel>Correct Answer</InputLabel>
+                        <Select
+                          value={editingTaskData.correctAnswer || "A"}
+                          onChange={(e) =>
+                            setEditingTaskData({
+                              ...editingTaskData,
+                              correctAnswer: e.target.value,
+                            })
+                          }
+                          label="Correct Answer"
+                        >
+                          {editingTaskData.options?.map((option) => (
+                            <MenuItem key={option.label} value={option.label}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     </Box>
                   )}
 
@@ -4344,6 +4538,204 @@ Student can now start their quest journey!`);
                           sx={{ width: 150 }}
                         />
                       )}
+                    </Box>
+                  )}
+
+                  {/* Custom API Call Configuration */}
+                  {editingTaskData.taskType === "custom-api-call" && (
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        Custom API Call Configuration
+                      </Typography>
+                      <TextField
+                        label="API Endpoint"
+                        value={editingTaskData.apiEndpoint || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            apiEndpoint: e.target.value,
+                          })
+                        }
+                        placeholder="https://api.example.com/data"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        label="Response Path"
+                        value={editingTaskData.responsePath || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            responsePath: e.target.value,
+                          })
+                        }
+                        placeholder="data.count"
+                        fullWidth
+                        sx={{ mb: 2 }}
+                      />
+                      <FormControl fullWidth sx={{ mb: 2 }}>
+                        <InputLabel>Expected Answer Type</InputLabel>
+                        <Select
+                          value={editingTaskData.expectedAnswerType || "Number"}
+                          onChange={(e) =>
+                            setEditingTaskData({
+                              ...editingTaskData,
+                              expectedAnswerType: e.target.value,
+                            })
+                          }
+                          label="Expected Answer Type"
+                        >
+                          <MenuItem value="Number">Number</MenuItem>
+                          <MenuItem value="String">String</MenuItem>
+                          <MenuItem value="Boolean">Boolean</MenuItem>
+                        </Select>
+                      </FormControl>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={editingTaskData.enableTolerance || false}
+                            onChange={(e) =>
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                enableTolerance: e.target.checked,
+                              })
+                            }
+                          />
+                        }
+                        label="Enable Tolerance Range"
+                      />
+                      {editingTaskData.enableTolerance && (
+                        <TextField
+                          label="Tolerance Range (%)"
+                          type="number"
+                          value={editingTaskData.toleranceRange || 10}
+                          onChange={(e) =>
+                            setEditingTaskData({
+                              ...editingTaskData,
+                              toleranceRange: parseInt(e.target.value) || 10,
+                            })
+                          }
+                          sx={{ width: 150, ml: 2 }}
+                        />
+                      )}
+                    </Box>
+                  )}
+
+                  {/* LLM Text Validation Configuration */}
+                  {editingTaskData.taskType === "llm-text-validation" && (
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        LLM Text Validation Configuration
+                      </Typography>
+                      <TextField
+                        label="Validation Question"
+                        value={editingTaskData.llmTextValidation?.question || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            llmTextValidation: {
+                              ...editingTaskData.llmTextValidation,
+                              question: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="What should be validated in the student's response?"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        sx={{ mb: 2 }}
+                      />
+                      
+                      <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
+                        Validation Parameters
+                      </Typography>
+                      {(editingTaskData.llmTextValidation?.validationParameters || []).map((param, index) => (
+                        <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                          <TextField
+                            label="Parameter"
+                            value={param}
+                            onChange={(e) => {
+                              const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || [])];
+                              newParams[index] = e.target.value;
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                llmTextValidation: {
+                                  ...editingTaskData.llmTextValidation,
+                                  validationParameters: newParams,
+                                },
+                              });
+                            }}
+                            fullWidth
+                          />
+                          <IconButton 
+                            onClick={() => {
+                              const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || [])];
+                              newParams.splice(index, 1);
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                llmTextValidation: {
+                                  ...editingTaskData.llmTextValidation,
+                                  validationParameters: newParams,
+                                },
+                              });
+                            }}
+                            color="error"
+                          >
+                            ✕
+                          </IconButton>
+                        </Box>
+                      ))}
+                      <Button
+                        onClick={() => {
+                          const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || []), ""];
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            llmTextValidation: {
+                              ...editingTaskData.llmTextValidation,
+                              validationParameters: newParams,
+                            },
+                          });
+                        }}
+                        startIcon={<span>+</span>}
+                        sx={{ mb: 2 }}
+                      >
+                        Add Parameter
+                      </Button>
+
+                      <TextField
+                        label="Temperature"
+                        type="number"
+                        value={editingTaskData.llmTextValidation?.temperature || 0.1}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            llmTextValidation: {
+                              ...editingTaskData.llmTextValidation,
+                              temperature: parseFloat(e.target.value) || 0.1,
+                            },
+                          })
+                        }
+                        inputProps={{ min: 0, max: 2, step: 0.1 }}
+                        sx={{ width: 150, mb: 2 }}
+                      />
+
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={editingTaskData.llmTextValidation?.enableDetailedFeedback || false}
+                            onChange={(e) =>
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                llmTextValidation: {
+                                  ...editingTaskData.llmTextValidation,
+                                  enableDetailedFeedback: e.target.checked,
+                                },
+                              })
+                            }
+                          />
+                        }
+                        label="Enable Detailed Feedback"
+                      />
                     </Box>
                   )}
 
@@ -4982,6 +5374,7 @@ const QuestBlock = ({
   onMoveTask,
   onEditTask,
   onDeleteTask,
+  onAddTask,
 }) => {
   const [expanded, setExpanded] = useState(true);
   const taskEntries = Object.entries(quest.tasks);
@@ -5146,6 +5539,27 @@ const QuestBlock = ({
             ))}
           </Box>
         )}
+        
+        {/* Add Task Button - Always visible when tasks are expanded */}
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Button
+            variant="outlined"
+            onClick={() => onAddTask()}
+            startIcon={<AddIcon />}
+            sx={{
+              borderRadius: 4,
+              fontWeight: "bold",
+              borderColor: "primary.main",
+              color: "primary.main",
+              "&:hover": {
+                borderColor: "primary.dark",
+                backgroundColor: "#e3f2fd",
+              },
+            }}
+          >
+            Add Task
+          </Button>
+        </Box>
       </AccordionDetails>
     </Accordion>
   );

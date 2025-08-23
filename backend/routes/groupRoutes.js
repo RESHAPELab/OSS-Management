@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, deployQuestToRepo } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend } = require("../controllers/groupController")
 const { generateHint } = require("../controllers/aiController")
 const { getStudents } = require("../controllers/studentController")
 
@@ -45,6 +45,6 @@ router.route("/:classId/stored-values").post(upsertStoredValue);
 router.post('/:classId/ai/generate-hint', generateHint);
 
 // Deploy a new MCQ quest to an existing repo
-router.post('/:classId/deploy-quest-to-repo', deployQuestToRepo);
+// router.post('/:classId/deploy-quest-to-repo', deployQuestToRepo);
 
 module.exports = router;
