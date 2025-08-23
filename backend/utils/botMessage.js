@@ -23,8 +23,10 @@ function getBotServiceUrl() {
 
 async function sendMessageToBot(url, payload) {
     const signature = signPayload(payload);
-    const botBaseUrl = getBotServiceUrl();
-    const botUrl = `${botBaseUrl}/${url}`;
+    // Use Railway bot URL in production, localhost in development
+    const botUrl = (process.env.NODE_ENV === 'production' 
+        ? "https://oss-timi.up.railway.app/" 
+        : "http://localhost:10000/") + url;
 
     try {
         const response = await axios.post(
@@ -36,27 +38,7 @@ async function sendMessageToBot(url, payload) {
         return response;
     } catch (error) {
         console.error("Error sending message to bot:", error.message);
-        throw error;
-    }
-}
-
-// New function to get GitHub App installation token from bot service
-async function getGithubAppInstallationAccessToken() {
-    const botBaseUrl = getBotServiceUrl();
-    const tokenUrl = `${botBaseUrl}/github/installation-token`;
-    
-    try {
-        const response = await axios.get(tokenUrl, {
-            headers: {
-                'Authorization': `Bearer ${process.env.BACKEND_API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        return response.data.token;
-    } catch (error) {
-        console.error('Error getting GitHub App installation token:', error.message);
-        throw new Error('Failed to get GitHub App installation token');
+        throw error; // Re-throw the error so the calling function can handle it
     }
 }
 

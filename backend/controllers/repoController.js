@@ -1410,7 +1410,13 @@ Repository for students in ${className}.`;
           Object.entries(firstQuest.tasks).forEach(([taskKey, taskVal]) => {
             if (taskKey === 'metadata') return;
             const taskDesc = taskVal.desc || taskVal.description || taskVal.name || '';
-            progressSection += `  - ${taskKey} - ${taskDesc}\n`;
+            
+            // For the first task (T1), add a clickable link to issue #1
+            if (taskKey === 'T1') {
+              progressSection += `  - ${taskKey} - ${taskDesc} [[Click here to start](https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues/1)]\n`;
+            } else {
+              progressSection += `  - ${taskKey} - ${taskDesc}\n`;
+            }
           });
         }
       }
@@ -1431,21 +1437,13 @@ Repository for students in ${className}.`;
     // 3. Check if this is the default quest-sequence.json
     const isDefaultSequence = sequenceFile === 'quest-sequence.json';
     let groupId = null;
-    let dynamicConfig = null;
+    let questConfigTemplate = null;
     if (!isDefaultSequence) {
-      groupId = `group_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      dynamicConfig = generateCustomQuestConfig(customSequenceData, groupId);
-      // Ensure generated directory exists
-      const path = require('path');
-      const fs = require('fs');
-      const generatedDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
-      if (!fs.existsSync(generatedDir)) {
-        fs.mkdirSync(generatedDir, { recursive: true });
-      }
-      // Save group-specific config
-      const configPath = path.join(generatedDir, `quest_config_${groupId}.json`);
-      fs.writeFileSync(configPath, JSON.stringify(dynamicConfig, null, 2));
-      console.log(`✅ Generated custom config: ${configPath}`);
+      // Generate the quest config template but don't save it yet
+      // Each repo will get its own unique copy
+      const templateGroupId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      questConfigTemplate = generateCustomQuestConfig(customSequenceData, templateGroupId);
+      console.log(`✅ Generated quest config template for custom sequence`);
     } else {
       console.log(`✅ Using default quest sequence: ${sequenceFile}`);
     }
@@ -1564,7 +1562,11 @@ Repository for students in ${className}.`;
             console.log(`🚀 [createCustomRepos] Initiating GitHub API call to upload README...`);
             console.log(`🚀 [createCustomRepos] Converting content to base64...`);
             
-            const base64Content = Buffer.from(readmeContent).toString('base64');
+            // Replace REPO_NAME placeholder with actual repository name
+            let finalReadmeContent = readmeContent.replace(/REPO_NAME/g, repoName);
+            console.log(`🔧 [createCustomRepos] Replaced REPO_NAME placeholder with: ${repoName}`);
+            
+            const base64Content = Buffer.from(finalReadmeContent).toString('base64');
             console.log(`🚀 [createCustomRepos] Base64 content length: ${base64Content.length} characters`);
             console.log(`🚀 [createCustomRepos] Base64 preview: "${base64Content.substring(0, 50)}..."`);
             
@@ -1706,6 +1708,7 @@ typings/
         
         // Get user data (either newly created or existing)
         // Connect to OSS-Doorway DB to update user data
+        let repoUniqueGroupId = null; // Declare this in higher scope for issue creation
         try {
             const mongoose = require('mongoose');
             const ossDoorwayURI = process.env.OSS_DOORWAY_DB_URI;
@@ -1734,7 +1737,37 @@ typings/
                 customSequenceFile: null
               };
               if (!isDefaultSequence) {
-                userDoc.user_data.customGroupId = groupId;
+                // Create a unique quest config for this specific repo
+                const uniqueGroupId = `repo_${user}_${repoIdentifier}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                repoUniqueGroupId = uniqueGroupId; // Store in higher scope for issue creation
+                
+                // Create a deep copy of the quest config template for this repo
+                const repoQuestConfig = JSON.parse(JSON.stringify(questConfigTemplate));
+                
+                // Update the groupId in the config to match this repo's unique ID
+                if (repoQuestConfig.map_repo_link) {
+                  // Keep the original map_repo_link, but ensure quest metadata uses unique groupId
+                  Object.keys(repoQuestConfig).forEach(questKey => {
+                    if (questKey !== 'map_repo_link' && repoQuestConfig[questKey].metadata) {
+                      repoQuestConfig[questKey].metadata.groupId = uniqueGroupId;
+                    }
+                  });
+                }
+                
+                // Save the unique quest config for this repo
+                const path = require('path');
+                const fs = require('fs');
+                const generatedDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
+                if (!fs.existsSync(generatedDir)) {
+                  fs.mkdirSync(generatedDir, { recursive: true });
+                }
+                const repoConfigPath = path.join(generatedDir, `quest_config_${uniqueGroupId}.json`);
+                fs.writeFileSync(repoConfigPath, JSON.stringify(repoQuestConfig, null, 2));
+                
+                console.log(`🔍 [QUEST-CONFIG-REPO] Created unique quest config for ${repoName}: ${repoConfigPath}`);
+                
+                // Store the unique groupId in the user's database entry
+                userDoc.user_data.customGroupId = uniqueGroupId;
                 userDoc.user_data.customSequenceFile = sequenceFile;
               }
               // Find the first quest (no prerequisite or isQ0)
@@ -1768,10 +1801,13 @@ typings/
                     ? JSON.parse(fs.readFileSync(defaultConfigPath, 'utf8'))
                     : {};
                 } else {
-                  const groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${groupId}.json`);
+                  // Use the unique groupId that was created for this specific repo
+                  const uniqueGroupId = repoUniqueGroupId;
+                  const groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${uniqueGroupId}.json`);
                   questConfig = fs.existsSync(groupConfigPath)
                     ? JSON.parse(fs.readFileSync(groupConfigPath, 'utf8'))
                     : {};
+                  console.log(`🔍 [QUEST-CONFIG-LOAD] Loading quest config for ${repoName}: ${groupConfigPath}`);
                 }
                 // Set up accepted
                 userDoc.user_data.accepted = userDoc.user_data.accepted || {};
@@ -1830,10 +1866,12 @@ typings/
               let questConfig = {};
               let groupConfigPath = null;
               if (!isDefaultSequence) {
-                groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${groupId}.json`);
+                // Use the unique groupId for this specific repo
+                const uniqueGroupId = repoUniqueGroupId;
+                groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${uniqueGroupId}.json`);
                 if (fs.existsSync(groupConfigPath)) {
                   questConfig = JSON.parse(fs.readFileSync(groupConfigPath, 'utf8'));
-                  console.log(`[DEBUG] Loaded group config for custom sequence: ${groupConfigPath}`);
+                  console.log(`🔍 [QUEST-CONFIG-LOAD] Loaded quest config for repo ${repoName}: ${groupConfigPath}`);
                   // Print all quests and their tasks
                   Object.keys(questConfig).forEach(qid => {
                     if (qid === 'map_repo_link') return;

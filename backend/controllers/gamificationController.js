@@ -1,3 +1,4 @@
+// const { request } = require('../../bot/server'); // Removed unused import
 const { sendMessageToBot } = require('../utils/botMessage');
 const { multipleAnswersValidation, singleAnswerValidation, metricAnswerValidation } = require('../utils/validateAnswer');
 const { CurrentQuestDescription, CompletedQuestsDescription } = require('../utils/gamificationContent');

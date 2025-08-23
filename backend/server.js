@@ -3,11 +3,24 @@ const path = require("path");
 const dotenv = require("dotenv").config({
   path: path.join(__dirname, "..", ".env"),
 });
+
+// Add environment variable validation
+if (!process.env.URI) {
+  console.error('❌ Missing required environment variable: URI');
+  console.error('Please set the URI environment variable in your Render dashboard');
+  process.exit(1);
+}
+
 const { errorHandler } = require("./middleware/errorMiddleware");
 const { connectDB, closeDB } = require("./config/db");
-const port = process.env.port || 8080;
+const port = process.env.PORT || 8080;
 const cors = require("cors");
 const generatejsonRoutes = require("./routes/generatejsonRoutes");
+
+// Prevent multiple instances
+if (process.env.NODE_ENV !== "test") {
+  console.log(`Starting server with PID: ${process.pid}`);
+}
 
 connectDB();
 
@@ -50,13 +63,39 @@ app.use("/api/repo", require("./routes/repoRoutes"));
 app.use("/api/gamification", require("./routes/gamificationRoutes"));
 app.use("/api/quest", require("./routes/questRoutes"));
 app.use("/api/quest-config", require("./routes/questConfigRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/generatejson", generatejsonRoutes);
 app.use(errorHandler);
 
+// Health check
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    port: port,
+    pid: process.pid,
+    uptime: process.uptime()
+  });
+});
+
 // Export app for testing purposes
 if (process.env.NODE_ENV !== "test") {
-  app.listen(port, () => console.log(`Server has started on port ${port}`));
+  const server = app.listen(port, '0.0.0.0', () => {
+    console.log(`Server has started on port ${port} with PID ${process.pid}`);
+  });
+  
+  // Handle graceful shutdown
+  const gracefulShutdown = () => {
+    console.log('Received shutdown signal, closing server...');
+    server.close(() => {
+      console.log('Server closed');
+      closeDB().then(() => {
+        console.log('Database connection closed');
+        process.exit(0);
+      });
+    });
+  };
+  
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 }
 
 module.exports = app;

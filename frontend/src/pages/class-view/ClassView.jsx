@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import HomeHeader from '../home/components/HomeHeader'
 import axios from 'axios'
 import { useAuthContext } from '../../context/AuthContext';
-import API_CONFIG from '../../config/api';
+import { API_BASE_URL, BOT_BASE_URL } from '../../config/api';
 import {
   Container, Box, Typography, Button, Stack, Card, Dialog, DialogTitle, DialogContent, DialogActions, 
   Alert, TextField, Chip, List, ListItem, ListItemText, Divider, Paper, Grid, IconButton,
@@ -40,7 +40,7 @@ import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
 import ManageAdmins from './ManageAdmins';
 
-const baseURL = API_CONFIG.getBaseURL();
+let baseURL = `http://localhost:${process.env.PORT || 8080}`;
 
 const ClassView = () => {
     const { classId } = useParams();
@@ -98,7 +98,7 @@ const ClassView = () => {
         }],
         hints: {
             enabled: false,
-            penalty: 10,
+            penalty: 0,
             hints: []
         },
         dueDate: ''
@@ -1104,7 +1104,7 @@ const ClassView = () => {
                     }],
                     hints: {
                         enabled: false,
-                        penalty: 10,
+                        penalty: 0,
                         hints: []
                     },
                     dueDate: ''
@@ -1258,7 +1258,7 @@ const ClassView = () => {
             }],
             hints: {
                 enabled: quest.hints && quest.hints.length > 0,
-                penalty: 10,
+                penalty: 0,
                 hints: quest.hints ? quest.hints.map(hint => hint.content || '') : []
             },
             dueDate: ''
@@ -1303,7 +1303,7 @@ const ClassView = () => {
             }],
             hints: {
                 enabled: false,
-                penalty: 10,
+                penalty: 0,
                 hints: []
             },
             dueDate: ''
@@ -1351,6 +1351,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move up - already at top of movable quests list');
             }
@@ -1376,6 +1388,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move down - already at bottom of quests list');
             }
@@ -1401,6 +1425,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move up - already at top of movable quests list');
             }
@@ -1426,6 +1462,18 @@ const ClassView = () => {
                 
                 // Use debounced save instead of immediate save
                 debouncedSaveQuestOrder(newOrder);
+                
+                // Schedule auto-centering after the state update and DOM re-render
+                setTimeout(() => {
+                    const questElement = document.querySelector(`[data-quest-id="${questId}"]`);
+                    if (questElement) {
+                        questElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center',
+                            inline: 'nearest'
+                        });
+                    }
+                }, 100); // Small delay to ensure DOM has updated
             } else {
                 console.log('Cannot move down - already at bottom of quests list');
             }
@@ -2056,16 +2104,6 @@ const ClassView = () => {
                             <Typography variant="h3" component="h1" fontWeight={700} gutterBottom>
                                 {classInfo.groupName}
                             </Typography>
-                            {classInfo.professorID && (
-                                <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                                    Professor: {classInfo.professorName || 'Loading...'}
-                                </Typography>
-                            )}
-                            {classInfo.professorName && (
-                                <Typography variant="body1" color="text.secondary" sx={{ fontStyle: 'italic', mb: 2 }}>
-                                    Professor {classInfo.professorName} has invited you to join this exciting learning journey! 🚀
-                                </Typography>
-                            )}
                             <Stack direction="row" spacing={2} alignItems="center" mt={2}>
                                 <Box sx={{ 
                                     display: 'flex', 

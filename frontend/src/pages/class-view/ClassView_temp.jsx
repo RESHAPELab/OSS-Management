@@ -7,7 +7,11 @@ import HomeHeader from '../home/components/HomeHeader'
 import axios from 'axios'
 import { useAuthContext } from '../../context/AuthContext';
 
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+import { API_BASE_URL } from '../../config/api';
+// Replace: let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+// With:
+let baseURL = API_BASE_URL;
+
 
 const ClassView = () => {
     const { classId } = useParams();

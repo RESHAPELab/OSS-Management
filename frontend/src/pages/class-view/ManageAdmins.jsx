@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import API_CONFIG from '../../config/api';
+import { API_BASE_URL, BOT_BASE_URL } from '../../config/api';
 import {
   Container,
   Box,
@@ -43,7 +43,7 @@ import {
 
 const ManageAdmins = () => {
   const { classId } = useParams();
-  const baseURL = API_CONFIG.getBaseURL();
+  const baseURL = API_BASE_URL;
   
   const [admins, setAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

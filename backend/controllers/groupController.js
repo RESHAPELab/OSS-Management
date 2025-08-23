@@ -311,14 +311,14 @@ const getGroupByCode = async (req, res) => {
 const getGroup = async (req, res ) => {
     const { groupID } = req.params;
     try{ 
-        const group = await Group.findById(groupID).populate('students').populate('professor', 'firstName lastName');
+        const group = await Group.findById(groupID).populate('students').populate('professor', 'name');
         if (!group) {
             return res.status(404).json({ error: `Group with ID ${groupID} not found` });
         }
 
-        // Get professor's full name
+        // Get professor's name
         const professorName = group.professor ? 
-            `${group.professor.firstName || ''} ${group.professor.lastName || ''}`.trim() : 
+            group.professor.name || 'Unknown Professor' : 
             'Unknown Professor';
 
         res.status(200).json({

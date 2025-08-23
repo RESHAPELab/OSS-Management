@@ -42,3 +42,7 @@ const API_CONFIG = {
 };
 
 export default API_CONFIG;
+
+// Named exports for backward compatibility
+export const API_BASE_URL = API_CONFIG.getBaseURL();
+export const BOT_BASE_URL = API_CONFIG.getBotURL();

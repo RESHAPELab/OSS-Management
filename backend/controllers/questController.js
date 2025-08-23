@@ -267,7 +267,7 @@ const uploadMCQQuest = async (req, res) => {
         // Automatically generate dynamic config for all groups owned by this professor
         try {
             const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
-            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const baseURL = req.get('host') ? `https://${req.get('host')}` : 'https://oss-michael-production.up.railway.app';
             
             // Get all groups owned by this professor
             const professor = await Professor.findById(professorId).populate('ownedGroups');
@@ -514,7 +514,7 @@ const updateQuest = async (req, res) => {
         // Automatically generate dynamic config for all groups owned by this professor
         try {
             const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
-            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const baseURL = req.get('host') ? `https://${req.get('host')}` : 'https://oss-michael-production.up.railway.app';
             
             // Get all groups owned by this professor
             const professor = await Professor.findById(professorId).populate('ownedGroups');
