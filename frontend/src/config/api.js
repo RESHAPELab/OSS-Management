@@ -2,18 +2,18 @@
 const API_CONFIG = {
   // Check if we're running in development (localhost) or production
   isDevelopment: () => {
-    // Check for Vercel deployment
+    // Check for production deployment platforms first
     if (window.location.hostname.includes("vercel.app") || 
         window.location.hostname.includes("netlify.app") ||
         window.location.hostname.includes("surge.sh")) {
       return false; // Production deployment
     }
     
+    // Only return true for actual localhost development
     return (
       window.location.hostname === "localhost" ||
       window.location.hostname === "127.0.0.1" ||
-      window.location.hostname === "" ||
-      window.location.port === "3000"
+      window.location.hostname === ""
     );
   },
 
