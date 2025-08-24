@@ -13,6 +13,25 @@ const GroupSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Student"
     }],
+    admins: [{
+        githubUsername: {
+            type: String,
+            required: true
+        },
+        role: {
+            type: String,
+            enum: ['professor', 'assistant', 'grader', 'mentor', 'moderator', 'other'],
+            default: 'assistant'
+        },
+        addedAt: {
+            type: Date,
+            default: Date.now
+        },
+        addedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Professor"
+        }
+    }],
     professor:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Professor"

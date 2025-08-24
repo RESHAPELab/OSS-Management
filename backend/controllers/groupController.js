@@ -1488,6 +1488,12 @@ const getStoredValuesForClass = async (req, res) => {
                     if (save && name) {
                         keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: 'Number' });
                     }
+                } else if (task?.taskType === 'collect-info' || task?.type === 'collect-info') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: 'Text' });
+                    }
                 }
             }
         }
@@ -1495,42 +1501,101 @@ const getStoredValuesForClass = async (req, res) => {
         // Attempt to fetch per-user values from bot DB (user_data collection)
         const valuesByUser = {};
         try {
-            const uri = process.env.URI;
-            const dbName = process.env.DB_NAME;
-            if (!uri || !dbName) {
-                console.warn('[getStoredValuesForClass] URI or DB_NAME env not set; skipping values fetch');
-            } else {
-                const client = new MongoClient(uri);
-                await client.connect();
-                const db = client.db(dbName);
-                const collection = db.collection('user_data');
-                let githubUsernames = (group.students || []).map(s => s.githubUsername).filter(Boolean);
-                if (githubUsernames.length > 0) {
-                    const docs = await collection.find({ _id: { $in: githubUsernames } }, { projection: { user_data: 1 } }).toArray();
+            // Check both databases: main database and OSS-Doorway bot database
+            const databases = [
+                { uri: process.env.URI, dbName: process.env.DB_NAME, name: 'Main DB' },
+                { uri: process.env.OSS_DOORWAY_DB_URI, dbName: process.env.OSS_DOORWAY_DB_NAME, name: 'OSS-Doorway Bot DB' }
+            ];
+            
+            for (const dbConfig of databases) {
+                if (!dbConfig.uri || !dbConfig.dbName) {
+                    console.warn(`[getStoredValuesForClass] ${dbConfig.name}: URI or DB_NAME env not set; skipping`);
+                    continue;
+                }
+                
+                console.log(`[getStoredValuesForClass] Searching ${dbConfig.name} for class: ${classId}`);
+                
+                try {
+                    const client = new MongoClient(dbConfig.uri);
+                    await client.connect();
+                    console.log(`[getStoredValuesForClass] Connected to ${dbConfig.name}`);
+                    
+                    const db = client.db(dbConfig.dbName);
+                    const collection = db.collection('user_data');
+                    
+                    // Strategy 1: Find users by classId (customGroupId)
+                    let docs = await collection.find({ 'user_data.customGroupId': classId }, { projection: { user_data: 1, _id: 1 } }).toArray();
+                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Found ${docs.length} users by customGroupId: ${classId}`);
+                    
                     for (const doc of docs) {
                         const stored = (doc.user_data && doc.user_data.storedValues) || {};
-                        valuesByUser[doc._id] = stored;
-                    }
-                } else {
-                    // Fallback: find users by classId (customGroupId) if students not linked on backend
-                    const docs = await collection.find({ 'user_data.customGroupId': classId }, { projection: { user_data: 1, _id: 1 } }).toArray();
-                    for (const doc of docs) {
-                        const stored = (doc.user_data && doc.user_data.storedValues) || {};
-                        valuesByUser[doc._id] = stored;
-                    }
-                    if (Object.keys(valuesByUser).length === 0 && group.groupName) {
-                        // Fallback 2: match by repo naming pattern (username-<groupNameLower>)
-                        const groupSuffix = `-${String(group.groupName).toLowerCase()}`;
-                        const regex = new RegExp(`${groupSuffix}$`, 'i');
-                        const docsByName = await collection.find({ _id: { $regex: regex } }, { projection: { user_data: 1, _id: 1 } }).toArray();
-                        for (const doc of docsByName) {
-                            const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                        if (Object.keys(stored).length > 0) {
                             valuesByUser[doc._id] = stored;
+                            console.log(`[getStoredValuesForClass] ${dbConfig.name}: Added user ${doc._id} with ${Object.keys(stored).length} stored values`);
                         }
                     }
+                    
+                    // Strategy 2: If no users found, try to find by repository pattern matching
+                    if (Object.keys(valuesByUser).length === 0 && group.groupName) {
+                        console.log(`[getStoredValuesForClass] ${dbConfig.name}: No users found by customGroupId, trying repository pattern matching...`);
+                        
+                        // Look for users with repository names that might match this class
+                        // The bot often uses patterns like: username-messages-timestamp
+                        const possiblePatterns = [
+                            `-${String(group.groupName).toLowerCase()}`,
+                            `-${String(group.groupName).toLowerCase()}-messages`,
+                            `-messages-${String(group.groupName).toLowerCase()}`
+                        ];
+                        
+                        for (const pattern of possiblePatterns) {
+                            const regex = new RegExp(`${pattern}$`, 'i');
+                            const docsByName = await collection.find({ _id: { $regex: regex } }, { projection: { user_data: 1, _id: 1 } }).toArray();
+                            console.log(`[getStoredValuesForClass] ${dbConfig.name}: Pattern "${pattern}" found ${docsByName.length} users`);
+                            
+                            for (const doc of docsByName) {
+                                const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                                if (Object.keys(stored).length > 0) {
+                                    valuesByUser[doc._id] = stored;
+                                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Added user ${doc._id} with ${Object.keys(stored).length} stored values`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Strategy 3: Look for any users with stored values that might be relevant
+                    if (Object.keys(valuesByUser).length === 0) {
+                        console.log(`[getStoredValuesForClass] ${dbConfig.name}: Still no users found, searching for any users with stored values...`);
+                        
+                        // Find any users who have stored values (this will catch collect-info data)
+                        const docsWithStoredValues = await collection.find(
+                            { 'user_data.storedValues': { $exists: true, $ne: {} } },
+                            { projection: { user_data: 1, _id: 1 } }
+                        ).limit(50).toArray(); // Limit to avoid overwhelming results
+                        
+                        console.log(`[getStoredValuesForClass] ${dbConfig.name}: Found ${docsWithStoredValues.length} users with stored values`);
+                        
+                        for (const doc of docsWithStoredValues) {
+                            const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                            if (Object.keys(stored).length > 0) {
+                                // Only add if we don't already have this user
+                                if (!valuesByUser[doc._id]) {
+                                    valuesByUser[doc._id] = stored;
+                                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Added user ${doc._id} with stored values: ${Object.keys(stored).join(', ')}`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    await client.close();
+                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Connection closed`);
+                    
+                } catch (dbErr) {
+                    console.error(`[getStoredValuesForClass] ${dbConfig.name}: Failed to fetch per-user values:`, dbErr.message);
                 }
-                await client.close();
             }
+            
+            console.log(`[getStoredValuesForClass] Final result: ${Object.keys(valuesByUser).length} users with stored values`);
+            
         } catch (dbErr) {
             console.error('[getStoredValuesForClass] Failed to fetch per-user values:', dbErr.message);
         }

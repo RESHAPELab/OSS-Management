@@ -57,6 +57,10 @@ const generateAcceptResponse = (taskData) => {
         }
         return `**Objective:** ${taskData.objective || 'Answer the question using AI validation'}\n\n**Task:** ${question}${parameterText}\n\n**Instructions:** Provide a detailed answer that addresses all the required criteria. The AI will evaluate your response based on the specified parameters.\n\n**Help:** Make sure your answer is comprehensive and covers all the required points.`;
     }
+    if (taskData.type === 'collect-info') {
+        const question = taskData.question || taskData.config?.question || 'Provide the requested information';
+        return `**Objective:** ${taskData.objective || 'Collect information'}\n\n**Task:** ${question}\n\n**Instructions:** This is a non-graded information collection task. Simply provide the requested information in the comment box below.\n\n**Note:** Any response will be accepted. This task is designed to collect information and does not require a specific answer format.`;
+    }
     // Default (MCQ)
     return `**Objective:** ${taskData.objective || 'Learn about this topic'}\n\n**Task:** ${taskData.description || 'Complete the task as described'}\n\n**Options:**\nA) ${taskData.options?.[0] || 'Option A'}\nB) ${taskData.options?.[1] || 'Option B'}\nC) ${taskData.options?.[2] || 'Option C'}\nD) ${taskData.options?.[3] || 'Option D'}\n\n**Outcome:** ${taskData.outcome || 'You will understand this concept better'}\n\n**Help:** ${taskData.helpText || 'Type "help" for hints if needed'}\n\nChoose the option that best answers the question.`;
 };
@@ -93,6 +97,20 @@ Your answer didn't meet all the required criteria. Please review the question an
 You can type "help" for additional hints (though it may cost you points).`;
     }
     
+    if (taskData.type === 'collect-info') {
+        return `❌ **No Response Detected**
+
+It looks like you haven't provided any information yet.
+
+**Please:** Type your response in the comment box below.
+
+**Note:** This is a non-graded task - any response will be accepted.
+
+**Hint:** ${taskData.helpText || 'Simply provide the requested information in any format'}
+
+You can type "help" for additional guidance.`;
+    }
+    
     return `❌ **Incorrect Answer**
 
 That's not the right answer. Please review the question and try again.
@@ -127,6 +145,22 @@ Excellent work! Your answer has been validated by AI and meets all the required 
 **Points earned:** ${taskData.points || 100}
 
 **AI Validation:** Your response was comprehensive and addressed all the required points! 🤖✨
+
+You're making excellent progress! 🎉`;
+    }
+    
+    if (taskData.type === 'collect-info') {
+        return `✅ **Information Collected!**
+
+Thank you for providing the requested information!
+
+**What you learned:** ${taskData.outcome || 'Information sharing is an important part of collaborative work'}
+
+**Points earned:** ${taskData.points || 100}
+
+**Task Type:** This was a non-graded information collection task.
+
+Great contribution! 📋
 
 You're making excellent progress! 🎉`;
     }
@@ -195,6 +229,9 @@ const uploadMCQQuest = async (req, res) => {
             } else if (taskData.type === 'llm-text-validation') {
                 answer = '';
                 answerType = 'llm-validation';
+                http://localhost:3000/class/68aa7f5a8a69e6a01577e368            } else if (taskData.type === 'collect-info') {
+                answer = '';
+                answerType = 'text';
             } else {
                 answer = taskData.correctAnswer || '';
                 answerType = 'singleAnswer';
@@ -447,6 +484,9 @@ const updateQuest = async (req, res) => {
             } else if (taskData.type === 'llm-text-validation') {
                 answer = '';
                 answerType = 'llm-validation';
+            } else if (taskData.type === 'collect-info') {
+                answer = '';
+                answerType = 'text';
             } else {
                 answer = taskData.correctAnswer || '';
                 answerType = 'singleAnswer';

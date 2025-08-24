@@ -32,10 +32,7 @@ const InviteByName = () => {
     }
 
     // Repository already exists
-    if (
-      errorStr.includes("already exists") ||
-      errorStr.includes("repository exists")
-    ) {
+    if (errorStr.includes('already exists') || errorStr.includes('repository exists') || errorStr.includes('name already exists on this account')) {
       return "You've already been invited to this class! Check your GitHub repositories.";
     }
 
@@ -240,14 +237,31 @@ You can now start your quest journey!`;
         else if (unsuccessful && unsuccessful.length > 0) {
           // Check if the error is actually a successful creation that was misreported
           const errorInfo = unsuccessful[0];
-          const technicalError =
-            errorInfo.error || errorInfo.message || "Unknown error";
+          const technicalError = errorInfo.error || errorInfo.message || "Unknown error";
+          
+          // Check if this is a "repository already exists" error
+          if (technicalError.toLowerCase().includes('already exists') || 
+              technicalError.toLowerCase().includes('repository exists') ||
+              technicalError.toLowerCase().includes('name already exists on this account')) {
+            
+            // Extract the repository name and construct the URL
+            const repoName = `${githubUsername}-${className?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}`;
+            const repoUrl = `https://github.com/${process.env.REACT_APP_GITHUB_ORG || 'OSS-Doorway-Dev'}/${repoName}`;
+            
+            const existingRepoMessage = `⚠️ Repository Already Exists!
+Your repository has been previously created for this class.
+Repository: ${repoUrl}
+You can access your existing repository and continue your quest journey!`;
 
+            setRepoCreationStatus(existingRepoMessage);
+
+            // Clear the input
+            setGithubUsername("");
+
+            console.log("⚠️ Repository already exists, showing warning:", response.data);
+          }
           // If the main message indicates success, treat it as success
-          if (
-            response.data.message &&
-            response.data.message.includes("completed")
-          ) {
+          else if (response.data.message && response.data.message.includes("completed")) {
             const successMessage = `Welcome to the class! 
 Your repository has been created successfully.
 You can now start your quest journey!`;
@@ -580,47 +594,41 @@ You can now start your quest journey!`;
             </Box>
 
             {repoCreationStatus && (
-              <Box
-                sx={{
-                  mt: 2,
-                  p: 2,
-                  borderRadius: 2,
-                  bgcolor:
-                    repoCreationStatus.includes("Welcome to the class") ||
-                    repoCreationStatus.includes("completed") ||
-                    repoCreationStatus.includes("successfully")
-                      ? "#e8f5e8"
-                      : repoCreationStatus.includes("Creating your repository")
-                      ? "#e3f2fd"
-                      : "#ffebee",
-                  border:
-                    repoCreationStatus.includes("Welcome to the class") ||
-                    repoCreationStatus.includes("completed") ||
-                    repoCreationStatus.includes("successfully")
-                      ? "1px solid #4caf50"
-                      : repoCreationStatus.includes("Creating your repository")
-                      ? "1px solid #2196f3"
-                      : "1px solid #f44336",
-                  color:
-                    repoCreationStatus.includes("Welcome to the class") ||
-                    repoCreationStatus.includes("completed") ||
-                    repoCreationStatus.includes("successfully")
-                      ? "#2e7d32"
-                      : repoCreationStatus.includes("Creating your repository")
-                      ? "#1976d2"
-                      : "#c62828",
-                }}
-              >
+              <Box sx={{ 
+                mt: 2, 
+                p: 2, 
+                borderRadius: 2,
+                bgcolor: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                  ? '#e8f5e8'
+                  : repoCreationStatus.includes("Repository Already Exists")
+                  ? '#fff8e1'
+                  : repoCreationStatus.includes("Creating your repository")
+                  ? '#e3f2fd'
+                  : '#ffebee',
+                border: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                  ? '1px solid #4caf50'
+                  : repoCreationStatus.includes("Repository Already Exists")
+                  ? '1px solid #ff9800'
+                  : repoCreationStatus.includes("Creating your repository")
+                  ? '1px solid #2196f3'
+                  : '1px solid #f44336',
+                color: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                  ? '#2e7d32'
+                  : repoCreationStatus.includes("Repository Already Exists")
+                  ? '#e65100'
+                  : repoCreationStatus.includes("Creating your repository")
+                  ? '#1976d2'
+                  : '#c62828'
+              }}>
                 <Typography
                   sx={{
                     whiteSpace: "pre-wrap",
                     fontFamily: "inherit",
-                    fontWeight:
-                      repoCreationStatus.includes("Welcome to the class") ||
-                      repoCreationStatus.includes("completed") ||
-                      repoCreationStatus.includes("successfully")
-                        ? 700
-                        : 400,
+                    fontWeight: repoCreationStatus.includes("Welcome to the class") || repoCreationStatus.includes("completed") || repoCreationStatus.includes("successfully")
+                      ? 700
+                      : repoCreationStatus.includes("Repository Already Exists")
+                      ? 600
+                      : 400
                   }}
                 >
                   {repoCreationStatus.split("\n").map((line, index) => {
