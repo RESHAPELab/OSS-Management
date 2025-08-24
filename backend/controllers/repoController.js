@@ -6,7 +6,6 @@ implement the logic. Time costs :(
 const UserRepo = require("../models/UserRepoModel");
 const Readme = require("../models/ReadmeModel");
 const Group = require("../models/GroupModel");
-const QuestConfig = require("../models/QuestConfigModel");
 require("dotenv").config();
 
 
@@ -1755,14 +1754,63 @@ typings/
                   });
                 }
                 
-                // Save the unique quest config for this repo (both file system and database)
-                await saveQuestConfig(uniqueGroupId, repoQuestConfig, {
-                  classId: classId,
-                  createdBy: user,
-                  originalFilePath: `quest_config_${uniqueGroupId}.json`
-                });
+                // Save the unique quest config for this repo
+                const path = require('path');
+                const fs = require('fs');
+                const generatedDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
+                if (!fs.existsSync(generatedDir)) {
+                  fs.mkdirSync(generatedDir, { recursive: true });
+                }
+                const repoConfigPath = path.join(generatedDir, `quest_config_${uniqueGroupId}.json`);
+                fs.writeFileSync(repoConfigPath, JSON.stringify(repoQuestConfig, null, 2));
                 
-                console.log(`🔍 [QUEST-CONFIG-REPO] Created unique quest config for ${repoName}: ${uniqueGroupId}`);
+                console.log(`🔍 [QUEST-CONFIG-REPO] Created unique quest config for ${repoName}: ${repoConfigPath}`);
+                
+                // NEW: Also save to OSS-Doorway database (safe - won't break if it fails)
+                try {
+                  console.log(`💾 [QUEST-CONFIG-REPO] Saving quest config to OSS-Doorway database for: ${uniqueGroupId}`);
+                  
+                  const mongoose = require('mongoose');
+                  const ossDoorwayURI = process.env.OSS_DOORWAY_DB_URI;
+                  const ossDoorwayDBName = process.env.OSS_DOORWAY_DB_NAME;
+                  
+                  if (ossDoorwayURI && ossDoorwayDBName) {
+                    const ossDoorwayConnection = mongoose.createConnection(`${ossDoorwayURI}/${ossDoorwayDBName}`);
+                    
+                    // Define QuestConfig schema for OSS-Doorway database
+                    const questConfigSchema = new mongoose.Schema({
+                      groupId: String,
+                      configData: Object,
+                      createdAt: Date,
+                      updatedAt: Date,
+                      source: String
+                    }, { collection: 'questconfigs' });
+                    
+                    const QuestConfig = ossDoorwayConnection.model('QuestConfig', questConfigSchema);
+                    
+                    // Save to database
+                    await QuestConfig.findOneAndUpdate(
+                      { groupId: uniqueGroupId },
+                      { 
+                        groupId: uniqueGroupId,
+                        configData: repoQuestConfig,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        source: 'database'
+                      },
+                      { upsert: true, new: true }
+                    );
+                    
+                    console.log(`✅ [QUEST-CONFIG-REPO] Quest config saved to database: ${uniqueGroupId}`);
+                    await ossDoorwayConnection.close();
+                  } else {
+                    console.warn(`⚠️ [QUEST-CONFIG-REPO] OSS-Doorway database credentials not found, skipping database save`);
+                  }
+                  
+                } catch (dbError) {
+                  console.error(`❌ [QUEST-CONFIG-REPO] Failed to save quest config to database:`, dbError.message);
+                  // Don't fail the operation - file system is still working
+                }
                 
                 // Store the unique groupId in the user's database entry
                 userDoc.user_data.customGroupId = uniqueGroupId;
@@ -2195,58 +2243,6 @@ const deleteRepository = async (req, res) => {
         });
     }
 };
-
-// Helper function to save quest config to both file system and database
-async function saveQuestConfig(configId, config, metadata = {}) {
-    const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
-    
-    // Always save to database (OSS-Doorway bot DB)
-    try {
-        const mongoose = require('mongoose');
-        const ossDoorwayURI = process.env.OSS_DOORWAY_DB_URI;
-        const ossDoorwayDBName = process.env.OSS_DOORWAY_DB_NAME;
-        if (!ossDoorwayURI || !ossDoorwayDBName) {
-            throw new Error('OSS_DOORWAY_DB_URI or OSS_DOORWAY_DB_NAME is not set');
-        }
-        const connection = mongoose.createConnection(`${ossDoorwayURI}/${ossDoorwayDBName}`);
-        const QuestConfigModel = connection.models.QuestConfig || connection.model('QuestConfig', QuestConfig.schema);
-
-        const updateData = { config, updatedAt: new Date(), ...metadata };
-        await QuestConfigModel.findOneAndUpdate(
-            { configId },
-            { $set: updateData },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
-        );
-
-        console.log(`📁 [QUEST-CONFIG-DB] Saved quest config to OSS-Doorway DB: ${configId}`);
-    } catch (dbError) {
-        console.error(`❌ [QUEST-CONFIG-DB] Failed to save to database:`, dbError);
-        // In production, database failure is critical
-        if (isProduction) {
-            throw dbError;
-        }
-    }
-    
-    // In development, also save to file system for backward compatibility
-    if (!isProduction) {
-        try {
-            const path = require('path');
-            const fs = require('fs');
-            const generatedDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
-            
-            // Ensure directory exists
-            if (!fs.existsSync(generatedDir)) {
-                fs.mkdirSync(generatedDir, { recursive: true });
-            }
-            
-            const filePath = path.join(generatedDir, `quest_config_${configId}.json`);
-            fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
-            console.log(`📁 [QUEST-CONFIG-FILE] Saved quest config to file: ${filePath}`);
-        } catch (fileError) {
-            console.error(`⚠️ [QUEST-CONFIG-FILE] Failed to save to file (non-critical in dev):`, fileError);
-        }
-    }
-}
 
 module.exports = {
     createRepo,
