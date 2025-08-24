@@ -5,6 +5,7 @@ const Student = require("../models/StudentModel");
 const Professor = require('../models/ProfessorModel')
 const Group = require('../models/GroupModel')
 const Readme = require("../models/ReadmeModel");
+const QuestConfig = require("../models/QuestConfigModel");
 const fs = require('fs');
 const path = require('path');
 const { MongoClient } = require('mongodb');
@@ -1284,14 +1285,8 @@ const saveQuestJsonConfig = async (req, res) => {
         group.questJsonLastUpdated = new Date();
         await group.save();
 
-        // Also write a legacy-compatible config file for the bot
+        // Also write a legacy-compatible config file for the bot (database + file)
         try {
-            const outputDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
-            const outputPath = path.join(outputDir, `quest_config_${classId}.json`);
-            if (!fs.existsSync(outputDir)) {
-                fs.mkdirSync(outputDir, { recursive: true });
-            }
-
             // Transform questJsonConfig.questSequence into legacy format expected by the bot
             const legacyConfig = { map_repo_link: questJsonConfig.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map" };
             for (const quest of questJsonConfig.questSequence) {
@@ -1301,13 +1296,47 @@ const saveQuestJsonConfig = async (req, res) => {
                 legacyConfig[questId] = { metadata: meta, ...tasks };
             }
 
-            fs.writeFileSync(outputPath, JSON.stringify(legacyConfig, null, 2));
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            fs.writeFileSync(`${outputPath}.${timestamp}`, JSON.stringify(legacyConfig, null, 2));
-            console.log(`✅ [saveQuestJsonConfig] Wrote legacy config to ${outputPath}`);
-        } catch (fileErr) {
-            console.error('⚠️ Failed to write legacy config file:', fileErr.message);
-            // Do not fail the API response for file write issues
+            // Save to OSS-Doorway bot database (always)
+            const mongoose = require('mongoose');
+            const ossDoorwayURI = process.env.OSS_DOORWAY_DB_URI;
+            const ossDoorwayDBName = process.env.OSS_DOORWAY_DB_NAME;
+            if (!ossDoorwayURI || !ossDoorwayDBName) {
+                throw new Error('OSS_DOORWAY_DB_URI or OSS_DOORWAY_DB_NAME is not set');
+            }
+            const connection = mongoose.createConnection(`${ossDoorwayURI}/${ossDoorwayDBName}`);
+            const QuestConfigModel = connection.models.QuestConfig || connection.model('QuestConfig', QuestConfig.schema);
+            await QuestConfigModel.findOneAndUpdate(
+                { configId: classId },
+                { 
+                    $set: {
+                        config: legacyConfig,
+                        updatedAt: new Date(),
+                        classId: classId,
+                        createdBy: 'quest-builder',
+                        originalFilePath: `quest_config_${classId}.json`
+                    }
+                },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
+            console.log(`✅ [saveQuestJsonConfig] Saved config to OSS-Doorway DB: ${classId}`);
+
+            // Also save to file system in development
+            const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+            if (!isProduction) {
+                const outputDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
+                const outputPath = path.join(outputDir, `quest_config_${classId}.json`);
+                if (!fs.existsSync(outputDir)) {
+                    fs.mkdirSync(outputDir, { recursive: true });
+                }
+
+                fs.writeFileSync(outputPath, JSON.stringify(legacyConfig, null, 2));
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                fs.writeFileSync(`${outputPath}.${timestamp}`, JSON.stringify(legacyConfig, null, 2));
+                console.log(`✅ [saveQuestJsonConfig] Wrote legacy config to file: ${outputPath}`);
+            }
+        } catch (err) {
+            console.error('⚠️ Failed to write quest config:', err.message);
+            // Do not fail the API response for config write issues
         }
 
         console.log(`✅ [saveQuestJsonConfig] Successfully saved quest JSON for class: ${group.groupName}`);

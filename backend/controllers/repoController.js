@@ -6,6 +6,7 @@ implement the logic. Time costs :(
 const UserRepo = require("../models/UserRepoModel");
 const Readme = require("../models/ReadmeModel");
 const Group = require("../models/GroupModel");
+const QuestConfig = require("../models/QuestConfigModel");
 require("dotenv").config();
 
 
@@ -1754,17 +1755,14 @@ typings/
                   });
                 }
                 
-                // Save the unique quest config for this repo
-                const path = require('path');
-                const fs = require('fs');
-                const generatedDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
-                if (!fs.existsSync(generatedDir)) {
-                  fs.mkdirSync(generatedDir, { recursive: true });
-                }
-                const repoConfigPath = path.join(generatedDir, `quest_config_${uniqueGroupId}.json`);
-                fs.writeFileSync(repoConfigPath, JSON.stringify(repoQuestConfig, null, 2));
+                // Save the unique quest config for this repo (both file system and database)
+                await saveQuestConfig(uniqueGroupId, repoQuestConfig, {
+                  classId: classId,
+                  createdBy: user,
+                  originalFilePath: `quest_config_${uniqueGroupId}.json`
+                });
                 
-                console.log(`🔍 [QUEST-CONFIG-REPO] Created unique quest config for ${repoName}: ${repoConfigPath}`);
+                console.log(`🔍 [QUEST-CONFIG-REPO] Created unique quest config for ${repoName}: ${uniqueGroupId}`);
                 
                 // Store the unique groupId in the user's database entry
                 userDoc.user_data.customGroupId = uniqueGroupId;
@@ -2197,6 +2195,58 @@ const deleteRepository = async (req, res) => {
         });
     }
 };
+
+// Helper function to save quest config to both file system and database
+async function saveQuestConfig(configId, config, metadata = {}) {
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT;
+    
+    // Always save to database (OSS-Doorway bot DB)
+    try {
+        const mongoose = require('mongoose');
+        const ossDoorwayURI = process.env.OSS_DOORWAY_DB_URI;
+        const ossDoorwayDBName = process.env.OSS_DOORWAY_DB_NAME;
+        if (!ossDoorwayURI || !ossDoorwayDBName) {
+            throw new Error('OSS_DOORWAY_DB_URI or OSS_DOORWAY_DB_NAME is not set');
+        }
+        const connection = mongoose.createConnection(`${ossDoorwayURI}/${ossDoorwayDBName}`);
+        const QuestConfigModel = connection.models.QuestConfig || connection.model('QuestConfig', QuestConfig.schema);
+
+        const updateData = { config, updatedAt: new Date(), ...metadata };
+        await QuestConfigModel.findOneAndUpdate(
+            { configId },
+            { $set: updateData },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+
+        console.log(`📁 [QUEST-CONFIG-DB] Saved quest config to OSS-Doorway DB: ${configId}`);
+    } catch (dbError) {
+        console.error(`❌ [QUEST-CONFIG-DB] Failed to save to database:`, dbError);
+        // In production, database failure is critical
+        if (isProduction) {
+            throw dbError;
+        }
+    }
+    
+    // In development, also save to file system for backward compatibility
+    if (!isProduction) {
+        try {
+            const path = require('path');
+            const fs = require('fs');
+            const generatedDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
+            
+            // Ensure directory exists
+            if (!fs.existsSync(generatedDir)) {
+                fs.mkdirSync(generatedDir, { recursive: true });
+            }
+            
+            const filePath = path.join(generatedDir, `quest_config_${configId}.json`);
+            fs.writeFileSync(filePath, JSON.stringify(config, null, 2));
+            console.log(`📁 [QUEST-CONFIG-FILE] Saved quest config to file: ${filePath}`);
+        } catch (fileError) {
+            console.error(`⚠️ [QUEST-CONFIG-FILE] Failed to save to file (non-critical in dev):`, fileError);
+        }
+    }
+}
 
 module.exports = {
     createRepo,
