@@ -102,6 +102,7 @@ const GenerateJson = () => {
     title: "",
     description: "",
     tasks: [], // <-- array of task objects
+    questions: [], // <-- array of questions for quiz tasks
   });
   // 1. Add state for editing quest
   const [editingQuestIndex, setEditingQuestIndex] = useState(null);
@@ -521,17 +522,21 @@ const GenerateJson = () => {
         }
       );
 
-      if (response.data.success) {
-        setSaveStatusType("success");
-        setSaveStatus("Default quest configuration saved successfully");
-        console.log("✅ Default quest configuration auto-saved");
-        setLastSavedAt(new Date());
-        // Clear success status after 3 seconds
-        setTimeout(() => {
-          setSaveStatusType("");
-          setSaveStatus("");
-        }, 3000);
-      }
+              if (response.data.success) {
+          setSaveStatusType("success");
+          setSaveStatus("Default quest configuration saved successfully");
+          console.log("✅ Default quest configuration auto-saved");
+          setLastSavedAt(new Date());
+          
+          // Auto-refresh stored data values after successful save
+          loadStoredValues();
+          
+          // Clear success status after 3 seconds
+          setTimeout(() => {
+            setSaveStatusType("");
+            setSaveStatus("");
+          }, 3000);
+        }
     } catch (error) {
       console.error("❌ Auto-save failed:", error);
       setSaveStatusType("error");
@@ -691,6 +696,7 @@ const GenerateJson = () => {
         correctAnswer: "",
         hints: [],
         detailedHints: [],
+        questions: [],
         // Per-user save controls (enabled by default for collect-info)
         saveValidatedData: true,
         savedDataName: "collected_info"
@@ -701,6 +707,9 @@ const GenerateJson = () => {
       
       return { ...prev, questSequence: newQuestSequence };
     });
+    
+    // Refresh stored data list after adding task to existing quest
+    loadStoredValues();
   };
 
   // 4. Add functions to edit, delete, and reorder tasks in questFormData.tasks
@@ -721,6 +730,11 @@ const GenerateJson = () => {
             updated.successText = defaults.successText;
           if (!updated.errorText?.trim())
             updated.errorText = defaults.errorText;
+          
+          // Initialize questions array for quiz tasks
+          if (value === "quiz" && !updated.questions) {
+            updated.questions = [];
+          }
         }
         return updated;
       });
@@ -870,6 +884,10 @@ const GenerateJson = () => {
           setSaveStatus(`Auto-saved: ${new Date().toLocaleString()}`);
           console.log("✅ Auto-save successful");
           setLastSavedAt(new Date());
+          
+          // Auto-refresh stored data values after successful save
+          loadStoredValues();
+          
           // Clear success status after 3 seconds
           setTimeout(() => {
             setSaveStatusType("");
@@ -920,17 +938,21 @@ const GenerateJson = () => {
         }
       );
 
-      if (response.data.success) {
-        setSaveStatusType("success");
-        setSaveStatus(`Saved: ${new Date().toLocaleString()}`);
-        console.log("✅ Manual save successful");
-        setLastSavedAt(new Date());
-        // Clear success status after 3 seconds
-        setTimeout(() => {
-          setSaveStatusType("");
-          setSaveStatus("");
-        }, 3000);
-      }
+              if (response.data.success) {
+          setSaveStatusType("success");
+          setSaveStatus(`Saved: ${new Date().toLocaleString()}`);
+          console.log("✅ Manual save successful");
+          setLastSavedAt(new Date());
+          
+          // Auto-refresh stored data values after successful save
+          loadStoredValues();
+          
+          // Clear success status after 3 seconds
+          setTimeout(() => {
+            setSaveStatusType("");
+            setSaveStatus("");
+          }, 3000);
+        }
     } catch (error) {
       console.error("❌ Manual save failed:", error);
       setSaveStatusType("error");
@@ -1072,7 +1094,7 @@ Student can now start their quest journey!`);
         quizContent += `Instructions: Answer all questions and submit your answers in the format [a,b,c,d,e] where each letter corresponds to your answer for each question.\n\n`;
         quizContent += `Example: If you think the answers are A, C, B, D, E, type: [a,c,b,d,e]\n\n`;
 
-        task.questions.forEach((q, index) => {
+        (task.questions || []).forEach((q, index) => {
           if (q.question) {
             quizContent += `Question ${index + 1}: ${q.question}\n\n`;
             if (q.optionA) quizContent += `A) ${q.optionA}\n`;
@@ -1088,11 +1110,11 @@ Student can now start their quest journey!`);
         let successText = task.successText
           .replace("{points}", task.points)
           .replace("[X]", "{correctCount}")
-          .replace("[Y]", task.questions.length);
+          .replace("[Y]", (task.questions || []).length);
         taskData = {
           ...taskData,
           type: "quiz",
-          questions: task.questions.filter((q) => q.question),
+          questions: (task.questions || []).filter((q) => q.question),
           accept: quizContent,
           success: successText,
           error: task.errorText,
@@ -1330,7 +1352,7 @@ Student can now start their quest journey!`);
     setQuestFormData((prev) => ({
       ...prev,
       questions: [
-        ...prev.questions,
+        ...(prev.questions || []),
         {
           question: "",
           optionA: "",
@@ -1351,7 +1373,7 @@ Student can now start their quest journey!`);
         if (tIdx !== taskIdx) return task;
         return {
           ...task,
-          questions: task.questions.filter((_, i) => i !== qIdx),
+          questions: (task.questions || []).filter((_, i) => i !== qIdx),
         };
       }),
     }));
@@ -1364,7 +1386,7 @@ Student can now start their quest journey!`);
         if (tIdx !== taskIdx) return task;
         return {
           ...task,
-          questions: task.questions.map((q, i) =>
+          questions: (task.questions || []).map((q, i) =>
             i === qIdx ? { ...q, [field]: value } : q
           ),
         };
@@ -1435,6 +1457,9 @@ Student can now start their quest journey!`);
       
       return { ...prev, questSequence: updatedSequence };
     });
+    
+    // Refresh stored data list after moving quest
+    loadStoredValues();
   };
 
     // Edit quest modal - only for quest title and description (no tasks)
@@ -2836,7 +2861,7 @@ Student can now start their quest journey!`);
                             Multi-Question Quiz
                           </Typography>
 
-                          {task.questions.map((question, qIdx) => (
+                          {(task.questions || []).map((question, qIdx) => (
                             <Card
                               key={qIdx}
                               sx={{
@@ -2862,7 +2887,7 @@ Student can now start their quest journey!`);
                                   >
                                     Question {qIdx + 1}
                                   </Typography>
-                                  {task.questions.length > 1 && (
+                                  {(task.questions || []).length > 1 && (
                                     <IconButton
                                       size="small"
                                       color="error"
@@ -3941,6 +3966,110 @@ Student can now start their quest journey!`);
                                 error messages.
                               </Typography>
                             </Box>
+                          </Box>
+                        </Box>
+                      )}
+
+                      {task.taskType === "collect-info" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Box
+                            sx={{
+                              backgroundColor: "#e8f5e8",
+                              p: 3,
+                              borderRadius: 4,
+                              border: "2px solid #4caf50",
+                              mb: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                color: "#2e7d32",
+                              }}
+                            >
+                              📝 Collect Information Task
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mt: 1 }}
+                            >
+                              Create non-graded tasks that collect information from students. 
+                              Any response will be accepted and stored for later reference.
+                            </Typography>
+                          </Box>
+
+                          {/* Save validated data per-user */}
+                          <Box sx={{ mt: 2 }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={task.saveValidatedData !== false}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "saveValidatedData",
+                                      e.target.checked
+                                    )
+                                  }
+                                  sx={{
+                                    "& .MuiSwitch-switchBase.Mui-checked": {
+                                      color: "#4caf50",
+                                      "&:hover": {
+                                        backgroundColor:
+                                          "rgba(76, 175, 80, 0.08)",
+                                      },
+                                    },
+                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                      { backgroundColor: "#4caf50" },
+                                  }}
+                                />
+                              }
+                              label="Save collected information for later tasks"
+                              sx={{
+                                "& .MuiFormControlLabel-label": {
+                                  fontSize: "0.95rem",
+                                  fontWeight: 500,
+                                  color: "#374151",
+                                },
+                              }}
+                            />
+                            {task.saveValidatedData !== false && (
+                              <>
+                                <TextField
+                                  label="Data Name"
+                                  value={task.savedDataName || "collected_info"}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "savedDataName",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="e.g., collected_info"
+                                  fullWidth
+                                  helperText="Unique key to reference this collected information in future tasks"
+                                  sx={{ mt: 1, borderRadius: 2 }}
+                                />
+                                <Alert
+                                  severity="info"
+                                  sx={{
+                                    mt: 1,
+                                    borderRadius: 4,
+                                    "& .MuiAlert-icon": { display: "none" },
+                                  }}
+                                >
+                                  <AlertTitle>Per-user Storage</AlertTitle>
+                                  When enabled, the information collected from students is saved for each student separately.
+                                  The value is stored as text and can be referenced in future tasks using the data name.
+                                </Alert>
+                              </>
+                            )}
                           </Box>
                         </Box>
                       )}

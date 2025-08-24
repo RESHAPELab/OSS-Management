@@ -1791,35 +1791,41 @@ typings/
                       setTimeout(() => reject(new Error('Connection timeout')), 10000);
                     });
                     
-                    // Define QuestConfig schema for OSS-Doorway database
+                    // Define QuestConfig schema for OSS-Doorway database (matching actual schema)
                     const questConfigSchema = new mongoose.Schema({
-                      groupId: String,
-                      configData: Object,
+                      configId: String,      // Primary identifier (has unique index)
+                      classId: String,       // Class/group identifier  
+                      config: Object,        // Quest configuration data
                       createdAt: Date,
                       updatedAt: Date,
-                      source: String
+                      createdBy: String,
+                      originalFilePath: String,
+                      version: Number
                     }, { collection: 'questconfigs' });
                     
                     const QuestConfig = ossDoorwayConnection.model('QuestConfig', questConfigSchema);
                     
                     console.log(`💾 [QUEST-CONFIG-REPO] Saving quest config document...`);
                     
-                    // Save to database
+                    // Save to database using the correct schema
                     const result = await QuestConfig.findOneAndUpdate(
-                      { groupId: uniqueGroupId },
+                      { configId: uniqueGroupId },
                       { 
-                        groupId: uniqueGroupId,
-                        configData: repoQuestConfig,
+                        configId: uniqueGroupId,
+                        classId: uniqueGroupId,
+                        config: repoQuestConfig,
                         createdAt: new Date(),
                         updatedAt: new Date(),
-                        source: 'production'
+                        createdBy: 'oss-management',
+                        originalFilePath: `quest_config_${uniqueGroupId}.json`,
+                        version: 1
                       },
                       { upsert: true, new: true }
                     );
                     
                     console.log(`✅ [QUEST-CONFIG-REPO] Quest config saved to database: ${uniqueGroupId}`);
                     console.log(`📄 [QUEST-CONFIG-REPO] Document ID: ${result._id}`);
-                    console.log(`🔍 [QUEST-CONFIG-REPO] Config keys: ${Object.keys(result.configData)}`);
+                    console.log(`🔍 [QUEST-CONFIG-REPO] Config keys: ${Object.keys(result.config)}`);
                     
                     await ossDoorwayConnection.close();
                     console.log(`🔌 [QUEST-CONFIG-REPO] Database connection closed`);
