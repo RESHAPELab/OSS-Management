@@ -1769,13 +1769,27 @@ typings/
                 // NEW: Also save to OSS-Doorway database (safe - won't break if it fails)
                 try {
                   console.log(`💾 [QUEST-CONFIG-REPO] Saving quest config to OSS-Doorway database for: ${uniqueGroupId}`);
+                  console.log(`🔍 [QUEST-CONFIG-REPO] Environment check:`);
+                  console.log(`  - OSS_DOORWAY_DB_URI exists: ${!!process.env.OSS_DOORWAY_DB_URI}`);
+                  console.log(`  - OSS_DOORWAY_DB_NAME exists: ${!!process.env.OSS_DOORWAY_DB_NAME}`);
                   
                   const mongoose = require('mongoose');
                   const ossDoorwayURI = process.env.OSS_DOORWAY_DB_URI;
                   const ossDoorwayDBName = process.env.OSS_DOORWAY_DB_NAME;
                   
                   if (ossDoorwayURI && ossDoorwayDBName) {
+                    console.log(`🔗 [QUEST-CONFIG-REPO] Connecting to: ${ossDoorwayURI}/${ossDoorwayDBName}`);
                     const ossDoorwayConnection = mongoose.createConnection(`${ossDoorwayURI}/${ossDoorwayDBName}`);
+                    
+                    // Wait for connection
+                    await new Promise((resolve, reject) => {
+                      ossDoorwayConnection.on('connected', () => {
+                        console.log(`✅ [QUEST-CONFIG-REPO] Connected to OSS-Doorway database`);
+                        resolve();
+                      });
+                      ossDoorwayConnection.on('error', reject);
+                      setTimeout(() => reject(new Error('Connection timeout')), 10000);
+                    });
                     
                     // Define QuestConfig schema for OSS-Doorway database
                     const questConfigSchema = new mongoose.Schema({
@@ -1788,27 +1802,36 @@ typings/
                     
                     const QuestConfig = ossDoorwayConnection.model('QuestConfig', questConfigSchema);
                     
+                    console.log(`💾 [QUEST-CONFIG-REPO] Saving quest config document...`);
+                    
                     // Save to database
-                    await QuestConfig.findOneAndUpdate(
+                    const result = await QuestConfig.findOneAndUpdate(
                       { groupId: uniqueGroupId },
                       { 
                         groupId: uniqueGroupId,
                         configData: repoQuestConfig,
                         createdAt: new Date(),
                         updatedAt: new Date(),
-                        source: 'database'
+                        source: 'production'
                       },
                       { upsert: true, new: true }
                     );
                     
                     console.log(`✅ [QUEST-CONFIG-REPO] Quest config saved to database: ${uniqueGroupId}`);
+                    console.log(`📄 [QUEST-CONFIG-REPO] Document ID: ${result._id}`);
+                    console.log(`🔍 [QUEST-CONFIG-REPO] Config keys: ${Object.keys(result.configData)}`);
+                    
                     await ossDoorwayConnection.close();
+                    console.log(`🔌 [QUEST-CONFIG-REPO] Database connection closed`);
                   } else {
-                    console.warn(`⚠️ [QUEST-CONFIG-REPO] OSS-Doorway database credentials not found, skipping database save`);
+                    console.warn(`⚠️ [QUEST-CONFIG-REPO] OSS-Doorway database credentials not found!`);
+                    console.warn(`  - OSS_DOORWAY_DB_URI: ${ossDoorwayURI ? 'SET' : 'MISSING'}`);
+                    console.warn(`  - OSS_DOORWAY_DB_NAME: ${ossDoorwayDBName ? 'SET' : 'MISSING'}`);
                   }
                   
                 } catch (dbError) {
                   console.error(`❌ [QUEST-CONFIG-REPO] Failed to save quest config to database:`, dbError.message);
+                  console.error(`🔍 [QUEST-CONFIG-REPO] Full error:`, dbError);
                   // Don't fail the operation - file system is still working
                 }
                 
