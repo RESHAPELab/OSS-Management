@@ -97,6 +97,9 @@ const GenerateJson = () => {
   const [repoCreationStatus, setRepoCreationStatus] = useState("");
   const [storedKeys, setStoredKeys] = useState([]);
   const [storedValuesByUser, setStoredValuesByUser] = useState({});
+  const [isLoadingCollectedInfo, setIsLoadingCollectedInfo] = useState(false);
+  const [collectedInfoSummary, setCollectedInfoSummary] = useState(null);
+  const [hasLoadedCollectedInfo, setHasLoadedCollectedInfo] = useState(false);
   // 1. Add new state for multiple tasks in questFormData
   const [questFormData, setQuestFormData] = useState({
     title: "",
@@ -857,6 +860,19 @@ const GenerateJson = () => {
   useEffect(() => {
     loadStoredValues();
   }, [lastSavedAt, classId]);
+
+  // Load collected_info data when component mounts (only once)
+  useEffect(() => {
+    if (classId) {
+      console.log('🚀 Component mounted, loading collected_info data for class:', classId);
+      // Reset the flag when class ID changes
+      setHasLoadedCollectedInfo(false);
+      // Only load if we don't already have the data
+      if (Object.keys(storedValuesByUser).length === 0) {
+        loadCollectedInfoData();
+      }
+    }
+  }, [classId]); // Remove loadCollectedInfoData from dependencies to prevent loops
 
   // Auto-save configuration when jsonContent changes
   useEffect(() => {
@@ -2071,8 +2087,115 @@ Student can now start their quest journey!`);
       const valuesByUser = res.data?.data?.valuesByUser || {};
       setStoredKeys(keys);
       setStoredValuesByUser(valuesByUser);
+      
+      // Only fetch collected_info data if we don't already have it
+      if (Object.keys(valuesByUser).length === 0 || !Object.keys(valuesByUser).some(userId => 
+        Object.keys(valuesByUser[userId] || {}).some(key => key === 'collected_info' || key.includes('collected_info'))
+      )) {
+        await loadCollectedInfoData();
+      }
     } catch (e) {
       console.error("Failed to load stored data:", e);
+    }
+  }
+
+  // New function to fetch collected_info data from our backend API
+  async function loadCollectedInfoData() {
+    if (!classId || hasLoadedCollectedInfo) return;
+    
+    console.log('🚀 [loadCollectedInfoData] Starting for class:', classId);
+    setIsLoadingCollectedInfo(true);
+    try {
+      console.log('🔍 Fetching collected_info data for class:', classId);
+      
+      // Fetch from our backend API which connects to OSS-Doorway database
+      const collectedInfoRes = await axios.get(
+        `${API_BASE_URL}/api/group/${classId}/collected-info`
+      );
+      
+              if (collectedInfoRes.data && collectedInfoRes.data.success) {
+          console.log('✅ Collected info data loaded:', collectedInfoRes.data);
+          console.log('✅ Response structure:', {
+            success: collectedInfoRes.data.success,
+            data: collectedInfoRes.data.data,
+            summary: collectedInfoRes.data.summary
+          });
+          
+          // Check if the class ID was automatically corrected
+          const summary = collectedInfoRes.data.summary;
+          setCollectedInfoSummary(summary);
+          if (summary && !summary.usedRequestedClassId) {
+            console.log(`⚠️ Class ID was automatically corrected from ${summary.requestedClassId} to ${summary.actualClassId}`);
+          }
+          
+          // Merge the collected_info data with existing stored values
+          const collectedInfoData = collectedInfoRes.data.data || {};
+        const updatedStoredValues = { ...storedValuesByUser };
+        
+        console.log('🔄 Before merge - storedValuesByUser:', storedValuesByUser);
+        console.log('🔄 Before merge - collectedInfoData:', collectedInfoData);
+        console.log('🔄 collectedInfoData keys:', Object.keys(collectedInfoData));
+        console.log('🔄 collectedInfoData values:', Object.values(collectedInfoData));
+        
+        // Add collected_info entries to the stored values
+        console.log('🔄 Starting to process collectedInfoData entries...');
+        Object.entries(collectedInfoData).forEach(([userId, userData]) => {
+          console.log(`🔄 Processing entry - userId: ${userId}, userData:`, userData);
+          
+          if (userData.collectedInfo && userData.collectedInfo.length > 0) {
+            // Use the username as the key for better display
+            const displayKey = userData.username || userData.github || userId;
+            
+            console.log(`🔄 Processing user ${displayKey} with collected_info:`, userData.collectedInfo);
+            
+            if (!updatedStoredValues[displayKey]) {
+              updatedStoredValues[displayKey] = {};
+            }
+            
+            userData.collectedInfo.forEach(info => {
+              updatedStoredValues[displayKey][info.key] = info.value;
+              console.log(`🔄 Added ${info.key} = ${info.value} for user ${displayKey}`);
+            });
+          } else {
+            console.log(`🔄 User ${userId} has no collectedInfo or empty array:`, userData.collectedInfo);
+          }
+        });
+        
+        console.log('🔄 After merge - updatedStoredValues:', updatedStoredValues);
+        setStoredValuesByUser(updatedStoredValues);
+        console.log('✅ [loadCollectedInfoData] Successfully updated storedValuesByUser state');
+        
+        // Add collected_info keys to storedKeys if they don't exist
+        const existingKeys = new Set(storedKeys.map(k => k.dataName));
+        const newKeys = [];
+        
+        Object.values(collectedInfoData).forEach(userData => {
+          if (userData.collectedInfo) {
+            userData.collectedInfo.forEach(info => {
+              if (!existingKeys.has(info.key)) {
+                newKeys.push({
+                  dataName: info.key,
+                  questId: 'Q1', // Use Q1 as default quest
+                  taskId: 'T1',  // Use T1 as default task
+                  expectedType: 'Text' // Set expected type
+                });
+                existingKeys.add(info.key);
+              }
+            });
+          }
+        });
+        
+        if (newKeys.length > 0) {
+          console.log('🔄 Adding new keys to storedKeys:', newKeys);
+          setStoredKeys(prev => [...prev, ...newKeys]);
+          console.log('✅ [loadCollectedInfoData] Successfully updated storedKeys state');
+        }
+      }
+    } catch (error) {
+      console.log('ℹ️ Could not fetch collected_info data, using existing data:', error.message);
+      // If collected_info fetch fails, continue with existing data
+    } finally {
+      setIsLoadingCollectedInfo(false);
     }
   }
 
@@ -2624,6 +2747,7 @@ Student can now start their quest journey!`);
                             Multiple Choice Question (MCQ)
                           </MenuItem>
                           <MenuItem value="quiz">Multi-Question Quiz</MenuItem>
+                          <MenuItem value="collect-info">Collect Information (Non-graded)</MenuItem>
                           <MenuItem value="get-issue-count">
                             Get Issue Count
                           </MenuItem>
@@ -2690,7 +2814,7 @@ Student can now start their quest journey!`);
                       />
 
                       <TextField
-                        label="Quest Notes (not displayed to student)"
+                        label="Task Notes (not displayed to student)"
                         value={task.taskDesc}
                         onChange={(e) =>
                           handleTaskChange(taskIdx, "taskDesc", e.target.value)
@@ -4547,16 +4671,16 @@ Student can now start their quest journey!`);
                       >
                         Default Task Types
                       </ListSubheader>
-                      <MenuItem value="multiple-choice">Multiple Choice</MenuItem>
-                      <MenuItem value="quiz">Quiz</MenuItem>
+                      <MenuItem value="multiple-choice">Multiple Choice Question (MCQ)</MenuItem>
+                      <MenuItem value="quiz">Multi-Question Quiz</MenuItem>
                       <MenuItem value="collect-info">Collect Information (Non-graded)</MenuItem>
                       <MenuItem value="get-issue-count">Get Issue Count</MenuItem>
-                      <MenuItem value="get-pr-count">Get PR Count</MenuItem>
+                      <MenuItem value="get-pr-count">Get Pull Request Count</MenuItem>
                       <MenuItem value="get-top-contributor">Get Top Contributor</MenuItem>
                       <MenuItem value="get-issue-title">Get Issue Title</MenuItem>
-                      <MenuItem value="get-open-issue">Get Open Issue</MenuItem>
+                      <MenuItem value="get-open-issue">Get Open Issue Count</MenuItem>
                       <MenuItem value="assigned">Assignment Validation</MenuItem>
-                      <MenuItem value="text-input">Text Input</MenuItem>
+                      <MenuItem value="comment">Comment Validation</MenuItem>
                       <MenuItem value="issue-no">Issue Number</MenuItem>
 
                       {/* AI-Powered Task Types */}
@@ -4736,11 +4860,51 @@ Student can now start their quest journey!`);
                     </Box>
                   )}
 
-                  {/* Repository and Issue Fields */}
+                  {/* GitHub Repo Configuration */}
                   {["get-issue-count", "get-pr-count", "get-top-contributor", "get-open-issue", "get-issue-title"].includes(editingTaskData.taskType) && (
-                    <Box>
+                    <Box
+                      sx={{
+                        backgroundColor: "#f0f8ff",
+                        p: 3,
+                        borderRadius: 4,
+                        border: "2px solid #1976d2",
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          color: "#1565c0",
+                          mb: 2,
+                        }}
+                      >
+                        🔗 GitHub Repo Configuration
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "text.secondary",
+                          mb: 2,
+                        }}
+                      >
+                        {editingTaskData.taskType === "get-issue-count" &&
+                          "Issue Count Task"}
+                        {editingTaskData.taskType === "get-pr-count" &&
+                          "Pull Request Count Task"}
+                        {editingTaskData.taskType === "get-top-contributor" &&
+                          "Top Contributor Task"}
+                        {editingTaskData.taskType === "get-open-issue" &&
+                          "Open Issue Count Task"}
+                        {editingTaskData.taskType === "get-issue-title" &&
+                          "Issue Title Task"}
+                      </Typography>
+
                       <TextField
-                        label="Repository"
+                        label="Repository (owner/repo)"
                         value={editingTaskData.repository || ""}
                         onChange={(e) =>
                           setEditingTaskData({
@@ -4748,10 +4912,78 @@ Student can now start their quest journey!`);
                             repository: e.target.value,
                           })
                         }
-                        placeholder="owner/repo-name"
+                        placeholder="e.g., microsoft/vscode"
                         fullWidth
-                        sx={{ mb: 2 }}
+                        helperText="Format: owner/repository-name"
+                        sx={{ borderRadius: 2 }}
                       />
+
+                      {editingTaskData.taskType === "get-issue-count" && (
+                        <Box sx={{ mt: 2 }}>
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={editingTaskData.saveValidatedData || false}
+                                onChange={(e) =>
+                                  setEditingTaskData({
+                                    ...editingTaskData,
+                                    saveValidatedData: e.target.checked,
+                                  })
+                                }
+                                sx={{
+                                  "& .MuiSwitch-switchBase.Mui-checked": {
+                                    color: "#4caf50",
+                                    "&:hover": {
+                                      backgroundColor: "rgba(76, 175, 80, 0.08)",
+                                    },
+                                  },
+                                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                    { backgroundColor: "#4caf50" },
+                                }}
+                              />
+                            }
+                            label="Save validated data for later tasks"
+                            sx={{
+                              "& .MuiFormControlLabel-label": {
+                                fontSize: "0.95rem",
+                                fontWeight: 500,
+                                color: "#374151",
+                              },
+                            }}
+                          />
+                          {editingTaskData.saveValidatedData && (
+                            <>
+                              <TextField
+                                label="Data Name"
+                                value={editingTaskData.savedDataName || ""}
+                                onChange={(e) =>
+                                  setEditingTaskData({
+                                    ...editingTaskData,
+                                    savedDataName: e.target.value,
+                                  })
+                                }
+                                placeholder="e.g., issue_count"
+                                fullWidth
+                                helperText="Unique key to reference this data in future tasks"
+                                sx={{ mt: 1, borderRadius: 2 }}
+                              />
+                              <Alert
+                                severity="info"
+                                sx={{
+                                  mt: 1,
+                                  borderRadius: 4,
+                                  "& .MuiAlert-icon": { display: "none" },
+                                }}
+                              >
+                                <AlertTitle>Per-user Storage</AlertTitle>
+                                When enabled, the validated answer is saved for each student separately.
+                                The value is automatically stored as a number or text based on the expected answer type.
+                              </Alert>
+                            </>
+                          )}
+                        </Box>
+                      )}
+
                       {editingTaskData.taskType === "get-issue-title" && (
                         <TextField
                           label="Issue Number"
@@ -4763,55 +4995,9 @@ Student can now start their quest journey!`);
                             })
                           }
                           placeholder="123"
-                          sx={{ width: 150 }}
+                          sx={{ mt: 2, width: 150 }}
                         />
                       )}
-                      <Box sx={{ mt: 2 }}>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={editingTaskData.saveValidatedData || false}
-                              onChange={(e) =>
-                                setEditingTaskData({
-                                  ...editingTaskData,
-                                  saveValidatedData: e.target.checked,
-                                })
-                              }
-                            />
-                          }
-                          label="Save validated data for later tasks"
-                        />
-                        {editingTaskData.saveValidatedData && (
-                          <>
-                            <TextField
-                              label="Data Name"
-                              value={editingTaskData.savedDataName || ""}
-                              onChange={(e) =>
-                                setEditingTaskData({
-                                  ...editingTaskData,
-                                  savedDataName: e.target.value,
-                                })
-                              }
-                              placeholder="e.g., repo_issue_count"
-                              fullWidth
-                              sx={{ mt: 1 }}
-                              helperText="Unique key to reference this saved value in future tasks"
-                            />
-                            <Alert
-                              severity="info"
-                              sx={{
-                                mt: 1,
-                                borderRadius: 4,
-                                "& .MuiAlert-icon": { display: "none" },
-                              }}
-                            >
-                              <AlertTitle>Per-user Storage</AlertTitle>
-                              When enabled, the validated answer is saved for each student separately.
-                              The value is automatically stored as a number or text based on the expected answer type.
-                            </Alert>
-                          </>
-                        )}
-                      </Box>
                     </Box>
                   )}
 
@@ -5445,57 +5631,19 @@ Student can now start their quest journey!`);
                     </Box>
                   )}
 
-                  {/* GitHub API Task Fields */}
-                  {["get-issue-count", "get-pr-count", "get-top-contributor", "get-open-issue", "get-issue-title"].includes(editingTaskData.taskType) && (
-                    <Box>
-                      <Typography
-                        variant="h6"
-                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
-                      >
-                        GitHub Repository Configuration
-                      </Typography>
-                      
-                      <TextField
-                        label="Repository (owner/repo)"
-                        value={editingTaskData.repository || ""}
-                        onChange={(e) =>
-                          setEditingTaskData({
-                            ...editingTaskData,
-                            repository: e.target.value,
-                          })
-                        }
-                        placeholder="e.g., microsoft/vscode"
-                        fullWidth
-                        helperText="Format: owner/repository-name"
-                        sx={{ mb: 2, borderRadius: 2 }}
-                      />
 
-                      {editingTaskData.taskType === "get-issue-title" && (
-                        <TextField
-                          label="Issue Number"
-                          type="number"
-                          value={editingTaskData.issueNumber || ""}
-                          onChange={(e) =>
-                            setEditingTaskData({
-                              ...editingTaskData,
-                              issueNumber: e.target.value,
-                            })
-                          }
-                          placeholder="e.g., 123"
-                          fullWidth
-                          helperText="The specific issue number students must find"
-                          sx={{ borderRadius: 2 }}
-                        />
-                      )}
-                    </Box>
-                  )}
 
                   {/* Assignment Validation Task Fields */}
                   {editingTaskData.taskType === "assigned" && (
                     <Box>
+                      <Divider sx={{ mb: 2 }} />
                       <Typography
                         variant="h6"
-                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
+                        sx={{
+                          fontWeight: 700,
+                          mb: 2,
+                          color: "secondary.main",
+                        }}
                       >
                         Assignment Validation Task
                       </Typography>
@@ -5533,14 +5681,19 @@ Student can now start their quest journey!`);
                     </Box>
                   )}
 
-                  {/* Issue Number Task Fields */}
-                  {editingTaskData.taskType === "issue-no" && (
+                  {/* Comment Validation Task Fields */}
+                  {editingTaskData.taskType === "comment" && (
                     <Box>
+                      <Divider sx={{ mb: 2 }} />
                       <Typography
                         variant="h6"
-                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
+                        sx={{
+                          fontWeight: 700,
+                          mb: 2,
+                          color: "secondary.main",
+                        }}
                       >
-                        Issue Number Validation Task
+                        Comment Validation Task
                       </Typography>
 
                       <TextField
@@ -5558,6 +5711,54 @@ Student can now start their quest journey!`);
                         sx={{ mb: 2, borderRadius: 2 }}
                       />
 
+                      <TextField
+                        label="Issue Number"
+                        type="number"
+                        value={editingTaskData.issueNumber || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            issueNumber: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., 123"
+                        fullWidth
+                        helperText="The specific issue number where students should post a comment"
+                        sx={{ borderRadius: 2 }}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Issue Number Task Fields */}
+                  {editingTaskData.taskType === "issue-no" && (
+                    <Box>
+                      <Divider sx={{ mb: 2 }} />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          mb: 2,
+                          color: "secondary.main",
+                        }}
+                      >
+                        Issue Number Validation Task
+                      </Typography>
+
+                      <TextField
+                        label="Repository (owner/repo)"
+                        value={editingTaskData.repository || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            repository: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., microsoft/vscode"
+                        fullWidth
+                        helperText="Format: owner/repository-name"
+                        sx={{ borderRadius: 2 }}
+                      />
+
                       <Box sx={{ mt: 2 }}>
                         <FormControlLabel
                           control={
@@ -5569,9 +5770,27 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
+                              sx={{
+                                "& .MuiSwitch-switchBase.Mui-checked": {
+                                  color: "#1976d2",
+                                  "&:hover": {
+                                    backgroundColor:
+                                      "rgba(25, 118, 210, 0.08)",
+                                  },
+                                },
+                                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                  { backgroundColor: "#1976d2" },
+                              }}
                             />
                           }
-                          label="Save validated issue number for future use"
+                          label="Save validated data per user"
+                          sx={{
+                            "& .MuiFormControlLabel-label": {
+                              fontSize: "0.95rem",
+                              fontWeight: 500,
+                              color: "#374151",
+                            },
+                          }}
                         />
                         {editingTaskData.saveValidatedData && (
                           <>
@@ -5586,8 +5805,8 @@ Student can now start their quest journey!`);
                               }
                               placeholder="e.g., provided_issue_number"
                               fullWidth
-                              sx={{ mt: 1 }}
-                              helperText="Unique key to reference this saved value in future tasks"
+                              helperText="Key used to store this value in each student's data."
+                              sx={{ mt: 1, borderRadius: 2 }}
                             />
                             <Alert
                               severity="info"
@@ -5598,7 +5817,9 @@ Student can now start their quest journey!`);
                               }}
                             >
                               <AlertTitle>Per-user Storage</AlertTitle>
-                              When enabled, the student-provided issue number is saved for each student separately. The value is stored as a number.
+                              When enabled, the student-provided issue
+                              number is saved for each student separately.
+                              The value is stored as a number.
                             </Alert>
                           </>
                         )}
@@ -5751,10 +5972,40 @@ Student can now start their quest journey!`);
 
                   {/* Collect Info Task Fields */}
                   {editingTaskData.taskType === "collect-info" && (
-                    <Box sx={{ mt: 3 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
-                        Collect Information Task
-                      </Typography>
+                    <Box>
+                      <Divider sx={{ mb: 2 }} />
+                      <Box
+                        sx={{
+                          backgroundColor: "#e8f5e8",
+                          p: 3,
+                          borderRadius: 4,
+                          border: "2px solid #4caf50",
+                          mb: 2,
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            color: "#2e7d32",
+                          }}
+                        >
+                          📝 Collect Information Task
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 1 }}
+                        >
+                          Create non-graded tasks that collect information from students. 
+                          Any response will be accepted and stored for later reference.
+                        </Typography>
+                      </Box>
+
+                      {/* Save validated data per-user */}
                       <Box sx={{ mt: 2 }}>
                         <FormControlLabel
                           control={
@@ -5766,9 +6017,27 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
+                              sx={{
+                                "& .MuiSwitch-switchBase.Mui-checked": {
+                                  color: "#4caf50",
+                                  "&:hover": {
+                                    backgroundColor:
+                                      "rgba(76, 175, 80, 0.08)",
+                                  },
+                                },
+                                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                  { backgroundColor: "#4caf50" },
+                              }}
                             />
                           }
                           label="Save collected information for later tasks"
+                          sx={{
+                            "& .MuiFormControlLabel-label": {
+                              fontSize: "0.95rem",
+                              fontWeight: 500,
+                              color: "#374151",
+                            },
+                          }}
                         />
                         {editingTaskData.saveValidatedData !== false && (
                           <>
@@ -5783,8 +6052,8 @@ Student can now start their quest journey!`);
                               }
                               placeholder="e.g., collected_info"
                               fullWidth
-                              sx={{ mt: 1 }}
                               helperText="Unique key to reference this collected information in future tasks"
+                              sx={{ mt: 1, borderRadius: 2 }}
                             />
                             <Alert
                               severity="info"
@@ -6166,14 +6435,34 @@ Good luck! 🚀"
               student, and shows stored values when available.
             </Typography>
 
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
               <Button
                 variant="outlined"
                 size="small"
                 onClick={loadStoredValues}
                 sx={{ borderRadius: 3 }}
               >
-                Refresh
+                Refresh All Data
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  setHasLoadedCollectedInfo(false);
+                  loadCollectedInfoData();
+                }}
+                sx={{ borderRadius: 3 }}
+                color="secondary"
+                disabled={isLoadingCollectedInfo}
+              >
+                {isLoadingCollectedInfo ? (
+                  <>
+                    <CircularProgress size={16} sx={{ mr: 1 }} />
+                    Loading...
+                  </>
+                ) : (
+                  'Refresh Collected Info'
+                )}
               </Button>
             </Box>
 
@@ -6230,6 +6519,75 @@ Good luck! 🚀"
             {/* Deploy MCQ Quest to Existing Repo */}
             <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
 
+            </Box>
+
+            {/* Collected Info Summary */}
+            <Box sx={{ mt: 3, mb: 3 }}>
+              <Typography
+                variant="h6"
+                component="h4"
+                sx={{ fontWeight: 600, mb: 2, color: 'secondary.main' }}
+              >
+                📝 Collected Info Summary
+              </Typography>
+              
+              {/* Show subtle notification if class ID was corrected */}
+              {collectedInfoSummary && !collectedInfoSummary.usedRequestedClassId && (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2, fontStyle: 'italic' }}>
+                  ℹ️ Showing collected_info data from available classes
+                </Typography>
+              )}
+              
+              {(() => {
+                const collectedInfoKeys = storedKeys.filter(k => 
+                  k.dataName === 'collected_info' || k.dataName.includes('collected_info')
+                );
+                
+                // Count actual collected_info entries from stored values
+                const totalCollectedInfoEntries = Object.values(storedValuesByUser).reduce((total, userValues) => {
+                  return total + Object.keys(userValues).filter(key => 
+                    key === 'collected_info' || key.includes('collected_info')
+                  ).length;
+                }, 0);
+                
+                // Count students who actually have collected_info data
+                const studentsWithCollectedInfo = Object.keys(storedValuesByUser).filter(userId => 
+                  Object.keys(storedValuesByUser[userId] || {}).some(key => 
+                    key === 'collected_info' || key.includes('collected_info')
+                  )
+                ).length;
+                
+                if (collectedInfoKeys.length === 0) {
+                  return (
+                    <Typography variant="body2" color="text.secondary">
+                      No collected_info data configured yet. Use "collect-info" task types to gather student information.
+                    </Typography>
+                  );
+                }
+                
+                return (
+                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Chip 
+                      label={`${collectedInfoKeys.length} collected_info keys`} 
+                      color="secondary" 
+                      variant="outlined"
+                      size="small"
+                    />
+                    <Chip 
+                      label={`${totalCollectedInfoEntries} total entries`} 
+                      color="primary" 
+                      variant="outlined"
+                      size="small"
+                    />
+                    <Chip 
+                      label={`${studentsWithCollectedInfo} students with data`} 
+                      color="success" 
+                      variant="outlined"
+                      size="small"
+                    />
+                  </Box>
+                );
+              })()}
             </Box>
 
             {/* Per-user values placeholder */}

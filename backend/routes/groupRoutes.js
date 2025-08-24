@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, getCollectedInfoForClass } = require("../controllers/groupController")
 const { generateHint } = require("../controllers/aiController")
 const { getStudents } = require("../controllers/studentController")
 
@@ -40,6 +40,7 @@ router.route("/:classId/quest-json-config").post(saveQuestJsonConfig).get(getQue
 router.route("/:classId/stored-values").get(getStoredValuesForClass);
 router.route("/:classId/stored-values/backend").get(getStoredValuesBackend);
 router.route("/:classId/stored-values").post(upsertStoredValue);
+router.route("/:classId/collected-info").get(getCollectedInfoForClass);
 
 // AI hint generation
 router.post('/:classId/ai/generate-hint', generateHint);
