@@ -37,7 +37,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 const ManageStudents = () => {
   const { classId } = useParams();
   const { authUser } = useAuthContext();
-  const baseURL = API_CONFIG.getBaseURL();
+  const baseURL = API_BASE_URL;
   const [studentData, setStudentData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');

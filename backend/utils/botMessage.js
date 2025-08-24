@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 const axios = require("axios");
-// Remove this line: const { getGithubAppInstallationAccessToken } = require("../../../bot/controllers/githubAppAuth");
 require("dotenv").config();
 
 function signPayload(payload) {
@@ -10,16 +9,6 @@ function signPayload(payload) {
     }
     const hmac = crypto.createHmac("sha256", secret); 
     return "sha256=" + hmac.update(JSON.stringify(payload)).digest("hex");
-}
-
-// Get bot service URL based on environment
-function getBotServiceUrl() {
-    // Check if we're in production
-    if (process.env.NODE_ENV === 'production' || process.env.BOT_SERVICE_URL) {
-        return process.env.BOT_SERVICE_URL || 'https://oss-timi.up.railway.app';
-    }
-    // Default to localhost for development
-    return 'http://localhost:10000';
 }
 
 async function sendMessageToBot(url, payload) {
@@ -164,6 +153,5 @@ const getGithubAppInstallationAccessToken = async () => {
 module.exports = {
     sendMessageToBot, 
     signPayload,
-    // Remove this line: getGithubAppInstallationAccessToken,
-    getBotServiceUrl
-};
+    getGithubAppInstallationAccessToken
+}

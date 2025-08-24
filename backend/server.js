@@ -25,34 +25,7 @@ if (process.env.NODE_ENV !== "test") {
 connectDB();
 
 const app = express();
-
-// Enhanced CORS configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    const allowedOrigins = [
-      "http://localhost:3000",
-      "http://localhost:8080",
-      "http://localhost:10000",
-      "https://oss-michael.up.railway.app",
-      "https://oss-timi.up.railway.app",
-      "https://ossdoorway.vercel.app",  // Add this line
-    ];
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-bot-signature"],
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import TextEditor from '../../components/TextEditor';
+import React, { useState, useEffect, useMemo } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { API_BASE_URL } from "../../config/api";
+import TextEditor from "../../components/TextEditor";
 import {
   Container,
   Box,
@@ -81,7 +82,7 @@ const defaultJsonContent = {
 const GenerateJson = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
-  const [downloadStatus, setDownloadStatus] = useState('');
+  const [downloadStatus, setDownloadStatus] = useState("");
   const [showAddQuestModal, setShowAddQuestModal] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
   const [showReadmeModal, setShowReadmeModal] = useState(false);
@@ -117,8 +118,269 @@ const GenerateJson = () => {
 
   // Initial JSON content with state management
   const [jsonContent, setJsonContent] = useState({
-    map_repo_link: "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
-    questSequence: []
+    map_repo_link:
+      "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+    questSequence: [
+      {
+        questId: "Q1",
+        title: "Q1: Understanding OSS Projects and GitHub Basics",
+        isQ0: false,
+        questType: "fixed",
+        sequenceNumber: 0,
+        metadata: {
+          title: "Q1: Understanding OSS Projects and GitHub Basics",
+          description:
+            "Learn the fundamentals of open source software and GitHub workflow",
+          prerequisite: null,
+          type: "general",
+        },
+        badgeDescription: "Explorer 🚀",
+        tasks: {
+          T1: {
+            title: "Explore the issue tracker",
+            taskTitle: "Explore the issue tracker",
+            desc: "Explore the issue tracker",
+            points: 20,
+            xp: 20,
+            type: "get-issue-count",
+            ossRepository: "probot-test-org/test-repo",
+            accept:
+              '### 🎯 Task 1: Find the Issue Tracker\n\n**Objective:** The issue tracker is the hub for project discussions, bug reports, and feature requests. Your goal is to find the issue tracker within our GitHub repository.\n\n**Task:** Visit the GitHub repository in the link below and **COUNT** the number of open issues and provide that number in the comment box to complete the task.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo)\n\n**Outcome:** This task will help you become familiar with how issues are reported, discussed, and tracked. Understanding the volume of discussions is crucial for grasping the project\'s activity level and areas that might need your contribution.\n\n**Help:** If you need help with this task, type "help" in the comment box to get hints, but it will cost you 5 points from your total score.',
+            success:
+              "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of issues in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. Each task completed is a step forward in your adventure. \n\nReady for the next challenge? More experiences and rewards await!\n\nA new task has appeared in the issues tab.\n\nYour adventure awaits! 🌟\n\n",
+            error:
+              "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** issues in our project. \n\nNo worries, though! Mistakes are just stepping stones on the path to learning.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nEach issue represents a story, a problem to solve, or a feature to improve. Finding the correct number is just the start of understanding the broader narrative of our project.\n\nReady for another try? Your correct answer awaits just a click away!",
+            answer: "",
+            hints: [],
+          },
+          T2: {
+            title: "Explore the pull-request menu",
+            taskTitle: "Explore the pull-request menu",
+            desc: "Explore the pull-request menu",
+            points: 20,
+            xp: 20,
+            type: "get-pr-count",
+            ossRepository: "probot-test-org/test-repo",
+            accept:
+              '### 🎯 Task 2: Find the Pull Request Menu\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n **Task:** Go to the GitHub repository using the link below, find the number of **open** pull requests, and enter it in the comment box below.\n\n**Outcome:** Completing this task will deepen your understanding of how contributions are proposed, discussed, and integrated into the project. Recognizing the volume of open pull requests helps you see the project\'s dynamic nature and where you might contribute in the future.\n\n**Help:** If you need help with this task, type "help" in the comment box to get hints, but it will cost you 5 points from your total score.',
+            success:
+              "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of pull requests in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. Each task completed is a step forward in your adventure. \n\nReady for the next challenge? More experiences and rewards await!\n\nYou will see a new task in your issues tab!\n\nYour adventure awaits! 🌟\n\n",
+            error:
+              "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** pull requests in our project.\n\nNo worries, though! Mistakes are part of the learning journey, and every misstep is an opportunity for growth.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nConsider this a bit of detective work 🕵️‍♂️.\n\nEvery open pull request is a potential contribution, waiting to enhance the project or fix an underlying issue. Identifying the correct number not only demonstrates your attentiveness but also helps you get acquainted with the contributions landscape of our project.\n\nReady to try again? The accurate count—and a chance to sharpen your project navigation skills—is just a click away!",
+            answer: "",
+            hints: [],
+          },
+          T3: {
+            title: "Explore the fork button",
+            taskTitle: "Explore the fork button",
+            desc: "Explore the fork button",
+            points: 20,
+            xp: 20,
+            type: "multiple-choice",
+            accept:
+              '**Question:** ### 🎯 Task 3: Locate the Fork Button \n\n**Objective:** Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Task:** Go to the GitHub repository using the link below, locate the **Fork** button, and note where it\'s positioned.\n\n**Choose the option that best describes where the "Fork" button is located.**\n\n\n\nA) Bottom-left corner of the page\nB) Directly under the repository description\nC) Next to the "Watch" and "Star" buttons\nD) In the repository\'s "Settings" tab\n\n**Instructions:** Select the correct answer.',
+            success:
+              "### 🌟 Congratulations! You've Got It Right!\n\nYou've correctly identified the fork button's location within a GitHub repository as the top-right corner of the page, showcasing your growing familiarity with GitHub's interface and tools for collaboration.\n\nAs a reward for your keen observation and learning skills, you've earned ${experiencePoints} experience points!\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of open-source collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon!\n\nTo dive into your next task, look in the issues tab!\n\nThe adventure continues! 🌟\n\n",
+            error:
+              "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the location you've selected for the fork button doesn't align with its typical placement in a GitHub repository.\n\nNo worries, though! Mistakes are simply steps on the path to mastery, and every attempt brings you closer to understanding.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThis is a bit like a treasure hunt 🗺️.\n\nFinding the fork button is a fundamental skill for navigating GitHub and making your mark on projects. Correctly identifying its location ensures you're ready to start experimenting and contributing on your own terms.\n\nReady for another try? Your correct answer is just a decision away!\n\n**Please select the correct answer from the options below:**\n\nA) Bottom-left corner of the page\nB) Directly under the repository description\nC) Top-right corner of the page\nD) In the repository's \"Settings\" tab\n\n**Type** the letter in the comment box to complete this task.",
+            answer: "C",
+            question:
+              '### 🎯 Task 3: Locate the Fork Button \n\n**Objective:** Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.\n\n**Task:** Go to the GitHub repository using the link below, locate the **Fork** button, and note where it\'s positioned.\n\n**Choose the option that best describes where the "Fork" button is located.**\n\n',
+            options: [
+              {
+                label: "A",
+                value: "Bottom-left corner of the page",
+              },
+              {
+                label: "B",
+                value: "Directly under the repository description",
+              },
+              {
+                label: "C",
+                value: 'Next to the "Watch" and "Star" buttons',
+              },
+              {
+                label: "D",
+                value: 'In the repository\'s "Settings" tab',
+              },
+            ],
+            hints: [],
+          },
+          T4: {
+            title: "Explore the readme file",
+            taskTitle: "Explore the readme file",
+            desc: "Explore the readme file",
+            points: 20,
+            xp: 20,
+            type: "multiple-choice",
+            accept:
+              "**Question:** ### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Instructions:** Select the correct answer.",
+            success:
+              "### 🌟 Congratulations! You've Got It Right!\n\nYou've successfully identified a key piece of information or instruction from the README file, demonstrating your thorough attention to detail and commitment to understanding the project.\n\nAs a reward for your keen observation and learning skills, you've earned ${experiencePoints} experience points!\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you're just **${pointsRemaining} points away** from leveling up!.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of open-source collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon! \n\nThere will be a new task in your issues tab.\n\nThe adventure continues! 🌟\n\n",
+            error:
+              "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the information you've shared from the README file doesn't quite match what we were looking for, or perhaps it was misunderstood.\n\nDon't fret, though! Each step, including the missteps, is part of the journey towards greater knowledge and proficiency.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nConsider this a chance to dive deeper 🤿.\n\nThe README file is packed with insights about the project, often hiding gems of information crucial for new contributors. By revisiting and reflecting on its content, you're not just completing a task but also building a foundation for meaningful contributions.\n\nReady to give it another go? The README file awaits with the details you need to move forward!\n\n**Please select the correct answer from the options below based on the sessions described in the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Type** the letter in the comment box to complete this task.",
+            answer: "D",
+            question:
+              "### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA",
+            options: [
+              {
+                label: "A",
+                value: "Functionality",
+              },
+              {
+                label: "B",
+                value: "Design",
+              },
+              {
+                label: "C",
+                value: "Architecture",
+              },
+              {
+                label: "D",
+                value: "Contributing",
+              },
+            ],
+            hints: [],
+          },
+          T5: {
+            title: "Explore the contributors",
+            taskTitle: "Explore the contributors",
+            desc: "Explore the contributors",
+            points: 20,
+            xp: 20,
+            type: "get-top-contributor",
+            ossRepository: "probot-test-org/test-repo",
+            accept:
+              "### 🎯 Task 5: Discover the Contributors \n\n**Objective:** Understanding who has contributed to a project can provide insights into the project's community and potentially whom to reach out to for collaboration or questions.\n\n**Task:** Go to the GitHub repository using the link below, locate the **number 1** contributor, and **TYPE** their username in the comment box. Do NOT include any symbols.\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Outcome:** This task will familiarize you with the collaborative nature of open-source projects on GitHub. Identifying contributors helps you understand the project's community size and diversity, offering a window into the people behind the project.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+            success:
+              "### 🌟 Congratulations! You've Reached a New Level!\n\nWith your latest achievement, you've accurately identified the number of contributors to our project, demonstrating not just your ability to navigate GitHub but also your appreciation for community collaboration.\n\nAs a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You've now accomplished a total of **${currentPoints} points**, achieving a remarkable milestone in your journey. This success is a testament to your dedication, learning, and contributions thus far.\n\n🎯 **Quest Completion:** You've successfully completed the tasks for this quest, leaving only the remaining quiz. This accomplishment signifies your mastery over the tasks at hand and your readiness to embark on new challenges and quests within the GitHub realm and beyond.\n\n> 🌟 🌟 🌟\n\nIncredible work! Your journey through this quest has been a tale of persistence, learning, and growth. Each task you've completed has not only contributed to your knowledge but has also paved the way for future adventures in open-source collaboration.\n\n**🚀 Ready for New Horizons:** With this quest behind you, new quests await, brimming with opportunities for exploration, learning, and making an impact.\n\nTo begin your next adventure, keep an eye out for the command or instructions that will introduce your next task. Your dedication and skills are invaluable assets on this journey of continuous learning and contribution.\n\nOnward to new quests and achievements! 🌟\n\n",
+            error:
+              "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the number of contributors you've mentioned doesn't align with the current roster of contributors to our project.\n\nBut remember, every error is a stepping stone towards greater understanding and skill.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThink of this as honing your analytical skills 🔍.\n\nEach contributor represents a unique contribution to the project, from code commits to documentation. Recognizing the breadth and depth of the community's engagement is crucial for appreciating the collective effort involved in open-source projects.\n\nAre you ready for another attempt? The correct number, and a deeper understanding of our project's community, is just a few clicks away!",
+            answer: "",
+            hints: [],
+          },
+          T6: {
+            title: "Quiz",
+            taskTitle: "Quiz",
+            desc: "Quiz",
+            points: 20,
+            xp: 20,
+            type: "quiz",
+            questions: [
+              {
+                question:
+                  "What is the primary purpose of the issue tracker in a GitHub repository?",
+                optionA: "To list all contributors to the project",
+                optionB:
+                  "To track bug reports, feature requests, and project discussions",
+                optionC: "To store documentation and project guidelines",
+                optionD: "To manage pull requests and merges",
+                correctAnswer: "b",
+                explanation: "",
+              },
+              {
+                question:
+                  "Which statement best describes a pull request on GitHub?",
+                optionA:
+                  "A way to propose changes to a repository, allowing for code review and discussion before integration",
+                optionB:
+                  "A method of archiving issues and marking them as resolved",
+                optionC:
+                  "A feature used for backing up repository data to a different server",
+                optionD:
+                  "A section where repository settings and configurations are modified",
+                correctAnswer: "a",
+                explanation: "",
+              },
+              {
+                question: "Why would you fork a repository on GitHub?",
+                optionA: "To permanently delete it from your account",
+                optionB: "To merge two different repositories into one",
+                optionC:
+                  "To create a personal copy where you can experiment and make changes without affecting the original",
+                optionD: "To mark it as one of your favorite projects",
+                correctAnswer: "c",
+                explanation: "",
+              },
+              {
+                question:
+                  "What information is typically found in a README file of a GitHub project?",
+                optionA: "The project's history and commit logs",
+                optionB:
+                  "A guide on how to contribute, along with an overview of the project",
+                optionC: "Personal information about the contributors",
+                optionD: "All the issues that have ever been reported",
+                correctAnswer: "b",
+                explanation: "",
+              },
+              {
+                question:
+                  "How can understanding who has contributed the most to a project be useful?",
+                optionA: "It ensures that you get paid for your contributions",
+                optionB:
+                  "It prevents other people from making changes to your code",
+                optionC:
+                  "It lets you change the project's license to your preference",
+                optionD:
+                  "It helps identify the project's most active users and potential people to reach out to for guidance",
+                correctAnswer: "d",
+                explanation: "",
+              },
+            ],
+            accept:
+              '### 🧠 Quest 1 Quiz \n Answer the following questions to test your knowledge of the GitHub contribution process.\n Note that you may navigate to issues and view your "closed issues" to view old tasks that may help you answer these questions! \n\nThere is only one attempt allowed!',
+            success: "Good Job!",
+            error:
+              "### Oops, That's Not Quite Right! Check if you have an answer for each question and if you are following the answer pattern: [X, X, X]",
+            answer: "",
+            hints: [],
+          },
+        },
+      },
+      {
+        questId: "Q2",
+        title: "Q2: Assignment Validation",
+        isQ0: false,
+        questType: "custom",
+        sequenceNumber: 1,
+        metadata: {
+          title: "Q2: Assignment Validation",
+          description: "Validate user assignments to specific issues",
+          prerequisite: "Q1",
+          type: "custom",
+        },
+        badgeDescription: "Custom Quest 🎯",
+        tasks: {
+          T1: {
+            title: "Identify the assigned user for the issue #88",
+            taskTitle: "Identify the assigned user for the issue #88",
+            desc: "Identify the assigned user for the issue #88",
+            points: 25,
+            xp: 25,
+            hints: [],
+            detailedHints: [],
+          },
+          T2: {
+            title: "Choose an issue that you would like to work with",
+            taskTitle: "Choose an issue that you would like to work with",
+            desc: "Choose an issue that you would like to work with",
+            points: 25,
+            xp: 25,
+            type: "issue-no",
+            ossRepository: "probot-test-org/test-repo",
+            accept:
+              "### 🎯 Task 1: Choose an Issue to Work On\n\n**Objective:** ${objective || 'The lifeblood of any Open Source Software (OSS) project is its community and the contributions that come from addressing issues. Your mission is to identify an issue within our GitHub repository that aligns with your skills, interests, or areas you wish to learn more about.'}\n\n**Task:** Go to the GitHub repository using the link below, find an issue that you would like to work on, and type its issue number in the comment box below.\n\n**Outcome:** By selecting an issue to work on, you are taking the first step towards contributing to the project and becoming part of the OSS community. This task helps you engage with the project's needs actively and lays the groundwork for your upcoming contributions.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+            success:
+              "### 🌟 Congratulations! You've Selected Your First Issue!\n\nBy choosing an issue to focus on, you've taken a significant step in your journey of contribution to our project. Your willingness to engage and make a difference showcases your commitment to the community and project advancement.\n\n**Points earned:** {points}\n\n🌟 🌟 🌟\n\n🏆 **Current Progress:** Good work! You currently have {points} points and you've started your journey towards achieving greater milestones.\n\n🎯 **Quest Advancement:** This task not only brings you closer to mastering the collaboration process within GitHub but also highlights your growing role within our community.\n\n🌟 🌟 🌟\n\nFantastic effort! You're proving to be an essential part of our journey towards developing a project that we can all be proud of. 🌟",
+            error:
+              "### ❌ Issue Not Found\n\nThe issue number you provided does not exist in the ${repository || '[repository]'} repository.\n\n**Please ensure:**\n1. You're checking the right repository\n2. You're typing a valid issue number\n3. The issue actually exists\n\n[Click here to view all issues](https://github.com/${repository || '[repository]'}/issues)",
+            answer: "",
+            hints: [],
+          },
+        },
+      },
+    ],
+    readme: "",
   });
 
   // Add a quest ID counter to ensure consistent timestamps
@@ -507,17 +769,31 @@ const GenerateJson = () => {
 
       try {
         setIsLoading(true);
-        console.log('🔄 Loading saved quest JSON configuration for class:', classId);
-        
-        const response = await axios.get(`http://localhost:8080/api/group/${classId}/quest-json-config`);
-        
-        console.log('🔍 Debug response data:', response.data);
-        console.log('🔍 hasConfig:', response.data.data?.hasConfig);
-        console.log('🔍 questJsonConfig:', response.data.data?.questJsonConfig);
-        console.log('🔍 questSequence length:', response.data.data?.questJsonConfig?.questSequence?.length);
-        
-        if (response.data.success && response.data.data.hasConfig && response.data.data.questJsonConfig && response.data.data.questJsonConfig.questSequence && response.data.data.questJsonConfig.questSequence.length > 0) {
-          console.log('✅ Loaded existing quest JSON configuration');
+        console.log(
+          "🔄 Loading saved quest JSON configuration for class:",
+          classId
+        );
+
+        const response = await axios.get(
+          `${API_BASE_URL}/api/group/${classId}/quest-json-config`
+        );
+
+        console.log("🔍 Debug response data:", response.data);
+        console.log("🔍 hasConfig:", response.data.data?.hasConfig);
+        console.log("🔍 questJsonConfig:", response.data.data?.questJsonConfig);
+        console.log(
+          "🔍 questSequence length:",
+          response.data.data?.questJsonConfig?.questSequence?.length
+        );
+
+        if (
+          response.data.success &&
+          response.data.data.hasConfig &&
+          response.data.data.questJsonConfig &&
+          response.data.data.questJsonConfig.questSequence &&
+          response.data.data.questJsonConfig.questSequence.length > 0
+        ) {
+          console.log("✅ Loaded existing quest JSON configuration");
           // Validate and fix the loaded configuration, then apply sequential IDs
           const validatedConfig = validateAndFixQuestConfig(
             response.data.data.questJsonConfig
@@ -534,27 +810,6 @@ const GenerateJson = () => {
             ).toLocaleString()}`
           );
           setLastSavedAt(new Date(response.data.data.lastUpdated));
-          
-          // If this is a default configuration that hasn't been explicitly saved through the UI,
-          // trigger an automatic save to ensure it's properly stored
-          if (!response.data.data.lastUpdated || response.data.data.questCount === 1) {
-            console.log('🔄 Auto-saving default configuration to ensure it\'s properly stored');
-            setTimeout(async () => {
-              try {
-                const saveResponse = await axios.post(`${baseURL}/api/group/${classId}/quest-json-config`, {
-                  questJsonConfig: configWithSequentialIds
-                });
-                if (saveResponse.data.success) {
-                  console.log('✅ Default configuration auto-saved successfully');
-                  setSaveStatusType('success');
-                  setSaveStatus(`Auto-saved: ${new Date().toLocaleString()}`);
-                  setLastSavedAt(new Date());
-                }
-              } catch (saveError) {
-                console.error('❌ Failed to auto-save default configuration:', saveError);
-              }
-            }, 1000);
-          }
         } else {
           console.log(
             "📭 No existing quest JSON configuration found, keeping default quest configuration"
@@ -602,11 +857,14 @@ const GenerateJson = () => {
 
         // Validate and fix quest configuration before saving
         const validatedConfig = validateAndFixQuestConfig(jsonContent);
-        
-        const response = await axios.post(`http://localhost:8080/api/group/${classId}/quest-json-config`, {
-          questJsonConfig: validatedConfig
-        });
-        
+
+        const response = await axios.post(
+          `${API_BASE_URL}/api/group/${classId}/quest-json-config`,
+          {
+            questJsonConfig: validatedConfig,
+          }
+        );
+
         if (response.data.success) {
           setSaveStatusType("success");
           setSaveStatus(`Auto-saved: ${new Date().toLocaleString()}`);
@@ -654,11 +912,14 @@ const GenerateJson = () => {
 
       // Validate and fix quest configuration before saving
       const validatedConfig = validateAndFixQuestConfig(jsonContent);
-      
-      const response = await axios.post(`http://localhost:8080/api/group/${classId}/quest-json-config`, {
-        questJsonConfig: validatedConfig
-      });
-      
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/group/${classId}/quest-json-config`,
+        {
+          questJsonConfig: validatedConfig,
+        }
+      );
+
       if (response.data.success) {
         setSaveStatusType("success");
         setSaveStatus(`Saved: ${new Date().toLocaleString()}`);
@@ -703,12 +964,15 @@ const GenerateJson = () => {
       console.log("🚀 Creating custom repos for user:", githubUsername);
       console.log("📄 Using JSON configuration:", jsonContent);
 
-      const response = await axios.post('http://localhost:8080/api/repo/createCustomRepos', {
-        users: [githubUsername],
-        customSequence: jsonContent,
-        className: `custom-quest-${Date.now()}`,
-        classId: classId
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/repo/createCustomRepos`,
+        {
+          users: [githubUsername],
+          customSequence: jsonContent,
+          className: `custom-quest-${Date.now()}`,
+          classId: classId,
+        }
+      );
 
       console.log("📋 Full response from server:", response.data);
 
@@ -1008,10 +1272,10 @@ Student can now start their quest journey!`);
           answer: task.answer || "",
           type: task.taskType || task.type,
           // Custom API call fields
-          apiEndpoint: task.apiEndpoint || '',
-          responsePath: task.responsePath || '',
-          expectedAnswerType: task.expectedAnswerType || 'Number',
-          repository: task.repository || '',
+          apiEndpoint: task.apiEndpoint || "",
+          responsePath: task.responsePath || "",
+          expectedAnswerType: task.expectedAnswerType || "Number",
+          repository: task.repository || "",
           saveValidatedData: Boolean(task.saveValidatedData),
           savedDataName: task.savedDataName || "",
           // Tolerance fields
@@ -1176,99 +1440,7 @@ Student can now start their quest journey!`);
     // Edit quest modal - only for quest title and description (no tasks)
   const editQuest = (questIndex) => {
     const quest = jsonContent.questSequence[questIndex];
-    const tasksArr = Object.entries(quest.tasks).map(([taskId, task]) => {
-      // Map all possible fields for all task types
-      const baseTask = {
-        ...task,
-        taskType: task.type,
-        taskDesc: task.desc || '',
-        points: task.points ?? 0,
-        acceptText: task.accept || task.responses?.accept || '',
-        successText: task.success || task.responses?.success || '',
-        errorText: task.error || task.responses?.error || '',
-        answer: task.answer || '',
-        answerType: task.answerType || '',
-        repository: task.repository || task.ossRepository || '',
-        issueNumber: task.issueNumber || '',
-        options: Array.isArray(task.options) ? task.options : [
-          { label: 'A', value: task.optionA || '' },
-          { label: 'B', value: task.optionB || '' },
-          ...(task.optionC ? [{ label: 'C', value: task.optionC }] : []),
-          ...(task.optionD ? [{ label: 'D', value: task.optionD }] : []),
-          ...(task.optionE ? [{ label: 'E', value: task.optionE }] : [])
-        ],
-        correctAnswer: task.correctAnswer || task.answer || '',
-        question: task.question || '',
-        questions: Array.isArray(task.questions) ? task.questions : [],
-        hints: Array.isArray(task.hints) ? task.hints : [],
-        detailedHints: Array.isArray(task.detailedHints) ? task.detailedHints : [],
-        // Tolerance fields
-        enableTolerance: task.enableTolerance || false,
-        toleranceRange: task.toleranceRange || 10,
-      };
-      // Fallbacks for MCQ
-      if (baseTask.taskType === 'multiple-choice') {
-        // Try to recover options and correct answer if missing
-        if ((!baseTask.options || baseTask.options.length < 2) && baseTask.acceptText) {
-          // More robust regex: tolerate extra spaces/line breaks
-          const optionRegex = /^\s*([A-E])\)\s+(.+)$/gm;
-          let match;
-          const options = [];
-          while ((match = optionRegex.exec(baseTask.acceptText)) !== null) {
-            options.push({ label: match[1], value: match[2].trim() });
-          }
-          if (options.length >= 2) baseTask.options = options;
-        }
-        if (!baseTask.options || baseTask.options.length < 2) {
-          baseTask.options = [
-            { label: 'A', value: '' },
-            { label: 'B', value: '' }
-          ];
-        }
-        // Always set correctAnswer from answer if present
-        if (typeof task.answer === 'string' && task.answer.length === 1) {
-          baseTask.correctAnswer = task.answer.toUpperCase();
-        }
-        if (!baseTask.correctAnswer) baseTask.correctAnswer = 'A';
-        if (!baseTask.question && baseTask.acceptText) {
-          const questionMatch = baseTask.acceptText.match(/\*\*Question:\*\* ([\s\S]+?)(?=\n\n|$)/);
-          if (questionMatch) {
-            baseTask.question = questionMatch[1].trim();
-          }
-        }
-      }
-      // Fallbacks for quiz
-      if (baseTask.taskType === 'quiz') {
-        if (!baseTask.questions || !Array.isArray(baseTask.questions)) {
-          baseTask.questions = [];
-        }
-        // Always set each question's correctAnswer from the question object, or from a global answer array if present
-        baseTask.questions = baseTask.questions.map((q, idx) => ({
-          question: q.question || '',
-          optionA: q.optionA || '',
-          optionB: q.optionB || '',
-          optionC: q.optionC || '',
-          optionD: q.optionD || '',
-          correctAnswer: q.correctAnswer || (Array.isArray(task.answer) ? task.answer[idx] : ''),
-          explanation: q.explanation || ''
-        }));
-      }
-      // Fallbacks for repo analysis
-      if ([
-        'get-issue-count',
-        'get-pr-count',
-        'get-top-contributor',
-        'get-open-issue',
-        'get-issue-title'
-      ].includes(baseTask.taskType)) {
-        if (!baseTask.repository) baseTask.repository = '';
-
-      }
-      if (baseTask.taskType === 'get-issue-title' && !baseTask.issueNumber) {
-        baseTask.issueNumber = '';
-      }
-      return baseTask;
-    });
+    
     setQuestFormData({
       title: quest.title,
       description: quest.metadata?.description || "",
@@ -1867,7 +2039,9 @@ Student can now start their quest journey!`);
     if (!classId) return;
     try {
       // Do not toggle global loading for stored values fetch; it's minor
-      const res = await axios.get(`http://localhost:8080/api/group/${classId}/stored-values`);
+      const res = await axios.get(
+        `${API_BASE_URL}/api/group/${classId}/stored-values`
+      );
       const keys = res.data?.data?.keys || [];
       const valuesByUser = res.data?.data?.valuesByUser || {};
       setStoredKeys(keys);
@@ -2248,17 +2422,21 @@ Student can now start their quest journey!`);
                 <>
                   <Divider />
 
-              {/* Task Configuration */}
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
-                  Tasks ({questFormData.tasks.length})
-                </Typography>
-              
-              {questFormData.tasks.map((task, taskIdx) => (
-                  <Card 
-                    key={taskIdx} 
-                    sx={{ 
-                      border: '1px solid #e0e0e0',
+                  {/* Task Configuration */}
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
+                    >
+                      Tasks ({questFormData.tasks.length})
+                    </Typography>
+
+                    {questFormData.tasks.map((task, taskIdx) => (
+                  <Card
+                    key={taskIdx}
+                    data-form-task-id={taskIdx}
+                    sx={{
+                      border: "1px solid #e0e0e0",
                       borderRadius: 4,
                       boxShadow: "none",
                       p: 3,
@@ -3083,25 +3261,37 @@ Student can now start their quest journey!`);
                           >
                             Assignment Validation Task
                           </Typography>
-                        
-                        <TextField
-                          label="Repository (owner/repo)"
-                          value={task.repository}
-                          onChange={(e) => handleTaskChange(taskIdx, 'repository', e.target.value)}
-                          placeholder="e.g., microsoft/vscode"
-                          fullWidth
-                          helperText="Format: owner/repository-name"
+
+                          <TextField
+                            label="Repository (owner/repo)"
+                            value={task.repository}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "repository",
+                                e.target.value
+                              )
+                            }
+                            placeholder="e.g., microsoft/vscode"
+                            fullWidth
+                            helperText="Format: owner/repository-name"
                             sx={{ mb: 2, borderRadius: 2 }}
-                        />
-                        
-                        <TextField
-                          label="Issue Number"
-                          type="number"
-                          value={task.issueNumber}
-                          onChange={(e) => handleTaskChange(taskIdx, 'issueNumber', e.target.value)}
-                          placeholder="e.g., 123"
-                          fullWidth
-                          helperText="The specific issue number students must be assigned to"
+                          />
+
+                          <TextField
+                            label="Issue Number"
+                            type="number"
+                            value={task.issueNumber}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "issueNumber",
+                                e.target.value
+                              )
+                            }
+                            placeholder="e.g., 123"
+                            fullWidth
+                            helperText="The specific issue number students must be assigned to"
                             sx={{ borderRadius: 2 }}
                           />
                         </Box>
@@ -3220,14 +3410,20 @@ Student can now start their quest journey!`);
                           >
                             Comment Validation Task
                           </Typography>
-                        
-                        <TextField
-                          label="Repository (owner/repo)"
-                          value={task.repository}
-                          onChange={(e) => handleTaskChange(taskIdx, 'repository', e.target.value)}
-                          placeholder="e.g., microsoft/vscode"
-                          fullWidth
-                          helperText="Format: owner/repository-name"
+
+                          <TextField
+                            label="Repository (owner/repo)"
+                            value={task.repository}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "repository",
+                                e.target.value
+                              )
+                            }
+                            placeholder="e.g., microsoft/vscode"
+                            fullWidth
+                            helperText="Format: owner/repository-name"
                             sx={{ mb: 2, borderRadius: 2 }}
                           />
 
@@ -3235,7 +3431,13 @@ Student can now start their quest journey!`);
                             label="Issue Number"
                             type="number"
                             value={task.issueNumber}
-                            onChange={(e) => handleTaskChange(taskIdx, 'issueNumber', e.target.value)}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "issueNumber",
+                                e.target.value
+                              )
+                            }
                             placeholder="e.g., 123"
                             fullWidth
                             helperText="The specific issue number where students should post a comment"
@@ -3949,8 +4151,19 @@ Student can now start their quest journey!`);
                                 expectedAnswerType: task.expectedAnswerType,
                                 llmTextValidation: task.llmTextValidation,
                               };
-                              const { data } = await axios.post(`http://localhost:8080/api/group/${classId}/ai/generate-hint`, payload, { headers: { 'Content-Type': 'application/json' } });
-                              const aiHint = (data && data.data && data.data.hint) ? data.data.hint : 'Try focusing on the key requirement and the relevant tab in the repository.';
+                              const { data } = await axios.post(
+                                `${API_BASE_URL}/api/group/${classId}/ai/generate-hint`,
+                                payload,
+                                {
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                }
+                              );
+                              const aiHint =
+                                data && data.data && data.data.hint
+                                  ? data.data.hint
+                                  : "Try focusing on the key requirement and the relevant tab in the repository.";
                               handleAddHint(editingQuestIndex || 0, taskIdx);
                               const newIdx = task.detailedHints?.length || 0;
                               handleUpdateHint(
@@ -3985,26 +4198,28 @@ Student can now start their quest journey!`);
                       </Box>
                     </Stack>
                   </Card>
-              ))}
-              
-                {/* Add Task Button - Moved to bottom */}
-              <Button 
-                variant="outlined" 
-                onClick={handleAddTaskToQuest}
-                startIcon={<AddIcon />}
-                  sx={{ 
-                    borderRadius: 4, 
-                    fontWeight: 'bold',
-                    borderColor: 'primary.main',
-                    color: 'primary.main',
-                    '&:hover': {
-                      borderColor: 'primary.dark',
-                      backgroundColor: '#e3f2fd'
-                    }
-                  }}
-                >
-                  Add Task
-              </Button>
+                ))}
+
+                {/* Add Task Button - Only show when adding new quests */}
+                {editingQuestIndex === null && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleAddTaskToQuest}
+                    startIcon={<AddIcon />}
+                    sx={{
+                      borderRadius: 4,
+                      fontWeight: "bold",
+                      borderColor: "primary.main",
+                      color: "primary.main",
+                      "&:hover": {
+                        borderColor: "primary.dark",
+                        backgroundColor: "#e3f2fd",
+                      },
+                    }}
+                  >
+                    Add Task
+                  </Button>
+                )}
               </Box>
                 </>
               )}
@@ -6070,16 +6285,19 @@ const QuestBlock = ({
         <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-              <Typography component="span" sx={{ 
-                color: '#f57c00', 
-                fontWeight: 700, 
-                mr: 1, 
-                fontSize: '0.9em',
-                backgroundColor: '#fff3e0',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                border: '1px solid #ffcc02'
-              }}>
+              <Typography
+                component="span"
+                sx={{
+                  color: "#f57c00",
+                  fontWeight: 700,
+                  mr: 1,
+                  fontSize: "0.9em",
+                  backgroundColor: "#fff3e0",
+                  padding: "2px 6px",
+                  borderRadius: "4px",
+                  border: "1px solid #ffcc02",
+                }}
+              >
                 Q{questIndex}
               </Typography>
               {quest.title}
