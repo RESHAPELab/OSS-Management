@@ -231,6 +231,16 @@ class DynamicQuestConfigGenerator {
                         enableDetailedFeedback: transformed.llmTextValidation.enableDetailedFeedback
                     });
                 }
+                if (type === 'collect-info') {
+                    transformed.saveValidatedData = taskData.saveValidatedData || config.saveValidatedData || false;
+                    transformed.savedDataName = taskData.savedDataName || config.savedDataName || '';
+                    transformed.question = taskData.question || config.question || '';
+                    console.log(`[transformCustomTasks] Added collect-info fields for ${type}:`, {
+                        saveValidatedData: transformed.saveValidatedData,
+                        savedDataName: transformed.savedDataName,
+                        question: transformed.question
+                    });
+                }
                 
                 transformedTasks.push(transformed);
             } catch (error) {
@@ -257,6 +267,8 @@ class DynamicQuestConfigGenerator {
             return 'get-issue-count'; // Default metric type
         } else if (task.answerType === 'llm-validation') {
             return 'llm-text-validation';
+        } else if (task.answerType === 'text') {
+            return 'collect-info';
         } else {
             return 'text-input';
         }
@@ -325,6 +337,21 @@ class DynamicQuestConfigGenerator {
                 temperature: task.llmTextValidation?.temperature || 0.1,
                 enableDetailedFeedback: task.llmTextValidation?.enableDetailedFeedback || false
             };
+            console.log(`[buildTaskConfig] Final config:`, config);
+        } else if (taskType === 'collect-info') {
+            console.log(`[buildTaskConfig] Building collect-info config for task:`, {
+                saveValidatedData: task.saveValidatedData,
+                savedDataName: task.savedDataName,
+                question: task.question
+            });
+            // New fields for per-user storage
+            if (typeof task.saveValidatedData !== 'undefined') {
+                config.saveValidatedData = !!task.saveValidatedData;
+            }
+            if (typeof task.savedDataName !== 'undefined') {
+                config.savedDataName = task.savedDataName;
+            }
+            config.question = task.question || '';
             console.log(`[buildTaskConfig] Final config:`, config);
         }
         
@@ -474,6 +501,13 @@ class DynamicQuestConfigGenerator {
                         if (task.type === 'custom-api-call') {
                             legacyTask.saveValidatedData = task.config?.saveValidatedData || false;
                             legacyTask.savedDataName = task.config?.savedDataName || '';
+                        }
+                        
+                        // For collect-info tasks
+                        if (task.type === 'collect-info') {
+                            legacyTask.saveValidatedData = task.config?.saveValidatedData || false;
+                            legacyTask.savedDataName = task.config?.savedDataName || '';
+                            legacyTask.question = task.config?.question || '';
                         }
                         
                         legacyConfig[questId][taskId] = legacyTask;

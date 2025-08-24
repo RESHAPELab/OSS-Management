@@ -34,6 +34,9 @@ exports.createQuest = async (req, res) => {
       } else if (taskData.type === 'text-input') {
         answer = taskData.expectedAnswer || '';
         answerType = 'singleAnswer';
+      } else if (taskData.type === 'collect-info') {
+        answer = '';
+        answerType = 'text';
       } else {
         answer = taskData.correctAnswer || '';
         answerType = 'singleAnswer';
@@ -114,6 +117,9 @@ exports.updateQuest = async (req, res) => {
         } else if (taskData.type === 'text-input') {
           answer = taskData.expectedAnswer || '';
           answerType = 'singleAnswer';
+        } else if (taskData.type === 'collect-info') {
+          answer = '';
+          answerType = 'text';
         } else {
           answer = taskData.correctAnswer || '';
           answerType = 'singleAnswer';

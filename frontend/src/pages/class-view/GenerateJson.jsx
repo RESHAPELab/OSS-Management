@@ -622,7 +622,7 @@ const GenerateJson = () => {
       { label: "B", value: "" }
     ],
     detailedHints: [],
-    taskType: "multiple-choice",
+    taskType: "collect-info",
     taskDesc: "",
     successText: "",
     errorText: "",
@@ -643,6 +643,9 @@ const GenerateJson = () => {
       temperature: 0.1,
       enableDetailedFeedback: false,
     },
+    // Per-user save controls (enabled by default for collect-info)
+    saveValidatedData: true,
+    savedDataName: "collected_info",
   });
 
   // 3. Add a function to add a new blank task to questFormData (for Add New Quest modal)
@@ -677,22 +680,20 @@ const GenerateJson = () => {
         desc: `Task ${nextTaskNumber}`,
         points: 20,
         xp: 20,
-        type: "multiple-choice",
-        accept: "**Question:** [Your question here]\n\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n**Instructions:** Select the correct answer.",
-        success: "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 20\n\nGreat work! 🎉",
-        error: "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        answer: "A",
-        answerType: "singleAnswer",
-        question: "[Your question here]",
-        options: [
-          { label: "A", value: "Option A" },
-          { label: "B", value: "Option B" },
-          { label: "C", value: "Option C" },
-          { label: "D", value: "Option D" }
-        ],
-        correctAnswer: "A",
+        type: "collect-info",
+        accept: "### 📝 Information Collection Task\n\n**Task:** This is a non-graded information collection task. Please provide the requested information below.\n\n**Instructions:** Simply type your response in the comment box. Any response will be accepted.\n\n**Note:** This task is designed to collect information and does not require a specific answer format.",
+        success: "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**Points earned:** 20\n\nGreat contribution! 📋",
+        error: "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+        answer: "",
+        answerType: "text",
+        question: "[What information would you like to collect?]",
+        options: [],
+        correctAnswer: "",
         hints: [],
-        detailedHints: []
+        detailedHints: [],
+        // Per-user save controls (enabled by default for collect-info)
+        saveValidatedData: true,
+        savedDataName: "collected_info"
       };
       
       // Add the template task to the quest
@@ -1178,6 +1179,17 @@ Student can now start their quest journey!`);
           error: task.errorText,
           answer: "",
         };
+      } else if (task.taskType === "collect-info") {
+        taskData = {
+          ...taskData,
+          type: "collect-info",
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: "",
+          saveValidatedData: Boolean(task.saveValidatedData),
+          savedDataName: task.savedDataName || "collected_info",
+        };
               }
         tasksObj[`T${idx + 1}`] = taskData;
       });
@@ -1308,6 +1320,9 @@ Student can now start their quest journey!`);
     setQuestFormData({ title: "", description: "", tasks: [] });
     setShowAddQuestModal(false);
     setEditingQuestIndex(null);
+    
+    // Refresh stored data list after adding/editing quest
+    loadStoredValues();
   };
 
   // Quiz helper functions
@@ -1444,6 +1459,9 @@ Student can now start their quest journey!`);
       // Update quest IDs to be sequential based on new positions
       return { ...prev, questSequence: updateQuestIds(newQuestSequence) };
     });
+    
+    // Refresh stored data list after deleting quest
+    loadStoredValues();
   };
 
   const moveTask = (questIndex, taskId, direction) => {
@@ -1485,6 +1503,9 @@ Student can now start their quest journey!`);
       
       return { ...prev, questSequence: newQuestSequence };
     });
+    
+    // Refresh stored data list after moving task
+    loadStoredValues();
   };
 
   const editTask = (questIndex, taskId) => {
@@ -1531,6 +1552,9 @@ Student can now start their quest journey!`);
         : [],
       enableTolerance: task.enableTolerance || false,
       toleranceRange: task.toleranceRange || 10,
+      // Persist per-user save controls
+      saveValidatedData: (task.saveValidatedData || (task.config && task.config.saveValidatedData)) || (task.type === "collect-info" ? true : false),
+      savedDataName: (task.savedDataName || (task.config && task.config.savedDataName)) || (task.type === "collect-info" ? "collected_info" : ""),
       // Ensure llmTextValidation is properly initialized
       llmTextValidation: task.llmTextValidation || {
         question: "",
@@ -1538,6 +1562,8 @@ Student can now start their quest journey!`);
         temperature: 0.1,
         enableDetailedFeedback: false,
       },
+      // Quest Notes field
+      questNotes: task.questNotes || task.taskDesc || "",
     };
     
     setEditingTaskData(taskData);
@@ -1581,8 +1607,13 @@ Student can now start their quest journey!`);
         apiEndpoint: editingTaskData.apiEndpoint,
         responsePath: editingTaskData.responsePath,
         expectedAnswerType: editingTaskData.expectedAnswerType,
+        // Save per-user persistence controls
+        saveValidatedData: editingTaskData.saveValidatedData,
+        savedDataName: editingTaskData.savedDataName,
         // Save LLM Text Validation fields
         llmTextValidation: editingTaskData.llmTextValidation,
+        // Save Quest Notes field
+        questNotes: editingTaskData.questNotes,
       };
       
       return { ...prev, questSequence: newQuestSequence };
@@ -1593,6 +1624,9 @@ Student can now start their quest journey!`);
     setEditingTaskData(null);
     setEditingTaskQuestIndex(null);
     setEditingTaskId(null);
+    
+    // Refresh stored data list after saving task
+    loadStoredValues();
   };
 
   const deleteTask = (questIndex, taskId) => {
@@ -1610,6 +1644,9 @@ Student can now start their quest journey!`);
 
       return { ...prev, questSequence: newQuestSequence };
     });
+    
+    // Refresh stored data list after deleting task
+    loadStoredValues();
   };
 
   const generateDefaultTexts = (taskType, repository, issueNumber) => {
@@ -1630,6 +1667,12 @@ Student can now start their quest journey!`);
         defaults.acceptText = `**Multi-Question Quiz**\n\n**Instructions:** Answer all questions and submit your answers in the format [a,b,c] where each letter corresponds to your answer for each question.\n\n**Example:** If you think the answers are A, C, B, type: [a,c,b]\n\n[Quiz questions will be displayed here]`;
         defaults.successText = `✅ **Quiz Completed!**\n\nExcellent work! You've completed the quiz.\n\n**Points earned:** {points}\n\nYou correctly answered [X] out of [Y] questions! ��`;
         defaults.errorText = `❌ **Quiz Submission Error**\n\nPlease check your answer format and try again.\n\n**Required format:** [a,b,c] where each letter is your answer choice.\n\n**Example:** [a,c,b,d]\n\nYou can type "help" for additional guidance.`;
+        break;
+
+      case "collect-info":
+        defaults.acceptText = `### 📝 Information Collection Task\n\n**Task:** This is a non-graded information collection task. Please provide the requested information below.\n\n**Instructions:** Simply type your response in the comment box. Any response will be accepted.\n\n**Note:** This task is designed to collect information and does not require a specific answer format.`;
+        defaults.successText = `✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** {points}\n\nGreat contribution! 📋`;
+        defaults.errorText = `❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.`;
         break;
 
       case "get-issue-count":
@@ -1886,6 +1929,9 @@ Student can now start their quest journey!`);
         await axios.post(`${API_BASE_URL}/api/generatejson/quest`, questData);
       }
       fetchLibraryQuests();
+      
+      // Refresh stored data list after saving quest to bank
+      loadStoredValues();
     } catch (err) {
       console.error("Failed to save quest to bank", err);
     }
@@ -4220,12 +4266,11 @@ Student can now start their quest journey!`);
               disabled={isAddQuestDisabled}
               sx={{
                 bgcolor: "#4caf50",
-                "&:hover": { bgcolor: "#388e3c" },
                 fontWeight: "bold",
                 px: 4,
                 borderRadius: 4,
                 boxShadow: "none",
-                "&:hover": { boxShadow: "none" },
+                "&:hover": { bgcolor: "#388e3c", boxShadow: "none" },
               }}
             >
               {editingQuestIndex !== null ? "Save Changes" : "Add New Quest"}
@@ -4289,40 +4334,39 @@ Student can now start their quest journey!`);
                     sx={{ mb: 2 }}
                   />
 
-                  <Stack direction="row" spacing={2}>
-                    <TextField
-                      label="Points"
-                      type="number"
-                      value={editingTaskData.points || 1}
-                      onChange={(e) => {
-                        const value = e.target.value === "" ? 1 : parseInt(e.target.value);
-                        if (value < 1) return;
-                        setEditingTaskData({
-                          ...editingTaskData,
-                          points: value,
-                        });
-                      }}
-                      inputProps={{ min: 1 }}
-                      sx={{ width: 120 }}
-                      helperText="Min: 1"
-                    />
-                    <TextField
-                      label="XP Points"
-                      type="number"
-                      value={editingTaskData.xp || 1}
-                      onChange={(e) => {
-                        const value = e.target.value === "" ? 1 : parseInt(e.target.value);
-                        if (value < 1) return;
-                        setEditingTaskData({
-                          ...editingTaskData,
-                          xp: value,
-                        });
-                      }}
-                      inputProps={{ min: 1 }}
-                      sx={{ width: 120 }}
-                      helperText="Min: 1"
-                    />
-                  </Stack>
+                  <TextField
+                    label="Quest Notes (not displayed to student)"
+                    value={editingTaskData.questNotes || ""}
+                    onChange={(e) =>
+                      setEditingTaskData({
+                        ...editingTaskData,
+                        questNotes: e.target.value,
+                      })
+                    }
+                    placeholder="Internal notes about this task"
+                    fullWidth
+                    multiline
+                    rows={2}
+                    sx={{ mb: 2 }}
+                  />
+
+                  <TextField
+                    label="Points/XP"
+                    type="number"
+                    value={editingTaskData.points || 1}
+                    onChange={(e) => {
+                      const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                      if (value < 1) return;
+                      setEditingTaskData({
+                        ...editingTaskData,
+                        points: value,
+                        xp: value, // Keep XP in sync with points
+                      });
+                    }}
+                    inputProps={{ min: 1 }}
+                    sx={{ width: 200 }}
+                    helperText="Points and XP are the same value (Min: 1)"
+                  />
                 </Box>
 
                 <Divider />
@@ -4376,6 +4420,7 @@ Student can now start their quest journey!`);
                       </ListSubheader>
                       <MenuItem value="multiple-choice">Multiple Choice</MenuItem>
                       <MenuItem value="quiz">Quiz</MenuItem>
+                      <MenuItem value="collect-info">Collect Information (Non-graded)</MenuItem>
                       <MenuItem value="get-issue-count">Get Issue Count</MenuItem>
                       <MenuItem value="get-pr-count">Get PR Count</MenuItem>
                       <MenuItem value="get-top-contributor">Get Top Contributor</MenuItem>
@@ -4411,6 +4456,60 @@ Student can now start their quest journey!`);
                       </MenuItem>
                     </Select>
                   </FormControl>
+
+                  <Divider sx={{ my: 3 }} />
+
+                  {/* Question Text Field */}
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        mb: 2,
+                        color: "primary.main",
+                      }}
+                    >
+                      Question Text
+                    </Typography>
+                    <TextEditor
+                      value={editingTaskData.acceptText || ""}
+                      onChange={(value) =>
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          acceptText: value,
+                        })
+                      }
+                      label="Question Text"
+                      placeholder="This text appears when the task is first presented to students"
+                      helperText="This is the main question text. You can use markdown formatting with live preview."
+                      acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
+                    />
+                  </Box>
+
+                  {/* Multiple Choice-specific Question Field */}
+                  {editingTaskData.taskType === "multiple-choice" && (
+                    <Box sx={{ mt: 3 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        Multiple Choice Question
+                      </Typography>
+                      <TextField
+                        label="Question"
+                        value={editingTaskData.question || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            question: e.target.value,
+                          })
+                        }
+                        placeholder="Enter your multiple choice question here"
+                        fullWidth
+                        multiline
+                        rows={2}
+                        helperText="The actual question that will be displayed to students"
+                        sx={{ mb: 2 }}
+                      />
+                    </Box>
+                  )}
 
                   {/* Multiple Choice Options */}
                   {editingTaskData.taskType === "multiple-choice" && (
@@ -4538,6 +4637,52 @@ Student can now start their quest journey!`);
                           sx={{ width: 150 }}
                         />
                       )}
+                      <Box sx={{ mt: 2 }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={editingTaskData.saveValidatedData || false}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  saveValidatedData: e.target.checked,
+                                })
+                              }
+                            />
+                          }
+                          label="Save validated data for later tasks"
+                        />
+                        {editingTaskData.saveValidatedData && (
+                          <>
+                            <TextField
+                              label="Data Name"
+                              value={editingTaskData.savedDataName || ""}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  savedDataName: e.target.value,
+                                })
+                              }
+                              placeholder="e.g., repo_issue_count"
+                              fullWidth
+                              sx={{ mt: 1 }}
+                              helperText="Unique key to reference this saved value in future tasks"
+                            />
+                            <Alert
+                              severity="info"
+                              sx={{
+                                mt: 1,
+                                borderRadius: 4,
+                                "& .MuiAlert-icon": { display: "none" },
+                              }}
+                            >
+                              <AlertTitle>Per-user Storage</AlertTitle>
+                              When enabled, the validated answer is saved for each student separately.
+                              The value is automatically stored as a number or text based on the expected answer type.
+                            </Alert>
+                          </>
+                        )}
+                      </Box>
                     </Box>
                   )}
 
@@ -4618,6 +4763,52 @@ Student can now start their quest journey!`);
                           sx={{ width: 150, ml: 2 }}
                         />
                       )}
+                      <Box sx={{ mt: 2 }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={editingTaskData.saveValidatedData || false}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  saveValidatedData: e.target.checked,
+                                })
+                              }
+                            />
+                          }
+                          label="Save validated data for later tasks"
+                        />
+                        {editingTaskData.saveValidatedData && (
+                          <>
+                            <TextField
+                              label="Data Name"
+                              value={editingTaskData.savedDataName || ""}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  savedDataName: e.target.value,
+                                })
+                              }
+                              placeholder="e.g., repo_issue_count"
+                              fullWidth
+                              sx={{ mt: 1 }}
+                              helperText="Unique key to reference this saved value in future tasks"
+                            />
+                            <Alert
+                              severity="info"
+                              sx={{
+                                mt: 1,
+                                borderRadius: 4,
+                                "& .MuiAlert-icon": { display: "none" },
+                              }}
+                            >
+                              <AlertTitle>Per-user Storage</AlertTitle>
+                              When enabled, the validated answer is saved for each student separately.
+                              The value is automatically stored as a number or text based on the expected answer type.
+                            </Alert>
+                          </>
+                        )}
+                      </Box>
                     </Box>
                   )}
 
@@ -4739,56 +4930,752 @@ Student can now start their quest journey!`);
                     </Box>
                   )}
 
+                  {/* Hints Section */}
+                  <Box>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+                    >
+                      Hints
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
+                      Add progressive hints that students can access by
+                      typing "help" in issue comments. Each hint costs
+                      points.
+                    </Typography>
+
+                    {(editingTaskData.detailedHints || []).map((hint, hintIdx) => (
+                      <Card
+                        key={hintIdx}
+                        sx={{
+                          border: "1px solid #e0e0e0",
+                          borderRadius: 4,
+                          boxShadow: "none",
+                          p: 2,
+                          mb: 2,
+                          backgroundColor: "#f9f9fa",
+                        }}
+                      >
+                        <Stack spacing={2}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 700 }}
+                            >
+                              Hint {hintIdx + 1}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => {
+                                const newHints = [...(editingTaskData.detailedHints || [])];
+                                newHints.splice(hintIdx, 1);
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  detailedHints: newHints,
+                                });
+                              }}
+                              sx={{ borderRadius: 2 }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+
+                          <TextField
+                            label="Hint Content"
+                            value={hint.content || ""}
+                            onChange={(e) => {
+                              const newHints = [...(editingTaskData.detailedHints || [])];
+                              newHints[hintIdx] = {
+                                ...newHints[hintIdx],
+                                content: e.target.value,
+                              };
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                detailedHints: newHints,
+                              });
+                            }}
+                            placeholder="Enter the hint content that will be shown to students"
+                            fullWidth
+                            multiline
+                            rows={3}
+                            helperText="This is the text that will be displayed when students request this hint"
+                            sx={{ borderRadius: 2 }}
+                          />
+
+                          <TextField
+                            label="Image URL (Optional)"
+                            value={hint.image || ""}
+                            onChange={(e) => {
+                              const newHints = [...(editingTaskData.detailedHints || [])];
+                              newHints[hintIdx] = {
+                                ...newHints[hintIdx],
+                                image: e.target.value,
+                              };
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                detailedHints: newHints,
+                              });
+                            }}
+                            placeholder="https://example.com/image.png"
+                            fullWidth
+                            helperText="Optional image URL to accompany the hint"
+                            sx={{ borderRadius: 2 }}
+                          />
+
+                          <TextField
+                            label="Penalty (Points)"
+                            type="number"
+                            value={hint.penalty || 0}
+                            onChange={(e) => {
+                              const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                              if (value < 0) return;
+                              const newHints = [...(editingTaskData.detailedHints || [])];
+                              newHints[hintIdx] = {
+                                ...newHints[hintIdx],
+                                penalty: value,
+                              };
+                              setEditingTaskData({
+                                ...editingTaskData,
+                                detailedHints: newHints,
+                              });
+                            }}
+                            inputProps={{ min: 0 }}
+                            sx={{ width: 150, borderRadius: 2 }}
+                            helperText="Points deducted when this hint is used (Min: 0)"
+                          />
+                        </Stack>
+                      </Card>
+                    ))}
+
+                    <Button
+                      variant="outlined"
+                      startIcon={<AddCircleOutlineIcon />}
+                      onClick={() => {
+                        const newHints = [...(editingTaskData.detailedHints || []), {
+                          content: "",
+                          image: "",
+                          penalty: 0,
+                        }];
+                        setEditingTaskData({
+                          ...editingTaskData,
+                          detailedHints: newHints,
+                        });
+                      }}
+                      sx={{
+                        mt: 1,
+                        mr: 1,
+                        borderRadius: 4,
+                        borderColor: "primary.main",
+                      }}
+                    >
+                      Add Hint
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<AutoAwesomeIcon />}
+                      onClick={async () => {
+                        try {
+                          const payload = {
+                            type: editingTaskData.taskType,
+                            desc: editingTaskData.taskDesc,
+                            accept: editingTaskData.acceptText,
+                            repository: editingTaskData.repository,
+                            ossRepository: editingTaskData.repository,
+                            issueNumber: editingTaskData.issueNumber,
+                            responsePath: editingTaskData.responsePath,
+                            expectedAnswerType: editingTaskData.expectedAnswerType,
+                            llmTextValidation: editingTaskData.llmTextValidation,
+                          };
+                          const { data } = await axios.post(
+                            `${API_BASE_URL}/api/group/${classId}/ai/generate-hint`,
+                            payload,
+                            {
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                            }
+                          );
+                          const aiHint =
+                            data && data.data && data.data.hint
+                              ? data.data.hint
+                              : "Try focusing on the key requirement and the relevant tab in the repository.";
+                          
+                          // Add the AI-generated hint
+                          const newHints = [...(editingTaskData.detailedHints || []), {
+                            content: aiHint,
+                            image: "",
+                            penalty: 0,
+                          }];
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            detailedHints: newHints,
+                          });
+                        } catch (e) {
+                          console.error("AI hint generation failed:", e);
+                          alert(
+                            "Failed to generate hint. Please try again."
+                          );
+                        }
+                      }}
+                      sx={{
+                        mt: 1,
+                        borderRadius: 4,
+                        backgroundColor: "white",
+                        color: "#ff5722",
+                        border: "1px solid #ff5722",
+                        "&:hover": {
+                          backgroundColor: "#fff3e0",
+                          borderColor: "#e64a19",
+                        },
+                        boxShadow: "none",
+                      }}
+                    >
+                      Generate hint with AI
+                    </Button>
+                  </Box>
+
+                  {/* Task Type Specific Fields */}
+                  {editingTaskData.taskType === "quiz" && (
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
+                      >
+                        Multi-Question Quiz
+                      </Typography>
+                      
+                      {(editingTaskData.questions || []).map((question, qIdx) => (
+                        <Card
+                          key={qIdx}
+                          sx={{
+                            border: "1px solid #e0e0e0",
+                            borderRadius: 4,
+                            boxShadow: "none",
+                            p: 2,
+                            mb: 2,
+                            backgroundColor: "#f8f9fa",
+                          }}
+                        >
+                          <Stack spacing={2}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                                Question {qIdx + 1}
+                              </Typography>
+                              {(editingTaskData.questions || []).length > 1 && (
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => {
+                                    const newQuestions = [...(editingTaskData.questions || [])];
+                                    newQuestions.splice(qIdx, 1);
+                                    setEditingTaskData({
+                                      ...editingTaskData,
+                                      questions: newQuestions,
+                                    });
+                                  }}
+                                  sx={{ borderRadius: 2 }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                            </Box>
+
+                            <TextField
+                              label="Question"
+                              value={question.question || ""}
+                              onChange={(e) => {
+                                const newQuestions = [...(editingTaskData.questions || [])];
+                                newQuestions[qIdx] = {
+                                  ...newQuestions[qIdx],
+                                  question: e.target.value,
+                                };
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  questions: newQuestions,
+                                });
+                              }}
+                              placeholder="Enter your question here"
+                              fullWidth
+                              multiline
+                              rows={2}
+                              sx={{ borderRadius: 2 }}
+                            />
+
+                            <TextField
+                              label="Option A"
+                              value={question.optionA || ""}
+                              onChange={(e) => {
+                                const newQuestions = [...(editingTaskData.questions || [])];
+                                newQuestions[qIdx] = {
+                                  ...newQuestions[qIdx],
+                                  optionA: e.target.value,
+                                };
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  questions: newQuestions,
+                                });
+                              }}
+                              fullWidth
+                              sx={{ borderRadius: 2 }}
+                            />
+
+                            <TextField
+                              label="Option B"
+                              value={question.optionB || ""}
+                              onChange={(e) => {
+                                const newQuestions = [...(editingTaskData.questions || [])];
+                                newQuestions[qIdx] = {
+                                  ...newQuestions[qIdx],
+                                  optionB: e.target.value,
+                                };
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  questions: newQuestions,
+                                });
+                              }}
+                              fullWidth
+                              sx={{ borderRadius: 2 }}
+                            />
+
+                            <TextField
+                              label="Option C"
+                              value={question.optionC || ""}
+                              onChange={(e) => {
+                                const newQuestions = [...(editingTaskData.questions || [])];
+                                newQuestions[qIdx] = {
+                                  ...newQuestions[qIdx],
+                                  optionC: e.target.value,
+                                };
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  questions: newQuestions,
+                                });
+                              }}
+                              fullWidth
+                              sx={{ borderRadius: 2 }}
+                            />
+
+                            <TextField
+                              label="Option D"
+                              value={question.optionD || ""}
+                              onChange={(e) => {
+                                const newQuestions = [...(editingTaskData.questions || [])];
+                                newQuestions[qIdx] = {
+                                  ...newQuestions[qIdx],
+                                  optionD: e.target.value,
+                                };
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  questions: newQuestions,
+                                });
+                              }}
+                              fullWidth
+                              sx={{ borderRadius: 2 }}
+                            />
+                          </Stack>
+                        </Card>
+                      ))}
+
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          const newQuestions = [...(editingTaskData.questions || []), {
+                            question: "",
+                            optionA: "",
+                            optionB: "",
+                            optionC: "",
+                            optionD: "",
+                          }];
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            questions: newQuestions,
+                          });
+                        }}
+                        sx={{ mt: 1, borderRadius: 4 }}
+                      >
+                        Add Question
+                      </Button>
+                    </Box>
+                  )}
+
+                  {/* GitHub API Task Fields */}
+                  {["get-issue-count", "get-pr-count", "get-top-contributor", "get-open-issue", "get-issue-title"].includes(editingTaskData.taskType) && (
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
+                      >
+                        GitHub Repository Configuration
+                      </Typography>
+                      
+                      <TextField
+                        label="Repository (owner/repo)"
+                        value={editingTaskData.repository || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            repository: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., microsoft/vscode"
+                        fullWidth
+                        helperText="Format: owner/repository-name"
+                        sx={{ mb: 2, borderRadius: 2 }}
+                      />
+
+                      {editingTaskData.taskType === "get-issue-title" && (
+                        <TextField
+                          label="Issue Number"
+                          type="number"
+                          value={editingTaskData.issueNumber || ""}
+                          onChange={(e) =>
+                            setEditingTaskData({
+                              ...editingTaskData,
+                              issueNumber: e.target.value,
+                            })
+                          }
+                          placeholder="e.g., 123"
+                          fullWidth
+                          helperText="The specific issue number students must find"
+                          sx={{ borderRadius: 2 }}
+                        />
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Assignment Validation Task Fields */}
+                  {editingTaskData.taskType === "assigned" && (
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
+                      >
+                        Assignment Validation Task
+                      </Typography>
+
+                      <TextField
+                        label="Repository (owner/repo)"
+                        value={editingTaskData.repository || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            repository: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., microsoft/vscode"
+                        fullWidth
+                        helperText="Format: owner/repository-name"
+                        sx={{ mb: 2, borderRadius: 2 }}
+                      />
+
+                      <TextField
+                        label="Issue Number"
+                        type="number"
+                        value={editingTaskData.issueNumber || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            issueNumber: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., 123"
+                        fullWidth
+                        helperText="The specific issue number students must be assigned to"
+                        sx={{ borderRadius: 2 }}
+                      />
+                    </Box>
+                  )}
+
+                  {/* Issue Number Task Fields */}
+                  {editingTaskData.taskType === "issue-no" && (
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
+                      >
+                        Issue Number Validation Task
+                      </Typography>
+
+                      <TextField
+                        label="Repository (owner/repo)"
+                        value={editingTaskData.repository || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            repository: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., microsoft/vscode"
+                        fullWidth
+                        helperText="Format: owner/repository-name"
+                        sx={{ mb: 2, borderRadius: 2 }}
+                      />
+
+                      <Box sx={{ mt: 2 }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={editingTaskData.saveValidatedData || false}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  saveValidatedData: e.target.checked,
+                                })
+                              }
+                            />
+                          }
+                          label="Save validated issue number for future use"
+                        />
+                        {editingTaskData.saveValidatedData && (
+                          <>
+                            <TextField
+                              label="Data Name"
+                              value={editingTaskData.savedDataName || ""}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  savedDataName: e.target.value,
+                                })
+                              }
+                              placeholder="e.g., provided_issue_number"
+                              fullWidth
+                              sx={{ mt: 1 }}
+                              helperText="Unique key to reference this saved value in future tasks"
+                            />
+                            <Alert
+                              severity="info"
+                              sx={{
+                                mt: 1,
+                                borderRadius: 4,
+                                "& .MuiAlert-icon": { display: "none" },
+                              }}
+                            >
+                              <AlertTitle>Per-user Storage</AlertTitle>
+                              When enabled, the student-provided issue number is saved for each student separately. The value is stored as a number.
+                            </Alert>
+                          </>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Custom API Call Task Fields - consolidated above; duplicate removed */}
+
+                  {/* LLM Text Validation Task Fields */}
+                  {editingTaskData.taskType === "llm-text-validation" && (
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, mb: 2, color: "secondary.main" }}
+                      >
+                        LLM Text Validation Configuration
+                      </Typography>
+
+                      <TextField
+                        label="Validation Question"
+                        value={editingTaskData.llmTextValidation?.question || ""}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            llmTextValidation: {
+                              ...editingTaskData.llmTextValidation,
+                              question: e.target.value,
+                            },
+                          })
+                        }
+                        placeholder="The question students must answer"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        sx={{ mb: 2, borderRadius: 2 }}
+                      />
+
+                      <TextField
+                        label="Validation Parameters (one per line)"
+                        value={(editingTaskData.llmTextValidation?.validationParameters || []).join('\n')}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            llmTextValidation: {
+                              ...editingTaskData.llmTextValidation,
+                              validationParameters: e.target.value.split('\n').filter(line => line.trim()),
+                            },
+                          })
+                        }
+                        placeholder="Enter validation criteria, one per line"
+                        fullWidth
+                        multiline
+                        rows={3}
+                        helperText="Each line becomes a validation criterion for the AI"
+                        sx={{ mb: 2, borderRadius: 2 }}
+                      />
+
+                      <TextField
+                        label="Temperature"
+                        type="number"
+                        value={editingTaskData.llmTextValidation?.temperature || 0.1}
+                        onChange={(e) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            llmTextValidation: {
+                              ...editingTaskData.llmTextValidation,
+                              temperature: parseFloat(e.target.value) || 0.1,
+                            },
+                          })
+                        }
+                        inputProps={{ min: 0, max: 2, step: 0.1 }}
+                        helperText="AI creativity level (0.1 = focused, 2.0 = creative)"
+                        sx={{ mb: 2, width: 200 }}
+                      />
+
+                      <Box sx={{ mt: 2 }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={editingTaskData.llmTextValidation?.enableDetailedFeedback || false}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  llmTextValidation: {
+                                    ...editingTaskData.llmTextValidation,
+                                    enableDetailedFeedback: e.target.checked,
+                                  },
+                                })
+                              }
+                            />
+                          }
+                          label="Enable detailed feedback from AI validation"
+                        />
+                      </Box>
+                    </Box>
+                  )}
+
                   {/* Response Texts */}
                   <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 700,
+                        mb: 2,
+                        color: "primary.main",
+                      }}
+                    >
                       Response Messages
                     </Typography>
-                    <TextField
-                      label="Accept Text (Instructions)"
-                      value={editingTaskData.acceptText || ""}
-                      onChange={(e) =>
-                        setEditingTaskData({
-                          ...editingTaskData,
-                          acceptText: e.target.value,
-                        })
-                      }
-                      placeholder="Instructions shown to students"
-                      fullWidth
-                      multiline
-                      rows={3}
-                      sx={{ mb: 2 }}
-                    />
-                    <TextField
-                      label="Success Text"
-                      value={editingTaskData.successText || ""}
-                      onChange={(e) =>
-                        setEditingTaskData({
-                          ...editingTaskData,
-                          successText: e.target.value,
-                        })
-                      }
-                      placeholder="Message shown on success"
-                      fullWidth
-                      multiline
-                      rows={3}
-                      sx={{ mb: 2 }}
-                    />
-                    <TextField
-                      label="Error Text"
-                      value={editingTaskData.errorText || ""}
-                      onChange={(e) =>
-                        setEditingTaskData({
-                          ...editingTaskData,
-                          errorText: e.target.value,
-                        })
-                      }
-                      placeholder="Message shown on error"
-                      fullWidth
-                      multiline
-                      rows={3}
-                    />
+                    
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                        Success Message
+                      </Typography>
+                      <TextEditor
+                        value={editingTaskData.successText || ""}
+                        onChange={(value) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            successText: value,
+                          })
+                        }
+                        label="Success Text"
+                        placeholder="Message shown when the student completes the task successfully"
+                        helperText="This message appears when the student gets the correct answer. You can use markdown formatting."
+                        acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
+                      />
+                    </Box>
+
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                        Error Message
+                      </Typography>
+                      <TextEditor
+                        value={editingTaskData.errorText || ""}
+                        onChange={(value) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            errorText: value,
+                          })
+                        }
+                        label="Error Text"
+                        placeholder="Message shown when the student provides an incorrect answer"
+                        helperText="This message appears when the student gets an incorrect answer. You can use markdown formatting."
+                        acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
+                      />
+                    </Box>
                   </Box>
+
+                  {/* Collect Info Task Fields */}
+                  {editingTaskData.taskType === "collect-info" && (
+                    <Box sx={{ mt: 3 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+                        Collect Information Task
+                      </Typography>
+                      <Box sx={{ mt: 2 }}>
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={editingTaskData.saveValidatedData !== false}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  saveValidatedData: e.target.checked,
+                                })
+                              }
+                            />
+                          }
+                          label="Save collected information for later tasks"
+                        />
+                        {editingTaskData.saveValidatedData !== false && (
+                          <>
+                            <TextField
+                              label="Data Name"
+                              value={editingTaskData.savedDataName || "collected_info"}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  savedDataName: e.target.value,
+                                })
+                              }
+                              placeholder="e.g., collected_info"
+                              fullWidth
+                              sx={{ mt: 1 }}
+                              helperText="Unique key to reference this collected information in future tasks"
+                            />
+                            <Alert
+                              severity="info"
+                              sx={{
+                                mt: 1,
+                                borderRadius: 4,
+                                "& .MuiAlert-icon": { display: "none" },
+                              }}
+                            >
+                              <AlertTitle>Per-user Storage</AlertTitle>
+                              When enabled, the information collected from students is saved for each student separately.
+                              The value is stored as text and can be referenced in future tasks using the data name.
+                            </Alert>
+                          </>
+                        )}
+                      </Box>
+                    </Box>
+                  )}
+
+                  {/* Repository and Issue Fields */}
                 </Box>
               </Stack>
             )}
@@ -4815,12 +5702,11 @@ Student can now start their quest journey!`);
               variant="contained"
               sx={{
                 bgcolor: "#4caf50",
-                "&:hover": { bgcolor: "#388e3c" },
                 fontWeight: "bold",
                 px: 4,
                 borderRadius: 4,
                 boxShadow: "none",
-                "&:hover": { boxShadow: "none" },
+                "&:hover": { bgcolor: "#388e3c", boxShadow: "none" },
               }}
             >
               Save Changes
@@ -5327,6 +6213,8 @@ const getTaskTypeColor = (taskType) => {
       return "#00bcd4";
     case "llm-text-validation":
       return "#ff9800";
+    case "collect-info":
+      return "#4caf50";
     default:
       return "#757575";
   }
@@ -5358,6 +6246,8 @@ const getTaskTypeLabel = (taskType) => {
       return "Comment";
     case "llm-text-validation":
       return "LLM Text";
+    case "collect-info":
+      return "Collect Info";
     default:
       return "Unknown";
   }
