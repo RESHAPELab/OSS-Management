@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { API_BASE_URL } from "../../config/api";
-import TextEditor from "../../components/TextEditor";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import TextEditor from '../../components/TextEditor';
 import {
   Container,
   Box,
@@ -82,7 +81,7 @@ const defaultJsonContent = {
 const GenerateJson = () => {
   const { classId } = useParams();
   const navigate = useNavigate();
-  const [downloadStatus, setDownloadStatus] = useState("");
+  const [downloadStatus, setDownloadStatus] = useState('');
   const [showAddQuestModal, setShowAddQuestModal] = useState(false);
   const [showJsonPreview, setShowJsonPreview] = useState(false);
   const [showReadmeModal, setShowReadmeModal] = useState(false);
@@ -118,309 +117,9 @@ const GenerateJson = () => {
 
   // Initial JSON content with state management
   const [jsonContent, setJsonContent] = useState({
-    map_repo_link:
-      "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
-    questSequence: [
-      {
-        questId: "Q1",
-        title: "Q1: Understanding OSS Projects and GitHub Basics",
-        isQ0: false,
-        questType: "fixed",
-        sequenceNumber: 0,
-        metadata: {
-          title: "Q1: Understanding OSS Projects and GitHub Basics",
-          description:
-            "Learn the fundamentals of open source software and GitHub workflow",
-          prerequisite: null,
-          type: "general",
-        },
-        badgeDescription: "Explorer 🚀",
-        tasks: {
-          T1: {
-            title: "Explore the issue tracker",
-            taskTitle: "Explore the issue tracker",
-            desc: "Explore the issue tracker",
-            points: 20,
-            xp: 20,
-            type: "get-issue-count",
-            ossRepository: "probot-test-org/test-repo",
-            accept:
-              '### 🎯 Task 1: Find the Issue Tracker\n\n**Objective:** The issue tracker is the hub for project discussions, bug reports, and feature requests. Your goal is to find the issue tracker within our GitHub repository.\n\n**Task:** Visit the GitHub repository in the link below and **COUNT** the number of open issues and provide that number in the comment box to complete the task.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo)\n\n**Outcome:** This task will help you become familiar with how issues are reported, discussed, and tracked. Understanding the volume of discussions is crucial for grasping the project\'s activity level and areas that might need your contribution.\n\n**Help:** If you need help with this task, type "help" in the comment box to get hints, but it will cost you 5 points from your total score.',
-            success:
-              "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of issues in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. Each task completed is a step forward in your adventure. \n\nReady for the next challenge? More experiences and rewards await!\n\nA new task has appeared in the issues tab.\n\nYour adventure awaits! 🌟\n\n",
-            error:
-              "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** issues in our project. \n\nNo worries, though! Mistakes are just stepping stones on the path to learning.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nEach issue represents a story, a problem to solve, or a feature to improve. Finding the correct number is just the start of understanding the broader narrative of our project.\n\nReady for another try? Your correct answer awaits just a click away!",
-            answer: "",
-            hints: [],
-          },
-          T2: {
-            title: "Explore the pull-request menu",
-            taskTitle: "Explore the pull-request menu",
-            desc: "Explore the pull-request menu",
-            points: 20,
-            xp: 20,
-            type: "get-pr-count",
-            ossRepository: "probot-test-org/test-repo",
-            accept:
-              '### 🎯 Task 2: Find the Pull Request Menu\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n **Task:** Go to the GitHub repository using the link below, find the number of **open** pull requests, and enter it in the comment box below.\n\n**Outcome:** Completing this task will deepen your understanding of how contributions are proposed, discussed, and integrated into the project. Recognizing the volume of open pull requests helps you see the project\'s dynamic nature and where you might contribute in the future.\n\n**Help:** If you need help with this task, type "help" in the comment box to get hints, but it will cost you 5 points from your total score.',
-            success:
-              "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of pull requests in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. Each task completed is a step forward in your adventure. \n\nReady for the next challenge? More experiences and rewards await!\n\nYou will see a new task in your issues tab!\n\nYour adventure awaits! 🌟\n\n",
-            error:
-              "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** pull requests in our project.\n\nNo worries, though! Mistakes are part of the learning journey, and every misstep is an opportunity for growth.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nConsider this a bit of detective work 🕵️‍♂️.\n\nEvery open pull request is a potential contribution, waiting to enhance the project or fix an underlying issue. Identifying the correct number not only demonstrates your attentiveness but also helps you get acquainted with the contributions landscape of our project.\n\nReady to try again? The accurate count—and a chance to sharpen your project navigation skills—is just a click away!",
-            answer: "",
-            hints: [],
-          },
-          T3: {
-            title: "Explore the fork button",
-            taskTitle: "Explore the fork button",
-            desc: "Explore the fork button",
-            points: 20,
-            xp: 20,
-            type: "multiple-choice",
-            accept:
-              '**Question:** ### 🎯 Task 3: Locate the Fork Button \n\n**Objective:** Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Task:** Go to the GitHub repository using the link below, locate the **Fork** button, and note where it\'s positioned.\n\n**Choose the option that best describes where the "Fork" button is located.**\n\n\n\nA) Bottom-left corner of the page\nB) Directly under the repository description\nC) Next to the "Watch" and "Star" buttons\nD) In the repository\'s "Settings" tab\n\n**Instructions:** Select the correct answer.',
-            success:
-              "### 🌟 Congratulations! You've Got It Right!\n\nYou've correctly identified the fork button's location within a GitHub repository as the top-right corner of the page, showcasing your growing familiarity with GitHub's interface and tools for collaboration.\n\nAs a reward for your keen observation and learning skills, you've earned ${experiencePoints} experience points!\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of open-source collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon!\n\nTo dive into your next task, look in the issues tab!\n\nThe adventure continues! 🌟\n\n",
-            error:
-              "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the location you've selected for the fork button doesn't align with its typical placement in a GitHub repository.\n\nNo worries, though! Mistakes are simply steps on the path to mastery, and every attempt brings you closer to understanding.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThis is a bit like a treasure hunt 🗺️.\n\nFinding the fork button is a fundamental skill for navigating GitHub and making your mark on projects. Correctly identifying its location ensures you're ready to start experimenting and contributing on your own terms.\n\nReady for another try? Your correct answer is just a decision away!\n\n**Please select the correct answer from the options below:**\n\nA) Bottom-left corner of the page\nB) Directly under the repository description\nC) Top-right corner of the page\nD) In the repository's \"Settings\" tab\n\n**Type** the letter in the comment box to complete this task.",
-            answer: "C",
-            question:
-              '### 🎯 Task 3: Locate the Fork Button \n\n**Objective:** Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.\n\n**Task:** Go to the GitHub repository using the link below, locate the **Fork** button, and note where it\'s positioned.\n\n**Choose the option that best describes where the "Fork" button is located.**\n\n',
-            options: [
-              {
-                label: "A",
-                value: "Bottom-left corner of the page",
-              },
-              {
-                label: "B",
-                value: "Directly under the repository description",
-              },
-              {
-                label: "C",
-                value: 'Next to the "Watch" and "Star" buttons',
-              },
-              {
-                label: "D",
-                value: 'In the repository\'s "Settings" tab',
-              },
-            ],
-            hints: [],
-          },
-          T4: {
-            title: "Explore the readme file",
-            taskTitle: "Explore the readme file",
-            desc: "Explore the readme file",
-            points: 20,
-            xp: 20,
-            type: "multiple-choice",
-            accept:
-              "**Question:** ### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Instructions:** Select the correct answer.",
-            success:
-              "### 🌟 Congratulations! You've Got It Right!\n\nYou've successfully identified a key piece of information or instruction from the README file, demonstrating your thorough attention to detail and commitment to understanding the project.\n\nAs a reward for your keen observation and learning skills, you've earned ${experiencePoints} experience points!\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you're just **${pointsRemaining} points away** from leveling up!.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of open-source collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon! \n\nThere will be a new task in your issues tab.\n\nThe adventure continues! 🌟\n\n",
-            error:
-              "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the information you've shared from the README file doesn't quite match what we were looking for, or perhaps it was misunderstood.\n\nDon't fret, though! Each step, including the missteps, is part of the journey towards greater knowledge and proficiency.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nConsider this a chance to dive deeper 🤿.\n\nThe README file is packed with insights about the project, often hiding gems of information crucial for new contributors. By revisiting and reflecting on its content, you're not just completing a task but also building a foundation for meaningful contributions.\n\nReady to give it another go? The README file awaits with the details you need to move forward!\n\n**Please select the correct answer from the options below based on the sessions described in the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Type** the letter in the comment box to complete this task.",
-            answer: "D",
-            question:
-              "### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA",
-            options: [
-              {
-                label: "A",
-                value: "Functionality",
-              },
-              {
-                label: "B",
-                value: "Design",
-              },
-              {
-                label: "C",
-                value: "Architecture",
-              },
-              {
-                label: "D",
-                value: "Contributing",
-              },
-            ],
-            hints: [],
-          },
-          T5: {
-            title: "Explore the contributors",
-            taskTitle: "Explore the contributors",
-            desc: "Explore the contributors",
-            points: 20,
-            xp: 20,
-            type: "get-top-contributor",
-            ossRepository: "probot-test-org/test-repo",
-            accept:
-              "### 🎯 Task 5: Discover the Contributors \n\n**Objective:** Understanding who has contributed to a project can provide insights into the project's community and potentially whom to reach out to for collaboration or questions.\n\n**Task:** Go to the GitHub repository using the link below, locate the **number 1** contributor, and **TYPE** their username in the comment box. Do NOT include any symbols.\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Outcome:** This task will familiarize you with the collaborative nature of open-source projects on GitHub. Identifying contributors helps you understand the project's community size and diversity, offering a window into the people behind the project.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
-            success:
-              "### 🌟 Congratulations! You've Reached a New Level!\n\nWith your latest achievement, you've accurately identified the number of contributors to our project, demonstrating not just your ability to navigate GitHub but also your appreciation for community collaboration.\n\nAs a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You've now accomplished a total of **${currentPoints} points**, achieving a remarkable milestone in your journey. This success is a testament to your dedication, learning, and contributions thus far.\n\n🎯 **Quest Completion:** You've successfully completed the tasks for this quest, leaving only the remaining quiz. This accomplishment signifies your mastery over the tasks at hand and your readiness to embark on new challenges and quests within the GitHub realm and beyond.\n\n> 🌟 🌟 🌟\n\nIncredible work! Your journey through this quest has been a tale of persistence, learning, and growth. Each task you've completed has not only contributed to your knowledge but has also paved the way for future adventures in open-source collaboration.\n\n**🚀 Ready for New Horizons:** With this quest behind you, new quests await, brimming with opportunities for exploration, learning, and making an impact.\n\nTo begin your next adventure, keep an eye out for the command or instructions that will introduce your next task. Your dedication and skills are invaluable assets on this journey of continuous learning and contribution.\n\nOnward to new quests and achievements! 🌟\n\n",
-            error:
-              "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the number of contributors you've mentioned doesn't align with the current roster of contributors to our project.\n\nBut remember, every error is a stepping stone towards greater understanding and skill.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThink of this as honing your analytical skills 🔍.\n\nEach contributor represents a unique contribution to the project, from code commits to documentation. Recognizing the breadth and depth of the community's engagement is crucial for appreciating the collective effort involved in open-source projects.\n\nAre you ready for another attempt? The correct number, and a deeper understanding of our project's community, is just a few clicks away!",
-            answer: "",
-            hints: [],
-          },
-          T6: {
-            title: "Quiz",
-            taskTitle: "Quiz",
-            desc: "Quiz",
-            points: 20,
-            xp: 20,
-            type: "quiz",
-            questions: [
-              {
-                question:
-                  "What is the primary purpose of the issue tracker in a GitHub repository?",
-                optionA: "To list all contributors to the project",
-                optionB:
-                  "To track bug reports, feature requests, and project discussions",
-                optionC: "To store documentation and project guidelines",
-                optionD: "To manage pull requests and merges",
-                correctAnswer: "b",
-                explanation: "",
-              },
-              {
-                question:
-                  "Which statement best describes a pull request on GitHub?",
-                optionA:
-                  "A way to propose changes to a repository, allowing for code review and discussion before integration",
-                optionB:
-                  "A method of archiving issues and marking them as resolved",
-                optionC:
-                  "A feature used for backing up repository data to a different server",
-                optionD:
-                  "A section where repository settings and configurations are modified",
-                correctAnswer: "a",
-                explanation: "",
-              },
-              {
-                question: "Why would you fork a repository on GitHub?",
-                optionA: "To permanently delete it from your account",
-                optionB: "To merge two different repositories into one",
-                optionC:
-                  "To create a personal copy where you can experiment and make changes without affecting the original",
-                optionD: "To mark it as one of your favorite projects",
-                correctAnswer: "c",
-                explanation: "",
-              },
-              {
-                question:
-                  "What information is typically found in a README file of a GitHub project?",
-                optionA: "The project's history and commit logs",
-                optionB:
-                  "A guide on how to contribute, along with an overview of the project",
-                optionC: "Personal information about the contributors",
-                optionD: "All the issues that have ever been reported",
-                correctAnswer: "b",
-                explanation: "",
-              },
-              {
-                question:
-                  "How can understanding who has contributed the most to a project be useful?",
-                optionA: "It ensures that you get paid for your contributions",
-                optionB:
-                  "It prevents other people from making changes to your code",
-                optionC:
-                  "It lets you change the project's license to your preference",
-                optionD:
-                  "It helps identify the project's most active users and potential people to reach out to for guidance",
-                correctAnswer: "d",
-                explanation: "",
-              },
-            ],
-            accept:
-              '### 🧠 Quest 1 Quiz \n Answer the following questions to test your knowledge of the GitHub contribution process.\n Note that you may navigate to issues and view your "closed issues" to view old tasks that may help you answer these questions! \n\nThere is only one attempt allowed!',
-            success: "Good Job!",
-            error:
-              "### Oops, That's Not Quite Right! Check if you have an answer for each question and if you are following the answer pattern: [X, X, X]",
-            answer: "",
-            hints: [],
-          },
-        },
-      },
-      {
-        questId: "Q2",
-        title: "Q2: Assignment Validation",
-        isQ0: false,
-        questType: "custom",
-        sequenceNumber: 1,
-        metadata: {
-          title: "Q2: Assignment Validation",
-          description: "Validate user assignments to specific issues",
-          prerequisite: "Q1",
-          type: "custom",
-        },
-        badgeDescription: "Custom Quest 🎯",
-        tasks: {
-          T1: {
-            title: "Identify the assigned user for the issue #88",
-            taskTitle: "Identify the assigned user for the issue #88",
-            desc: "Identify the assigned user for the issue #88",
-            points: 25,
-            xp: 25,
-            hints: [],
-            detailedHints: [],
-          },
-          T2: {
-            title: "Choose an issue that you would like to work with",
-            taskTitle: "Choose an issue that you would like to work with",
-            desc: "Choose an issue that you would like to work with",
-            points: 25,
-            xp: 25,
-            type: "issue-no",
-            ossRepository: "probot-test-org/test-repo",
-            accept:
-              "### 🎯 Task 1: Choose an Issue to Work On\n\n**Objective:** ${objective || 'The lifeblood of any Open Source Software (OSS) project is its community and the contributions that come from addressing issues. Your mission is to identify an issue within our GitHub repository that aligns with your skills, interests, or areas you wish to learn more about.'}\n\n**Task:** Go to the GitHub repository using the link below, find an issue that you would like to work on, and type its issue number in the comment box below.\n\n**Outcome:** By selecting an issue to work on, you are taking the first step towards contributing to the project and becoming part of the OSS community. This task helps you engage with the project's needs actively and lays the groundwork for your upcoming contributions.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
-            success:
-              "### 🌟 Congratulations! You've Selected Your First Issue!\n\nBy choosing an issue to focus on, you've taken a significant step in your journey of contribution to our project. Your willingness to engage and make a difference showcases your commitment to the community and project advancement.\n\n**Points earned:** {points}\n\n🌟 🌟 🌟\n\n🏆 **Current Progress:** Good work! You currently have {points} points and you've started your journey towards achieving greater milestones.\n\n🎯 **Quest Advancement:** This task not only brings you closer to mastering the collaboration process within GitHub but also highlights your growing role within our community.\n\n🌟 🌟 🌟\n\nFantastic effort! You're proving to be an essential part of our journey towards developing a project that we can all be proud of. 🌟",
-            error:
-              "### ❌ Issue Not Found\n\nThe issue number you provided does not exist in the ${repository || '[repository]'} repository.\n\n**Please ensure:**\n1. You're checking the right repository\n2. You're typing a valid issue number\n3. The issue actually exists\n\n[Click here to view all issues](https://github.com/${repository || '[repository]'}/issues)",
-            answer: "",
-            hints: [],
-          },
-        },
-      },
-    ],
-    readme: "",
+    map_repo_link: "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+    questSequence: []
   });
-
-  // {
-  //   questId: "Q2",
-  //   title: "Assignment Validation",
-  //   isQ0: false,
-  //   questType: "custom",
-  //   sequenceNumber: 1,
-  //   metadata: {
-  //     title: "Assignment Validation",
-  //     description: "Validate user assignments to specific issues",
-  //     prerequisite: "Q1",
-  //     type: "custom",
-  //   },
-  //   badgeDescription: "Custom Quest 🎯",
-  //   tasks: {
-  //     T1: {
-  //       desc: "Identify the assigned user for the issue #88",
-  //       points: 25,
-  //       xp: 25,
-  //       hints: [],
-  //       detailedHints: [],
-  //     },
-  //     T2: {
-  //       desc: "Choose an issue that you would like to work with",
-  //       points: 25,
-  //       xp: 25,
-  //       type: "issue-no",
-  //       ossRepository: "probot-test-org/test-repo",
-  //       accept:
-  //         "### 🎯 Task 1: Choose an Issue to Work On\n\n**Objective:** ${objective || 'The lifeblood of any Open Source Software (OSS) project is its community and the contributions that come from addressing issues. Your mission is to identify an issue within our GitHub repository that aligns with your skills, interests, or areas you wish to learn more about.'}\n\n**Task:** Go to the GitHub repository using the link below, find an issue that you would like to work on, and type its issue number in the comment box below.\n\n**Outcome:** By selecting an issue to work on, you are taking the first step towards contributing to the project and becoming part of the OSS community. This task helps you engage with the project's needs actively and lays the groundwork for your upcoming contributions.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
-  //       success:
-  //         "### 🌟 Congratulations! You've Selected Your First Issue!\n\nBy choosing an issue to focus on, you've taken a significant step in your journey of contribution to our project. Your willingness to engage and make a difference showcases your commitment to the community and project advancement.\n\n**Points earned:** {points}\n\n🌟 🌟 🌟\n\n🏆 **Current Progress:** Good work! You currently have {points} points and you've started your journey towards achieving greater milestones.\n\n🎯 **Quest Advancement:** This task not only brings you closer to mastering the collaboration process within GitHub but also highlights your growing role within our community.\n\n🌟 🌟 🌟\n\nFantastic effort! You're proving to be an essential part of our journey towards developing a project that we can all be proud of. 🌟",
-  //       error:
-  //         "### ❌ Issue Not Found\n\nThe issue number you provided does not exist in the ${repository || '[repository]'} repository.\n\n**Please ensure:**\n1. You're checking the right repository\n2. You're typing a valid issue number\n3. The issue actually exists\n\n[Click here to view all issues](https://github.com/${repository || '[repository]'}/issues)",
-  //       answer: "",
-  //       hints: [],
-  //     },
-  //   },
-  // },
 
   // Add a quest ID counter to ensure consistent timestamps
   const [questIdCounter, setQuestIdCounter] = useState(0);
@@ -658,7 +357,7 @@ const GenerateJson = () => {
     answer: "",
     options: [
       { label: "A", value: "" },
-      { label: "B", value: "" },
+      { label: "B", value: "" }
     ],
     detailedHints: [],
     taskType: "multiple-choice",
@@ -701,16 +400,14 @@ const GenerateJson = () => {
   // 4. Add a function to add a new blank task to existing quests in the sequence builder
   const handleAddTaskToExistingQuest = (questIndex) => {
     // Generate the next task ID before creating the task
-    const existingTaskIds = Object.keys(
-      jsonContent.questSequence[questIndex].tasks
-    );
+    const existingTaskIds = Object.keys(jsonContent.questSequence[questIndex].tasks);
     const nextTaskNumber = existingTaskIds.length + 1;
     const newTaskId = `T${nextTaskNumber}`;
-
+    
     setJsonContent((prev) => {
       const newQuestSequence = [...prev.questSequence];
       const quest = newQuestSequence[questIndex];
-
+      
       // Create a template MCQ task
       const templateTask = {
         title: `Task ${nextTaskNumber}`,
@@ -719,12 +416,9 @@ const GenerateJson = () => {
         points: 20,
         xp: 20,
         type: "multiple-choice",
-        accept:
-          "**Question:** [Your question here]\n\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n**Instructions:** Select the correct answer.",
-        success:
-          "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 20\n\nGreat work! 🎉",
-        error:
-          '❌ **Incorrect Answer**\n\nThat\'s not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type "help" for additional guidance.',
+        accept: "**Question:** [Your question here]\n\nA) Option A\nB) Option B\nC) Option C\nD) Option D\n\n**Instructions:** Select the correct answer.",
+        success: "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 20\n\nGreat work! 🎉",
+        error: "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
         answer: "A",
         answerType: "singleAnswer",
         question: "[Your question here]",
@@ -732,16 +426,16 @@ const GenerateJson = () => {
           { label: "A", value: "Option A" },
           { label: "B", value: "Option B" },
           { label: "C", value: "Option C" },
-          { label: "D", value: "Option D" },
+          { label: "D", value: "Option D" }
         ],
         correctAnswer: "A",
         hints: [],
-        detailedHints: [],
+        detailedHints: []
       };
-
+      
       // Add the template task to the quest
       quest.tasks[newTaskId] = templateTask;
-
+      
       return { ...prev, questSequence: newQuestSequence };
     });
   };
@@ -785,21 +479,19 @@ const GenerateJson = () => {
         newTasks[newIndex],
         newTasks[taskIdx],
       ];
-
+      
       // Schedule auto-centering after the state update and DOM re-render
       setTimeout(() => {
-        const taskElement = document.querySelector(
-          `[data-form-task-id="${newIndex}"]`
-        );
+        const taskElement = document.querySelector(`[data-form-task-id="${newIndex}"]`);
         if (taskElement) {
           taskElement.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
           });
         }
       }, 100); // Small delay to ensure DOM has updated
-
+      
       return { ...prev, tasks: newTasks };
     });
   };
@@ -814,31 +506,17 @@ const GenerateJson = () => {
 
       try {
         setIsLoading(true);
-        console.log(
-          "🔄 Loading saved quest JSON configuration for class:",
-          classId
-        );
-
-        const response = await axios.get(
-          `${API_BASE_URL}/api/group/${classId}/quest-json-config`
-        );
-
-        console.log("🔍 Debug response data:", response.data);
-        console.log("🔍 hasConfig:", response.data.data?.hasConfig);
-        console.log("🔍 questJsonConfig:", response.data.data?.questJsonConfig);
-        console.log(
-          "🔍 questSequence length:",
-          response.data.data?.questJsonConfig?.questSequence?.length
-        );
-
-        if (
-          response.data.success &&
-          response.data.data.hasConfig &&
-          response.data.data.questJsonConfig &&
-          response.data.data.questJsonConfig.questSequence &&
-          response.data.data.questJsonConfig.questSequence.length > 0
-        ) {
-          console.log("✅ Loaded existing quest JSON configuration");
+        console.log('🔄 Loading saved quest JSON configuration for class:', classId);
+        
+        const response = await axios.get(`http://localhost:8080/api/group/${classId}/quest-json-config`);
+        
+        console.log('🔍 Debug response data:', response.data);
+        console.log('🔍 hasConfig:', response.data.data?.hasConfig);
+        console.log('🔍 questJsonConfig:', response.data.data?.questJsonConfig);
+        console.log('🔍 questSequence length:', response.data.data?.questJsonConfig?.questSequence?.length);
+        
+        if (response.data.success && response.data.data.hasConfig && response.data.data.questJsonConfig && response.data.data.questJsonConfig.questSequence && response.data.data.questJsonConfig.questSequence.length > 0) {
+          console.log('✅ Loaded existing quest JSON configuration');
           // Validate and fix the loaded configuration, then apply sequential IDs
           const validatedConfig = validateAndFixQuestConfig(
             response.data.data.questJsonConfig
@@ -855,37 +533,24 @@ const GenerateJson = () => {
             ).toLocaleString()}`
           );
           setLastSavedAt(new Date(response.data.data.lastUpdated));
-
+          
           // If this is a default configuration that hasn't been explicitly saved through the UI,
           // trigger an automatic save to ensure it's properly stored
-          if (
-            !response.data.data.lastUpdated ||
-            response.data.data.questCount === 1
-          ) {
-            console.log(
-              "🔄 Auto-saving default configuration to ensure it's properly stored"
-            );
+          if (!response.data.data.lastUpdated || response.data.data.questCount === 1) {
+            console.log('🔄 Auto-saving default configuration to ensure it\'s properly stored');
             setTimeout(async () => {
               try {
-                const saveResponse = await axios.post(
-                  `${API_BASE_URL}/api/group/${classId}/quest-json-config`,
-                  {
-                    questJsonConfig: configWithSequentialIds,
-                  }
-                );
+                const saveResponse = await axios.post(`${baseURL}/api/group/${classId}/quest-json-config`, {
+                  questJsonConfig: configWithSequentialIds
+                });
                 if (saveResponse.data.success) {
-                  console.log(
-                    "✅ Default configuration auto-saved successfully"
-                  );
-                  setSaveStatusType("success");
+                  console.log('✅ Default configuration auto-saved successfully');
+                  setSaveStatusType('success');
                   setSaveStatus(`Auto-saved: ${new Date().toLocaleString()}`);
                   setLastSavedAt(new Date());
                 }
               } catch (saveError) {
-                console.error(
-                  "❌ Failed to auto-save default configuration:",
-                  saveError
-                );
+                console.error('❌ Failed to auto-save default configuration:', saveError);
               }
             }, 1000);
           }
@@ -936,14 +601,11 @@ const GenerateJson = () => {
 
         // Validate and fix quest configuration before saving
         const validatedConfig = validateAndFixQuestConfig(jsonContent);
-
-        const response = await axios.post(
-          `${API_BASE_URL}/api/group/${classId}/quest-json-config`,
-          {
-            questJsonConfig: validatedConfig,
-          }
-        );
-
+        
+        const response = await axios.post(`http://localhost:8080/api/group/${classId}/quest-json-config`, {
+          questJsonConfig: validatedConfig
+        });
+        
         if (response.data.success) {
           setSaveStatusType("success");
           setSaveStatus(`Auto-saved: ${new Date().toLocaleString()}`);
@@ -991,14 +653,11 @@ const GenerateJson = () => {
 
       // Validate and fix quest configuration before saving
       const validatedConfig = validateAndFixQuestConfig(jsonContent);
-
-      const response = await axios.post(
-        `${API_BASE_URL}/api/group/${classId}/quest-json-config`,
-        {
-          questJsonConfig: validatedConfig,
-        }
-      );
-
+      
+      const response = await axios.post(`http://localhost:8080/api/group/${classId}/quest-json-config`, {
+        questJsonConfig: validatedConfig
+      });
+      
       if (response.data.success) {
         setSaveStatusType("success");
         setSaveStatus(`Saved: ${new Date().toLocaleString()}`);
@@ -1043,15 +702,12 @@ const GenerateJson = () => {
       console.log("🚀 Creating custom repos for user:", githubUsername);
       console.log("📄 Using JSON configuration:", jsonContent);
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/repo/createCustomRepos`,
-        {
-          users: [githubUsername],
-          customSequence: jsonContent,
-          className: `custom-quest-${Date.now()}`,
-          classId: classId,
-        }
-      );
+      const response = await axios.post('http://localhost:8080/api/repo/createCustomRepos', {
+        users: [githubUsername],
+        customSequence: jsonContent,
+        className: `custom-quest-${Date.now()}`,
+        classId: classId
+      });
 
       console.log("📋 Full response from server:", response.data);
 
@@ -1103,7 +759,7 @@ Student can now start their quest journey!`);
         : jsonContent.questSequence.length;
     // Build tasks object
     const tasksObj = {};
-
+    
     // When editing a quest, preserve existing tasks
     if (editingQuestIndex !== null) {
       const existingQuest = jsonContent.questSequence[editingQuestIndex];
@@ -1117,155 +773,150 @@ Student can now start their quest journey!`);
         let taskData = {
           title: task.title || "", // Add task title
           taskTitle: task.title || "", // Add taskTitle field
-          desc:
-            task.title ||
-            task.taskDesc ||
-            task.acceptText ||
-            "Complete this task", // Use title as primary, fallback to others
+          desc: task.title || task.taskDesc || task.acceptText || "Complete this task", // Use title as primary, fallback to others
           points: parseInt(task.points),
           xp: parseInt(task.points),
           hints: [],
           detailedHints: task.detailedHints || [],
         };
-        if (task.taskType === "multiple-choice") {
-          // Store question and options separately, but combine for display
-          let acceptText = task.acceptText || "";
-          if (task.question) {
-            acceptText = `**Question:** ${task.question}\n\n`;
-            task.options.forEach((opt) => {
-              if (opt.value) acceptText += `${opt.label}) ${opt.value}\n`;
-            });
-            acceptText += `\n**Instructions:** Select the correct answer.`;
-          }
-          taskData = {
-            ...taskData,
-            type: "multiple-choice",
-            accept: acceptText,
-            success: task.successText.replace("{points}", task.points),
-            error: task.errorText,
-            answer: task.correctAnswer,
-            question: task.question,
-            options: task.options,
-          };
-        } else if (task.taskType === "quiz") {
-          // Build complete quiz content for the accept field
-          let quizContent = `### 🧠 Quiz\n\n`;
-          quizContent += `Quest: ${questFormData.title}\n\n`;
-          quizContent += `Description: ${questFormData.description}\n\n`;
-          quizContent += `Instructions: Answer all questions and submit your answers in the format [a,b,c,d,e] where each letter corresponds to your answer for each question.\n\n`;
-          quizContent += `Example: If you think the answers are A, C, B, D, E, type: [a,c,b,d,e]\n\n`;
-
-          task.questions.forEach((q, index) => {
-            if (q.question) {
-              quizContent += `Question ${index + 1}: ${q.question}\n\n`;
-              if (q.optionA) quizContent += `A) ${q.optionA}\n`;
-              if (q.optionB) quizContent += `B) ${q.optionB}\n`;
-              if (q.optionC) quizContent += `C) ${q.optionC}\n`;
-              if (q.optionD) quizContent += `D) ${q.optionD}\n`;
-              quizContent += `\n`;
-            }
+      if (task.taskType === "multiple-choice") {
+        // Store question and options separately, but combine for display
+        let acceptText = task.acceptText || "";
+        if (task.question) {
+          acceptText = `**Question:** ${task.question}\n\n`;
+          task.options.forEach((opt) => {
+            if (opt.value) acceptText += `${opt.label}) ${opt.value}\n`;
           });
-
-          quizContent += `Submit your answers in the format [a,b,c,d,e] where each letter is your answer choice.`;
-
-          let successText = task.successText
-            .replace("{points}", task.points)
-            .replace("[X]", "{correctCount}")
-            .replace("[Y]", task.questions.length);
-          taskData = {
-            ...taskData,
-            type: "quiz",
-            questions: task.questions.filter((q) => q.question),
-            accept: quizContent,
-            success: successText,
-            error: task.errorText,
-            answer: "",
-          };
-        } else if (
-          task.taskType === "get-issue-count" ||
-          task.taskType === "get-pr-count" ||
-          task.taskType === "get-top-contributor" ||
-          task.taskType === "get-open-issue"
-        ) {
-          taskData = {
-            ...taskData,
-            type: task.taskType,
-            ossRepository: task.repository,
-            accept: task.acceptText,
-            success: task.successText.replace("{points}", task.points),
-            error: task.errorText,
-            answer: "",
-            // per-user save (supported for get-issue-count)
-            ...(task.taskType === "get-issue-count"
-              ? {
-                  saveValidatedData: Boolean(task.saveValidatedData),
-                  savedDataName: task.savedDataName || "",
-                }
-              : {}),
-          };
-        } else if (task.taskType === "get-issue-title") {
-          taskData = {
-            ...taskData,
-            type: "get-issue-title",
-            ossRepository: task.repository,
-            issueNumber: task.issueNumber,
-            accept: task.acceptText,
-            success: task.successText.replace("{points}", task.points),
-            error: task.errorText,
-            answer: "",
-            useStoredKey: Boolean(task.useStoredKey),
-            selectedStoredKey: task.selectedStoredKey || "",
-          };
-        } else if (task.taskType === "issue-no") {
-          taskData = {
-            ...taskData,
-            type: "issue-no",
-            repository: task.repository,
-            accept: task.acceptText,
-            success: task.successText.replace("{points}", task.points),
-            error: task.errorText,
-            answer: "",
-            saveValidatedData: Boolean(task.saveValidatedData),
-            savedDataName: task.savedDataName || "",
-          };
-        } else if (task.taskType === "custom-api-call") {
-          taskData = {
-            ...taskData,
-            type: "custom-api-call",
-            apiEndpoint: task.apiEndpoint,
-            responsePath: task.responsePath,
-            expectedAnswerType: task.expectedAnswerType,
-            repository: task.repository,
-            enableTolerance: task.enableTolerance || false,
-            toleranceRange: task.toleranceRange || 10,
-            accept: task.acceptText,
-            success: task.successText.replace("{points}", task.points),
-            error: task.errorText,
-            answer: "",
-            saveValidatedData: Boolean(task.saveValidatedData),
-            savedDataName: task.savedDataName || "",
-          };
-        } else if (task.taskType === "llm-text-validation") {
-          taskData = {
-            ...taskData,
-            type: "llm-text-validation",
-            llmTextValidation: {
-              question: task.llmTextValidation?.question || "",
-              validationParameters:
-                task.llmTextValidation?.validationParameters || [],
-              temperature: task.llmTextValidation?.temperature || 0.1,
-              enableDetailedFeedback:
-                task.llmTextValidation?.enableDetailedFeedback || false,
-            },
-            accept: task.acceptText,
-            success: task.successText.replace("{points}", task.points),
-            error: task.errorText,
-            answer: "",
-          };
+          acceptText += `\n**Instructions:** Select the correct answer.`;
         }
-        tasksObj[`T${idx + 1}`] = taskData;
-      });
-    }
+        taskData = {
+          ...taskData,
+          type: "multiple-choice",
+          accept: acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: task.correctAnswer,
+          question: task.question,
+          options: task.options,
+        };
+      } else if (task.taskType === "quiz") {
+        // Build complete quiz content for the accept field
+        let quizContent = `### 🧠 Quiz\n\n`;
+        quizContent += `Quest: ${questFormData.title}\n\n`;
+        quizContent += `Description: ${questFormData.description}\n\n`;
+        quizContent += `Instructions: Answer all questions and submit your answers in the format [a,b,c,d,e] where each letter corresponds to your answer for each question.\n\n`;
+        quizContent += `Example: If you think the answers are A, C, B, D, E, type: [a,c,b,d,e]\n\n`;
+
+        task.questions.forEach((q, index) => {
+          if (q.question) {
+            quizContent += `Question ${index + 1}: ${q.question}\n\n`;
+            if (q.optionA) quizContent += `A) ${q.optionA}\n`;
+            if (q.optionB) quizContent += `B) ${q.optionB}\n`;
+            if (q.optionC) quizContent += `C) ${q.optionC}\n`;
+            if (q.optionD) quizContent += `D) ${q.optionD}\n`;
+            quizContent += `\n`;
+          }
+        });
+
+        quizContent += `Submit your answers in the format [a,b,c,d,e] where each letter is your answer choice.`;
+
+        let successText = task.successText
+          .replace("{points}", task.points)
+          .replace("[X]", "{correctCount}")
+          .replace("[Y]", task.questions.length);
+        taskData = {
+          ...taskData,
+          type: "quiz",
+          questions: task.questions.filter((q) => q.question),
+          accept: quizContent,
+          success: successText,
+          error: task.errorText,
+          answer: "",
+        };
+      } else if (
+        task.taskType === "get-issue-count" ||
+        task.taskType === "get-pr-count" ||
+        task.taskType === "get-top-contributor" ||
+        task.taskType === "get-open-issue"
+      ) {
+        taskData = {
+          ...taskData,
+          type: task.taskType,
+          ossRepository: task.repository,
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: "",
+          // per-user save (supported for get-issue-count)
+          ...(task.taskType === "get-issue-count"
+            ? {
+                saveValidatedData: Boolean(task.saveValidatedData),
+                savedDataName: task.savedDataName || "",
+              }
+            : {}),
+        };
+      } else if (task.taskType === "get-issue-title") {
+        taskData = {
+          ...taskData,
+          type: "get-issue-title",
+          ossRepository: task.repository,
+          issueNumber: task.issueNumber,
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: "",
+          useStoredKey: Boolean(task.useStoredKey),
+          selectedStoredKey: task.selectedStoredKey || "",
+        };
+      } else if (task.taskType === "issue-no") {
+        taskData = {
+          ...taskData,
+          type: "issue-no",
+          repository: task.repository,
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: "",
+          saveValidatedData: Boolean(task.saveValidatedData),
+          savedDataName: task.savedDataName || "",
+        };
+      } else if (task.taskType === "custom-api-call") {
+        taskData = {
+          ...taskData,
+          type: "custom-api-call",
+          apiEndpoint: task.apiEndpoint,
+          responsePath: task.responsePath,
+          expectedAnswerType: task.expectedAnswerType,
+          repository: task.repository,
+          enableTolerance: task.enableTolerance || false,
+          toleranceRange: task.toleranceRange || 10,
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: "",
+          saveValidatedData: Boolean(task.saveValidatedData),
+          savedDataName: task.savedDataName || "",
+        };
+      } else if (task.taskType === "llm-text-validation") {
+        taskData = {
+          ...taskData,
+          type: "llm-text-validation",
+          llmTextValidation: {
+            question: task.llmTextValidation?.question || "",
+            validationParameters:
+              task.llmTextValidation?.validationParameters || [],
+            temperature: task.llmTextValidation?.temperature || 0.1,
+            enableDetailedFeedback:
+              task.llmTextValidation?.enableDetailedFeedback || false,
+          },
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: "",
+        };
+      }
+      tasksObj[`T${idx + 1}`] = taskData;
+    });
     // Create new quest with temporary ID (will be updated by updateQuestIds)
     const newQuest = {
       questId: `TEMP_${Date.now()}`, // Temporary ID, will be replaced
@@ -1311,13 +962,7 @@ Student can now start their quest journey!`);
         return {
           // Required fields for TaskModel
           taskTitle: task.title || task.taskTitle || `Task ${idx + 1}`,
-          desc:
-            task.title ||
-            task.taskDesc ||
-            task.desc ||
-            task.accept ||
-            task.acceptText ||
-            "Complete this task",
+          desc: task.title || task.taskDesc || task.desc || task.accept || task.acceptText || "Complete this task",
           points:
             typeof task.points === "number"
               ? task.points
@@ -1350,10 +995,10 @@ Student can now start their quest journey!`);
           answer: task.answer || "",
           type: task.taskType || task.type,
           // Custom API call fields
-          apiEndpoint: task.apiEndpoint || "",
-          responsePath: task.responsePath || "",
-          expectedAnswerType: task.expectedAnswerType || "Number",
-          repository: task.repository || "",
+          apiEndpoint: task.apiEndpoint || '',
+          responsePath: task.responsePath || '',
+          expectedAnswerType: task.expectedAnswerType || 'Number',
+          repository: task.repository || '',
           saveValidatedData: Boolean(task.saveValidatedData),
           savedDataName: task.savedDataName || "",
           // Tolerance fields
@@ -1494,28 +1139,120 @@ Student can now start their quest journey!`);
 
       // Update quest IDs to be sequential based on new positions
       const updatedSequence = updateQuestIds(newQuestSequence);
-
+      
       // Schedule auto-centering after the state update and DOM re-render
       setTimeout(() => {
         // Find the quest by its new position in the sequence
-        const questElements = document.querySelectorAll("[data-quest-id]");
+        const questElements = document.querySelectorAll('[data-quest-id]');
         if (questElements[newIndex]) {
           questElements[newIndex].scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
           });
         }
       }, 100); // Small delay to ensure DOM has updated
-
+      
       return { ...prev, questSequence: updatedSequence };
     });
   };
 
-  // Edit quest modal - only for quest title and description (no tasks)
+    // Edit quest modal - only for quest title and description (no tasks)
   const editQuest = (questIndex) => {
     const quest = jsonContent.questSequence[questIndex];
+    const tasksArr = Object.entries(quest.tasks).map(([taskId, task]) => {
+      // Map all possible fields for all task types
+      const baseTask = {
+        ...task,
+        taskType: task.type,
+        taskDesc: task.desc || '',
+        points: task.points ?? 0,
+        acceptText: task.accept || task.responses?.accept || '',
+        successText: task.success || task.responses?.success || '',
+        errorText: task.error || task.responses?.error || '',
+        answer: task.answer || '',
+        answerType: task.answerType || '',
+        repository: task.repository || task.ossRepository || '',
+        issueNumber: task.issueNumber || '',
+        options: Array.isArray(task.options) ? task.options : [
+          { label: 'A', value: task.optionA || '' },
+          { label: 'B', value: task.optionB || '' },
+          ...(task.optionC ? [{ label: 'C', value: task.optionC }] : []),
+          ...(task.optionD ? [{ label: 'D', value: task.optionD }] : []),
+          ...(task.optionE ? [{ label: 'E', value: task.optionE }] : [])
+        ],
+        correctAnswer: task.correctAnswer || task.answer || '',
+        question: task.question || '',
+        questions: Array.isArray(task.questions) ? task.questions : [],
+        hints: Array.isArray(task.hints) ? task.hints : [],
+        detailedHints: Array.isArray(task.detailedHints) ? task.detailedHints : [],
+        // Tolerance fields
+        enableTolerance: task.enableTolerance || false,
+        toleranceRange: task.toleranceRange || 10,
+      };
+      // Fallbacks for MCQ
+      if (baseTask.taskType === 'multiple-choice') {
+        // Try to recover options and correct answer if missing
+        if ((!baseTask.options || baseTask.options.length < 2) && baseTask.acceptText) {
+          // More robust regex: tolerate extra spaces/line breaks
+          const optionRegex = /^\s*([A-E])\)\s+(.+)$/gm;
+          let match;
+          const options = [];
+          while ((match = optionRegex.exec(baseTask.acceptText)) !== null) {
+            options.push({ label: match[1], value: match[2].trim() });
+          }
+          if (options.length >= 2) baseTask.options = options;
+        }
+        if (!baseTask.options || baseTask.options.length < 2) {
+          baseTask.options = [
+            { label: 'A', value: '' },
+            { label: 'B', value: '' }
+          ];
+        }
+        // Always set correctAnswer from answer if present
+        if (typeof task.answer === 'string' && task.answer.length === 1) {
+          baseTask.correctAnswer = task.answer.toUpperCase();
+        }
+        if (!baseTask.correctAnswer) baseTask.correctAnswer = 'A';
+        if (!baseTask.question && baseTask.acceptText) {
+          const questionMatch = baseTask.acceptText.match(/\*\*Question:\*\* ([\s\S]+?)(?=\n\n|$)/);
+          if (questionMatch) {
+            baseTask.question = questionMatch[1].trim();
+          }
+        }
+      }
+      // Fallbacks for quiz
+      if (baseTask.taskType === 'quiz') {
+        if (!baseTask.questions || !Array.isArray(baseTask.questions)) {
+          baseTask.questions = [];
+        }
+        // Always set each question's correctAnswer from the question object, or from a global answer array if present
+        baseTask.questions = baseTask.questions.map((q, idx) => ({
+          question: q.question || '',
+          optionA: q.optionA || '',
+          optionB: q.optionB || '',
+          optionC: q.optionC || '',
+          optionD: q.optionD || '',
+          correctAnswer: q.correctAnswer || (Array.isArray(task.answer) ? task.answer[idx] : ''),
+          explanation: q.explanation || ''
+        }));
+      }
+      // Fallbacks for repo analysis
+      if ([
+        'get-issue-count',
+        'get-pr-count',
+        'get-top-contributor',
+        'get-open-issue',
+        'get-issue-title'
+      ].includes(baseTask.taskType)) {
+        if (!baseTask.repository) baseTask.repository = '';
 
+      }
+      if (baseTask.taskType === 'get-issue-title' && !baseTask.issueNumber) {
+        baseTask.issueNumber = '';
+      }
+      return baseTask;
+    });
     setQuestFormData({
       title: quest.title,
       description: quest.metadata?.description || "",
@@ -1559,25 +1296,20 @@ Student can now start their quest journey!`);
       });
 
       quest.tasks = newTasks;
-
+      
       // Schedule auto-centering after the state update and DOM re-render
       setTimeout(() => {
-        const movedTaskId =
-          direction === "up"
-            ? taskEntries[newIndex][0]
-            : taskEntries[currentIndex][0];
-        const taskElement = document.querySelector(
-          `[data-task-id="${movedTaskId}"][data-quest-index="${questIndex}"]`
-        );
+        const movedTaskId = direction === "up" ? taskEntries[newIndex][0] : taskEntries[currentIndex][0];
+        const taskElement = document.querySelector(`[data-task-id="${movedTaskId}"][data-quest-index="${questIndex}"]`);
         if (taskElement) {
           taskElement.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-            inline: "nearest",
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
           });
         }
       }, 100); // Small delay to ensure DOM has updated
-
+      
       return { ...prev, questSequence: newQuestSequence };
     });
   };
@@ -1586,7 +1318,7 @@ Student can now start their quest journey!`);
     // Open the edit task modal for the specific task
     const quest = jsonContent.questSequence[questIndex];
     const task = quest.tasks[taskId];
-
+    
     // Map task data to form format
     const taskData = {
       ...task,
@@ -1634,7 +1366,7 @@ Student can now start their quest journey!`);
         enableDetailedFeedback: false,
       },
     };
-
+    
     setEditingTaskData(taskData);
     setEditingTaskQuestIndex(questIndex);
     setEditingTaskId(taskId);
@@ -1642,17 +1374,12 @@ Student can now start their quest journey!`);
   };
 
   const saveEditedTask = () => {
-    if (
-      !editingTaskData ||
-      editingTaskQuestIndex === null ||
-      editingTaskId === null
-    )
-      return;
-
+    if (!editingTaskData || editingTaskQuestIndex === null || editingTaskId === null) return;
+    
     setJsonContent((prev) => {
       const newQuestSequence = [...prev.questSequence];
       const quest = newQuestSequence[editingTaskQuestIndex];
-
+      
       // Update the task with edited data
       quest.tasks[editingTaskId] = {
         ...quest.tasks[editingTaskId],
@@ -1684,10 +1411,10 @@ Student can now start their quest journey!`);
         // Save LLM Text Validation fields
         llmTextValidation: editingTaskData.llmTextValidation,
       };
-
+      
       return { ...prev, questSequence: newQuestSequence };
     });
-
+    
     // Close modal and reset state
     setShowEditTaskModal(false);
     setEditingTaskData(null);
@@ -2002,11 +1729,7 @@ Student can now start their quest journey!`);
         }, 0);
         const taskPoints = parseInt(task.points) || 1;
         if (totalPenalty > taskPoints) {
-          errors.push(
-            `Task ${
-              taskIndex + 1
-            }: Hint penalties (${totalPenalty}) exceed task points (${taskPoints})`
-          );
+          errors.push(`Task ${taskIndex + 1}: Hint penalties (${totalPenalty}) exceed task points (${taskPoints})`);
         }
       }
     });
@@ -2016,13 +1739,13 @@ Student can now start their quest journey!`);
   const hintPenaltyErrors = getHintPenaltyValidationErrors();
   const hasHintPenaltyErrors = hintPenaltyErrors.length > 0;
 
-  const isAddQuestDisabled =
-    !questFormData.title.trim() ||
-    // When editing a quest, don't require tasks (we're only editing title/description)
-    // When adding a new quest, require at least one task
-    (editingQuestIndex === null && questFormData.tasks.length === 0) ||
-    hasHintPenaltyErrors ||
-    questFormData.tasks.some((task) => {
+      const isAddQuestDisabled =
+      !questFormData.title.trim() ||
+      // When editing a quest, don't require tasks (we're only editing title/description)
+      // When adding a new quest, require at least one task
+      (editingQuestIndex === null && questFormData.tasks.length === 0) ||
+      hasHintPenaltyErrors ||
+      questFormData.tasks.some((task) => {
       if (task.taskType === "multiple-choice") {
         return (
           !task.question?.trim() ||
@@ -2097,9 +1820,7 @@ Student can now start their quest journey!`);
     if (!classId) return;
     try {
       // Do not toggle global loading for stored values fetch; it's minor
-      const res = await axios.get(
-        `${API_BASE_URL}/api/group/${classId}/stored-values`
-      );
+      const res = await axios.get(`http://localhost:8080/api/group/${classId}/stored-values`);
       const keys = res.data?.data?.keys || [];
       const valuesByUser = res.data?.data?.valuesByUser || {};
       setStoredKeys(keys);
@@ -2439,9 +2160,7 @@ Student can now start their quest journey!`);
             }}
           >
             <Typography variant="h5" component="h3" sx={{ fontWeight: 700 }}>
-              {editingQuestIndex !== null
-                ? "Edit Quest (Title & Description Only)"
-                : "Add New Quest"}
+              {editingQuestIndex !== null ? "Edit Quest (Title & Description Only)" : "Add New Quest"}
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ pt: 3 }}>
@@ -2452,9 +2171,7 @@ Student can now start their quest journey!`);
                   variant="h6"
                   sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
                 >
-                  {editingQuestIndex !== null
-                    ? "Quest Information (Edit Mode)"
-                    : "Quest Information"}
+                  {editingQuestIndex !== null ? "Quest Information (Edit Mode)" : "Quest Information"}
                 </Typography>
 
                 <TextField
@@ -2484,1443 +2201,1338 @@ Student can now start their quest journey!`);
                 <>
                   <Divider />
 
-                  {/* Task Configuration */}
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
-                    >
-                      Tasks ({questFormData.tasks.length})
-                    </Typography>
-
-                    {questFormData.tasks.map((task, taskIdx) => (
-                      <Card
-                        key={taskIdx}
-                        data-form-task-id={taskIdx}
+              {/* Task Configuration */}
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, color: 'primary.main' }}>
+                  Tasks ({questFormData.tasks.length})
+                </Typography>
+              
+              {questFormData.tasks.map((task, taskIdx) => (
+                  <Card 
+                    key={taskIdx} 
+                    sx={{ 
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 4,
+                      boxShadow: "none",
+                      p: 3,
+                      mb: 2,
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        backgroundColor: "#f8f9fa",
+                      },
+                    }}
+                  >
+                    <Stack spacing={3}>
+                      {/* Task Header */}
+                      <Box
                         sx={{
-                          border: "1px solid #e0e0e0",
-                          borderRadius: 4,
-                          boxShadow: "none",
-                          p: 3,
-                          mb: 2,
-                          "&:hover": {
-                            borderColor: "primary.main",
-                            backgroundColor: "#f8f9fa",
-                          },
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
                         }}
                       >
-                        <Stack spacing={3}>
-                          {/* Task Header */}
-                          <Box
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          Task {taskIdx + 1}
+                        </Typography>
+                        {questFormData.tasks.length > 1 && (
+                          <Stack direction="row" spacing={1}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: 40,
+                                height: 40,
+                                borderRadius: 2,
+                                border: "1px solid #f44336",
+                                backgroundColor: "white",
+                                cursor: "pointer",
+                                "&:hover": {
+                                  backgroundColor: "#ffebee",
+                                  borderColor: "#d32f2f",
+                                },
+                              }}
+                              onClick={() => handleDeleteTask(taskIdx)}
+                            >
+                              <DeleteIcon
+                                fontSize="small"
+                                sx={{ color: "#f44336" }}
+                              />
+                            </Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: 40,
+                                height: 40,
+                                borderRadius: 4,
+                                border: "1px solid #2196f3",
+                                backgroundColor: "white",
+                                cursor: "pointer",
+                                opacity: taskIdx === 0 ? 0.5 : 1,
+                                "&:hover": {
+                                  backgroundColor:
+                                    taskIdx === 0 ? "white" : "#e3f2fd",
+                                  borderColor:
+                                    taskIdx === 0 ? "#e0e0e0" : "#1976d2",
+                                },
+                              }}
+                              onClick={() =>
+                                taskIdx !== 0 && handleMoveTask(taskIdx, "up")
+                              }
+                            >
+                              <ArrowUpwardIcon
+                                fontSize="small"
+                                sx={{ color: "#2196f3" }}
+                              />
+                            </Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                width: 40,
+                                height: 40,
+                                borderRadius: 4,
+                                border: "1px solid #2196f3",
+                                backgroundColor: "white",
+                                cursor: "pointer",
+                                opacity:
+                                  taskIdx === questFormData.tasks.length - 1
+                                    ? 0.5
+                                    : 1,
+                                "&:hover": {
+                                  backgroundColor:
+                                    taskIdx === questFormData.tasks.length - 1
+                                      ? "white"
+                                      : "#e3f2fd",
+                                  borderColor:
+                                    taskIdx === questFormData.tasks.length - 1
+                                      ? "#e0e0e0"
+                                      : "#1976d2",
+                                },
+                              }}
+                              onClick={() =>
+                                taskIdx !== questFormData.tasks.length - 1 &&
+                                handleMoveTask(taskIdx, "down")
+                              }
+                            >
+                              <ArrowDownwardIcon
+                                fontSize="small"
+                                sx={{ color: "#2196f3" }}
+                              />
+                            </Box>
+                          </Stack>
+                        )}
+                      </Box>
+
+                      {/* Task Type Selection */}
+                      <FormControl fullWidth>
+                        <InputLabel>Task Type</InputLabel>
+                        <Select
+                          value={task.taskType}
+                          onChange={(e) =>
+                            handleTaskChange(
+                              taskIdx,
+                              "taskType",
+                              e.target.value
+                            )
+                          }
+                          label="Task Type"
+                          sx={{ borderRadius: 2 }}
+                        >
+                          {/* Custom API Call - Most Prominent */}
+                          <MenuItem
+                            value="custom-api-call"
                             sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
+                              backgroundColor: "#e3f2fd",
+                              fontWeight: "bold",
+                              borderBottom: "2px solid #2196f3",
+                              "&:hover": {
+                                backgroundColor: "#bbdefb",
+                              },
                             }}
                           >
-                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                              Task {taskIdx + 1}
-                            </Typography>
-                            {questFormData.tasks.length > 1 && (
-                              <Stack direction="row" spacing={1}>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 2,
-                                    border: "1px solid #f44336",
-                                    backgroundColor: "white",
-                                    cursor: "pointer",
-                                    "&:hover": {
-                                      backgroundColor: "#ffebee",
-                                      borderColor: "#d32f2f",
-                                    },
-                                  }}
-                                  onClick={() => handleDeleteTask(taskIdx)}
-                                >
-                                  <DeleteIcon
-                                    fontSize="small"
-                                    sx={{ color: "#f44336" }}
-                                  />
-                                </Box>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 4,
-                                    border: "1px solid #2196f3",
-                                    backgroundColor: "white",
-                                    cursor: "pointer",
-                                    opacity: taskIdx === 0 ? 0.5 : 1,
-                                    "&:hover": {
-                                      backgroundColor:
-                                        taskIdx === 0 ? "white" : "#e3f2fd",
-                                      borderColor:
-                                        taskIdx === 0 ? "#e0e0e0" : "#1976d2",
-                                    },
-                                  }}
-                                  onClick={() =>
-                                    taskIdx !== 0 &&
-                                    handleMoveTask(taskIdx, "up")
-                                  }
-                                >
-                                  <ArrowUpwardIcon
-                                    fontSize="small"
-                                    sx={{ color: "#2196f3" }}
-                                  />
-                                </Box>
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    width: 40,
-                                    height: 40,
-                                    borderRadius: 4,
-                                    border: "1px solid #2196f3",
-                                    backgroundColor: "white",
-                                    cursor: "pointer",
-                                    opacity:
-                                      taskIdx === questFormData.tasks.length - 1
-                                        ? 0.5
-                                        : 1,
-                                    "&:hover": {
-                                      backgroundColor:
-                                        taskIdx ===
-                                        questFormData.tasks.length - 1
-                                          ? "white"
-                                          : "#e3f2fd",
-                                      borderColor:
-                                        taskIdx ===
-                                        questFormData.tasks.length - 1
-                                          ? "#e0e0e0"
-                                          : "#1976d2",
-                                    },
-                                  }}
-                                  onClick={() =>
-                                    taskIdx !==
-                                      questFormData.tasks.length - 1 &&
-                                    handleMoveTask(taskIdx, "down")
-                                  }
-                                >
-                                  <ArrowDownwardIcon
-                                    fontSize="small"
-                                    sx={{ color: "#2196f3" }}
-                                  />
-                                </Box>
-                              </Stack>
-                            )}
-                          </Box>
-
-                          {/* Task Type Selection */}
-                          <FormControl fullWidth>
-                            <InputLabel>Task Type</InputLabel>
-                            <Select
-                              value={task.taskType}
-                              onChange={(e) =>
-                                handleTaskChange(
-                                  taskIdx,
-                                  "taskType",
-                                  e.target.value
-                                )
-                              }
-                              label="Task Type"
-                              sx={{ borderRadius: 2 }}
-                            >
-                              {/* Custom API Call - Most Prominent */}
-                              <MenuItem
-                                value="custom-api-call"
-                                sx={{
-                                  backgroundColor: "#e3f2fd",
-                                  fontWeight: "bold",
-                                  borderBottom: "2px solid #2196f3",
-                                  "&:hover": {
-                                    backgroundColor: "#bbdefb",
-                                  },
-                                }}
-                              >
-                                Custom API Call
-                              </MenuItem>
-
-                              <Divider />
-
-                              {/* Default Task Types */}
-                              <ListSubheader
-                                sx={{
-                                  backgroundColor: "#f5f5f5",
-                                  fontWeight: "bold",
-                                  color: "#666",
-                                }}
-                              >
-                                Default Task Types
-                              </ListSubheader>
-
-                              <MenuItem value="multiple-choice">
-                                Multiple Choice Question (MCQ)
-                              </MenuItem>
-                              <MenuItem value="quiz">
-                                Multi-Question Quiz
-                              </MenuItem>
-                              <MenuItem value="get-issue-count">
-                                Get Issue Count
-                              </MenuItem>
-                              <MenuItem value="get-pr-count">
-                                Get Pull Request Count
-                              </MenuItem>
-                              <MenuItem value="get-top-contributor">
-                                Get Top Contributor
-                              </MenuItem>
-                              <MenuItem value="get-issue-title">
-                                Get Issue Title
-                              </MenuItem>
-                              <MenuItem value="get-open-issue">
-                                Get Open Issue Count
-                              </MenuItem>
-                              <MenuItem value="assigned">
-                                Assignment Validation
-                              </MenuItem>
-                              <MenuItem value="issue-no">
-                                Issue Number Validation
-                              </MenuItem>
-                              <MenuItem value="comment">
-                                Comment Validation
-                              </MenuItem>
-
-                              <Divider />
-
-                              {/* AI-Powered Task Types */}
-                              <ListSubheader
-                                sx={{
-                                  backgroundColor: "#f5f5f5",
-                                  fontWeight: "bold",
-                                  color: "#666",
-                                }}
-                              >
-                                AI-Powered Task Types
-                              </ListSubheader>
-
-                              <MenuItem
-                                value="llm-text-validation"
-                                sx={{
-                                  backgroundColor: "#fff3e0",
-                                  fontWeight: "bold",
-                                  borderBottom: "2px solid #ff9800",
-                                  "&:hover": {
-                                    backgroundColor: "#ffe0b2",
-                                  },
-                                }}
-                              >
-                                LLM Text Validation
-                              </MenuItem>
-                            </Select>
-                          </FormControl>
-
-                          <TextField
-                            label="Task Title"
-                            value={task.title || ""}
-                            onChange={(e) =>
-                              handleTaskChange(taskIdx, "title", e.target.value)
-                            }
-                            placeholder="e.g., Understanding GitHub Issues"
-                            fullWidth
-                            sx={{ borderRadius: 2, mb: 2 }}
-                          />
-
-                          <TextField
-                            label="Quest Notes (not displayed to student)"
-                            value={task.taskDesc}
-                            onChange={(e) =>
-                              handleTaskChange(
-                                taskIdx,
-                                "taskDesc",
-                                e.target.value
-                              )
-                            }
-                            placeholder="notes for task"
-                            fullWidth
-                            sx={{ borderRadius: 2 }}
-                          />
-
-                          <TextField
-                            label="Points/XP"
-                            type="number"
-                            value={task.points || 1}
-                            onChange={(e) => {
-                              const value =
-                                e.target.value === ""
-                                  ? 1
-                                  : parseInt(e.target.value);
-                              if (value < 1) {
-                                // Prevent setting points below 1
-                                return;
-                              }
-                              handleTaskChange(taskIdx, "points", value);
-                            }}
-                            inputProps={{ min: 1 }}
-                            fullWidth
-                            sx={{ borderRadius: 2 }}
-                            helperText="Minimum value: 1"
-                          />
+                            Custom API Call
+                          </MenuItem>
 
                           <Divider />
 
-                          {/* Question Text Field */}
-                          {task.taskType !== "multiple-choice" && (
-                            <Box>
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "primary.main",
-                                }}
-                              >
-                                Question Text
-                              </Typography>
-                              <TextEditor
-                                value={task.acceptText}
-                                onChange={(value) =>
-                                  handleTaskChange(taskIdx, "acceptText", value)
-                                }
-                                label="Question Text"
-                                placeholder="This text appears when the task is first presented to students"
-                                helperText="This is the main question text. You can type directly or upload a text file."
-                                acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
-                              />
-                            </Box>
-                          )}
+                          {/* Default Task Types */}
+                          <ListSubheader
+                            sx={{
+                              backgroundColor: "#f5f5f5",
+                              fontWeight: "bold",
+                              color: "#666",
+                            }}
+                          >
+                            Default Task Types
+                          </ListSubheader>
 
-                          {/* Conditional Fields based on Task Type */}
-                          {task.taskType === "multiple-choice" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "secondary.main",
-                                }}
-                              >
-                                Multiple Choice Question
-                              </Typography>
+                          <MenuItem value="multiple-choice">
+                            Multiple Choice Question (MCQ)
+                          </MenuItem>
+                          <MenuItem value="quiz">Multi-Question Quiz</MenuItem>
+                          <MenuItem value="get-issue-count">
+                            Get Issue Count
+                          </MenuItem>
+                          <MenuItem value="get-pr-count">
+                            Get Pull Request Count
+                          </MenuItem>
+                          <MenuItem value="get-top-contributor">
+                            Get Top Contributor
+                          </MenuItem>
+                          <MenuItem value="get-issue-title">
+                            Get Issue Title
+                          </MenuItem>
+                          <MenuItem value="get-open-issue">
+                            Get Open Issue Count
+                          </MenuItem>
+                          <MenuItem value="assigned">
+                            Assignment Validation
+                          </MenuItem>
+                          <MenuItem value="issue-no">
+                            Issue Number Validation
+                          </MenuItem>
+                          <MenuItem value="comment">
+                            Comment Validation
+                          </MenuItem>
+
+                          <Divider />
+
+                          {/* AI-Powered Task Types */}
+                          <ListSubheader
+                            sx={{
+                              backgroundColor: "#f5f5f5",
+                              fontWeight: "bold",
+                              color: "#666",
+                            }}
+                          >
+                            AI-Powered Task Types
+                          </ListSubheader>
+
+                          <MenuItem
+                            value="llm-text-validation"
+                            sx={{
+                              backgroundColor: "#fff3e0",
+                              fontWeight: "bold",
+                              borderBottom: "2px solid #ff9800",
+                              "&:hover": {
+                                backgroundColor: "#ffe0b2",
+                              },
+                            }}
+                          >
+                            LLM Text Validation
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <TextField
+                        label="Task Title"
+                        value={task.title || ""}
+                        onChange={(e) =>
+                          handleTaskChange(taskIdx, "title", e.target.value)
+                        }
+                        placeholder="e.g., Understanding GitHub Issues"
+                        fullWidth
+                        sx={{ borderRadius: 2, mb: 2 }}
+                      />
+
+                      <TextField
+                        label="Quest Notes (not displayed to student)"
+                        value={task.taskDesc}
+                        onChange={(e) =>
+                          handleTaskChange(taskIdx, "taskDesc", e.target.value)
+                        }
+                        placeholder="notes for task"
+                        fullWidth
+                        sx={{ borderRadius: 2 }}
+                      />
+
+                      <TextField
+                        label="Points/XP"
+                        type="number"
+                        value={task.points || 1}
+                        onChange={(e) => {
+                          const value = e.target.value === "" ? 1 : parseInt(e.target.value);
+                          if (value < 1) {
+                            // Prevent setting points below 1
+                            return;
+                          }
+                          handleTaskChange(taskIdx, "points", value);
+                        }}
+                        inputProps={{ min: 1 }}
+                        fullWidth
+                        sx={{ borderRadius: 2 }}
+                        helperText="Minimum value: 1"
+                      />
+
+                      <Divider />
+
+                      {/* Question Text Field */}
+                      {task.taskType !== "multiple-choice" && (
+                        <Box>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "primary.main",
+                            }}
+                          >
+                            Question Text
+                          </Typography>
+                          <TextEditor
+                            value={task.acceptText}
+                            onChange={(value) =>
+                              handleTaskChange(taskIdx, "acceptText", value)
+                            }
+                            label="Question Text"
+                            placeholder="This text appears when the task is first presented to students"
+                            helperText="This is the main question text. You can type directly or upload a text file."
+                            acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
+                          />
+                        </Box>
+                      )}
+
+                      {/* Conditional Fields based on Task Type */}
+                      {task.taskType === "multiple-choice" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "secondary.main",
+                            }}
+                          >
+                            Multiple Choice Question
+                          </Typography>
+                          <TextField
+                            label="Question"
+                            value={task.question || ""}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "question",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Enter your question here"
+                            fullWidth
+                            multiline
+                            rows={2}
+                            helperText="The actual question that will be displayed to students"
+                            sx={{ mb: 2 }}
+                          />
+                          {task.options.map((opt, optIdx) => (
+                            <Box
+                              key={opt.label}
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                mb: 1,
+                              }}
+                            >
                               <TextField
-                                label="Question"
-                                value={task.question || ""}
+                                label={`Option ${opt.label}`}
+                                value={opt.value}
                                 onChange={(e) =>
                                   handleTaskChange(
                                     taskIdx,
-                                    "question",
+                                    `option-${optIdx}`,
                                     e.target.value
                                   )
                                 }
-                                placeholder="Enter your question here"
                                 fullWidth
-                                multiline
-                                rows={2}
-                                helperText="The actual question that will be displayed to students"
-                                sx={{ mb: 2 }}
+                                sx={{ borderRadius: 2 }}
                               />
-                              {task.options.map((opt, optIdx) => (
-                                <Box
+                              {optIdx >= 2 && (
+                                <IconButton
+                                  color="error"
+                                  onClick={() =>
+                                    handleRemoveOption(taskIdx, optIdx)
+                                  }
+                                  disabled={false}
+                                  sx={{ borderRadius: 2 }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                            </Box>
+                          ))}
+                          <Button
+                            onClick={() => handleAddOption(taskIdx)}
+                            sx={{ mt: 1, borderRadius: 4 }}
+                          >
+                            Add Option
+                          </Button>
+                          <FormControl fullWidth sx={{ mt: 2 }}>
+                            <InputLabel>Correct Answer</InputLabel>
+                            <Select
+                              value={task.correctAnswer}
+                              onChange={(e) =>
+                                handleTaskChange(
+                                  taskIdx,
+                                  "correctAnswer",
+                                  e.target.value
+                                )
+                              }
+                              label="Correct Answer"
+                              sx={{ borderRadius: 2 }}
+                            >
+                              {task.options.map((opt, idx) => (
+                                <MenuItem
                                   key={opt.label}
+                                  value={opt.label.toLowerCase()}
+                                >
+                                  {opt.label}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Box>
+                      )}
+
+                      {task.taskType === "quiz" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "secondary.main",
+                            }}
+                          >
+                            Multi-Question Quiz
+                          </Typography>
+
+                          {task.questions.map((question, qIdx) => (
+                            <Card
+                              key={qIdx}
+                              sx={{
+                                border: "1px solid #e0e0e0",
+                                borderRadius: 4,
+                                boxShadow: "none",
+                                p: 2,
+                                mb: 2,
+                                backgroundColor: "#f8f9fa",
+                              }}
+                            >
+                              <Stack spacing={2}>
+                                <Box
                                   sx={{
                                     display: "flex",
+                                    justifyContent: "space-between",
                                     alignItems: "center",
-                                    gap: 1,
-                                    mb: 1,
                                   }}
                                 >
-                                  <TextField
-                                    label={`Option ${opt.label}`}
-                                    value={opt.value}
-                                    onChange={(e) =>
-                                      handleTaskChange(
-                                        taskIdx,
-                                        `option-${optIdx}`,
-                                        e.target.value
-                                      )
-                                    }
-                                    fullWidth
-                                    sx={{ borderRadius: 2 }}
-                                  />
-                                  {optIdx >= 2 && (
+                                  <Typography
+                                    variant="subtitle1"
+                                    sx={{ fontWeight: 700 }}
+                                  >
+                                    Question {qIdx + 1}
+                                  </Typography>
+                                  {task.questions.length > 1 && (
                                     <IconButton
+                                      size="small"
                                       color="error"
                                       onClick={() =>
-                                        handleRemoveOption(taskIdx, optIdx)
+                                        removeQuestion(taskIdx, qIdx)
                                       }
-                                      disabled={false}
                                       sx={{ borderRadius: 2 }}
                                     >
                                       <DeleteIcon fontSize="small" />
                                     </IconButton>
                                   )}
                                 </Box>
-                              ))}
-                              <Button
-                                onClick={() => handleAddOption(taskIdx)}
-                                sx={{ mt: 1, borderRadius: 4 }}
-                              >
-                                Add Option
-                              </Button>
-                              <FormControl fullWidth sx={{ mt: 2 }}>
-                                <InputLabel>Correct Answer</InputLabel>
-                                <Select
-                                  value={task.correctAnswer}
+
+                                <TextField
+                                  label="Question"
+                                  value={question.question}
                                   onChange={(e) =>
-                                    handleTaskChange(
+                                    updateQuestion(
                                       taskIdx,
-                                      "correctAnswer",
+                                      qIdx,
+                                      "question",
                                       e.target.value
                                     )
                                   }
-                                  label="Correct Answer"
+                                  placeholder="Enter your question here"
+                                  fullWidth
+                                  multiline
+                                  rows={2}
                                   sx={{ borderRadius: 2 }}
-                                >
-                                  {task.options.map((opt, idx) => (
-                                    <MenuItem
-                                      key={opt.label}
-                                      value={opt.label.toLowerCase()}
-                                    >
-                                      {opt.label}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                            </Box>
-                          )}
-
-                          {task.taskType === "quiz" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "secondary.main",
-                                }}
-                              >
-                                Multi-Question Quiz
-                              </Typography>
-
-                              {task.questions.map((question, qIdx) => (
-                                <Card
-                                  key={qIdx}
-                                  sx={{
-                                    border: "1px solid #e0e0e0",
-                                    borderRadius: 4,
-                                    boxShadow: "none",
-                                    p: 2,
-                                    mb: 2,
-                                    backgroundColor: "#f8f9fa",
-                                  }}
-                                >
-                                  <Stack spacing={2}>
-                                    <Box
-                                      sx={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                      }}
-                                    >
-                                      <Typography
-                                        variant="subtitle1"
-                                        sx={{ fontWeight: 700 }}
-                                      >
-                                        Question {qIdx + 1}
-                                      </Typography>
-                                      {task.questions.length > 1 && (
-                                        <IconButton
-                                          size="small"
-                                          color="error"
-                                          onClick={() =>
-                                            removeQuestion(taskIdx, qIdx)
-                                          }
-                                          sx={{ borderRadius: 2 }}
-                                        >
-                                          <DeleteIcon fontSize="small" />
-                                        </IconButton>
-                                      )}
-                                    </Box>
-
-                                    <TextField
-                                      label="Question"
-                                      value={question.question}
-                                      onChange={(e) =>
-                                        updateQuestion(
-                                          taskIdx,
-                                          qIdx,
-                                          "question",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="Enter your question here"
-                                      fullWidth
-                                      multiline
-                                      rows={2}
-                                      sx={{ borderRadius: 2 }}
-                                    />
-
-                                    <TextField
-                                      label="Option A"
-                                      value={question.optionA}
-                                      onChange={(e) =>
-                                        updateQuestion(
-                                          taskIdx,
-                                          qIdx,
-                                          "optionA",
-                                          e.target.value
-                                        )
-                                      }
-                                      fullWidth
-                                      sx={{ borderRadius: 2 }}
-                                    />
-
-                                    <TextField
-                                      label="Option B"
-                                      value={question.optionB}
-                                      onChange={(e) =>
-                                        updateQuestion(
-                                          taskIdx,
-                                          qIdx,
-                                          "optionB",
-                                          e.target.value
-                                        )
-                                      }
-                                      fullWidth
-                                      sx={{ borderRadius: 2 }}
-                                    />
-
-                                    <TextField
-                                      label="Option C"
-                                      value={question.optionC}
-                                      onChange={(e) =>
-                                        updateQuestion(
-                                          taskIdx,
-                                          qIdx,
-                                          "optionC",
-                                          e.target.value
-                                        )
-                                      }
-                                      fullWidth
-                                      sx={{ borderRadius: 2 }}
-                                    />
-
-                                    <TextField
-                                      label="Option D"
-                                      value={question.optionD}
-                                      onChange={(e) =>
-                                        updateQuestion(
-                                          taskIdx,
-                                          qIdx,
-                                          "optionD",
-                                          e.target.value
-                                        )
-                                      }
-                                      fullWidth
-                                      sx={{ borderRadius: 2 }}
-                                    />
-
-                                    <FormControl fullWidth>
-                                      <InputLabel>Correct Answer</InputLabel>
-                                      <Select
-                                        value={question.correctAnswer}
-                                        onChange={(e) =>
-                                          updateQuestion(
-                                            taskIdx,
-                                            qIdx,
-                                            "correctAnswer",
-                                            e.target.value
-                                          )
-                                        }
-                                        label="Correct Answer"
-                                        sx={{ borderRadius: 2 }}
-                                      >
-                                        <MenuItem value="a">A</MenuItem>
-                                        <MenuItem value="b">B</MenuItem>
-                                        <MenuItem value="c">C</MenuItem>
-                                        <MenuItem value="d">D</MenuItem>
-                                      </Select>
-                                    </FormControl>
-
-                                    <TextField
-                                      label="Explanation (Optional)"
-                                      value={question.explanation}
-                                      onChange={(e) =>
-                                        updateQuestion(
-                                          taskIdx,
-                                          qIdx,
-                                          "explanation",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="Explain why this is the correct answer"
-                                      fullWidth
-                                      multiline
-                                      rows={2}
-                                      sx={{ borderRadius: 2 }}
-                                    />
-                                  </Stack>
-                                </Card>
-                              ))}
-
-                              <Button
-                                variant="outlined"
-                                onClick={() => addQuestion()}
-                                startIcon={<AddIcon />}
-                                sx={{ mt: 2, borderRadius: 4 }}
-                              >
-                                Add Another Question
-                              </Button>
-                            </Box>
-                          )}
-
-                          {(task.taskType === "get-issue-count" ||
-                            task.taskType === "get-pr-count" ||
-                            task.taskType === "get-top-contributor" ||
-                            task.taskType === "get-open-issue") && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "secondary.main",
-                                }}
-                              >
-                                {task.taskType === "get-issue-count" &&
-                                  "Issue Count Task"}
-                                {task.taskType === "get-pr-count" &&
-                                  "Pull Request Count Task"}
-                                {task.taskType === "get-top-contributor" &&
-                                  "Top Contributor Task"}
-                                {task.taskType === "get-open-issue" &&
-                                  "Open Issue Count Task"}
-                              </Typography>
-
-                              <TextField
-                                label="Repository (owner/repo)"
-                                value={task.repository}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "repository",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., microsoft/vscode"
-                                fullWidth
-                                helperText="Format: owner/repository-name"
-                                sx={{ borderRadius: 2 }}
-                              />
-
-                              {task.taskType === "get-issue-count" && (
-                                <Box sx={{ mt: 2 }}>
-                                  <FormControlLabel
-                                    control={
-                                      <Switch
-                                        checked={
-                                          task.saveValidatedData || false
-                                        }
-                                        onChange={(e) =>
-                                          handleTaskChange(
-                                            taskIdx,
-                                            "saveValidatedData",
-                                            e.target.checked
-                                          )
-                                        }
-                                        sx={{
-                                          "& .MuiSwitch-switchBase.Mui-checked":
-                                            {
-                                              color: "#1976d2",
-                                              "&:hover": {
-                                                backgroundColor:
-                                                  "rgba(25, 118, 210, 0.08)",
-                                              },
-                                            },
-                                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                            { backgroundColor: "#1976d2" },
-                                        }}
-                                      />
-                                    }
-                                    label="Save validated data per user"
-                                    sx={{
-                                      "& .MuiFormControlLabel-label": {
-                                        fontSize: "0.95rem",
-                                        fontWeight: 500,
-                                        color: "#374151",
-                                      },
-                                    }}
-                                  />
-                                  {task.saveValidatedData && (
-                                    <>
-                                      <TextField
-                                        label="Data Name"
-                                        value={task.savedDataName || ""}
-                                        onChange={(e) =>
-                                          handleTaskChange(
-                                            taskIdx,
-                                            "savedDataName",
-                                            e.target.value
-                                          )
-                                        }
-                                        placeholder="e.g., repo_issue_count"
-                                        fullWidth
-                                        helperText="Key used to store this value in each student's data."
-                                        sx={{ mt: 1, borderRadius: 2 }}
-                                      />
-                                      <Alert
-                                        severity="info"
-                                        sx={{
-                                          mt: 1,
-                                          borderRadius: 4,
-                                          "& .MuiAlert-icon": {
-                                            display: "none",
-                                          },
-                                        }}
-                                      >
-                                        <AlertTitle>
-                                          Per-user Storage
-                                        </AlertTitle>
-                                        When enabled, the validated answer is
-                                        saved for each student separately. The
-                                        value is stored as a number.
-                                      </Alert>
-                                    </>
-                                  )}
-                                </Box>
-                              )}
-                            </Box>
-                          )}
-
-                          {task.taskType === "get-issue-title" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "secondary.main",
-                                }}
-                              >
-                                Issue Title Task
-                              </Typography>
-
-                              <TextField
-                                label="Repository (owner/repo)"
-                                value={task.repository}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "repository",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., microsoft/vscode"
-                                fullWidth
-                                helperText="Format: owner/repository-name"
-                                sx={{ mb: 2, borderRadius: 2 }}
-                              />
-
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 2,
-                                  mb: 2,
-                                  flexWrap: "wrap",
-                                }}
-                              >
-                                <FormControlLabel
-                                  control={
-                                    <Switch
-                                      checked={task.useStoredKey || false}
-                                      onChange={(e) =>
-                                        handleTaskChange(
-                                          taskIdx,
-                                          "useStoredKey",
-                                          e.target.checked
-                                        )
-                                      }
-                                      sx={{
-                                        "& .MuiSwitch-switchBase.Mui-checked": {
-                                          color: "#1976d2",
-                                          "&:hover": {
-                                            backgroundColor:
-                                              "rgba(25, 118, 210, 0.08)",
-                                          },
-                                        },
-                                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                          { backgroundColor: "#1976d2" },
-                                      }}
-                                    />
-                                  }
-                                  label="Use stored data for Issue Number"
                                 />
-                                <FormControl
-                                  sx={{ minWidth: 240 }}
-                                  disabled={
-                                    !task.useStoredKey ||
-                                    (storedKeys || []).length === 0
+
+                                <TextField
+                                  label="Option A"
+                                  value={question.optionA}
+                                  onChange={(e) =>
+                                    updateQuestion(
+                                      taskIdx,
+                                      qIdx,
+                                      "optionA",
+                                      e.target.value
+                                    )
                                   }
-                                >
-                                  <InputLabel>Stored Data</InputLabel>
+                                  fullWidth
+                                  sx={{ borderRadius: 2 }}
+                                />
+
+                                <TextField
+                                  label="Option B"
+                                  value={question.optionB}
+                                  onChange={(e) =>
+                                    updateQuestion(
+                                      taskIdx,
+                                      qIdx,
+                                      "optionB",
+                                      e.target.value
+                                    )
+                                  }
+                                  fullWidth
+                                  sx={{ borderRadius: 2 }}
+                                />
+
+                                <TextField
+                                  label="Option C"
+                                  value={question.optionC}
+                                  onChange={(e) =>
+                                    updateQuestion(
+                                      taskIdx,
+                                      qIdx,
+                                      "optionC",
+                                      e.target.value
+                                    )
+                                  }
+                                  fullWidth
+                                  sx={{ borderRadius: 2 }}
+                                />
+
+                                <TextField
+                                  label="Option D"
+                                  value={question.optionD}
+                                  onChange={(e) =>
+                                    updateQuestion(
+                                      taskIdx,
+                                      qIdx,
+                                      "optionD",
+                                      e.target.value
+                                    )
+                                  }
+                                  fullWidth
+                                  sx={{ borderRadius: 2 }}
+                                />
+
+                                <FormControl fullWidth>
+                                  <InputLabel>Correct Answer</InputLabel>
                                   <Select
-                                    label="Stored Data"
-                                    value={task.selectedStoredKey || ""}
+                                    value={question.correctAnswer}
                                     onChange={(e) =>
-                                      handleTaskChange(
+                                      updateQuestion(
                                         taskIdx,
-                                        "selectedStoredKey",
+                                        qIdx,
+                                        "correctAnswer",
                                         e.target.value
                                       )
                                     }
+                                    label="Correct Answer"
+                                    sx={{ borderRadius: 2 }}
                                   >
-                                    <MenuItem value="">
-                                      Set number manually
-                                    </MenuItem>
-                                    {(storedKeys || []).map((k, i) => (
-                                      <MenuItem
-                                        key={`${k.dataName}-${i}`}
-                                        value={k.dataName}
-                                      >
-                                        {k.dataName}
-                                      </MenuItem>
-                                    ))}
+                                    <MenuItem value="a">A</MenuItem>
+                                    <MenuItem value="b">B</MenuItem>
+                                    <MenuItem value="c">C</MenuItem>
+                                    <MenuItem value="d">D</MenuItem>
                                   </Select>
-                                  <FormHelperText>
-                                    {(storedKeys || []).length === 0
-                                      ? "No stored keys available yet"
-                                      : "Choose a previously saved value"}
-                                  </FormHelperText>
                                 </FormControl>
-                              </Box>
 
-                              <TextField
-                                label="Issue Number"
-                                type="number"
-                                value={task.issueNumber}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "issueNumber",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., 123"
-                                fullWidth
-                                helperText={
-                                  task.useStoredKey
-                                    ? "Using stored data; manual input disabled"
-                                    : "The specific issue number students should find"
-                                }
-                                sx={{ borderRadius: 2 }}
-                                disabled={Boolean(task.useStoredKey)}
-                              />
-                            </Box>
-                          )}
-
-                          {task.taskType === "assigned" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "secondary.main",
-                                }}
-                              >
-                                Assignment Validation Task
-                              </Typography>
-
-                              <TextField
-                                label="Repository (owner/repo)"
-                                value={task.repository}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "repository",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., microsoft/vscode"
-                                fullWidth
-                                helperText="Format: owner/repository-name"
-                                sx={{ mb: 2, borderRadius: 2 }}
-                              />
-
-                              <TextField
-                                label="Issue Number"
-                                type="number"
-                                value={task.issueNumber}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "issueNumber",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., 123"
-                                fullWidth
-                                helperText="The specific issue number students must be assigned to"
-                                sx={{ borderRadius: 2 }}
-                              />
-                            </Box>
-                          )}
-
-                          {task.taskType === "issue-no" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "secondary.main",
-                                }}
-                              >
-                                Issue Number Validation Task
-                              </Typography>
-
-                              <TextField
-                                label="Repository (owner/repo)"
-                                value={task.repository}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "repository",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., microsoft/vscode"
-                                fullWidth
-                                helperText="Format: owner/repository-name"
-                                sx={{ borderRadius: 2 }}
-                              />
-
-                              <Box sx={{ mt: 2 }}>
-                                <FormControlLabel
-                                  control={
-                                    <Switch
-                                      checked={task.saveValidatedData || false}
-                                      onChange={(e) =>
-                                        handleTaskChange(
-                                          taskIdx,
-                                          "saveValidatedData",
-                                          e.target.checked
-                                        )
-                                      }
-                                      sx={{
-                                        "& .MuiSwitch-switchBase.Mui-checked": {
-                                          color: "#1976d2",
-                                          "&:hover": {
-                                            backgroundColor:
-                                              "rgba(25, 118, 210, 0.08)",
-                                          },
-                                        },
-                                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                          { backgroundColor: "#1976d2" },
-                                      }}
-                                    />
-                                  }
-                                  label="Save validated data per user"
-                                  sx={{
-                                    "& .MuiFormControlLabel-label": {
-                                      fontSize: "0.95rem",
-                                      fontWeight: 500,
-                                      color: "#374151",
-                                    },
-                                  }}
-                                />
-                                {task.saveValidatedData && (
-                                  <>
-                                    <TextField
-                                      label="Data Name"
-                                      value={task.savedDataName || ""}
-                                      onChange={(e) =>
-                                        handleTaskChange(
-                                          taskIdx,
-                                          "savedDataName",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="e.g., provided_issue_number"
-                                      fullWidth
-                                      helperText="Key used to store this value in each student's data."
-                                      sx={{ mt: 1, borderRadius: 2 }}
-                                    />
-                                    <Alert
-                                      severity="info"
-                                      sx={{
-                                        mt: 1,
-                                        borderRadius: 4,
-                                        "& .MuiAlert-icon": { display: "none" },
-                                      }}
-                                    >
-                                      <AlertTitle>Per-user Storage</AlertTitle>
-                                      When enabled, the student-provided issue
-                                      number is saved for each student
-                                      separately. The value is stored as a
-                                      number.
-                                    </Alert>
-                                  </>
-                                )}
-                              </Box>
-                            </Box>
-                          )}
-
-                          {task.taskType === "comment" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Typography
-                                variant="h6"
-                                sx={{
-                                  fontWeight: 700,
-                                  mb: 2,
-                                  color: "secondary.main",
-                                }}
-                              >
-                                Comment Validation Task
-                              </Typography>
-
-                              <TextField
-                                label="Repository (owner/repo)"
-                                value={task.repository}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "repository",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., microsoft/vscode"
-                                fullWidth
-                                helperText="Format: owner/repository-name"
-                                sx={{ mb: 2, borderRadius: 2 }}
-                              />
-
-                              <TextField
-                                label="Issue Number"
-                                type="number"
-                                value={task.issueNumber}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "issueNumber",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="e.g., 123"
-                                fullWidth
-                                helperText="The specific issue number where students should post a comment"
-                                sx={{ borderRadius: 2 }}
-                              />
-                            </Box>
-                          )}
-
-                          {task.taskType === "custom-api-call" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Box
-                                sx={{
-                                  backgroundColor: "#e3f2fd",
-                                  p: 3,
-                                  borderRadius: 4,
-                                  border: "2px solid #2196f3",
-                                  mb: 2,
-                                }}
-                              >
-                                <Typography
-                                  variant="h6"
-                                  sx={{
-                                    fontWeight: 700,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 1,
-                                    color: "primary.main",
-                                  }}
-                                >
-                                  Custom API Call Task
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{ mt: 1 }}
-                                >
-                                  Create dynamic tasks that call GitHub APIs to
-                                  retrieve real-time data
-                                </Typography>
-                              </Box>
-
-                              <TextField
-                                label="Repository (owner/repo)"
-                                value={task.repository}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "repository",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="JabRef/jabref"
-                                fullWidth
-                                helperText="Repository to analyze (e.g., JabRef/jabref) - leave empty to use student's assigned repo"
-                                sx={{ mb: 2, borderRadius: 2 }}
-                              />
-
-                              <TextField
-                                label="API Endpoint"
-                                value={task.apiEndpoint}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "apiEndpoint",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="/repos/{owner}/{repo}/stargazers"
-                                fullWidth
-                                helperText="GitHub API endpoint with {owner} and {repo} placeholders"
-                                sx={{ mb: 2, borderRadius: 2 }}
-                              />
-
-                              <TextField
-                                label="Response Path"
-                                value={task.responsePath}
-                                onChange={(e) =>
-                                  handleTaskChange(
-                                    taskIdx,
-                                    "responsePath",
-                                    e.target.value
-                                  )
-                                }
-                                placeholder="length, language, description"
-                                fullWidth
-                                helperText="JSON path to extract the answer from API response"
-                                sx={{ mb: 2, borderRadius: 2 }}
-                              />
-
-                              <FormControl fullWidth>
-                                <InputLabel>Expected Answer Type</InputLabel>
-                                <Select
-                                  value={task.expectedAnswerType || "Number"}
+                                <TextField
+                                  label="Explanation (Optional)"
+                                  value={question.explanation}
                                   onChange={(e) =>
-                                    handleTaskChange(
+                                    updateQuestion(
                                       taskIdx,
-                                      "expectedAnswerType",
+                                      qIdx,
+                                      "explanation",
                                       e.target.value
                                     )
                                   }
-                                  label="Expected Answer Type"
+                                  placeholder="Explain why this is the correct answer"
+                                  fullWidth
+                                  multiline
+                                  rows={2}
                                   sx={{ borderRadius: 2 }}
-                                >
-                                  <MenuItem value="Number">Number</MenuItem>
-                                  <MenuItem value="Text">Text</MenuItem>
-                                </Select>
-                              </FormControl>
-
-                              {/* Save validated data per-user */}
-                              <Box sx={{ mt: 2 }}>
-                                <FormControlLabel
-                                  control={
-                                    <Switch
-                                      checked={task.saveValidatedData || false}
-                                      onChange={(e) =>
-                                        handleTaskChange(
-                                          taskIdx,
-                                          "saveValidatedData",
-                                          e.target.checked
-                                        )
-                                      }
-                                      sx={{
-                                        "& .MuiSwitch-switchBase.Mui-checked": {
-                                          color: "#1976d2",
-                                          "&:hover": {
-                                            backgroundColor:
-                                              "rgba(25, 118, 210, 0.08)",
-                                          },
-                                        },
-                                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                          { backgroundColor: "#1976d2" },
-                                      }}
-                                    />
-                                  }
-                                  label="Save validated data per user"
-                                  sx={{
-                                    "& .MuiFormControlLabel-label": {
-                                      fontSize: "0.95rem",
-                                      fontWeight: 500,
-                                      color: "#374151",
-                                    },
-                                  }}
                                 />
-                                {task.saveValidatedData && (
-                                  <>
-                                    <TextField
-                                      label="Data Name"
-                                      value={task.savedDataName || ""}
-                                      onChange={(e) =>
-                                        handleTaskChange(
-                                          taskIdx,
-                                          "savedDataName",
-                                          e.target.value
-                                        )
-                                      }
-                                      placeholder="e.g., repo_issue_count"
-                                      fullWidth
-                                      helperText="Key used to store this value in each student's data."
-                                      sx={{ mt: 1, borderRadius: 2 }}
-                                    />
-                                    <Alert
-                                      severity="info"
-                                      sx={{
-                                        mt: 1,
-                                        borderRadius: 4,
-                                        "& .MuiAlert-icon": { display: "none" },
-                                      }}
-                                    >
-                                      <AlertTitle>Per-user Storage</AlertTitle>
-                                      When enabled, the validated answer is
-                                      saved for each student separately. The
-                                      value is automatically stored as a number
-                                      or text based on the expected answer type.
-                                    </Alert>
-                                  </>
-                                )}
-                              </Box>
+                              </Stack>
+                            </Card>
+                          ))}
 
-                              {/* Additional options for Number type */}
-                              {task.expectedAnswerType === "Number" && (
-                                <Box sx={{ mt: 2 }}>
-                                  {/* Info box for number visibility */}
+                          <Button
+                            variant="outlined"
+                            onClick={() => addQuestion()}
+                            startIcon={<AddIcon />}
+                            sx={{ mt: 2, borderRadius: 4 }}
+                          >
+                            Add Another Question
+                          </Button>
+                        </Box>
+                      )}
+
+                      {(task.taskType === "get-issue-count" ||
+                        task.taskType === "get-pr-count" ||
+                        task.taskType === "get-top-contributor" ||
+                        task.taskType === "get-open-issue") && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "secondary.main",
+                            }}
+                          >
+                            {task.taskType === "get-issue-count" &&
+                              "Issue Count Task"}
+                            {task.taskType === "get-pr-count" &&
+                              "Pull Request Count Task"}
+                            {task.taskType === "get-top-contributor" &&
+                              "Top Contributor Task"}
+                            {task.taskType === "get-open-issue" &&
+                              "Open Issue Count Task"}
+                          </Typography>
+
+                          <TextField
+                            label="Repository (owner/repo)"
+                            value={task.repository}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "repository",
+                                e.target.value
+                              )
+                            }
+                            placeholder="e.g., microsoft/vscode"
+                            fullWidth
+                            helperText="Format: owner/repository-name"
+                            sx={{ borderRadius: 2 }}
+                          />
+
+                          {task.taskType === "get-issue-count" && (
+                            <Box sx={{ mt: 2 }}>
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={task.saveValidatedData || false}
+                                    onChange={(e) =>
+                                      handleTaskChange(
+                                        taskIdx,
+                                        "saveValidatedData",
+                                        e.target.checked
+                                      )
+                                    }
+                                    sx={{
+                                      "& .MuiSwitch-switchBase.Mui-checked": {
+                                        color: "#1976d2",
+                                        "&:hover": {
+                                          backgroundColor:
+                                            "rgba(25, 118, 210, 0.08)",
+                                        },
+                                      },
+                                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                        { backgroundColor: "#1976d2" },
+                                    }}
+                                  />
+                                }
+                                label="Save validated data per user"
+                                sx={{
+                                  "& .MuiFormControlLabel-label": {
+                                    fontSize: "0.95rem",
+                                    fontWeight: 500,
+                                    color: "#374151",
+                                  },
+                                }}
+                              />
+                              {task.saveValidatedData && (
+                                <>
+                                  <TextField
+                                    label="Data Name"
+                                    value={task.savedDataName || ""}
+                                    onChange={(e) =>
+                                      handleTaskChange(
+                                        taskIdx,
+                                        "savedDataName",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="e.g., repo_issue_count"
+                                    fullWidth
+                                    helperText="Key used to store this value in each student's data."
+                                    sx={{ mt: 1, borderRadius: 2 }}
+                                  />
                                   <Alert
                                     severity="info"
                                     sx={{
-                                      mb: 2,
+                                      mt: 1,
                                       borderRadius: 4,
-                                      "& .MuiAlert-icon": {
-                                        display: "none",
-                                      },
+                                      "& .MuiAlert-icon": { display: "none" },
                                     }}
                                   >
-                                    <AlertTitle>Number Visibility</AlertTitle>
-                                    Ensure the number can be seen by students in
-                                    the GitHub repository. For example, if
-                                    asking for issue count, make sure students
-                                    can access the repository and see the issues
-                                    tab.
+                                    <AlertTitle>Per-user Storage</AlertTitle>
+                                    When enabled, the validated answer is saved
+                                    for each student separately. The value is
+                                    stored as a number.
                                   </Alert>
-
-                                  {/* Tolerance fields in a row */}
-                                  <Stack
-                                    direction="row"
-                                    spacing={1}
-                                    sx={{ mt: 2 }}
-                                  >
-                                    {/* Tolerance checkbox box */}
-                                    <Card
-                                      sx={{
-                                        flex: 1,
-                                        p: 2,
-                                        border: "1px solid #e0e0e0",
-                                        borderRadius: 4,
-                                        boxShadow: "none",
-                                        backgroundColor: "#f9f9fa",
-                                      }}
-                                    >
-                                      <FormControlLabel
-                                        control={
-                                          <Checkbox
-                                            checked={
-                                              task.enableTolerance || false
-                                            }
-                                            onChange={(e) =>
-                                              handleTaskChange(
-                                                taskIdx,
-                                                "enableTolerance",
-                                                e.target.checked
-                                              )
-                                            }
-                                          />
-                                        }
-                                        label="Enable tolerance for dynamic numbers (±10 default)"
-                                      />
-                                    </Card>
-
-                                    {/* Tolerance number box */}
-                                    {task.enableTolerance && (
-                                      <Card
-                                        sx={{
-                                          flex: 1,
-                                          p: 2,
-                                          border: "1px solid #e0e0e0",
-                                          borderRadius: 4,
-                                          boxShadow: "none",
-                                          backgroundColor: "#f9f9fa",
-                                        }}
-                                      >
-                                        <TextField
-                                          fullWidth
-                                          label="Tolerance Range"
-                                          type="number"
-                                          value={task.toleranceRange || 10}
-                                          onChange={(e) =>
-                                            handleTaskChange(
-                                              taskIdx,
-                                              "toleranceRange",
-                                              parseInt(e.target.value) || 10
-                                            )
-                                          }
-                                          helperText="Fixed number tolerance (e.g., 10 means ±10 from expected answer)"
-                                          sx={{
-                                            "& .MuiOutlinedInput-root": {
-                                              borderRadius: 2,
-                                            },
-                                          }}
-                                        />
-                                      </Card>
-                                    )}
-                                  </Stack>
-                                </Box>
+                                </>
                               )}
                             </Box>
                           )}
+                        </Box>
+                      )}
 
-                          {task.taskType === "llm-text-validation" && (
-                            <Box>
-                              <Divider sx={{ mb: 2 }} />
-                              <Box
-                                sx={{
-                                  backgroundColor: "#fff3e0",
-                                  p: 3,
-                                  borderRadius: 4,
-                                  border: "2px solid #ff9800",
-                                  mb: 2,
-                                }}
-                              >
-                                <Typography
-                                  variant="h6"
+                      {task.taskType === "get-issue-title" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "secondary.main",
+                            }}
+                          >
+                            Issue Title Task
+                          </Typography>
+
+                          <TextField
+                            label="Repository (owner/repo)"
+                            value={task.repository}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "repository",
+                                e.target.value
+                              )
+                            }
+                            placeholder="e.g., microsoft/vscode"
+                            fullWidth
+                            helperText="Format: owner/repository-name"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                          />
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                              mb: 2,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={task.useStoredKey || false}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "useStoredKey",
+                                      e.target.checked
+                                    )
+                                  }
                                   sx={{
-                                    fontWeight: 700,
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 1,
-                                    color: "warning.main",
+                                    "& .MuiSwitch-switchBase.Mui-checked": {
+                                      color: "#1976d2",
+                                      "&:hover": {
+                                        backgroundColor:
+                                          "rgba(25, 118, 210, 0.08)",
+                                      },
+                                    },
+                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                      { backgroundColor: "#1976d2" },
+                                  }}
+                                />
+                              }
+                              label="Use stored data for Issue Number"
+                            />
+                            <FormControl
+                              sx={{ minWidth: 240 }}
+                              disabled={
+                                !task.useStoredKey ||
+                                (storedKeys || []).length === 0
+                              }
+                            >
+                              <InputLabel>Stored Data</InputLabel>
+                              <Select
+                                label="Stored Data"
+                                value={task.selectedStoredKey || ""}
+                                onChange={(e) =>
+                                  handleTaskChange(
+                                    taskIdx,
+                                    "selectedStoredKey",
+                                    e.target.value
+                                  )
+                                }
+                              >
+                                <MenuItem value="">
+                                  Set number manually
+                                </MenuItem>
+                                {(storedKeys || []).map((k, i) => (
+                                  <MenuItem
+                                    key={`${k.dataName}-${i}`}
+                                    value={k.dataName}
+                                  >
+                                    {k.dataName}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                              <FormHelperText>
+                                {(storedKeys || []).length === 0
+                                  ? "No stored keys available yet"
+                                  : "Choose a previously saved value"}
+                              </FormHelperText>
+                            </FormControl>
+                          </Box>
+
+                          <TextField
+                            label="Issue Number"
+                            type="number"
+                            value={task.issueNumber}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "issueNumber",
+                                e.target.value
+                              )
+                            }
+                            placeholder="e.g., 123"
+                            fullWidth
+                            helperText={
+                              task.useStoredKey
+                                ? "Using stored data; manual input disabled"
+                                : "The specific issue number students should find"
+                            }
+                            sx={{ borderRadius: 2 }}
+                            disabled={Boolean(task.useStoredKey)}
+                          />
+                        </Box>
+                      )}
+
+                      {task.taskType === "assigned" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "secondary.main",
+                            }}
+                          >
+                            Assignment Validation Task
+                          </Typography>
+                        
+                        <TextField
+                          label="Repository (owner/repo)"
+                          value={task.repository}
+                          onChange={(e) => handleTaskChange(taskIdx, 'repository', e.target.value)}
+                          placeholder="e.g., microsoft/vscode"
+                          fullWidth
+                          helperText="Format: owner/repository-name"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                        />
+                        
+                        <TextField
+                          label="Issue Number"
+                          type="number"
+                          value={task.issueNumber}
+                          onChange={(e) => handleTaskChange(taskIdx, 'issueNumber', e.target.value)}
+                          placeholder="e.g., 123"
+                          fullWidth
+                          helperText="The specific issue number students must be assigned to"
+                            sx={{ borderRadius: 2 }}
+                          />
+                        </Box>
+                      )}
+
+                      {task.taskType === "issue-no" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "secondary.main",
+                            }}
+                          >
+                            Issue Number Validation Task
+                          </Typography>
+
+                          <TextField
+                            label="Repository (owner/repo)"
+                            value={task.repository}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "repository",
+                                e.target.value
+                              )
+                            }
+                            placeholder="e.g., microsoft/vscode"
+                            fullWidth
+                            helperText="Format: owner/repository-name"
+                            sx={{ borderRadius: 2 }}
+                          />
+
+                          <Box sx={{ mt: 2 }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={task.saveValidatedData || false}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "saveValidatedData",
+                                      e.target.checked
+                                    )
+                                  }
+                                  sx={{
+                                    "& .MuiSwitch-switchBase.Mui-checked": {
+                                      color: "#1976d2",
+                                      "&:hover": {
+                                        backgroundColor:
+                                          "rgba(25, 118, 210, 0.08)",
+                                      },
+                                    },
+                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                      { backgroundColor: "#1976d2" },
+                                  }}
+                                />
+                              }
+                              label="Save validated data per user"
+                              sx={{
+                                "& .MuiFormControlLabel-label": {
+                                  fontSize: "0.95rem",
+                                  fontWeight: 500,
+                                  color: "#374151",
+                                },
+                              }}
+                            />
+                            {task.saveValidatedData && (
+                              <>
+                                <TextField
+                                  label="Data Name"
+                                  value={task.savedDataName || ""}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "savedDataName",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="e.g., provided_issue_number"
+                                  fullWidth
+                                  helperText="Key used to store this value in each student's data."
+                                  sx={{ mt: 1, borderRadius: 2 }}
+                                />
+                                <Alert
+                                  severity="info"
+                                  sx={{
+                                    mt: 1,
+                                    borderRadius: 4,
+                                    "& .MuiAlert-icon": { display: "none" },
                                   }}
                                 >
-                                  LLM Text Validation Task
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{ mt: 1 }}
-                                >
-                                  Create AI-powered tasks that validate student
-                                  text answers using GPT-4o
-                                </Typography>
-                              </Box>
+                                  <AlertTitle>Per-user Storage</AlertTitle>
+                                  When enabled, the student-provided issue
+                                  number is saved for each student separately.
+                                  The value is stored as a number.
+                                </Alert>
+                              </>
+                            )}
+                          </Box>
+                        </Box>
+                      )}
 
-                              {/* Criteria for Evaluation */}
-                              <Box sx={{ mb: 3 }}>
-                                <Typography
-                                  variant="subtitle1"
-                                  sx={{ fontWeight: 600, mb: 2 }}
-                                >
-                                  Criteria for Evaluation
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{ mb: 2 }}
-                                >
-                                  Define the criteria that the AI will use to
-                                  evaluate student answers. Students must
-                                  address all criteria to pass.
-                                </Typography>
+                      {task.taskType === "comment" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 700,
+                              mb: 2,
+                              color: "secondary.main",
+                            }}
+                          >
+                            Comment Validation Task
+                          </Typography>
+                        
+                        <TextField
+                          label="Repository (owner/repo)"
+                          value={task.repository}
+                          onChange={(e) => handleTaskChange(taskIdx, 'repository', e.target.value)}
+                          placeholder="e.g., microsoft/vscode"
+                          fullWidth
+                          helperText="Format: owner/repository-name"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                          />
 
-                                {/* Existing Parameters */}
-                                {(
-                                  task.llmTextValidation
-                                    ?.validationParameters || []
-                                ).map((param, paramIdx) => (
-                                  <Box
-                                    key={paramIdx}
+                          <TextField
+                            label="Issue Number"
+                            type="number"
+                            value={task.issueNumber}
+                            onChange={(e) => handleTaskChange(taskIdx, 'issueNumber', e.target.value)}
+                            placeholder="e.g., 123"
+                            fullWidth
+                            helperText="The specific issue number where students should post a comment"
+                            sx={{ borderRadius: 2 }}
+                          />
+                        </Box>
+                      )}
+
+                      {task.taskType === "custom-api-call" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Box
+                            sx={{
+                              backgroundColor: "#e3f2fd",
+                              p: 3,
+                              borderRadius: 4,
+                              border: "2px solid #2196f3",
+                              mb: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                color: "primary.main",
+                              }}
+                            >
+                              Custom API Call Task
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mt: 1 }}
+                            >
+                              Create dynamic tasks that call GitHub APIs to
+                              retrieve real-time data
+                            </Typography>
+                          </Box>
+
+                          <TextField
+                            label="Repository (owner/repo)"
+                            value={task.repository}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "repository",
+                                e.target.value
+                              )
+                            }
+                            placeholder="JabRef/jabref"
+                            fullWidth
+                            helperText="Repository to analyze (e.g., JabRef/jabref) - leave empty to use student's assigned repo"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                          />
+
+                          <TextField
+                            label="API Endpoint"
+                            value={task.apiEndpoint}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "apiEndpoint",
+                                e.target.value
+                              )
+                            }
+                            placeholder="/repos/{owner}/{repo}/stargazers"
+                            fullWidth
+                            helperText="GitHub API endpoint with {owner} and {repo} placeholders"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                          />
+
+                          <TextField
+                            label="Response Path"
+                            value={task.responsePath}
+                            onChange={(e) =>
+                              handleTaskChange(
+                                taskIdx,
+                                "responsePath",
+                                e.target.value
+                              )
+                            }
+                            placeholder="length, language, description"
+                            fullWidth
+                            helperText="JSON path to extract the answer from API response"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                          />
+
+                          <FormControl fullWidth>
+                            <InputLabel>Expected Answer Type</InputLabel>
+                            <Select
+                              value={task.expectedAnswerType || "Number"}
+                              onChange={(e) =>
+                                handleTaskChange(
+                                  taskIdx,
+                                  "expectedAnswerType",
+                                  e.target.value
+                                )
+                              }
+                              label="Expected Answer Type"
+                              sx={{ borderRadius: 2 }}
+                            >
+                              <MenuItem value="Number">Number</MenuItem>
+                              <MenuItem value="Text">Text</MenuItem>
+                            </Select>
+                          </FormControl>
+
+                          {/* Save validated data per-user */}
+                          <Box sx={{ mt: 2 }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={task.saveValidatedData || false}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "saveValidatedData",
+                                      e.target.checked
+                                    )
+                                  }
+                                  sx={{
+                                    "& .MuiSwitch-switchBase.Mui-checked": {
+                                      color: "#1976d2",
+                                      "&:hover": {
+                                        backgroundColor:
+                                          "rgba(25, 118, 210, 0.08)",
+                                      },
+                                    },
+                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                      { backgroundColor: "#1976d2" },
+                                  }}
+                                />
+                              }
+                              label="Save validated data per user"
+                              sx={{
+                                "& .MuiFormControlLabel-label": {
+                                  fontSize: "0.95rem",
+                                  fontWeight: 500,
+                                  color: "#374151",
+                                },
+                              }}
+                            />
+                            {task.saveValidatedData && (
+                              <>
+                                <TextField
+                                  label="Data Name"
+                                  value={task.savedDataName || ""}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "savedDataName",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="e.g., repo_issue_count"
+                                  fullWidth
+                                  helperText="Key used to store this value in each student's data."
+                                  sx={{ mt: 1, borderRadius: 2 }}
+                                />
+                                <Alert
+                                  severity="info"
+                                  sx={{
+                                    mt: 1,
+                                    borderRadius: 4,
+                                    "& .MuiAlert-icon": { display: "none" },
+                                  }}
+                                >
+                                  <AlertTitle>Per-user Storage</AlertTitle>
+                                  When enabled, the validated answer is saved
+                                  for each student separately. The value is
+                                  automatically stored as a number or text based
+                                  on the expected answer type.
+                                </Alert>
+                              </>
+                            )}
+                          </Box>
+
+                          {/* Additional options for Number type */}
+                          {task.expectedAnswerType === "Number" && (
+                            <Box sx={{ mt: 2 }}>
+                              {/* Info box for number visibility */}
+                              <Alert
+                                severity="info"
+                                sx={{
+                                  mb: 2,
+                                  borderRadius: 4,
+                                  "& .MuiAlert-icon": {
+                                    display: "none",
+                                  },
+                                }}
+                              >
+                                <AlertTitle>Number Visibility</AlertTitle>
+                                Ensure the number can be seen by students in the
+                                GitHub repository. For example, if asking for
+                                issue count, make sure students can access the
+                                repository and see the issues tab.
+                              </Alert>
+
+                              {/* Tolerance fields in a row */}
+                              <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+                                {/* Tolerance checkbox box */}
+                                <Card
+                                  sx={{
+                                    flex: 1,
+                                    p: 2,
+                                    border: "1px solid #e0e0e0",
+                                    borderRadius: 4,
+                                    boxShadow: "none",
+                                    backgroundColor: "#f9f9fa",
+                                  }}
+                                >
+                                  <FormControlLabel
+                                    control={
+                                      <Checkbox
+                                        checked={task.enableTolerance || false}
+                                        onChange={(e) =>
+                                          handleTaskChange(
+                                            taskIdx,
+                                            "enableTolerance",
+                                            e.target.checked
+                                          )
+                                        }
+                                      />
+                                    }
+                                    label="Enable tolerance for dynamic numbers (±10 default)"
+                                  />
+                                </Card>
+
+                                {/* Tolerance number box */}
+                                {task.enableTolerance && (
+                                  <Card
                                     sx={{
-                                      display: "flex",
-                                      gap: 1,
-                                      mb: 1,
-                                      alignItems: "center",
+                                      flex: 1,
+                                      p: 2,
+                                      border: "1px solid #e0e0e0",
+                                      borderRadius: 4,
+                                      boxShadow: "none",
+                                      backgroundColor: "#f9f9fa",
                                     }}
                                   >
                                     <TextField
                                       fullWidth
-                                      label={`Parameter ${paramIdx + 1}`}
-                                      value={param}
-                                      onChange={(e) => {
-                                        const newParams = [
-                                          ...(task.llmTextValidation
-                                            ?.validationParameters || []),
-                                        ];
-                                        newParams[paramIdx] = e.target.value;
+                                      label="Tolerance Range"
+                                      type="number"
+                                      value={task.toleranceRange || 10}
+                                      onChange={(e) =>
                                         handleTaskChange(
                                           taskIdx,
-                                          "llmTextValidation",
-                                          {
-                                            ...task.llmTextValidation,
-                                            validationParameters: newParams,
-                                          }
-                                        );
-                                      }}
-                                      placeholder="e.g., Provide 3 examples, Explain the concept clearly, Include code snippets"
-                                      sx={{ borderRadius: 2 }}
-                                    />
-                                    <IconButton
-                                      onClick={() => {
-                                        const newParams = (
-                                          task.llmTextValidation
-                                            ?.validationParameters || []
-                                        ).filter((_, idx) => idx !== paramIdx);
-                                        handleTaskChange(
-                                          taskIdx,
-                                          "llmTextValidation",
-                                          {
-                                            ...task.llmTextValidation,
-                                            validationParameters: newParams,
-                                          }
-                                        );
-                                      }}
+                                          "toleranceRange",
+                                          parseInt(e.target.value) || 10
+                                        )
+                                      }
+                                      helperText="Fixed number tolerance (e.g., 10 means ±10 from expected answer)"
                                       sx={{
-                                        color: "#f44336",
-                                        "&:hover": {
-                                          backgroundColor: "#ffebee",
+                                        "& .MuiOutlinedInput-root": {
+                                          borderRadius: 2,
                                         },
                                       }}
-                                    >
-                                      <DeleteIcon />
-                                    </IconButton>
-                                  </Box>
-                                ))}
+                                    />
+                                  </Card>
+                                )}
+                              </Stack>
+                            </Box>
+                          )}
+                        </Box>
+                      )}
 
-                                {/* Add Parameter Button */}
-                                <Button
-                                  variant="outlined"
-                                  onClick={() => {
+                      {task.taskType === "llm-text-validation" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Box
+                            sx={{
+                              backgroundColor: "#fff3e0",
+                              p: 3,
+                              borderRadius: 4,
+                              border: "2px solid #ff9800",
+                              mb: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                color: "warning.main",
+                              }}
+                            >
+                              LLM Text Validation Task
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mt: 1 }}
+                            >
+                              Create AI-powered tasks that validate student text
+                              answers using GPT-4o
+                            </Typography>
+                          </Box>
+
+                          {/* Criteria for Evaluation */}
+                          <Box sx={{ mb: 3 }}>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600, mb: 2 }}
+                            >
+                              Criteria for Evaluation
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mb: 2 }}
+                            >
+                              Define the criteria that the AI will use to
+                              evaluate student answers. Students must address
+                              all criteria to pass.
+                            </Typography>
+
+                            {/* Existing Parameters */}
+                            {(
+                              task.llmTextValidation?.validationParameters || []
+                            ).map((param, paramIdx) => (
+                              <Box
+                                key={paramIdx}
+                                sx={{
+                                  display: "flex",
+                                  gap: 1,
+                                  mb: 1,
+                                  alignItems: "center",
+                                }}
+                              >
+                                <TextField
+                                  fullWidth
+                                  label={`Parameter ${paramIdx + 1}`}
+                                  value={param}
+                                  onChange={(e) => {
                                     const newParams = [
                                       ...(task.llmTextValidation
                                         ?.validationParameters || []),
-                                      "",
                                     ];
+                                    newParams[paramIdx] = e.target.value;
                                     handleTaskChange(
                                       taskIdx,
                                       "llmTextValidation",
@@ -3930,435 +3542,435 @@ Student can now start their quest journey!`);
                                       }
                                     );
                                   }}
-                                  startIcon={<AddIcon />}
-                                  sx={{ mt: 1, borderRadius: 2 }}
-                                >
-                                  Add Parameter
-                                </Button>
-                              </Box>
-
-                              {/* Advanced Settings */}
-                              <Box sx={{ mb: 3 }}>
-                                <Typography
-                                  variant="subtitle1"
-                                  sx={{ fontWeight: 600, mb: 2 }}
-                                >
-                                  Advanced Settings (Optional)
-                                </Typography>
-
-                                <TextField
-                                  label="Temperature"
-                                  type="number"
-                                  value={
-                                    task.llmTextValidation?.temperature || 0.1
-                                  }
-                                  onChange={(e) =>
+                                  placeholder="e.g., Provide 3 examples, Explain the concept clearly, Include code snippets"
+                                  sx={{ borderRadius: 2 }}
+                                />
+                                <IconButton
+                                  onClick={() => {
+                                    const newParams = (
+                                      task.llmTextValidation
+                                        ?.validationParameters || []
+                                    ).filter((_, idx) => idx !== paramIdx);
                                     handleTaskChange(
                                       taskIdx,
                                       "llmTextValidation",
                                       {
                                         ...task.llmTextValidation,
-                                        temperature:
-                                          parseFloat(e.target.value) || 0.1,
+                                        validationParameters: newParams,
                                       }
-                                    )
-                                  }
-                                  helperText="AI creativity level (0.0-1.0)"
-                                  inputProps={{ min: 0, max: 1, step: 0.1 }}
-                                  sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                      borderRadius: 2,
-                                    },
+                                    );
                                   }}
-                                />
-
-                                {/* Info box for temperature */}
-                                <Alert
-                                  severity="info"
                                   sx={{
-                                    mt: 1,
-                                    mb: 2,
-                                    borderRadius: 4,
-                                    "& .MuiAlert-icon": {
-                                      display: "none",
-                                    },
+                                    color: "#f44336",
+                                    "&:hover": { backgroundColor: "#ffebee" },
                                   }}
                                 >
-                                  <AlertTitle>Temperature Control</AlertTitle>
-                                  Controls how creative vs. consistent the AI is
-                                  when evaluating answers. Lower values
-                                  (0.0-0.3) make responses more consistent and
-                                  focused. Higher values (0.7-1.0) allow more
-                                  creative interpretation but may be less
-                                  predictable.
-                                </Alert>
-
-                                {/* Detailed Feedback Toggle */}
-                                <Box sx={{ mt: 2 }}>
-                                  <FormControlLabel
-                                    control={
-                                      <Switch
-                                        checked={
-                                          task.llmTextValidation
-                                            ?.enableDetailedFeedback || false
-                                        }
-                                        onChange={(e) =>
-                                          handleTaskChange(
-                                            taskIdx,
-                                            "llmTextValidation",
-                                            {
-                                              ...task.llmTextValidation,
-                                              enableDetailedFeedback:
-                                                e.target.checked,
-                                            }
-                                          )
-                                        }
-                                        sx={{
-                                          "& .MuiSwitch-switchBase.Mui-checked":
-                                            {
-                                              color: "#1976d2",
-                                              "&:hover": {
-                                                backgroundColor:
-                                                  "rgba(25, 118, 210, 0.08)",
-                                              },
-                                            },
-                                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                            {
-                                              backgroundColor: "#1976d2",
-                                            },
-                                        }}
-                                      />
-                                    }
-                                    label="Enable detailed feedback"
-                                    sx={{
-                                      "& .MuiFormControlLabel-label": {
-                                        fontSize: "0.95rem",
-                                        fontWeight: 500,
-                                        color: "#374151",
-                                      },
-                                    }}
-                                  />
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{ display: "block", mt: 0.5, ml: 4 }}
-                                  >
-                                    When enabled, students receive specific
-                                    feedback about what they got wrong instead
-                                    of generic error messages.
-                                  </Typography>
-                                </Box>
+                                  <DeleteIcon />
+                                </IconButton>
                               </Box>
-                            </Box>
-                          )}
-
-                          <Divider />
-
-                          {/* Success and Error Text Fields */}
-                          <Box>
-                            <Typography
-                              variant="h6"
-                              sx={{
-                                fontWeight: 700,
-                                mb: 2,
-                                color: "primary.main",
-                              }}
-                            >
-                              Response Text
-                            </Typography>
-
-                            <TextField
-                              label="Success Text (Correct Answer Response)"
-                              value={task.successText}
-                              onChange={(e) =>
-                                handleTaskChange(
-                                  taskIdx,
-                                  "successText",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="This text appears when students answer correctly"
-                              fullWidth
-                              multiline
-                              rows={3}
-                              helperText="Use {points} as a placeholder for the points value"
-                              sx={{ mb: 2, borderRadius: 2 }}
-                            />
-
-                            <TextField
-                              label="Error Text (Incorrect Answer Response)"
-                              value={task.errorText}
-                              onChange={(e) =>
-                                handleTaskChange(
-                                  taskIdx,
-                                  "errorText",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="This text appears when students answer incorrectly"
-                              fullWidth
-                              multiline
-                              rows={3}
-                              helperText="Should provide helpful hints and guidance"
-                              sx={{ borderRadius: 2 }}
-                            />
-                          </Box>
-
-                          <Divider />
-
-                          {/* Hints Section */}
-                          <Box>
-                            <Typography
-                              variant="h6"
-                              sx={{
-                                fontWeight: 700,
-                                color: "primary.main",
-                                mb: 1,
-                              }}
-                            >
-                              Hints
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              sx={{ mb: 2 }}
-                            >
-                              Add progressive hints that students can access by
-                              typing "help" in issue comments. Each hint costs
-                              points.
-                            </Typography>
-
-                            {(task.detailedHints || []).map((hint, hintIdx) => (
-                              <Card
-                                key={hintIdx}
-                                sx={{
-                                  border: "1px solid #e0e0e0",
-                                  borderRadius: 4,
-                                  boxShadow: "none",
-                                  p: 2,
-                                  mb: 2,
-                                  backgroundColor: "#f9f9fa",
-                                }}
-                              >
-                                <Stack spacing={2}>
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                      alignItems: "center",
-                                    }}
-                                  >
-                                    <Typography
-                                      variant="subtitle1"
-                                      sx={{ fontWeight: 700 }}
-                                    >
-                                      Hint {hintIdx + 1}
-                                    </Typography>
-                                    <IconButton
-                                      size="small"
-                                      color="error"
-                                      onClick={() =>
-                                        handleRemoveHint(
-                                          editingQuestIndex || 0,
-                                          taskIdx,
-                                          hintIdx
-                                        )
-                                      }
-                                      sx={{ borderRadius: 2 }}
-                                    >
-                                      <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                  </Box>
-
-                                  <TextField
-                                    label="Hint Content"
-                                    value={hint.content || ""}
-                                    onChange={(e) =>
-                                      handleUpdateHint(
-                                        editingQuestIndex || 0,
-                                        taskIdx,
-                                        hintIdx,
-                                        "content",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="Enter the hint content that will be shown to students"
-                                    fullWidth
-                                    multiline
-                                    rows={3}
-                                    helperText="This is the text that will be displayed when students request this hint"
-                                    sx={{ borderRadius: 2 }}
-                                  />
-
-                                  <TextField
-                                    label="Image URL (Optional)"
-                                    value={hint.image || ""}
-                                    onChange={(e) =>
-                                      handleUpdateHint(
-                                        editingQuestIndex || 0,
-                                        taskIdx,
-                                        hintIdx,
-                                        "image",
-                                        e.target.value
-                                      )
-                                    }
-                                    placeholder="https://example.com/image.png"
-                                    fullWidth
-                                    helperText="Optional image URL to accompany the hint"
-                                    sx={{ borderRadius: 2 }}
-                                  />
-
-                                  <TextField
-                                    label="Penalty (Points)"
-                                    type="number"
-                                    value={hint.penalty || 0}
-                                    onChange={(e) => {
-                                      const value =
-                                        e.target.value === ""
-                                          ? 0
-                                          : parseInt(e.target.value);
-                                      if (value < 0) {
-                                        // Prevent setting penalty below 0
-                                        return;
-                                      }
-                                      handleUpdateHint(
-                                        editingQuestIndex || 0,
-                                        taskIdx,
-                                        hintIdx,
-                                        "penalty",
-                                        value
-                                      );
-                                    }}
-                                    inputProps={{ min: 0 }}
-                                    sx={{ width: 150, borderRadius: 2 }}
-                                    helperText="Points deducted when this hint is used (Min: 0)"
-                                  />
-                                </Stack>
-                              </Card>
                             ))}
 
+                            {/* Add Parameter Button */}
                             <Button
                               variant="outlined"
-                              startIcon={<AddCircleOutlineIcon />}
-                              onClick={() =>
-                                handleAddHint(editingQuestIndex || 0, taskIdx)
+                              onClick={() => {
+                                const newParams = [
+                                  ...(task.llmTextValidation
+                                    ?.validationParameters || []),
+                                  "",
+                                ];
+                                handleTaskChange(taskIdx, "llmTextValidation", {
+                                  ...task.llmTextValidation,
+                                  validationParameters: newParams,
+                                });
+                              }}
+                              startIcon={<AddIcon />}
+                              sx={{ mt: 1, borderRadius: 2 }}
+                            >
+                              Add Parameter
+                            </Button>
+                          </Box>
+
+                          {/* Advanced Settings */}
+                          <Box sx={{ mb: 3 }}>
+                            <Typography
+                              variant="subtitle1"
+                              sx={{ fontWeight: 600, mb: 2 }}
+                            >
+                              Advanced Settings (Optional)
+                            </Typography>
+
+                            <TextField
+                              label="Temperature"
+                              type="number"
+                              value={task.llmTextValidation?.temperature || 0.1}
+                              onChange={(e) =>
+                                handleTaskChange(taskIdx, "llmTextValidation", {
+                                  ...task.llmTextValidation,
+                                  temperature:
+                                    parseFloat(e.target.value) || 0.1,
+                                })
                               }
+                              helperText="AI creativity level (0.0-1.0)"
+                              inputProps={{ min: 0, max: 1, step: 0.1 }}
+                              sx={{
+                                "& .MuiOutlinedInput-root": { borderRadius: 2 },
+                              }}
+                            />
+
+                            {/* Info box for temperature */}
+                            <Alert
+                              severity="info"
                               sx={{
                                 mt: 1,
-                                mr: 1,
+                                mb: 2,
                                 borderRadius: 4,
-                                borderColor: "primary.main",
+                                "& .MuiAlert-icon": {
+                                  display: "none",
+                                },
                               }}
                             >
-                              Add Hint
-                            </Button>
-                            <Button
-                              variant="contained"
-                              size="small"
-                              startIcon={<AutoAwesomeIcon />}
-                              onClick={async () => {
-                                try {
-                                  const payload = {
-                                    type: task.taskType,
-                                    desc: task.taskDesc,
-                                    accept: task.acceptText,
-                                    repository: task.repository,
-                                    ossRepository: task.ossRepository,
-                                    issueNumber: task.issueNumber,
-                                    responsePath: task.responsePath,
-                                    expectedAnswerType: task.expectedAnswerType,
-                                    llmTextValidation: task.llmTextValidation,
-                                  };
-                                  const { data } = await axios.post(
-                                    `${API_BASE_URL}/api/group/${classId}/ai/generate-hint`,
-                                    payload,
-                                    {
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
+                              <AlertTitle>Temperature Control</AlertTitle>
+                              Controls how creative vs. consistent the AI is
+                              when evaluating answers. Lower values (0.0-0.3)
+                              make responses more consistent and focused. Higher
+                              values (0.7-1.0) allow more creative
+                              interpretation but may be less predictable.
+                            </Alert>
+
+                            {/* Detailed Feedback Toggle */}
+                            <Box sx={{ mt: 2 }}>
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={
+                                      task.llmTextValidation
+                                        ?.enableDetailedFeedback || false
                                     }
-                                  );
-                                  const aiHint =
-                                    data && data.data && data.data.hint
-                                      ? data.data.hint
-                                      : "Try focusing on the key requirement and the relevant tab in the repository.";
-                                  handleAddHint(
-                                    editingQuestIndex || 0,
-                                    taskIdx
-                                  );
-                                  const newIdx =
-                                    task.detailedHints?.length || 0;
+                                    onChange={(e) =>
+                                      handleTaskChange(
+                                        taskIdx,
+                                        "llmTextValidation",
+                                        {
+                                          ...task.llmTextValidation,
+                                          enableDetailedFeedback:
+                                            e.target.checked,
+                                        }
+                                      )
+                                    }
+                                    sx={{
+                                      "& .MuiSwitch-switchBase.Mui-checked": {
+                                        color: "#1976d2",
+                                        "&:hover": {
+                                          backgroundColor:
+                                            "rgba(25, 118, 210, 0.08)",
+                                        },
+                                      },
+                                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                                        {
+                                          backgroundColor: "#1976d2",
+                                        },
+                                    }}
+                                  />
+                                }
+                                label="Enable detailed feedback"
+                                sx={{
+                                  "& .MuiFormControlLabel-label": {
+                                    fontSize: "0.95rem",
+                                    fontWeight: 500,
+                                    color: "#374151",
+                                  },
+                                }}
+                              />
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block", mt: 0.5, ml: 4 }}
+                              >
+                                When enabled, students receive specific feedback
+                                about what they got wrong instead of generic
+                                error messages.
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                      )}
+
+                      <Divider />
+
+                      {/* Success and Error Text Fields */}
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
+                        >
+                          Response Text
+                        </Typography>
+
+                        <TextField
+                          label="Success Text (Correct Answer Response)"
+                          value={task.successText}
+                          onChange={(e) =>
+                            handleTaskChange(
+                              taskIdx,
+                              "successText",
+                              e.target.value
+                            )
+                          }
+                          placeholder="This text appears when students answer correctly"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          helperText="Use {points} as a placeholder for the points value"
+                          sx={{ mb: 2, borderRadius: 2 }}
+                        />
+
+                        <TextField
+                          label="Error Text (Incorrect Answer Response)"
+                          value={task.errorText}
+                          onChange={(e) =>
+                            handleTaskChange(
+                              taskIdx,
+                              "errorText",
+                              e.target.value
+                            )
+                          }
+                          placeholder="This text appears when students answer incorrectly"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          helperText="Should provide helpful hints and guidance"
+                          sx={{ borderRadius: 2 }}
+                        />
+                      </Box>
+
+                      <Divider />
+
+                      {/* Hints Section */}
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
+                        >
+                          Hints
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mb: 2 }}
+                        >
+                          Add progressive hints that students can access by
+                          typing "help" in issue comments. Each hint costs
+                          points.
+                        </Typography>
+
+                        {(task.detailedHints || []).map((hint, hintIdx) => (
+                          <Card
+                            key={hintIdx}
+                            sx={{
+                              border: "1px solid #e0e0e0",
+                              borderRadius: 4,
+                              boxShadow: "none",
+                              p: 2,
+                              mb: 2,
+                              backgroundColor: "#f9f9fa",
+                            }}
+                          >
+                            <Stack spacing={2}>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <Typography
+                                  variant="subtitle1"
+                                  sx={{ fontWeight: 700 }}
+                                >
+                                  Hint {hintIdx + 1}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() =>
+                                    handleRemoveHint(
+                                      editingQuestIndex || 0,
+                                      taskIdx,
+                                      hintIdx
+                                    )
+                                  }
+                                  sx={{ borderRadius: 2 }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+
+                              <TextField
+                                label="Hint Content"
+                                value={hint.content || ""}
+                                onChange={(e) =>
                                   handleUpdateHint(
                                     editingQuestIndex || 0,
                                     taskIdx,
-                                    newIdx - 1,
+                                    hintIdx,
                                     "content",
-                                    aiHint
-                                  );
-                                } catch (e) {
-                                  console.error(
-                                    "AI hint generation failed:",
-                                    e
-                                  );
-                                  alert(
-                                    "Failed to generate hint. Please try again."
-                                  );
+                                    e.target.value
+                                  )
                                 }
-                              }}
-                              sx={{
-                                mt: 1,
-                                borderRadius: 4,
-                                backgroundColor: "white",
-                                color: "#ff5722",
-                                border: "1px solid #ff5722",
-                                "&:hover": {
-                                  backgroundColor: "#fff3e0",
-                                  borderColor: "#e64a19",
-                                },
-                                boxShadow: "none",
-                              }}
-                            >
-                              Generate hint with AI
-                            </Button>
-                          </Box>
-                        </Stack>
-                      </Card>
-                    ))}
+                                placeholder="Enter the hint content that will be shown to students"
+                                fullWidth
+                                multiline
+                                rows={3}
+                                helperText="This is the text that will be displayed when students request this hint"
+                                sx={{ borderRadius: 2 }}
+                              />
 
-                    {/* Add Task Button - Only show when adding new quests */}
-                    {editingQuestIndex === null && (
-                      <Button
-                        variant="outlined"
-                        onClick={handleAddTaskToQuest}
-                        startIcon={<AddIcon />}
-                        sx={{
-                          borderRadius: 4,
-                          fontWeight: "bold",
-                          borderColor: "primary.main",
-                          color: "primary.main",
-                          "&:hover": {
-                            borderColor: "primary.dark",
-                            backgroundColor: "#e3f2fd",
-                          },
-                        }}
-                      >
-                        Add Task
-                      </Button>
-                    )}
-                  </Box>
+                              <TextField
+                                label="Image URL (Optional)"
+                                value={hint.image || ""}
+                                onChange={(e) =>
+                                  handleUpdateHint(
+                                    editingQuestIndex || 0,
+                                    taskIdx,
+                                    hintIdx,
+                                    "image",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="https://example.com/image.png"
+                                fullWidth
+                                helperText="Optional image URL to accompany the hint"
+                                sx={{ borderRadius: 2 }}
+                              />
+
+                              <TextField
+                                label="Penalty (Points)"
+                                type="number"
+                                value={hint.penalty || 0}
+                                onChange={(e) => {
+                                  const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                                  if (value < 0) {
+                                    // Prevent setting penalty below 0
+                                    return;
+                                  }
+                                  handleUpdateHint(
+                                    editingQuestIndex || 0,
+                                    taskIdx,
+                                    hintIdx,
+                                    "penalty",
+                                    value
+                                  );
+                                }}
+                                inputProps={{ min: 0 }}
+                                sx={{ width: 150, borderRadius: 2 }}
+                                helperText="Points deducted when this hint is used (Min: 0)"
+                              />
+                            </Stack>
+                          </Card>
+                        ))}
+
+                        <Button
+                          variant="outlined"
+                          startIcon={<AddCircleOutlineIcon />}
+                          onClick={() =>
+                            handleAddHint(editingQuestIndex || 0, taskIdx)
+                          }
+                          sx={{
+                            mt: 1,
+                            mr: 1,
+                            borderRadius: 4,
+                            borderColor: "primary.main",
+                          }}
+                        >
+                          Add Hint
+                        </Button>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          startIcon={<AutoAwesomeIcon />}
+                          onClick={async () => {
+                            try {
+                              const payload = {
+                                type: task.taskType,
+                                desc: task.taskDesc,
+                                accept: task.acceptText,
+                                repository: task.repository,
+                                ossRepository: task.ossRepository,
+                                issueNumber: task.issueNumber,
+                                responsePath: task.responsePath,
+                                expectedAnswerType: task.expectedAnswerType,
+                                llmTextValidation: task.llmTextValidation,
+                              };
+                              const { data } = await axios.post(`http://localhost:8080/api/group/${classId}/ai/generate-hint`, payload, { headers: { 'Content-Type': 'application/json' } });
+                              const aiHint = (data && data.data && data.data.hint) ? data.data.hint : 'Try focusing on the key requirement and the relevant tab in the repository.';
+                              handleAddHint(editingQuestIndex || 0, taskIdx);
+                              const newIdx = task.detailedHints?.length || 0;
+                              handleUpdateHint(
+                                editingQuestIndex || 0,
+                                taskIdx,
+                                newIdx - 1,
+                                "content",
+                                aiHint
+                              );
+                            } catch (e) {
+                              console.error("AI hint generation failed:", e);
+                              alert(
+                                "Failed to generate hint. Please try again."
+                              );
+                            }
+                          }}
+                          sx={{
+                            mt: 1,
+                            borderRadius: 4,
+                            backgroundColor: "white",
+                            color: "#ff5722",
+                            border: "1px solid #ff5722",
+                            "&:hover": {
+                              backgroundColor: "#fff3e0",
+                              borderColor: "#e64a19",
+                            },
+                            boxShadow: "none",
+                          }}
+                        >
+                          Generate hint with AI
+                        </Button>
+                      </Box>
+                    </Stack>
+                  </Card>
+              ))}
+              
+                {/* Add Task Button - Moved to bottom */}
+              <Button 
+                variant="outlined" 
+                onClick={handleAddTaskToQuest}
+                startIcon={<AddIcon />}
+                  sx={{ 
+                    borderRadius: 4, 
+                    fontWeight: 'bold',
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    '&:hover': {
+                      borderColor: 'primary.dark',
+                      backgroundColor: '#e3f2fd'
+                    }
+                  }}
+                >
+                  Add Task
+              </Button>
+              </Box>
                 </>
               )}
             </Stack>
           </DialogContent>
-
+          
           {/* Hint Penalty Validation Errors */}
           {hasHintPenaltyErrors && (
             <Box sx={{ p: 3, pt: 0 }}>
               <Alert severity="error" sx={{ borderRadius: 2 }}>
                 <AlertTitle>Invalid Hint Penalties</AlertTitle>
                 <Typography variant="body2" component="div">
-                  The following tasks have hint penalties that exceed the task
-                  points:
+                  The following tasks have hint penalties that exceed the task points:
                 </Typography>
                 <Box component="ul" sx={{ mt: 1, mb: 0, pl: 2 }}>
                   {hintPenaltyErrors.map((error, index) => (
@@ -4368,13 +3980,12 @@ Student can now start their quest journey!`);
                   ))}
                 </Box>
                 <Typography variant="body2" sx={{ mt: 1 }}>
-                  Please reduce hint penalties or increase task points to
-                  continue.
+                  Please reduce hint penalties or increase task points to continue.
                 </Typography>
               </Alert>
             </Box>
           )}
-
+          
           <DialogActions sx={{ p: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
             <Button
               onClick={() => setShowAddQuestModal(false)}
@@ -4468,8 +4079,7 @@ Student can now start their quest journey!`);
                       type="number"
                       value={editingTaskData.points || 1}
                       onChange={(e) => {
-                        const value =
-                          e.target.value === "" ? 1 : parseInt(e.target.value);
+                        const value = e.target.value === "" ? 1 : parseInt(e.target.value);
                         if (value < 1) return;
                         setEditingTaskData({
                           ...editingTaskData,
@@ -4485,8 +4095,7 @@ Student can now start their quest journey!`);
                       type="number"
                       value={editingTaskData.xp || 1}
                       onChange={(e) => {
-                        const value =
-                          e.target.value === "" ? 1 : parseInt(e.target.value);
+                        const value = e.target.value === "" ? 1 : parseInt(e.target.value);
                         if (value < 1) return;
                         setEditingTaskData({
                           ...editingTaskData,
@@ -4549,24 +4158,14 @@ Student can now start their quest journey!`);
                       >
                         Default Task Types
                       </ListSubheader>
-                      <MenuItem value="multiple-choice">
-                        Multiple Choice
-                      </MenuItem>
+                      <MenuItem value="multiple-choice">Multiple Choice</MenuItem>
                       <MenuItem value="quiz">Quiz</MenuItem>
-                      <MenuItem value="get-issue-count">
-                        Get Issue Count
-                      </MenuItem>
+                      <MenuItem value="get-issue-count">Get Issue Count</MenuItem>
                       <MenuItem value="get-pr-count">Get PR Count</MenuItem>
-                      <MenuItem value="get-top-contributor">
-                        Get Top Contributor
-                      </MenuItem>
-                      <MenuItem value="get-issue-title">
-                        Get Issue Title
-                      </MenuItem>
+                      <MenuItem value="get-top-contributor">Get Top Contributor</MenuItem>
+                      <MenuItem value="get-issue-title">Get Issue Title</MenuItem>
                       <MenuItem value="get-open-issue">Get Open Issue</MenuItem>
-                      <MenuItem value="assigned">
-                        Assignment Validation
-                      </MenuItem>
+                      <MenuItem value="assigned">Assignment Validation</MenuItem>
                       <MenuItem value="text-input">Text Input</MenuItem>
                       <MenuItem value="issue-no">Issue Number</MenuItem>
 
@@ -4600,24 +4199,13 @@ Student can now start their quest journey!`);
                   {/* Multiple Choice Options */}
                   {editingTaskData.taskType === "multiple-choice" && (
                     <Box>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontWeight: 600, mb: 2 }}
-                      >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                         Multiple Choice Options
                       </Typography>
-
+                      
                       {/* Options List */}
                       {editingTaskData.options?.map((option, index) => (
-                        <Box
-                          key={index}
-                          sx={{
-                            display: "flex",
-                            gap: 1,
-                            mb: 2,
-                            alignItems: "flex-start",
-                          }}
-                        >
+                        <Box key={index} sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'flex-start' }}>
                           <TextField
                             label={`Option ${option.label}`}
                             value={option.value}
@@ -4637,16 +4225,13 @@ Student can now start their quest journey!`);
                               onClick={() => {
                                 const newOptions = [...editingTaskData.options];
                                 newOptions.splice(index, 1);
-
+                                
                                 // Update correct answer if it was the deleted option
-                                let newCorrectAnswer =
-                                  editingTaskData.correctAnswer;
-                                if (
-                                  editingTaskData.correctAnswer === option.label
-                                ) {
+                                let newCorrectAnswer = editingTaskData.correctAnswer;
+                                if (editingTaskData.correctAnswer === option.label) {
                                   newCorrectAnswer = "A"; // Default to A if deleted option was selected
                                 }
-
+                                
                                 setEditingTaskData({
                                   ...editingTaskData,
                                   options: newOptions,
@@ -4661,17 +4246,15 @@ Student can now start their quest journey!`);
                           )}
                         </Box>
                       ))}
-
+                      
                       {/* Add Option Button */}
                       {editingTaskData.options?.length < 26 && (
                         <Button
                           onClick={() => {
-                            const nextLetter = String.fromCharCode(
-                              65 + editingTaskData.options.length
-                            ); // A=65, B=66, etc.
+                            const nextLetter = String.fromCharCode(65 + editingTaskData.options.length); // A=65, B=66, etc.
                             const newOptions = [
                               ...editingTaskData.options,
-                              { label: nextLetter, value: "" },
+                              { label: nextLetter, value: "" }
                             ];
                             setEditingTaskData({
                               ...editingTaskData,
@@ -4682,13 +4265,10 @@ Student can now start their quest journey!`);
                           variant="outlined"
                           sx={{ mb: 2 }}
                         >
-                          Add Option{" "}
-                          {String.fromCharCode(
-                            65 + editingTaskData.options?.length
-                          )}
+                          Add Option {String.fromCharCode(65 + editingTaskData.options?.length)}
                         </Button>
                       )}
-
+                      
                       {/* Correct Answer Dropdown */}
                       <FormControl sx={{ width: 200 }}>
                         <InputLabel>Correct Answer</InputLabel>
@@ -4713,13 +4293,7 @@ Student can now start their quest journey!`);
                   )}
 
                   {/* Repository and Issue Fields */}
-                  {[
-                    "get-issue-count",
-                    "get-pr-count",
-                    "get-top-contributor",
-                    "get-open-issue",
-                    "get-issue-title",
-                  ].includes(editingTaskData.taskType) && (
+                  {["get-issue-count", "get-pr-count", "get-top-contributor", "get-open-issue", "get-issue-title"].includes(editingTaskData.taskType) && (
                     <Box>
                       <TextField
                         label="Repository"
@@ -4754,10 +4328,7 @@ Student can now start their quest journey!`);
                   {/* Custom API Call Configuration */}
                   {editingTaskData.taskType === "custom-api-call" && (
                     <Box>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontWeight: 600, mb: 2 }}
-                      >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                         Custom API Call Configuration
                       </Typography>
                       <TextField
@@ -4837,17 +4408,12 @@ Student can now start their quest journey!`);
                   {/* LLM Text Validation Configuration */}
                   {editingTaskData.taskType === "llm-text-validation" && (
                     <Box>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{ fontWeight: 600, mb: 2 }}
-                      >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                         LLM Text Validation Configuration
                       </Typography>
                       <TextField
                         label="Validation Question"
-                        value={
-                          editingTaskData.llmTextValidation?.question || ""
-                        }
+                        value={editingTaskData.llmTextValidation?.question || ""}
                         onChange={(e) =>
                           setEditingTaskData({
                             ...editingTaskData,
@@ -4863,29 +4429,17 @@ Student can now start their quest journey!`);
                         rows={3}
                         sx={{ mb: 2 }}
                       />
-
-                      <Typography
-                        variant="body2"
-                        sx={{ mb: 2, fontWeight: 600 }}
-                      >
+                      
+                      <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
                         Validation Parameters
                       </Typography>
-                      {(
-                        editingTaskData.llmTextValidation
-                          ?.validationParameters || []
-                      ).map((param, index) => (
-                        <Box
-                          key={index}
-                          sx={{ display: "flex", gap: 1, mb: 1 }}
-                        >
+                      {(editingTaskData.llmTextValidation?.validationParameters || []).map((param, index) => (
+                        <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
                           <TextField
                             label="Parameter"
                             value={param}
                             onChange={(e) => {
-                              const newParams = [
-                                ...(editingTaskData.llmTextValidation
-                                  ?.validationParameters || []),
-                              ];
+                              const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || [])];
                               newParams[index] = e.target.value;
                               setEditingTaskData({
                                 ...editingTaskData,
@@ -4897,12 +4451,9 @@ Student can now start their quest journey!`);
                             }}
                             fullWidth
                           />
-                          <IconButton
+                          <IconButton 
                             onClick={() => {
-                              const newParams = [
-                                ...(editingTaskData.llmTextValidation
-                                  ?.validationParameters || []),
-                              ];
+                              const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || [])];
                               newParams.splice(index, 1);
                               setEditingTaskData({
                                 ...editingTaskData,
@@ -4920,11 +4471,7 @@ Student can now start their quest journey!`);
                       ))}
                       <Button
                         onClick={() => {
-                          const newParams = [
-                            ...(editingTaskData.llmTextValidation
-                              ?.validationParameters || []),
-                            "",
-                          ];
+                          const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || []), ""];
                           setEditingTaskData({
                             ...editingTaskData,
                             llmTextValidation: {
@@ -4942,9 +4489,7 @@ Student can now start their quest journey!`);
                       <TextField
                         label="Temperature"
                         type="number"
-                        value={
-                          editingTaskData.llmTextValidation?.temperature || 0.1
-                        }
+                        value={editingTaskData.llmTextValidation?.temperature || 0.1}
                         onChange={(e) =>
                           setEditingTaskData({
                             ...editingTaskData,
@@ -4961,10 +4506,7 @@ Student can now start their quest journey!`);
                       <FormControlLabel
                         control={
                           <Checkbox
-                            checked={
-                              editingTaskData.llmTextValidation
-                                ?.enableDetailedFeedback || false
-                            }
+                            checked={editingTaskData.llmTextValidation?.enableDetailedFeedback || false}
                             onChange={(e) =>
                               setEditingTaskData({
                                 ...editingTaskData,
@@ -4983,10 +4525,7 @@ Student can now start their quest journey!`);
 
                   {/* Response Texts */}
                   <Box>
-                    <Typography
-                      variant="subtitle1"
-                      sx={{ fontWeight: 600, mb: 2 }}
-                    >
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
                       Response Messages
                     </Typography>
                     <TextField
@@ -5458,9 +4997,9 @@ Good luck! 🚀"
             </TableContainer>
 
             {/* Deploy MCQ Quest to Existing Repo */}
-            <Box
-              sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}
-            ></Box>
+            <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
+
+            </Box>
 
             {/* Per-user values placeholder */}
             <Box sx={{ mt: 3 }}>
@@ -5630,7 +5169,7 @@ const QuestBlock = ({
       onChange={() => setExpanded(!expanded)}
       sx={{
         mb: 2,
-        bgcolor: quest.isQ0 ? "#f8f9fa" : expanded ? "white" : "#f5f5f5",
+        bgcolor: quest.isQ0 ? "#f8f9fa" : (expanded ? "white" : "#f5f5f5"),
         borderRadius: 4,
         boxShadow: "none",
         transition: "background-color 0.2s ease-in-out",
@@ -5640,19 +5179,16 @@ const QuestBlock = ({
         <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
-              <Typography
-                component="span"
-                sx={{
-                  color: "#f57c00",
-                  fontWeight: 700,
-                  mr: 1,
-                  fontSize: "0.9em",
-                  backgroundColor: "#fff3e0",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
-                  border: "1px solid #ffcc02",
-                }}
-              >
+              <Typography component="span" sx={{ 
+                color: '#f57c00', 
+                fontWeight: 700, 
+                mr: 1, 
+                fontSize: '0.9em',
+                backgroundColor: '#fff3e0',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: '1px solid #ffcc02'
+              }}>
                 Q{questIndex}
               </Typography>
               {quest.title}
@@ -5784,9 +5320,9 @@ const QuestBlock = ({
             ))}
           </Box>
         )}
-
+        
         {/* Add Task Button - Always visible when tasks are expanded */}
-        <Box sx={{ mt: 2, textAlign: "center" }}>
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button
             variant="outlined"
             onClick={() => onAddTask()}

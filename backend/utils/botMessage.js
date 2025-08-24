@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const axios = require("axios");
+// Remove this line: const { getGithubAppInstallationAccessToken } = require("../../../bot/controllers/githubAppAuth");
 require("dotenv").config();
 
 function signPayload(payload) {
@@ -45,6 +46,6 @@ async function sendMessageToBot(url, payload) {
 module.exports = {
     sendMessageToBot, 
     signPayload,
-    getGithubAppInstallationAccessToken,
+    // Remove this line: getGithubAppInstallationAccessToken,
     getBotServiceUrl
 };
