@@ -253,8 +253,17 @@ Your current progress will be displayed here as you complete quests.
 
         // Inject initial quest progress section if we have a quest sequence
         if (customSequenceData && customSequenceData.questSequence && customSequenceData.questSequence.length > 0) {
-          const timestamp = new Date().toISOString().replace('T', ' ').replace(/\..+/, '');
-          let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} UTC\n\n### ⚙️ Current Quest\n\n`;
+          const timestamp = new Date().toLocaleString('en-US', {
+            timeZone: 'America/Phoenix',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          }).replace(',', '');
+          let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} MST\n\n### ⚙️ Current Quest\n\n`;
 
           // Determine the first quest (prefer Q0 or a quest without prerequisites)
           const firstQuest = customSequenceData.questSequence.find(q => !q.metadata?.prerequisite || q.isQ0 || q.metadata?.isQ0) || customSequenceData.questSequence[0];
@@ -1398,8 +1407,17 @@ Repository for students in ${className}.`;
 
     // Inject initial quest progress section if we have a quest sequence
     if (customSequenceData && customSequenceData.questSequence && customSequenceData.questSequence.length > 0) {
-      const timestamp = new Date().toISOString().replace('T', ' ').replace(/\..+/, '');
-      let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} UTC\n\n### ⚙️ Current Quest\n\n`;
+      const timestamp = new Date().toLocaleString('en-US', {
+        timeZone: 'America/Phoenix',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(',', '');
+      let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} MST\n\n### ⚙️ Current Quest\n\n`;
 
       // Determine the first quest (prefer Q0 or a quest without prerequisites)
       const firstQuest = customSequenceData.questSequence.find(q => !q.metadata?.prerequisite || q.isQ0 || q.metadata?.isQ0) || customSequenceData.questSequence[0];
