@@ -1493,61 +1493,54 @@ Student can now start their quest journey!`);
     }
   };
 
-  // Fetch student count when component loads
+  // Fetch student count using the same logic as ManageStudents
   const fetchStudentCount = async () => {
     console.log(`🔍 [fetchStudentCount] Starting for class: ${classId}`);
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/students`, { params: { t: Date.now() } });
-      console.log(`📊 [fetchStudentCount] Response:`, response.data);
-      const students = response.data && response.data.students ? response.data.students : [];
-      // Support both arrays of strings (usernames) and arrays of student docs
-      const count = Array.isArray(students) ? students.length : 0;
-      console.log(`✅ [fetchStudentCount] Found ${count} students`);
-      setStudentCount(count);
-    } catch (error) {
-      console.error("❌ [fetchStudentCount] Error fetching student count:", error);
-
-      // Fallback to ManageStudents logic: use listRepos + class groupName formatting
-      console.log(`🔄 [fetchStudentCount] Trying fallback method...`);
-      try {
-        // 1) Get class info for groupName
-        const classResp = await axios.get(`${API_BASE_URL}/api/group/class/${classId}`);
-        const group = classResp.data;
-        const groupName = group?.groupName || '';
-        console.log(`📋 [fetchStudentCount] Group name: ${groupName}`);
-        if (!groupName) {
-          console.log(`❌ [fetchStudentCount] No group name found`);
-          setStudentCount(0);
-          return;
-        }
-
-        // 2) Get organizationGh
-        const orgResp = await axios.get(`${API_BASE_URL}/api/repo/prodStatus`);
-        const organizationGh = orgResp.data?.organizationGh;
-        if (!organizationGh) {
-          setStudentCount(0);
-          return;
-        }
-
-        // 3) List repos and filter by formatted class name
-        const listResp = await axios.get(`${API_BASE_URL}/api/repo/listRepos`, { params: { organizationGh } });
-        const repos = Array.isArray(listResp.data?.repos) ? listResp.data.repos : [];
-
-        const formattedClassName = groupName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
-
-        const usernames = repos
-          .filter(repo => repo.name && repo.name.endsWith(`-${formattedClassName}`))
-          .map(repo => repo.name.replace(`-${formattedClassName}`, ''));
-
-        console.log(`✅ [fetchStudentCount] Fallback found ${usernames.length} students:`, usernames);
-        setStudentCount(usernames.length);
-      } catch (fallbackErr) {
-        console.error('❌ [fetchStudentCount] Fallback student count failed:', fallbackErr);
+      // Use the same approach as ManageStudents: get class info, then list repos
+      // 1) Get class info for groupName
+      const classResp = await axios.get(`${API_BASE_URL}/api/group/class/${classId}`);
+      const group = classResp.data;
+      const groupName = group?.groupName || '';
+      console.log(`📋 [fetchStudentCount] Group name: ${groupName}`);
+      if (!groupName) {
+        console.log(`❌ [fetchStudentCount] No group name found`);
         setStudentCount(0);
+        return;
       }
+
+      // 2) Get organizationGh
+      const orgResp = await axios.get(`${API_BASE_URL}/api/repo/prodStatus`);
+      const organizationGh = orgResp.data?.organizationGh;
+      console.log(`🏢 [fetchStudentCount] Organization: ${organizationGh}`);
+      if (!organizationGh) {
+        console.log(`❌ [fetchStudentCount] No organization found`);
+        setStudentCount(0);
+        return;
+      }
+
+      // 3) List repos and filter by formatted class name (exact ManageStudents logic)
+      const listResp = await axios.get(`${API_BASE_URL}/api/repo/listRepos`, { params: { organizationGh } });
+      const repos = Array.isArray(listResp.data?.repos) ? listResp.data.repos : [];
+      console.log(`📊 [fetchStudentCount] Found ${repos.length} total repos`);
+
+      // Format class name to match repository naming convention (exact ManageStudents logic)
+      const formattedClassName = groupName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      console.log(`🔧 [fetchStudentCount] Formatted class name: ${formattedClassName}`);
+
+      // Filter repositories to only show ones for this class using username-classname format
+      const classRepos = repos
+        .filter(repo => repo.name && repo.name.endsWith(`-${formattedClassName}`))
+        .map(repo => repo.name.replace(`-${formattedClassName}`, ''));
+
+      console.log(`✅ [fetchStudentCount] Found ${classRepos.length} students:`, classRepos);
+      setStudentCount(classRepos.length);
+    } catch (error) {
+      console.error('❌ [fetchStudentCount] Error fetching student count:', error);
+      setStudentCount(0);
     }
   };
 
