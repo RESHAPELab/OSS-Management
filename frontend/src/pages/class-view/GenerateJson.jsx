@@ -1492,10 +1492,11 @@ Student can now start their quest journey!`);
   // Fetch student count when component loads
   const fetchStudentCount = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/students`);
-      if (response.data && response.data.students) {
-        setStudentCount(response.data.students.length);
-      }
+      const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/students`, { params: { t: Date.now() } });
+      const students = response.data && response.data.students ? response.data.students : [];
+      // Support both arrays of strings (usernames) and arrays of student docs
+      const count = Array.isArray(students) ? students.length : 0;
+      setStudentCount(count);
     } catch (error) {
       console.error("Error fetching student count:", error);
       setStudentCount(0);
@@ -1508,6 +1509,13 @@ Student can now start their quest journey!`);
       fetchStudentCount();
     }
   }, [classId]);
+
+  // Refresh count whenever the README modal opens
+  useEffect(() => {
+    if (showReadmeModal && classId) {
+      fetchStudentCount();
+    }
+  }, [showReadmeModal, classId]);
 
   const handleReadmeRemove = () => {
     setJsonContent((prev) => {
