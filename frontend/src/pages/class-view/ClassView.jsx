@@ -40,7 +40,7 @@ import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
 import ManageAdmins from './ManageAdmins';
 
-let baseURL = `http://localhost:${process.env.PORT || 8080}`;
+let baseURL = API_BASE_URL;
 
 const ClassView = () => {
     const { classId } = useParams();
@@ -187,11 +187,8 @@ const ClassView = () => {
         // console.log('existingReadme state changed:', existingReadme); // Removed
     }, [existingReadme]);
 
-    useEffect(() => {
-        if (organizationGh) {
-            fetchOrganizationRepos();
-        }
-    }, [organizationGh]);
+    // Removed this useEffect as it was calling fetchOrganizationRepos too early
+    // The proper useEffect below waits for both organizationGh AND classInfo
     
     const toggleAccordion = (index) => {
         setActiveIndex(activeIndex === index ? null : index);
@@ -258,8 +255,11 @@ const ClassView = () => {
                 keys: Object.keys(response.data || {})
             });
             setClassInfo(response.data);
-            // We're not using the students from the backend anymore
-            // setStudentData(response.data.students || []);
+            
+            // If we have organization info, fetch student repositories
+            if (response.data.organizationGh) {
+                setOrganizationGh(response.data.organizationGh);
+            }
         } catch (error) {
             console.error('❌ [DEBUG] Error fetching class info:', error.response?.data || error.message);
             console.error('❌ [DEBUG] Full error:', error);
@@ -307,10 +307,13 @@ const ClassView = () => {
 
     const fetchOrganizationGh = async () => {
         try {
+            console.log('🔍 [ClassView] Fetching organization GitHub info...');
             const response = await axios.get(`${baseURL}/api/repo/prodStatus`);
+            console.log('🔍 [ClassView] Organization response:', response.data);
             setOrganizationGh(response.data.organizationGh);
+            console.log('🔍 [ClassView] Set organizationGh to:', response.data.organizationGh);
         } catch (error) {
-            console.error('Error fetching organization GitHub name:', error);
+            console.error('❌ [ClassView] Error fetching organization GitHub name:', error);
             setCreateReposStatus('Error: Could not fetch organization information');
         }
     }
@@ -348,33 +351,41 @@ const ClassView = () => {
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/^-+|-+$/g, '');
                 
+                console.log('🔍 [ClassView] Class name formatting:', {
+                    original: classInfo.groupName,
+                    lowercase: classInfo.groupName.toLowerCase(),
+                    afterReplace: classInfo.groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                    final: formattedClassName
+                });
                 console.log('🔍 [ClassView] Looking for repositories ending with:', `-${formattedClassName}`);
                 
                 // Filter repositories to only show ones for this class using new username-classname format
                 const classRepos = response.data.repos
                     .filter(repo => repo.name.endsWith(`-${formattedClassName}`))
-                    .map(repo => ({ 
-                        githubUsername: repo.name.replace(`-${formattedClassName}`, '')
-                    }));
+                    .map(repo => repo.name.replace(`-${formattedClassName}`, '')); // Return username string directly
                 
                 console.log(`✅ [ClassView] Found ${classRepos.length} repositories for this class`);
-                console.log('👥 [ClassView] Class repositories:', classRepos.map(r => r.githubUsername));
+                console.log('👥 [ClassView] Class repositories:', classRepos);
+                
+                // Debug: Show all repositories and which ones match
+                console.log('🔍 [ClassView] All repositories in organization:', response.data.repos.map(r => r.name));
+                console.log('🔍 [ClassView] Repositories that match pattern:', response.data.repos.filter(repo => repo.name.endsWith(`-${formattedClassName}`)).map(r => r.name));
                 
                 setStudentData(classRepos);
                 
-                // Check collaboration status for these repositories
+                                // Check collaboration status for these repositories
                 if (classRepos.length > 0) {
                     try {
                         const statusResponse = await axios.post(`${baseURL}/api/repo/collaborationStatus`, {
                             organizationGh,
-                            students: classRepos.map(repo => repo.githubUsername),
+                            students: classRepos, // classRepos is now array of strings
                             className: classInfo.groupName
                         });
                         if (statusResponse.data.results) {
                             console.log('✅ [ClassView] Collaboration status updated:', statusResponse.data.results);
                             setCollaborationStatus(statusResponse.data.results);
-            }
-        } catch (error) {
+                        }
+                    } catch (error) {
                         console.error('❌ [ClassView] Error checking collaboration status:', error);
                     }
                 }
@@ -390,8 +401,19 @@ const ClassView = () => {
 
     // Update useEffect to wait for classInfo
     useEffect(() => {
+        console.log('🔍 [ClassView] useEffect triggered:', {
+            hasOrganizationGh: !!organizationGh,
+            hasClassInfo: !!classInfo,
+            hasGroupName: !!classInfo?.groupName,
+            organizationGh,
+            groupName: classInfo?.groupName
+        });
+        
         if (organizationGh && classInfo && classInfo.groupName) {
+            console.log('✅ [ClassView] All required data available, calling fetchOrganizationRepos');
             fetchOrganizationRepos();
+        } else {
+            console.log('⏳ [ClassView] Waiting for required data...');
         }
     }, [organizationGh, classInfo]);
 
@@ -663,7 +685,7 @@ const ClassView = () => {
 
             const response = await axios.post(`${baseURL}/api/repo/collaborationStatus`, {
                 organizationGh,
-                students: studentData.map(repo => repo.githubUsername),
+                students: studentData, // studentData is now array of strings
                 className: classInfo.groupName
             });
 
@@ -700,7 +722,7 @@ const ClassView = () => {
 
             const response = await axios.post(`${baseURL}/api/repo/studentScores`, {
                 className: classInfo.groupName,
-                students: studentData.map(repo => repo.githubUsername)
+                students: studentData // studentData is now array of strings
             });
 
             if (response.data.scores) {
@@ -2268,7 +2290,7 @@ const ClassView = () => {
                                     </Box>
                                 ) : (
                                     <List>
-                                        {studentData.map((repo, index) => {
+                                        {studentData.map((username, index) => {
                                             // Define a set of colors for the icons
                                             const colors = [
                                                 '#1976d2', // blue
@@ -2294,7 +2316,7 @@ const ClassView = () => {
                                                             mt: 0.5
                                                         }} 
                                                     />
-                                                            <ListItemText primary={repo.githubUsername} />
+                                                            <ListItemText primary={username} />
                                                         </ListItem>
                                             );
                                         })}
@@ -2351,12 +2373,12 @@ const ClassView = () => {
                                         <Box>
                                                 {studentData
                                                     .sort((a, b) => {
-                                                        const scoreA = studentScores[a.githubUsername]?.points || 0;
-                                                        const scoreB = studentScores[b.githubUsername]?.points || 0;
+                                                        const scoreA = studentScores[a]?.points || 0;
+                                                        const scoreB = studentScores[b]?.points || 0;
                                                         return scoreB - scoreA; // Sort by points descending
                                                     })
                                                     .map((student, index) => {
-                                                        const scores = studentScores[student.githubUsername] || {};
+                                                        const scores = studentScores[student] || {};
                                                         
                                                         // Calculate total tasks for the class
                                                         const totalTasks = (questBreakdownQuests || []).reduce((sum, quest) => {
@@ -2390,7 +2412,7 @@ const ClassView = () => {
                                                         const completionPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
                                                         
                                                         return (
-                                                        <Box key={student.githubUsername} sx={{ 
+                                                        <Box key={student} sx={{ 
                                                             display: 'grid', 
                                                             gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
                                                             gap: 2,
@@ -2400,7 +2422,7 @@ const ClassView = () => {
                                                         }}>
                                                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                                                 <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                                                                    {student.githubUsername}
+                                                                    {student}
                                                                     {index === 0 && scores.points > 0 && (
                                                                         <EmojiEventsIcon sx={{ ml: 1, fontSize: '1.2rem', color: '#ffd700' }} />
                                                                     )}
@@ -2480,7 +2502,7 @@ const ClassView = () => {
                                                                 let hasActualData = false;
                                                                 
                                                                 studentData.forEach(student => {
-                                                                    const scores = studentScores[student.githubUsername];
+                                                                    const scores = studentScores[student];
                                                                     if (scores) {
                                                                         // First try to get quest-specific data if available
                                                                         const classQuestId = `${(classInfo.groupName || '').replace(/[^a-zA-Z0-9]+/g, '')}-${questId}`;
