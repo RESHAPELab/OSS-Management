@@ -1499,7 +1499,44 @@ Student can now start their quest journey!`);
       setStudentCount(count);
     } catch (error) {
       console.error("Error fetching student count:", error);
-      setStudentCount(0);
+
+      // Fallback to ManageStudents logic: use listRepos + class groupName formatting
+      try {
+        // 1) Get class info for groupName
+        const classResp = await axios.get(`${API_BASE_URL}/api/group/class/${classId}`);
+        const group = classResp.data;
+        const groupName = group?.groupName || '';
+        if (!groupName) {
+          setStudentCount(0);
+          return;
+        }
+
+        // 2) Get organizationGh
+        const orgResp = await axios.get(`${API_BASE_URL}/api/repo/prodStatus`);
+        const organizationGh = orgResp.data?.organizationGh;
+        if (!organizationGh) {
+          setStudentCount(0);
+          return;
+        }
+
+        // 3) List repos and filter by formatted class name
+        const listResp = await axios.get(`${API_BASE_URL}/api/repo/listRepos`, { params: { organizationGh } });
+        const repos = Array.isArray(listResp.data?.repos) ? listResp.data.repos : [];
+
+        const formattedClassName = groupName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+
+        const usernames = repos
+          .filter(repo => repo.name && repo.name.endsWith(`-${formattedClassName}`))
+          .map(repo => repo.name.replace(`-${formattedClassName}`, ''));
+
+        setStudentCount(usernames.length);
+      } catch (fallbackErr) {
+        console.error('Fallback student count failed:', fallbackErr);
+        setStudentCount(0);
+      }
     }
   };
 
