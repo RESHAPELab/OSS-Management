@@ -1425,6 +1425,8 @@ Student can now start their quest journey!`);
         const content = e.target.result;
         setReadmeContent(content);
         setShowReadmeModal(true);
+        // Fetch student count when opening README modal
+        fetchStudentCount();
       };
       reader.readAsText(file);
     } else {
@@ -1456,32 +1458,14 @@ Student can now start their quest journey!`);
       }));
 
       // Call the new batch update endpoint
-      let response;
-      try {
-        response = await axios.post(
-          `${API_BASE_URL}/api/group/${classId}/readme/batch-update`,
-          {
-            content: readmeContent,
-            fileName: 'README.md',
-            pushToRepos: true
-          }
-        );
-      } catch (err) {
-        // Fallback for older servers without batch-update route
-        if (err?.response?.status === 404) {
-          setBatchUpdateStatus("Server does not support batch-update yet. Saving README to class config...");
-          response = await axios.post(
-            `${API_BASE_URL}/api/group/${classId}/readme`,
-            {
-              content: readmeContent,
-              fileName: 'README.md',
-              pushToRepos: true
-            }
-          );
-        } else {
-          throw err;
+      const response = await axios.post(
+        `${API_BASE_URL}/api/group/${classId}/readme/batch-update`,
+        {
+          content: readmeContent,
+          fileName: 'README.md',
+          pushToRepos: true
         }
-      }
+      );
 
       if (response.data.batchUpdate && response.data.batchUpdate.results) {
         const { successful, failed, total } = response.data.batchUpdate.results;
@@ -1490,7 +1474,7 @@ Student can now start their quest journey!`);
           (failed.length > 0 ? ` ${failed.length} failed.` : '')
         );
       } else {
-        setBatchUpdateStatus("✅ README saved. Note: Server may not have pushed to repos if batch-update is unsupported.");
+        setBatchUpdateStatus("✅ README saved successfully!");
       }
       
       // Auto-close after a delay
@@ -1509,22 +1493,28 @@ Student can now start their quest journey!`);
 
   // Fetch student count when component loads
   const fetchStudentCount = async () => {
+    console.log(`🔍 [fetchStudentCount] Starting for class: ${classId}`);
     try {
       const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/students`, { params: { t: Date.now() } });
+      console.log(`📊 [fetchStudentCount] Response:`, response.data);
       const students = response.data && response.data.students ? response.data.students : [];
       // Support both arrays of strings (usernames) and arrays of student docs
       const count = Array.isArray(students) ? students.length : 0;
+      console.log(`✅ [fetchStudentCount] Found ${count} students`);
       setStudentCount(count);
     } catch (error) {
-      console.error("Error fetching student count:", error);
+      console.error("❌ [fetchStudentCount] Error fetching student count:", error);
 
       // Fallback to ManageStudents logic: use listRepos + class groupName formatting
+      console.log(`🔄 [fetchStudentCount] Trying fallback method...`);
       try {
         // 1) Get class info for groupName
         const classResp = await axios.get(`${API_BASE_URL}/api/group/class/${classId}`);
         const group = classResp.data;
         const groupName = group?.groupName || '';
+        console.log(`📋 [fetchStudentCount] Group name: ${groupName}`);
         if (!groupName) {
+          console.log(`❌ [fetchStudentCount] No group name found`);
           setStudentCount(0);
           return;
         }
@@ -1550,9 +1540,10 @@ Student can now start their quest journey!`);
           .filter(repo => repo.name && repo.name.endsWith(`-${formattedClassName}`))
           .map(repo => repo.name.replace(`-${formattedClassName}`, ''));
 
+        console.log(`✅ [fetchStudentCount] Fallback found ${usernames.length} students:`, usernames);
         setStudentCount(usernames.length);
       } catch (fallbackErr) {
-        console.error('Fallback student count failed:', fallbackErr);
+        console.error('❌ [fetchStudentCount] Fallback student count failed:', fallbackErr);
         setStudentCount(0);
       }
     }
@@ -2553,6 +2544,8 @@ Student can now start their quest journey!`);
                       onClick={() => {
                         setReadmeContent(jsonContent.readme);
                         setShowReadmeModal(true);
+                        // Fetch student count when opening README modal
+                        fetchStudentCount();
                       }}
                       sx={{
                         borderColor: "#2196f3",
