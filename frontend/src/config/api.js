@@ -19,15 +19,33 @@ const API_CONFIG = {
 
   // Get the appropriate backend URL based on environment
   getBaseURL: () => {
-    if (API_CONFIG.isDevelopment()) {
+    const isDev = API_CONFIG.isDevelopment();
+    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    const backendPort = process.env.REACT_APP_BACKEND_PORT;
+    
+    console.log('🔍 [API_CONFIG] Environment detection:', {
+      hostname: window.location.hostname,
+      isDevelopment: isDev,
+      REACT_APP_BACKEND_URL: backendUrl,
+      REACT_APP_BACKEND_PORT: backendPort
+    });
+    
+    if (isDev) {
       // Local development - use localhost
-      return `http://localhost:${process.env.REACT_APP_BACKEND_PORT || 8080}`;
+      const localhostUrl = `http://localhost:${backendPort || 8080}`;
+      console.log('🔍 [API_CONFIG] Using localhost URL:', localhostUrl);
+      return localhostUrl;
     } else {
       // Production - use Railway backend URL
-      return (
-        process.env.REACT_APP_BACKEND_URL ||
-        "https://oss-michael-production.up.railway.app"
-      );
+      // Prioritize REACT_APP_BACKEND_URL over port
+      if (backendUrl) {
+        console.log('🔍 [API_CONFIG] Using production URL from env:', backendUrl);
+        return backendUrl;
+      }
+      // Fallback to default Railway URL
+      const fallbackUrl = "https://oss-michael.up.railway.app";
+      console.log('🔍 [API_CONFIG] Using fallback URL:', fallbackUrl);
+      return fallbackUrl;
     }
   },
 
