@@ -1015,7 +1015,7 @@ const updateReadmeAcrossRepos = async (req, res) => {
                 return res.status(500).json({ message: "GitHub organization not configured" });
             }
 
-            // Use the SAME method as the frontend: sendMessageToBot("github/listRepos")
+            // Get repositories from bot server (COPY from working test script)
             console.log(`📋 [BATCH-README] Fetching repositories from ${organizationGh} using bot server`);
             const reposResponse = await sendMessageToBot(
                 "github/listRepos",
@@ -1028,7 +1028,7 @@ const updateReadmeAcrossRepos = async (req, res) => {
 
             console.log(`📊 [BATCH-README] Total repositories in org: ${reposResponse.data.length}`);
 
-            // Filter repositories to only those for this class
+            // Filter repositories to only those for this class (COPY from working test script)
             const classRepos = reposResponse.data.filter(repo => 
                 repo.name.endsWith(`-${formattedClassName}`)
             );
@@ -1053,7 +1053,7 @@ const updateReadmeAcrossRepos = async (req, res) => {
             // Define the boundary marker for splitting sections
             const sectionBoundary = '----\n*This README is automatically updated as you progress through the course.*';
             
-            // Process each repository
+            // For each repo, do the function (COPY from working test script)
             for (const repo of classRepos) {
                 const repoName = repo.name;
                 const username = repoName.replace(`-${formattedClassName}`, '');
@@ -1061,12 +1061,15 @@ const updateReadmeAcrossRepos = async (req, res) => {
                 try {
                     console.log(`📝 [BATCH-README] Processing repository: ${repoName}`);
                     
-                    // Fetch current README content using GitHub API directly
+                    // Get access token for this repo (COPY from working test script)
+                    const accessToken = await getGithubAppInstallationAccessToken();
+                    console.log(`🔑 Got access token: ${accessToken ? 'Yes' : 'No'}`);
+                    
+                    // Fetch current README content using GitHub API directly (COPY from working test script)
                     let currentReadmeContent = '';
                     let currentSha = null;
                     
                     try {
-                        const accessToken = await getGithubAppInstallationAccessToken();
                         const currentReadmeResponse = await axios.get(
                             `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
                             {
@@ -1081,6 +1084,7 @@ const updateReadmeAcrossRepos = async (req, res) => {
                         currentReadmeContent = Buffer.from(currentReadmeResponse.data.content, 'base64').toString('utf-8');
                         currentSha = currentReadmeResponse.data.sha;
                         console.log(`📄 [BATCH-README] Current README found for ${repoName}, length: ${currentReadmeContent.length}`);
+                        console.log(`📄 [BATCH-README] Current SHA: ${currentSha}`);
                     } catch (fetchError) {
                         if (fetchError.response?.status === 404) {
                             console.log(`📄 [BATCH-README] No existing README found for ${repoName}, will create new one`);
@@ -1089,7 +1093,7 @@ const updateReadmeAcrossRepos = async (req, res) => {
                         }
                     }
 
-                    // Split the current README into sections
+                    // Split the current README into sections (COPY from working test script)
                     let firstSection = content; // New instructor content
                     let secondSection = '';
 
@@ -1106,10 +1110,11 @@ const updateReadmeAcrossRepos = async (req, res) => {
                         console.log(`🔧 [BATCH-README] Adding default progress section for ${repoName}`);
                     }
 
-                    // Combine sections
+                    // Combine sections (COPY from working test script)
                     const newReadmeContent = firstSection + secondSection;
+                    console.log(`📝 [BATCH-README] New README content length: ${newReadmeContent.length}`);
 
-                    // Update the README file using GitHub API directly
+                    // Update the README file using GitHub API directly (COPY from working test script)
                     const commitMessage = `Update README via batch update - ${new Date().toISOString()}`;
                     
                     const writePayload = {
@@ -1118,11 +1123,12 @@ const updateReadmeAcrossRepos = async (req, res) => {
                         branch: 'main'
                     };
                     
-                    // If we have an existing SHA, include it for update
+                    // If we have an existing SHA, include it for update (COPY from working test script)
                     if (currentSha) {
                         writePayload.sha = currentSha;
                     }
                     
+                    console.log(`📤 [BATCH-README] Updating README for ${repoName}...`);
                     await axios.put(
                         `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
                         writePayload,

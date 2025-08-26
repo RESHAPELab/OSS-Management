@@ -28,7 +28,8 @@ import {
   Delete as DeleteIcon,
   Edit as EditIcon,
   Close as CloseIcon,
-  Add as AddIcon
+  Add as AddIcon,
+  OpenInNew as OpenInNewIcon
 } from '@mui/icons-material';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
@@ -659,7 +660,37 @@ const ManageStudents = () => {
                           mt: 0.5
                         }} 
                       />
-                      <ListItemText primary={username} />
+                      <ListItemText 
+                        primary={
+                          <a 
+                            href={classInfo?.groupName ? `https://github.com/${organizationGh}/${username}-${classInfo.groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')}` : '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              textDecoration: 'none',
+                              color: classInfo?.groupName ? '#1976d2' : '#ccc',
+                              fontWeight: '500',
+                              cursor: classInfo?.groupName ? 'pointer' : 'default',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (classInfo?.groupName) {
+                                e.target.style.textDecoration = 'underline';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (classInfo?.groupName) {
+                                e.target.style.textDecoration = 'none';
+                              }
+                            }}
+                          >
+                            {username}
+                            <OpenInNewIcon sx={{ fontSize: '0.8rem', ml: 0.5 }} />
+                          </a>
+                        } 
+                      />
                       <Box sx={{ flexGrow: 1 }} /> {/* Spacer to push elements apart */}
                       <Button
                         variant="contained"

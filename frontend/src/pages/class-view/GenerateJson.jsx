@@ -125,6 +125,11 @@ const GenerateJson = () => {
   const [libraryQuests, setLibraryQuests] = useState([]);
   const [isLibraryLoading, setIsLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState("");
+  
+  // Task deletion confirmation dialog state
+  const [showDeleteTaskDialog, setShowDeleteTaskDialog] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [questToDeleteFrom, setQuestToDeleteFrom] = useState(null);
 
   // Initial JSON content with state management
   const [jsonContent, setJsonContent] = useState({
@@ -751,11 +756,13 @@ const GenerateJson = () => {
     });
   };
   const handleDeleteTask = (taskIdx) => {
-    setQuestFormData((prev) => ({
-      ...prev,
-      tasks: prev.tasks.filter((_, idx) => idx !== taskIdx),
-    }));
+    // Show confirmation dialog instead of deleting immediately
+    setTaskToDelete(taskIdx);
+    setQuestToDeleteFrom('questForm');
+    setShowDeleteTaskDialog(true);
   };
+
+
   const handleMoveTask = (taskIdx, direction) => {
     setQuestFormData((prev) => {
       const newTasks = [...prev.tasks];
@@ -1834,23 +1841,52 @@ Student can now start their quest journey!`);
   };
 
   const deleteTask = (questIndex, taskId) => {
-    setJsonContent((prev) => {
-      const newQuestSequence = [...prev.questSequence];
-      const quest = newQuestSequence[questIndex];
-      delete quest.tasks[taskId];
+    // Show confirmation dialog instead of deleting immediately
+    setTaskToDelete(taskId);
+    setQuestToDeleteFrom(questIndex);
+    setShowDeleteTaskDialog(true);
+  };
 
-      // Renumber remaining tasks
-      const taskEntries = Object.entries(quest.tasks);
-      quest.tasks = {};
-      taskEntries.forEach(([_, taskData], index) => {
-        quest.tasks[`T${index + 1}`] = taskData;
+  const confirmDeleteTask = () => {
+    if (questToDeleteFrom === 'questForm') {
+      // Delete from quest form modal
+      if (typeof taskToDelete === 'number') {
+        setQuestFormData((prev) => ({
+          ...prev,
+          tasks: prev.tasks.filter((_, idx) => idx !== taskToDelete),
+        }));
+      }
+    } else if (taskToDelete && questToDeleteFrom !== null) {
+      // Delete from main quest sequence
+      setJsonContent((prev) => {
+        const newQuestSequence = [...prev.questSequence];
+        const quest = newQuestSequence[questToDeleteFrom];
+        delete quest.tasks[taskToDelete];
+
+        // Renumber remaining tasks
+        const taskEntries = Object.entries(quest.tasks);
+        quest.tasks = {};
+        taskEntries.forEach(([_, taskData], index) => {
+          quest.tasks[`T${index + 1}`] = taskData;
+        });
+
+        return { ...prev, questSequence: newQuestSequence };
       });
-
-      return { ...prev, questSequence: newQuestSequence };
-    });
+      
+      // Refresh stored data list after deleting task
+      loadStoredValues();
+    }
     
-    // Refresh stored data list after deleting task
-    loadStoredValues();
+    // Close dialog and reset state
+    setShowDeleteTaskDialog(false);
+    setTaskToDelete(null);
+    setQuestToDeleteFrom(null);
+  };
+
+  const cancelDeleteTask = () => {
+    setShowDeleteTaskDialog(false);
+    setTaskToDelete(null);
+    setQuestToDeleteFrom(null);
   };
 
   const generateDefaultTexts = (taskType, repository, issueNumber) => {
@@ -6982,6 +7018,15 @@ Good luck! 🚀"
           </Box>
         </Card>
       </Container>
+      
+      {/* Task Deletion Confirmation Dialog */}
+      <TaskDeleteConfirmationDialog
+        open={showDeleteTaskDialog}
+        onClose={cancelDeleteTask}
+        onConfirm={confirmDeleteTask}
+        taskToDelete={taskToDelete}
+        questToDeleteFrom={questToDeleteFrom}
+      />
     </div>
   );
 };
@@ -7439,6 +7484,61 @@ const TaskBlock = ({
         </Box>
       </Box>
     </Card>
+  );
+};
+
+// Task Deletion Confirmation Dialog Component
+const TaskDeleteConfirmationDialog = ({ 
+  open, 
+  onClose, 
+  onConfirm, 
+  taskToDelete, 
+  questToDeleteFrom 
+}) => {
+  const getTaskDisplayName = () => {
+    if (questToDeleteFrom === 'questForm') {
+      return `Task ${taskToDelete + 1}`;
+    } else {
+      return taskToDelete;
+    }
+  };
+
+  const getQuestDisplayName = () => {
+    if (questToDeleteFrom === 'questForm') {
+      return 'the quest you are creating';
+    } else {
+      return `Quest ${questToDeleteFrom + 1}`;
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Delete Task</DialogTitle>
+      <DialogContent>
+        <Typography>
+          Are you sure you want to delete <strong>{getTaskDisplayName()}</strong> from {getQuestDisplayName()}?
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          This action cannot be undone.
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Cancel
+        </Button>
+        <Button 
+          onClick={onConfirm} 
+          color="error" 
+          variant="contained"
+          sx={{ 
+            bgcolor: 'error.main',
+            '&:hover': { bgcolor: 'error.dark' }
+          }}
+        >
+          Delete Task
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
