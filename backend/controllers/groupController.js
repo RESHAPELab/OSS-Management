@@ -8,6 +8,7 @@ const Readme = require("../models/ReadmeModel");
 const fs = require('fs');
 const path = require('path');
 const { MongoClient } = require('mongodb');
+const axios = require('axios');
 const UserStoredData = require('../models/UserStoredData');
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -997,11 +998,7 @@ const updateReadmeAcrossRepos = async (req, res) => {
             console.log(`🚀 [BATCH-README] Starting batch README update for class: ${group.groupName}`);
             
             // Import required modules for GitHub operations
-            const axios = require('axios');
-            const { getGithubAppInstallationAccessToken } = require('../utils/botMessage');
-            
-            // Get GitHub access token
-            const accessToken = await getGithubAppInstallationAccessToken();
+            const { sendMessageToBot, getGithubAppInstallationAccessToken } = require('../utils/botMessage');
             
             // Format class name to match repository naming convention
             const formattedClassName = group.groupName
@@ -1009,31 +1006,43 @@ const updateReadmeAcrossRepos = async (req, res) => {
                 .replace(/[^a-z0-9]+/g, '-')
                 .replace(/^-+|-+$/g, '');
 
+            console.log(`🔧 [BATCH-README] Original class name: "${group.groupName}"`);
+            console.log(`🔧 [BATCH-README] Formatted class name: "${formattedClassName}"`);
+
             // Get organization from environment
             const organizationGh = process.env.GITHUB_ORG;
             if (!organizationGh) {
                 return res.status(500).json({ message: "GitHub organization not configured" });
             }
 
-            // Fetch all repositories in the organization
-            console.log(`📋 [BATCH-README] Fetching repositories from ${organizationGh}`);
-            const reposResponse = await axios.get(
-                `https://api.github.com/orgs/${organizationGh}/repos`,
-                {
-                    headers: {
-                        Authorization: `token ${accessToken}`,
-                        Accept: 'application/vnd.github.v3+json',
-                        'User-Agent': 'OSS-Management-Backend'
-                    }
-                }
+            // Use the SAME method as the frontend: sendMessageToBot("github/listRepos")
+            console.log(`📋 [BATCH-README] Fetching repositories from ${organizationGh} using bot server`);
+            const reposResponse = await sendMessageToBot(
+                "github/listRepos",
+                { org: organizationGh }
             );
+
+            if (!reposResponse || !reposResponse.data) {
+                return res.status(502).json({ message: "Bot did not return repository data" });
+            }
+
+            console.log(`📊 [BATCH-README] Total repositories in org: ${reposResponse.data.length}`);
 
             // Filter repositories to only those for this class
             const classRepos = reposResponse.data.filter(repo => 
                 repo.name.endsWith(`-${formattedClassName}`)
             );
 
+            console.log(`🔍 [BATCH-README] Looking for repos ending with: "-${formattedClassName}"`);
             console.log(`📊 [BATCH-README] Found ${classRepos.length} repositories for class: ${group.groupName}`);
+            
+            if (classRepos.length > 0) {
+                console.log(`📝 [BATCH-README] Class repositories:`, classRepos.map(r => r.name));
+            } else {
+                // Log some example repo names to help debug
+                const exampleRepos = reposResponse.data.slice(0, 10).map(r => r.name);
+                console.log(`❌ [BATCH-README] No repos found. Example repo names:`, exampleRepos);
+            }
 
             const results = {
                 successful: [],
@@ -1052,11 +1061,12 @@ const updateReadmeAcrossRepos = async (req, res) => {
                 try {
                     console.log(`📝 [BATCH-README] Processing repository: ${repoName}`);
                     
-                    // Fetch current README content
+                    // Fetch current README content using GitHub API directly
                     let currentReadmeContent = '';
-                    let currentReadmeSha = null;
+                    let currentSha = null;
                     
                     try {
+                        const accessToken = await getGithubAppInstallationAccessToken();
                         const currentReadmeResponse = await axios.get(
                             `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
                             {
@@ -1069,13 +1079,13 @@ const updateReadmeAcrossRepos = async (req, res) => {
                         );
                         
                         currentReadmeContent = Buffer.from(currentReadmeResponse.data.content, 'base64').toString('utf-8');
-                        currentReadmeSha = currentReadmeResponse.data.sha;
+                        currentSha = currentReadmeResponse.data.sha;
                         console.log(`📄 [BATCH-README] Current README found for ${repoName}, length: ${currentReadmeContent.length}`);
                     } catch (fetchError) {
                         if (fetchError.response?.status === 404) {
                             console.log(`📄 [BATCH-README] No existing README found for ${repoName}, will create new one`);
                         } else {
-                            throw fetchError;
+                            console.log(`📄 [BATCH-README] Error fetching README for ${repoName}: ${fetchError.message}`);
                         }
                     }
 
@@ -1099,20 +1109,23 @@ const updateReadmeAcrossRepos = async (req, res) => {
                     // Combine sections
                     const newReadmeContent = firstSection + secondSection;
 
-                    // Update the README file
-                    const updatePayload = {
-                        message: `Update README - instructor content updated`,
+                    // Update the README file using GitHub API directly
+                    const commitMessage = `Update README via batch update - ${new Date().toISOString()}`;
+                    
+                    const writePayload = {
+                        message: commitMessage,
                         content: Buffer.from(newReadmeContent).toString('base64'),
                         branch: 'main'
                     };
-
-                    if (currentReadmeSha) {
-                        updatePayload.sha = currentReadmeSha;
+                    
+                    // If we have an existing SHA, include it for update
+                    if (currentSha) {
+                        writePayload.sha = currentSha;
                     }
-
+                    
                     await axios.put(
                         `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
-                        updatePayload,
+                        writePayload,
                         {
                             headers: {
                                 Authorization: `token ${accessToken}`,
