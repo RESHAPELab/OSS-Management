@@ -1456,14 +1456,32 @@ Student can now start their quest journey!`);
       }));
 
       // Call the new batch update endpoint
-      const response = await axios.post(
-        `${API_BASE_URL}/api/group/${classId}/readme/batch-update`,
-        {
-          content: readmeContent,
-          fileName: 'README.md',
-          pushToRepos: true
+      let response;
+      try {
+        response = await axios.post(
+          `${API_BASE_URL}/api/group/${classId}/readme/batch-update`,
+          {
+            content: readmeContent,
+            fileName: 'README.md',
+            pushToRepos: true
+          }
+        );
+      } catch (err) {
+        // Fallback for older servers without batch-update route
+        if (err?.response?.status === 404) {
+          setBatchUpdateStatus("Server does not support batch-update yet. Saving README to class config...");
+          response = await axios.post(
+            `${API_BASE_URL}/api/group/${classId}/readme`,
+            {
+              content: readmeContent,
+              fileName: 'README.md',
+              pushToRepos: true
+            }
+          );
+        } else {
+          throw err;
         }
-      );
+      }
 
       if (response.data.batchUpdate && response.data.batchUpdate.results) {
         const { successful, failed, total } = response.data.batchUpdate.results;
@@ -1472,7 +1490,7 @@ Student can now start their quest journey!`);
           (failed.length > 0 ? ` ${failed.length} failed.` : '')
         );
       } else {
-        setBatchUpdateStatus("✅ README saved successfully!");
+        setBatchUpdateStatus("✅ README saved. Note: Server may not have pushed to repos if batch-update is unsupported.");
       }
       
       // Auto-close after a delay
