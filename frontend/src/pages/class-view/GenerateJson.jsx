@@ -1482,6 +1482,38 @@ Student can now start their quest journey!`);
           `✅ Batch update completed! ${successful.length}/${total} repositories updated successfully.` +
           (failed.length > 0 ? ` ${failed.length} failed.` : '')
         );
+
+        // After successful batch update, update README with quest progress for each student
+        if (successful.length > 0) {
+          setBatchUpdateStatus("🔄 Updating README with quest progress for each student...");
+          
+          try {
+            // Get the list of students for this class
+            const studentsResponse = await axios.get(`${API_BASE_URL}/api/group/${classId}/students`);
+            const students = studentsResponse.data.students || [];
+            
+            // Update README with quest progress for each successful repository
+            for (const repo of successful) {
+              const student = students.find(s => s.github === repo.username);
+              if (student) {
+                try {
+                  await axios.post(`${API_BASE_URL}/api/gamification/updateReadme`, {
+                    studentId: student._id,
+                    groupId: classId
+                  });
+                  console.log(`✅ Updated README with quest progress for ${repo.username}`);
+                } catch (updateError) {
+                  console.error(`❌ Failed to update quest progress for ${repo.username}:`, updateError);
+                }
+              }
+            }
+            
+            setBatchUpdateStatus("🎉 All READMEs updated with quest progress!");
+          } catch (progressError) {
+            console.error("Error updating quest progress:", progressError);
+            setBatchUpdateStatus("✅ READMEs updated, but quest progress update failed");
+          }
+        }
       } else {
         setBatchUpdateStatus("✅ README saved successfully!");
       }
@@ -1491,7 +1523,7 @@ Student can now start their quest journey!`);
         setShowReadmeModal(false);
         setIsBatchUpdating(false);
         setBatchUpdateStatus("");
-      }, 3000);
+      }, 5000); // Increased delay to show quest progress update
 
     } catch (error) {
       console.error("Error updating README across repositories:", error);

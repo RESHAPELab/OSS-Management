@@ -1755,8 +1755,8 @@ typings/
                 customSequenceFile: null
               };
               if (!isDefaultSequence) {
-                // Create a unique quest config for this specific repo
-                const uniqueGroupId = `repo_${user}_${repoIdentifier}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                // Use class-based groupId for shared quest config (instead of unique per repo)
+                const uniqueGroupId = classId; // All users in same class share the same config
                 repoUniqueGroupId = uniqueGroupId; // Store in higher scope for issue creation
                 
                 // Create a deep copy of the quest config template for this repo
@@ -1772,7 +1772,7 @@ typings/
                   });
                 }
                 
-                // Save the unique quest config for this repo
+                // Save the shared quest config for this class (only if it doesn't exist)
                 const path = require('path');
                 const fs = require('fs');
                 const generatedDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
@@ -1780,13 +1780,22 @@ typings/
                   fs.mkdirSync(generatedDir, { recursive: true });
                 }
                 const repoConfigPath = path.join(generatedDir, `quest_config_${uniqueGroupId}.json`);
-                fs.writeFileSync(repoConfigPath, JSON.stringify(repoQuestConfig, null, 2));
                 
-                console.log(`🔍 [QUEST-CONFIG-REPO] Created unique quest config for ${repoName}: ${repoConfigPath}`);
+                // Only create config if it doesn't exist (shared across all users)
+                if (!fs.existsSync(repoConfigPath)) {
+                  fs.writeFileSync(repoConfigPath, JSON.stringify(repoQuestConfig, null, 2));
+                  console.log(`🔍 [QUEST-CONFIG-SHARED] Created shared quest config for class ${classId}: ${repoConfigPath}`);
+                } else {
+                  console.log(`🔍 [QUEST-CONFIG-SHARED] Using existing shared quest config for class ${classId}: ${repoConfigPath}`);
+                }
+                
+
                 
                 // NEW: Also save to OSS-Doorway database (safe - won't break if it fails)
-                try {
-                  console.log(`💾 [QUEST-CONFIG-REPO] Saving quest config to OSS-Doorway database for: ${uniqueGroupId}`);
+                // Only save to database if config file was just created (shared across all users)
+                if (!fs.existsSync(repoConfigPath + '.db_saved')) {
+                  try {
+                    console.log(`💾 [QUEST-CONFIG-SHARED] Saving shared quest config to OSS-Doorway database for class: ${uniqueGroupId}`);
                   console.log(`🔍 [QUEST-CONFIG-REPO] Environment check:`);
                   console.log(`  - OSS_DOORWAY_DB_URI exists: ${!!process.env.OSS_DOORWAY_DB_URI}`);
                   console.log(`  - OSS_DOORWAY_DB_NAME exists: ${!!process.env.OSS_DOORWAY_DB_NAME}`);
@@ -1846,17 +1855,24 @@ typings/
                     console.log(`🔍 [QUEST-CONFIG-REPO] Config keys: ${Object.keys(result.config)}`);
                     
                     await ossDoorwayConnection.close();
-                    console.log(`🔌 [QUEST-CONFIG-REPO] Database connection closed`);
+                    console.log(`🔌 [QUEST-CONFIG-SHARED] Database connection closed`);
+                    
+                    // Create marker file to indicate database save completed
+                    fs.writeFileSync(repoConfigPath + '.db_saved', new Date().toISOString());
+                    
                   } else {
-                    console.warn(`⚠️ [QUEST-CONFIG-REPO] OSS-Doorway database credentials not found!`);
+                    console.warn(`⚠️ [QUEST-CONFIG-SHARED] OSS-Doorway database credentials not found!`);
                     console.warn(`  - OSS_DOORWAY_DB_URI: ${ossDoorwayURI ? 'SET' : 'MISSING'}`);
                     console.warn(`  - OSS_DOORWAY_DB_NAME: ${ossDoorwayDBName ? 'SET' : 'MISSING'}`);
                   }
                   
-                } catch (dbError) {
-                  console.error(`❌ [QUEST-CONFIG-REPO] Failed to save quest config to database:`, dbError.message);
-                  console.error(`🔍 [QUEST-CONFIG-REPO] Full error:`, dbError);
-                  // Don't fail the operation - file system is still working
+                  } catch (dbError) {
+                    console.error(`❌ [QUEST-CONFIG-SHARED] Failed to save quest config to database:`, dbError.message);
+                    console.error(`🔍 [QUEST-CONFIG-SHARED] Full error:`, dbError);
+                    // Don't fail the operation - file system is still working
+                  }
+                } else {
+                  console.log(`📋 [QUEST-CONFIG-SHARED] Database save already completed for class ${uniqueGroupId}`);
                 }
                 
                 // Store the unique groupId in the user's database entry
