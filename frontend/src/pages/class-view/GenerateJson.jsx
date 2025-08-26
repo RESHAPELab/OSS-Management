@@ -1423,9 +1423,11 @@ Student can now start their quest journey!`);
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target.result;
+        console.log(`🚀 [README Modal] Opening README modal via file upload for class: ${classId}`);
         setReadmeContent(content);
         setShowReadmeModal(true);
         // Fetch student count when opening README modal
+        console.log(`📞 [README Modal] Calling fetchStudentCount...`);
         fetchStudentCount();
       };
       reader.readAsText(file);
@@ -2542,9 +2544,11 @@ Student can now start their quest journey!`);
                       variant="outlined"
                       startIcon={<DescriptionIcon />}
                       onClick={() => {
+                        console.log(`🚀 [README Modal] Opening README modal for class: ${classId}`);
                         setReadmeContent(jsonContent.readme);
                         setShowReadmeModal(true);
                         // Fetch student count when opening README modal
+                        console.log(`📞 [README Modal] Calling fetchStudentCount...`);
                         fetchStudentCount();
                       }}
                       sx={{
