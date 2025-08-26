@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, getCollectedInfoForClass } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, updateReadmeAcrossRepos, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, getCollectedInfoForClass } = require("../controllers/groupController")
 const { generateHint } = require("../controllers/aiController")
 const { getStudents } = require("../controllers/studentController")
 
@@ -27,6 +27,7 @@ router.route("/:professorID/group/:groupID/hint/:hintID").put(updateHint).delete
 
 router.route("/:groupId/students").get(getStudents);
 router.route("/:groupId/readme").post(saveGroupReadme).get(getGroupReadme);
+router.route("/:groupId/readme/batch-update").post(updateReadmeAcrossRepos);
 
 // Quest Order Management Routes
 router.route("/:groupId/quest-order").post(saveQuestOrder).get(getQuestOrder);

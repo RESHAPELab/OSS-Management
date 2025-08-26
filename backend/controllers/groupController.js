@@ -959,6 +959,220 @@ const getGroupReadme = async (req, res) => {
     }
 };
 
+// Batch update README across all student repositories
+const updateReadmeAcrossRepos = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { content, fileName, pushToRepos = false } = req.body;
+
+        // Allow empty string to clear the first section; only reject undefined/null
+        if (content === undefined || content === null) {
+            return res.status(400).json({ message: "README content is required" });
+        }
+
+        // Check if group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Save README to database first
+        let readme = await Readme.findOne({ group: groupId });
+        
+        if (readme) {
+            readme.content = content; // may be empty string to clear first section
+            readme.fileName = fileName || 'README.md';
+        } else {
+            readme = new Readme({
+                group: groupId,
+                content: content, // may be empty
+                fileName: fileName || 'README.md'
+            });
+        }
+
+        await readme.save();
+
+        // If pushToRepos is true, update all student repositories
+        if (pushToRepos) {
+            console.log(`🚀 [BATCH-README] Starting batch README update for class: ${group.groupName}`);
+            
+            // Import required modules for GitHub operations
+            const axios = require('axios');
+            const { getGithubAppInstallationAccessToken } = require('../utils/botMessage');
+            
+            // Get GitHub access token
+            const accessToken = await getGithubAppInstallationAccessToken();
+            
+            // Format class name to match repository naming convention
+            const formattedClassName = group.groupName
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+            // Get organization from environment
+            const organizationGh = process.env.GITHUB_ORG;
+            if (!organizationGh) {
+                return res.status(500).json({ message: "GitHub organization not configured" });
+            }
+
+            // Fetch all repositories in the organization
+            console.log(`📋 [BATCH-README] Fetching repositories from ${organizationGh}`);
+            const reposResponse = await axios.get(
+                `https://api.github.com/orgs/${organizationGh}/repos`,
+                {
+                    headers: {
+                        Authorization: `token ${accessToken}`,
+                        Accept: 'application/vnd.github.v3+json',
+                        'User-Agent': 'OSS-Management-Backend'
+                    }
+                }
+            );
+
+            // Filter repositories to only those for this class
+            const classRepos = reposResponse.data.filter(repo => 
+                repo.name.endsWith(`-${formattedClassName}`)
+            );
+
+            console.log(`📊 [BATCH-README] Found ${classRepos.length} repositories for class: ${group.groupName}`);
+
+            const results = {
+                successful: [],
+                failed: [],
+                total: classRepos.length
+            };
+
+            // Define the boundary marker for splitting sections
+            const sectionBoundary = '----\n*This README is automatically updated as you progress through the course.*';
+            
+            // Process each repository
+            for (const repo of classRepos) {
+                const repoName = repo.name;
+                const username = repoName.replace(`-${formattedClassName}`, '');
+                
+                try {
+                    console.log(`📝 [BATCH-README] Processing repository: ${repoName}`);
+                    
+                    // Fetch current README content
+                    let currentReadmeContent = '';
+                    let currentReadmeSha = null;
+                    
+                    try {
+                        const currentReadmeResponse = await axios.get(
+                            `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
+                            {
+                                headers: {
+                                    Authorization: `token ${accessToken}`,
+                                    Accept: 'application/vnd.github.v3+json',
+                                    'User-Agent': 'OSS-Management-Backend'
+                                }
+                            }
+                        );
+                        
+                        currentReadmeContent = Buffer.from(currentReadmeResponse.data.content, 'base64').toString('utf-8');
+                        currentReadmeSha = currentReadmeResponse.data.sha;
+                        console.log(`📄 [BATCH-README] Current README found for ${repoName}, length: ${currentReadmeContent.length}`);
+                    } catch (fetchError) {
+                        if (fetchError.response?.status === 404) {
+                            console.log(`📄 [BATCH-README] No existing README found for ${repoName}, will create new one`);
+                        } else {
+                            throw fetchError;
+                        }
+                    }
+
+                    // Split the current README into sections
+                    let firstSection = content; // New instructor content
+                    let secondSection = '';
+
+                    if (currentReadmeContent && currentReadmeContent.includes(sectionBoundary)) {
+                        // Preserve existing second section
+                        const sections = currentReadmeContent.split(sectionBoundary);
+                        if (sections.length > 1) {
+                            secondSection = sectionBoundary + sections.slice(1).join(sectionBoundary);
+                            console.log(`🔧 [BATCH-README] Preserving existing progress section for ${repoName}`);
+                        }
+                    } else {
+                        // Add default progress section if none exists
+                        secondSection = `\n\n${sectionBoundary}`;
+                        console.log(`🔧 [BATCH-README] Adding default progress section for ${repoName}`);
+                    }
+
+                    // Combine sections
+                    const newReadmeContent = firstSection + secondSection;
+
+                    // Update the README file
+                    const updatePayload = {
+                        message: `Update README - instructor content updated`,
+                        content: Buffer.from(newReadmeContent).toString('base64'),
+                        branch: 'main'
+                    };
+
+                    if (currentReadmeSha) {
+                        updatePayload.sha = currentReadmeSha;
+                    }
+
+                    await axios.put(
+                        `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
+                        updatePayload,
+                        {
+                            headers: {
+                                Authorization: `token ${accessToken}`,
+                                Accept: 'application/vnd.github.v3+json',
+                                'User-Agent': 'OSS-Management-Backend'
+                            }
+                        }
+                    );
+
+                    console.log(`✅ [BATCH-README] Successfully updated README for ${repoName}`);
+                    results.successful.push({ username, repoName });
+                    
+                } catch (error) {
+                    console.error(`❌ [BATCH-README] Failed to update README for ${repoName}:`, error.message);
+                    results.failed.push({ 
+                        username, 
+                        repoName, 
+                        error: error.response?.data?.message || error.message 
+                    });
+                }
+            }
+
+            console.log(`🎉 [BATCH-README] Batch update completed. Success: ${results.successful.length}, Failed: ${results.failed.length}`);
+
+            return res.status(200).json({
+                message: "README saved and batch update completed",
+                readme: {
+                    id: readme._id,
+                    fileName: readme.fileName,
+                    contentLength: readme.content.length
+                },
+                batchUpdate: {
+                    enabled: true,
+                    results: results
+                }
+            });
+        }
+
+        // Standard response if not pushing to repos
+        res.status(200).json({
+            message: "README saved successfully",
+            readme: {
+                id: readme._id,
+                fileName: readme.fileName,
+                contentLength: readme.content.length
+            },
+            batchUpdate: {
+                enabled: false
+            }
+        });
+
+    } catch (error) {
+        console.error("Error in batch README update:", error);
+        res.status(500).json({ 
+            message: "Error updating README", 
+            error: error.message 
+        });
+    }
+};
+
 // Quest Order Management Functions
 const saveQuestOrder = async (req, res) => {
     try {
@@ -1826,6 +2040,7 @@ module.exports = {
     getHint,
     saveGroupReadme,
     getGroupReadme,
+    updateReadmeAcrossRepos,
     saveQuestOrder,
     getQuestOrder,
     resetQuestOrder,

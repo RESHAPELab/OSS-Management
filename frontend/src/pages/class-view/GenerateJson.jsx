@@ -32,6 +32,7 @@ import {
   AccordionDetails,
   Tooltip,
   CircularProgress,
+  LinearProgress,
   ListSubheader,
   Switch,
   Table,
@@ -87,6 +88,11 @@ const GenerateJson = () => {
   const [showJsonPreview, setShowJsonPreview] = useState(false);
   const [showReadmeModal, setShowReadmeModal] = useState(false);
   const [readmeContent, setReadmeContent] = useState("");
+  const [isBatchUpdating, setIsBatchUpdating] = useState(false);
+  const [batchUpdateStatus, setBatchUpdateStatus] = useState("");
+  const [showBatchUpdateConfirm, setShowBatchUpdateConfirm] = useState(false);
+  const [showRemoveReadmeConfirm, setShowRemoveReadmeConfirm] = useState(false);
+  const [studentCount, setStudentCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
@@ -1436,6 +1442,73 @@ Student can now start their quest journey!`);
     setShowReadmeModal(false);
   };
 
+  // New function to handle batch README update
+  const handleReadmeSaveAndPublish = async () => {
+    setShowBatchUpdateConfirm(false);
+    setIsBatchUpdating(true);
+    setBatchUpdateStatus("Saving README and updating all student repositories...");
+
+    try {
+      // First save the README locally
+      setJsonContent((prev) => ({
+        ...prev,
+        readme: readmeContent,
+      }));
+
+      // Call the new batch update endpoint
+      const response = await axios.post(
+        `${API_BASE_URL}/api/group/${classId}/readme/batch-update`,
+        {
+          content: readmeContent,
+          fileName: 'README.md',
+          pushToRepos: true
+        }
+      );
+
+      if (response.data.batchUpdate && response.data.batchUpdate.results) {
+        const { successful, failed, total } = response.data.batchUpdate.results;
+        setBatchUpdateStatus(
+          `✅ Batch update completed! ${successful.length}/${total} repositories updated successfully.` +
+          (failed.length > 0 ? ` ${failed.length} failed.` : '')
+        );
+      } else {
+        setBatchUpdateStatus("✅ README saved successfully!");
+      }
+      
+      // Auto-close after a delay
+      setTimeout(() => {
+        setShowReadmeModal(false);
+        setIsBatchUpdating(false);
+        setBatchUpdateStatus("");
+      }, 3000);
+
+    } catch (error) {
+      console.error("Error updating README across repositories:", error);
+      setBatchUpdateStatus("❌ Error updating repositories. Please try again.");
+      setIsBatchUpdating(false);
+    }
+  };
+
+  // Fetch student count when component loads
+  const fetchStudentCount = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/students`);
+      if (response.data && response.data.students) {
+        setStudentCount(response.data.students.length);
+      }
+    } catch (error) {
+      console.error("Error fetching student count:", error);
+      setStudentCount(0);
+    }
+  };
+
+  // Add to useEffect to fetch student count
+  useEffect(() => {
+    if (classId) {
+      fetchStudentCount();
+    }
+  }, [classId]);
+
   const handleReadmeRemove = () => {
     setJsonContent((prev) => {
       const newContent = { ...prev };
@@ -1443,6 +1516,47 @@ Student can now start their quest journey!`);
       return newContent;
     });
     setReadmeContent("");
+  };
+
+  const handleRemoveAndPublishEmpty = async () => {
+    setShowRemoveReadmeConfirm(false);
+    setIsBatchUpdating(true);
+    setBatchUpdateStatus("Removing README and publishing empty instructor section across all student repositories...");
+
+    try {
+      // Clear local config first
+      handleReadmeRemove();
+
+      // Publish empty content for first section, preserving second section boundary
+      const response = await axios.post(
+        `${API_BASE_URL}/api/group/${classId}/readme/batch-update`,
+        {
+          content: "",
+          fileName: 'README.md',
+          pushToRepos: true
+        }
+      );
+
+      if (response.data.batchUpdate && response.data.batchUpdate.results) {
+        const { successful, failed, total } = response.data.batchUpdate.results;
+        setBatchUpdateStatus(
+          `✅ README removed. ${successful.length}/${total} repositories updated.` +
+          (failed.length > 0 ? ` ${failed.length} failed.` : '')
+        );
+      } else {
+        setBatchUpdateStatus("✅ README removed successfully!");
+      }
+
+      setTimeout(() => {
+        setShowReadmeModal(false);
+        setIsBatchUpdating(false);
+        setBatchUpdateStatus("");
+      }, 2500);
+    } catch (error) {
+      console.error("Error removing README across repositories:", error);
+      setBatchUpdateStatus("❌ Error removing README across repositories.");
+      setIsBatchUpdating(false);
+    }
   };
 
   // Quest management functions
@@ -6168,6 +6282,25 @@ Good luck! 🚀"
               </Typography>
             </Box>
           </DialogContent>
+          <DialogContent sx={{ pt: 0 }}>
+            {/* Show batch update status if active */}
+            {isBatchUpdating && (
+              <Box sx={{ width: '100%', mb: 2 }}>
+                <LinearProgress sx={{ mb: 1 }} />
+                <Typography variant="body2" color="text.secondary" textAlign="center">
+                  {batchUpdateStatus}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Success status display */}
+            {batchUpdateStatus && !isBatchUpdating && (
+              <Alert severity={batchUpdateStatus.includes('❌') ? 'error' : 'success'} sx={{ mb: 2, width: '100%' }}>
+                {batchUpdateStatus}
+              </Alert>
+            )}
+          </DialogContent>
+
           <DialogActions sx={{ p: 3, pt: 2, borderTop: "1px solid #e0e0e0" }}>
             {/* Hidden input for uploading new README */}
             <input
@@ -6187,66 +6320,193 @@ Good luck! 🚀"
                 e.target.value = "";
               }}
             />
-            {/* Save first */}
-            <Button
-              onClick={handleReadmeSave}
-              variant="contained"
-              disabled={!readmeContent.trim()}
-              sx={{
-                bgcolor: "#2196f3",
-                borderRadius: 4,
-                fontWeight: "bold",
-                px: 3,
-                py: 1,
-                boxShadow: "none",
-                "&:hover": { bgcolor: "#1976d2", boxShadow: "none" },
-              }}
-            >
-              Save README
+
+            {/* Button container */}
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end', width: '100%' }}>
+              {/* New README File upload */}
+              <label htmlFor="readme-replace-upload">
+                <Button
+                  variant="outlined"
+                  disabled={isBatchUpdating}
+                  sx={{
+                    textTransform: "none",
+                    borderRadius: 4,
+                    fontWeight: "bold",
+                    px: 3,
+                    py: 1,
+                    boxShadow: "none",
+                    "&:hover": { boxShadow: "none" },
+                  }}
+                >
+                  New README File
+                </Button>
+              </label>
+
+              {/* Save locally only */}
+              <Button
+                onClick={handleReadmeSave}
+                variant="outlined"
+                disabled={!readmeContent.trim() || isBatchUpdating}
+                sx={{
+                  borderRadius: 4,
+                  fontWeight: "bold",
+                  px: 3,
+                  py: 1,
+                  boxShadow: "none",
+                  "&:hover": { boxShadow: "none" },
+                }}
+              >
+                Save to Config
+              </Button>
+
+              {/* Save and publish to all repos */}
+              <Button
+                onClick={() => setShowBatchUpdateConfirm(true)}
+                variant="contained"
+                disabled={!readmeContent.trim() || isBatchUpdating}
+                sx={{
+                  bgcolor: "#4caf50",
+                  borderRadius: 4,
+                  fontWeight: "bold",
+                  px: 3,
+                  py: 1,
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: "#388e3c", boxShadow: "none" },
+                }}
+              >
+                {isBatchUpdating ? (
+                  <>
+                    <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+                    Publishing...
+                  </>
+                ) : (
+                  `Save & Publish to Students (${studentCount})`
+                )}
+              </Button>
+
+              {/* Remove README */}
+              {jsonContent.readme !== undefined && (
+                <Button
+                  color="error"
+                  variant="outlined"
+                  disabled={isBatchUpdating}
+                  onClick={() => setShowRemoveReadmeConfirm(true)}
+                  sx={{
+                    borderRadius: 4,
+                    fontWeight: "bold",
+                    px: 3,
+                    py: 1,
+                    boxShadow: "none",
+                    "&:hover": { boxShadow: "none" },
+                  }}
+                >
+                  Remove README
+                </Button>
+              )}
+
+              {/* Cancel */}
+              <Button
+                onClick={() => setShowReadmeModal(false)}
+                disabled={isBatchUpdating}
+                sx={{
+                  borderRadius: 4,
+                  fontWeight: "bold",
+                  px: 3,
+                  py: 1,
+                }}
+              >
+                Cancel
+              </Button>
+            </Box>
+          </DialogActions>
+        </Dialog>
+
+        {/* Remove README Confirmation Dialog */}
+        <Dialog
+          open={showRemoveReadmeConfirm}
+          onClose={() => setShowRemoveReadmeConfirm(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              🗑️ Remove README for All Students
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <AlertTitle>This will clear the instructor section</AlertTitle>
+              Publishing this change will:
+              <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+                <li>Set the README instructor section to empty</li>
+                <li>Preserve any existing progress/links section</li>
+                <li>Apply to all {studentCount} student repositories</li>
+              </ul>
+            </Alert>
+            <Typography variant="body1" sx={{ mb: 1 }}>
+              Are you sure you want to remove the README instructor content for all students?
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 3 }}>
+            <Button onClick={() => setShowRemoveReadmeConfirm(false)} sx={{ borderRadius: 4, fontWeight: 'bold' }}>
+              Cancel
             </Button>
-            {/* New README File upload */}
-            <label htmlFor="readme-replace-upload">
-              <Button
-                variant="outlined"
-                sx={{
-                  textTransform: "none",
-                  borderRadius: 4,
-                  fontWeight: "bold",
-                  px: 3,
-                  py: 1,
-                  boxShadow: "none",
-                  "&:hover": { boxShadow: "none" },
-                }}
-              >
-                New README File
-              </Button>
-            </label>
-            {jsonContent.readme && (
-              <Button
-                color="error"
-                variant="outlined"
-                onClick={() => {
-                  handleReadmeRemove();
-                  setShowReadmeModal(false);
-                }}
-                sx={{
-                  borderRadius: 4,
-                  fontWeight: "bold",
-                  px: 3,
-                  py: 1,
-                  boxShadow: "none",
-                  "&:hover": { boxShadow: "none" },
-                }}
-              >
-                Remove README
-              </Button>
-            )}
-            {/* Cancel last */}
+            <Button onClick={handleRemoveAndPublishEmpty} variant="contained" color="error" sx={{ borderRadius: 4, fontWeight: 'bold' }}>
+              Yes, Remove & Publish
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Batch Update Confirmation Dialog */}
+        <Dialog
+          open={showBatchUpdateConfirm}
+          onClose={() => setShowBatchUpdateConfirm(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              📢 Publish README to All Students
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mb: 3 }}>
+              <AlertTitle>⚠️ This will update existing student repositories</AlertTitle>
+              This action will:
+              <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+                <li>Save the README content to your class configuration</li>
+                <li>Update README files in all {studentCount} student repositories</li>
+                <li>Preserve existing progress sections (links, scores, etc.)</li>
+                <li>Only replace the instructor content (first section)</li>
+              </ul>
+            </Alert>
+            
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              Are you sure you want to publish this README to all {studentCount} student repositories?
+            </Typography>
+            
+            <Typography variant="body2" color="text.secondary">
+              💡 <strong>Tip:</strong> Student progress sections will remain unchanged. Only the instructor content will be updated.
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ p: 3 }}>
             <Button
-              onClick={() => setShowReadmeModal(false)}
-              sx={{ borderRadius: 4, fontWeight: "bold", px: 3, py: 1 }}
+              onClick={() => setShowBatchUpdateConfirm(false)}
+              sx={{ borderRadius: 4, fontWeight: "bold" }}
             >
               Cancel
+            </Button>
+            <Button
+              onClick={handleReadmeSaveAndPublish}
+              variant="contained"
+              sx={{
+                bgcolor: "#4caf50",
+                borderRadius: 4,
+                fontWeight: "bold",
+                "&:hover": { bgcolor: "#388e3c" },
+              }}
+            >
+              Yes, Publish to All Students
             </Button>
           </DialogActions>
         </Dialog>
