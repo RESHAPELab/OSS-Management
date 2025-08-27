@@ -633,17 +633,20 @@ const deployQuestToClass = async (req, res) => {
             updatedStudents++;
 
             // Check if student has completed all previous quests
-            const completed = student.user_data.completed || [];
-            const hasCompletedPrevious = nextQuestNumber === 1 || completed.includes(`Q${nextQuestNumber - 1}`);
+            // Note: completed is an OBJECT, not an array, like { Q1: { title, points, xp }, Q2: { ... } }
+            const completed = student.user_data.completed || {};
+            const completedQuestIds = Object.keys(completed);
+            const previousQuestId = `Q${nextQuestNumber - 1}`;
+            const hasCompletedPrevious = nextQuestNumber === 1 || completedQuestIds.includes(previousQuestId);
             
             if (hasCompletedPrevious) {
                 studentsReadyForNewQuest.push({
                     username: student._id,
                     repo: student._id.replace(`-${formattedClassName}`, '')
                 });
-                console.log(`🎯 [QUEST-DEPLOYMENT] Student ready for ${newQuestId}: ${student._id} (completed: ${completed.join(', ')})`);
+                console.log(`🎯 [QUEST-DEPLOYMENT] Student ready for ${newQuestId}: ${student._id} (completed: ${completedQuestIds.join(', ')})`);
             } else {
-                console.log(`⏳ [QUEST-DEPLOYMENT] Student not ready for ${newQuestId}: ${student._id} (completed: ${completed.join(', ')}, needs: Q${nextQuestNumber - 1})`);
+                console.log(`⏳ [QUEST-DEPLOYMENT] Student not ready for ${newQuestId}: ${student._id} (completed: ${completedQuestIds.join(', ')}, needs: ${previousQuestId})`);
             }
         }
         
@@ -659,52 +662,118 @@ const deployQuestToClass = async (req, res) => {
 
         // 10. Clear cache for old config to force reload
         if (existingConfig.groupId !== newConfigId) {
-            console.log(`🔍 [QUEST-DEPLOYMENT] Step 9: Clearing old configuration cache...`);
-            try {
-                const { getGithubAppInstallationAccessToken } = require('../utils/botMessage');
-                const axios = require('axios');
+                    console.log(`🔍 [QUEST-DEPLOYMENT] Step 9: Clearing old configuration cache...`);
+        try {
+            const { getGithubAppInstallationAccessToken } = require('../utils/botMessage');
+            const axios = require('axios');
+            
+            console.log(`🔑 [QUEST-DEPLOYMENT] Getting GitHub App access token for cache clearing...`);
+            const accessToken = await getGithubAppInstallationAccessToken();
+            console.log(`✅ [QUEST-DEPLOYMENT] GitHub access token obtained for cache clearing`);
+            
+            // Find any student repo to post cache command
+            if (studentsToUpdate.length > 0) {
+                const sampleStudent = studentsToUpdate[0];
+                const sampleRepo = sampleStudent._id;
+                console.log(`📋 [QUEST-DEPLOYMENT] Using sample repo for cache command: ${sampleRepo}`);
                 
-                console.log(`🔑 [QUEST-DEPLOYMENT] Getting GitHub App access token for cache clearing...`);
-                const accessToken = await getGithubAppInstallationAccessToken();
-                console.log(`✅ [QUEST-DEPLOYMENT] GitHub access token obtained for cache clearing`);
-                
-                // Find any student repo to post cache command
-                if (studentsToUpdate.length > 0) {
-                    const sampleStudent = studentsToUpdate[0];
-                    const sampleRepo = sampleStudent._id;
-                    console.log(`📋 [QUEST-DEPLOYMENT] Using sample repo for cache command: ${sampleRepo}`);
+                const issuesResponse = await axios.get(`https://api.github.com/repos/OSS-Doorway-Dev/${sampleRepo}/issues`, {
+                    headers: {
+                        'Authorization': `token ${accessToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'OSS-Management-Backend'
+                    },
+                    params: { state: 'open', sort: 'updated', direction: 'desc' }
+                });
+
+                if (issuesResponse.data && issuesResponse.data.length > 0) {
+                    const issue = issuesResponse.data[0];
+                    console.log(`💬 [QUEST-DEPLOYMENT] Posting cache reload command to issue #${issue.number}: /cache reload ${existingConfig.groupId}`);
                     
-                    const issuesResponse = await axios.get(`https://api.github.com/repos/OSS-Doorway-Dev/${sampleRepo}/issues`, {
+                    await axios.post(`https://api.github.com/repos/OSS-Doorway-Dev/${sampleRepo}/issues/${issue.number}/comments`, {
+                        body: `/cache reload ${existingConfig.groupId}`
+                    }, {
                         headers: {
                             'Authorization': `token ${accessToken}`,
                             'Accept': 'application/vnd.github.v3+json',
                             'User-Agent': 'OSS-Management-Backend'
-                        },
-                        params: { state: 'open', sort: 'updated', direction: 'desc' }
+                        }
                     });
-
-                    if (issuesResponse.data && issuesResponse.data.length > 0) {
-                        const issue = issuesResponse.data[0];
-                        console.log(`💬 [QUEST-DEPLOYMENT] Posting cache reload command to issue #${issue.number}: /cache reload ${existingConfig.groupId}`);
+                    
+                    console.log(`✅ [QUEST-DEPLOYMENT] Cache reload command posted successfully`);
+                } else {
+                    console.log(`⚠️ [QUEST-DEPLOYMENT] No open issues found in ${sampleRepo} for cache command`);
+                }
+            }
+            
+            // AUTO-UNLOCK: Now unlock the new quest for students who are ready
+            if (studentsReadyForNewQuest.length > 0) {
+                console.log(`🚀 [QUEST-DEPLOYMENT] Step 10: Auto-unlocking ${newQuestId} for ${studentsReadyForNewQuest.length} ready students...`);
+                
+                let successCount = 0;
+                let unlockErrors = [];
+                
+                for (const student of studentsReadyForNewQuest) {
+                    try {
+                        const studentRepo = student.username; // Full repo name like "username-classname"
+                        console.log(`🔓 [QUEST-DEPLOYMENT] Auto-unlocking ${newQuestId} for ${studentRepo}...`);
                         
-                        await axios.post(`https://api.github.com/repos/OSS-Doorway-Dev/${sampleRepo}/issues/${issue.number}/comments`, {
-                            body: `/cache reload ${existingConfig.groupId}`
-                        }, {
+                        // Get open issues for this student's repo
+                        const studentIssuesResponse = await axios.get(`https://api.github.com/repos/OSS-Doorway-Dev/${studentRepo}/issues`, {
                             headers: {
                                 'Authorization': `token ${accessToken}`,
                                 'Accept': 'application/vnd.github.v3+json',
                                 'User-Agent': 'OSS-Management-Backend'
-                            }
+                            },
+                            params: { state: 'open', sort: 'updated', direction: 'desc' }
                         });
-                        
-                        console.log(`✅ [QUEST-DEPLOYMENT] Cache reload command posted successfully`);
-                    } else {
-                        console.log(`⚠️ [QUEST-DEPLOYMENT] No open issues found in ${sampleRepo} for cache command`);
+
+                        if (studentIssuesResponse.data && studentIssuesResponse.data.length > 0) {
+                            const studentIssue = studentIssuesResponse.data[0];
+                            console.log(`📝 [QUEST-DEPLOYMENT] Found issue #${studentIssue.number} for ${studentRepo}: "${studentIssue.title}"`);
+                            
+                            // Post unlock command
+                            await axios.post(`https://api.github.com/repos/OSS-Doorway-Dev/${studentRepo}/issues/${studentIssue.number}/comments`, {
+                                body: `/accept ${newQuestId}`
+                            }, {
+                                headers: {
+                                    'Authorization': `token ${accessToken}`,
+                                    'Accept': 'application/vnd.github.v3+json',
+                                    'User-Agent': 'OSS-Management-Backend'
+                                }
+                            });
+                            
+                            successCount++;
+                            console.log(`✅ [QUEST-DEPLOYMENT] Successfully auto-unlocked ${newQuestId} for ${studentRepo}`);
+                        } else {
+                            const errorMsg = `${studentRepo}: No open issues found for auto-unlock`;
+                            console.log(`⚠️ [QUEST-DEPLOYMENT] ${errorMsg}`);
+                            unlockErrors.push(errorMsg);
+                        }
+                    } catch (studentError) {
+                        const errorMsg = `${student.username}: ${studentError.message}`;
+                        console.error(`❌ [QUEST-DEPLOYMENT] Error auto-unlocking for ${student.username}:`, studentError.message);
+                        unlockErrors.push(errorMsg);
                     }
                 }
-            } catch (cacheError) {
-                console.error(`❌ [QUEST-DEPLOYMENT] Failed to clear cache, but deployment succeeded:`, cacheError.message);
+                
+                console.log(`🎯 [QUEST-DEPLOYMENT] Auto-unlock summary:`, {
+                    targetStudents: studentsReadyForNewQuest.length,
+                    successCount,
+                    errorCount: unlockErrors.length,
+                    successRate: `${Math.round((successCount / studentsReadyForNewQuest.length) * 100)}%`
+                });
+                
+                if (unlockErrors.length > 0) {
+                    console.log(`⚠️ [QUEST-DEPLOYMENT] Auto-unlock errors:`, unlockErrors);
+                }
+            } else {
+                console.log(`ℹ️ [QUEST-DEPLOYMENT] No students ready for auto-unlock of ${newQuestId}`);
             }
+            
+        } catch (cacheError) {
+            console.error(`❌ [QUEST-DEPLOYMENT] Failed to clear cache, but deployment succeeded:`, cacheError.message);
+        }
         } else {
             console.log(`ℹ️ [QUEST-DEPLOYMENT] No cache clearing needed (same config ID)`);
         }
