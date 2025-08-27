@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, updateReadmeAcrossRepos, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, getCollectedInfoForClass } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, updateReadmeAcrossRepos, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, saveDraftQuestConfig, getDraftQuestConfig, deleteDraftQuest, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, getCollectedInfoForClass, createTestRepo } = require("../controllers/groupController")
 const { generateHint } = require("../controllers/aiController")
 const { getStudents } = require("../controllers/studentController")
 
@@ -38,6 +38,13 @@ router.get('/repo/:repoName/class', getClassIdFromRepo);
 
 // Quest JSON Configuration Routes
 router.route("/:classId/quest-json-config").post(saveQuestJsonConfig).get(getQuestJsonConfig);
+
+// Draft Quest Configuration Routes
+router.route("/:classId/draft-quest-config").post(saveDraftQuestConfig).get(getDraftQuestConfig);
+router.route("/:classId/draft-quest-config/:questIndex").delete(deleteDraftQuest);
+
+// Test repository creation using draft quest configuration
+router.route("/:classId/create-test-repo").post(createTestRepo);
 router.route("/:classId/stored-values").get(getStoredValuesForClass);
 router.route("/:classId/stored-values/backend").get(getStoredValuesBackend);
 router.route("/:classId/stored-values").post(upsertStoredValue);

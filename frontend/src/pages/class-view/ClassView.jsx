@@ -147,6 +147,35 @@ const ClassView = () => {
     // Add state to track total repos fetched
     const [totalReposFetched, setTotalReposFetched] = useState(null);
 
+    const handleUnlockQ2 = async (studentUsername) => {
+        try {
+            const formattedClassName = (classInfo.groupName || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            const repoName = `${studentUsername}-${formattedClassName}`;
+            
+            console.log('🚀 Unlocking Q2 for:', { 
+                org: organizationGh, 
+                repoName, 
+                questId: 'Q2',
+                studentUsername,
+                formattedClassName
+            });
+            
+            const response = await axios.post(`${baseURL}/api/gamification/unlockQuest`, {
+                org: organizationGh,
+                repoName,
+                questId: 'Q2'
+            });
+            
+            alert(`✅ Sent unlock command for Q2 to ${organizationGh}/${repoName}!\nIssue: #${response.data.issueNumber} - ${response.data.issueTitle}`);
+        } catch (err) {
+            console.error('Failed to unlock Q2:', err?.response?.data || err.message);
+            alert(`❌ Failed to unlock Q2: ${err?.response?.data?.message || err.message}`);
+        }
+    };
+
     useEffect(() => {
         if (authUser && classId) {
             // console.log("logged in user:", authUser.profName) // Removed
@@ -2322,6 +2351,34 @@ const ClassView = () => {
                                         })}
                                     </List>
                                 )}
+                            </Box>
+                        </Card>
+
+                        {/* Force-Unlock Q2 Section */}
+                        <Card sx={{ mb: 4, borderRadius: 4, boxShadow: 'none' }}>
+                            <Box p={3}>
+                                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 700 }}>
+                                    Force Unlock Q2
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    Enter a GitHub username to unlock Q2 for their class repository.
+                                </Typography>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+                                    <TextField
+                                        size="small"
+                                        placeholder="GitHub username (e.g., dfscsfcscs)"
+                                        value={currentProcessingUser}
+                                        onChange={(e) => setCurrentProcessingUser(e.target.value)}
+                                    />
+                                    <Button
+                                        variant="contained"
+                                        color="secondary"
+                                        disabled={!organizationGh || !classInfo?.groupName || !currentProcessingUser}
+                                        onClick={() => handleUnlockQ2(currentProcessingUser)}
+                                    >
+                                        Unlock Q2
+                                    </Button>
+                                </Stack>
                             </Box>
                         </Card>
 

@@ -1621,6 +1621,169 @@ const getQuestJsonConfig = async (req, res) => {
     }
 };
 
+// Save draft quest configuration for a class
+const saveDraftQuestConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const { draftQuestConfig } = req.body;
+
+        console.log(`💾 [saveDraftQuestConfig] Saving draft quest JSON for class: ${classId}`);
+        console.log(`📊 [saveDraftQuestConfig] JSON size: ${JSON.stringify(draftQuestConfig).length} characters`);
+
+        if (!draftQuestConfig) {
+            return res.status(400).json({
+                success: false,
+                message: 'Draft quest configuration is required'
+            });
+        }
+
+        // Find and update the group
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        // Update draft quest configuration
+        group.draftQuestConfig = draftQuestConfig;
+        group.draftQuestLastUpdated = new Date();
+        await group.save();
+
+        console.log(`✅ [saveDraftQuestConfig] Successfully saved draft quest JSON for class: ${group.groupName}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Draft quest configuration saved successfully',
+            data: {
+                classId: group._id,
+                className: group.groupName,
+                questCount: draftQuestConfig.questSequence?.length || 0,
+                lastUpdated: group.draftQuestLastUpdated
+            }
+        });
+
+    } catch (error) {
+        console.error('Error saving draft quest config:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error saving draft quest configuration',
+            error: error.message
+        });
+    }
+};
+
+// Get draft quest configuration for a class
+const getDraftQuestConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+
+        console.log(`📖 [getDraftQuestConfig] Retrieving draft quest JSON for class: ${classId}`);
+
+        // Find the group and return draft quest JSON config
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        if (!group.draftQuestConfig) {
+            console.log(`📭 [getDraftQuestConfig] No draft quest JSON found for class: ${group.groupName}`);
+            return res.status(200).json({
+                success: true,
+                message: 'No draft quest configuration found',
+                data: {
+                    draftQuestConfig: { questSequence: [] },
+                    lastUpdated: null,
+                    hasConfig: false
+                }
+            });
+        }
+
+        console.log(`✅ [getDraftQuestConfig] Successfully retrieved draft quest JSON for class: ${group.groupName}`);
+        console.log(`📊 [getDraftQuestConfig] Quest count: ${group.draftQuestConfig.questSequence?.length || 0}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Draft quest configuration retrieved successfully',
+            data: {
+                draftQuestConfig: group.draftQuestConfig,
+                lastUpdated: group.draftQuestLastUpdated,
+                hasConfig: true,
+                questCount: group.draftQuestConfig.questSequence?.length || 0,
+                className: group.groupName,
+                classCode: group.classCode
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting draft quest config:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving draft quest configuration',
+            error: error.message
+        });
+    }
+};
+
+// Delete a draft quest
+const deleteDraftQuest = async (req, res) => {
+    try {
+        const { classId, questIndex } = req.params;
+
+        console.log(`🗑️ [deleteDraftQuest] Deleting draft quest ${questIndex} for class: ${classId}`);
+
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        if (!group.draftQuestConfig || !group.draftQuestConfig.questSequence) {
+            return res.status(404).json({
+                success: false,
+                message: 'No draft quests found'
+            });
+        }
+
+        const questIndexNum = parseInt(questIndex, 10);
+        if (questIndexNum < 0 || questIndexNum >= group.draftQuestConfig.questSequence.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid quest index'
+            });
+        }
+
+        // Remove the quest at the specified index
+        group.draftQuestConfig.questSequence.splice(questIndexNum, 1);
+        group.draftQuestLastUpdated = new Date();
+        await group.save();
+
+        console.log(`✅ [deleteDraftQuest] Successfully deleted draft quest for class: ${group.groupName}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Draft quest deleted successfully',
+            data: {
+                questCount: group.draftQuestConfig.questSequence.length
+            }
+        });
+
+    } catch (error) {
+        console.error('Error deleting draft quest:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting draft quest',
+            error: error.message
+        });
+    }
+};
+
 // Upsert a stored value for a user in a class
 const upsertStoredValue = async (req, res) => {
     try {
@@ -2032,6 +2195,115 @@ const getCollectedInfoForClass = async (req, res) => {
     }
 };
 
+// Create test repository using draft quest configuration
+const createTestRepo = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { username, questConfig, isTestRepo } = req.body;
+
+    console.log(`🧪 [CREATE-TEST-REPO] Starting test repo creation for user: ${username}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Class ID: ${classId}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Is Test Repo: ${isTestRepo}`);
+
+    // Get the group to get the actual class name
+    const group = await Group.findById(classId);
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        message: 'Class not found'
+      });
+    }
+
+    // Create test class name with -test suffix
+    const actualClassName = group.groupName || group.className || "Unknown";
+    const testClassName = `${actualClassName}-test`;
+    
+    console.log(`🧪 [CREATE-TEST-REPO] Original class name: ${actualClassName}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Test class name: ${testClassName}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Quest config has ${questConfig?.questSequence?.length || 0} quests`);
+
+    // Create test-specific class ID to avoid conflicts with main system
+    const testClassId = `${classId}-test`;
+    
+    console.log(`🧪 [CREATE-TEST-REPO] Test class ID: ${testClassId}`);
+    
+    // Use the existing createCustomRepos function but with test parameters
+    const repoController = require('./repoController');
+    
+    // Prepare the request for the existing createCustomRepos function
+    const testReq = {
+      body: {
+        users: [username],
+        customSequence: questConfig, // Use draft quest configuration
+        className: testClassName, // Use test class name
+        classId: testClassId, // Use test-specific class ID
+        isTestRepo: true // Mark as test repository
+      }
+    };
+
+    // Create a mock response object to capture the result
+    let repoResult = null;
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => {
+          repoResult = { status: code, data };
+        }
+      }),
+      json: (data) => {
+        repoResult = { status: 200, data };
+      }
+    };
+
+    // Call the existing createCustomRepos function
+    await repoController.createCustomRepos(testReq, mockRes);
+
+    if (repoResult && repoResult.status === 200 && repoResult.data.results) {
+      const { successful, unsuccessful } = repoResult.data.results;
+      
+      if (successful && successful.length > 0) {
+        const successResult = successful[0];
+        // Format the repository URL
+        const formattedClassName = actualClassName.toLowerCase().replace(/\s+/g, '-');
+        const repoUrl = `https://github.com/OSS-Doorway-Dev/${username}-${formattedClassName}-test`;
+        
+        console.log(`✅ [CREATE-TEST-REPO] Test repository created successfully: ${repoUrl}`);
+        
+        return res.json({
+          success: true,
+          message: 'Test repository created successfully',
+          repositoryUrl: repoUrl,
+          repositoryName: `${username}-${formattedClassName}-test`,
+          className: testClassName,
+          questConfig: questConfig
+        });
+      } else if (unsuccessful && unsuccessful.length > 0) {
+        const error = unsuccessful[0];
+        console.error(`❌ [CREATE-TEST-REPO] Failed to create test repository: ${error.error}`);
+        
+        return res.status(400).json({
+          success: false,
+          message: error.error || 'Failed to create test repository'
+        });
+      }
+    }
+
+    // If we get here, something went wrong
+    console.error(`❌ [CREATE-TEST-REPO] Unexpected response from createCustomRepos`);
+    return res.status(500).json({
+      success: false,
+      message: 'Unexpected error creating test repository'
+    });
+
+  } catch (error) {
+    console.error('❌ [CREATE-TEST-REPO] Error creating test repository:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
     getProfessor, 
     createGroup,
@@ -2066,8 +2338,12 @@ module.exports = {
     getClassIdFromRepo,
     saveQuestJsonConfig,
     getQuestJsonConfig,
+    saveDraftQuestConfig,
+    getDraftQuestConfig,
+    deleteDraftQuest,
     getStoredValuesForClass,
     upsertStoredValue,
     getStoredValuesBackend,
-    getCollectedInfoForClass
+    getCollectedInfoForClass,
+    createTestRepo
 }

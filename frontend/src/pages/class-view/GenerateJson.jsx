@@ -62,6 +62,7 @@ import {
   AddCircleOutline as AddCircleOutlineIcon,
   AutoAwesome as AutoAwesomeIcon,
   Info as InfoIcon,
+  PlayArrow as PlayArrowIcon,
 } from "@mui/icons-material";
 import { useAuthContext } from "../../context/AuthContext";
 
@@ -106,6 +107,42 @@ const GenerateJson = () => {
   const [isLoadingCollectedInfo, setIsLoadingCollectedInfo] = useState(false);
   const [collectedInfoSummary, setCollectedInfoSummary] = useState(null);
   const [hasLoadedCollectedInfo, setHasLoadedCollectedInfo] = useState(false);
+  // Draft Quest System State
+  const [draftQuests, setDraftQuests] = useState({ questSequence: [] });
+  const [isDraftLoading, setIsDraftLoading] = useState(false);
+  const [draftSaveStatus, setDraftSaveStatus] = useState("");
+  const [showDraftJsonPreview, setShowDraftJsonPreview] = useState(false);
+  
+  // Normalized draft (for preview): fills sequenceNumber and metadata.prerequisite chain
+  const normalizedDraftForPreview = useMemo(() => {
+    try {
+      const seq = Array.isArray(draftQuests?.questSequence) ? draftQuests.questSequence : [];
+      const normalizedSequence = seq.map((q, idx, arr) => {
+        const prevQuestId = idx > 0 ? (arr[idx - 1]?.questId || null) : null;
+        const metadata = {
+          ...(q?.metadata || {}),
+          prerequisite: prevQuestId,
+          type: q?.metadata?.type || q?.questType || "custom",
+          title: q?.metadata?.title || q?.title || "",
+          description: q?.metadata?.description || q?.description || "",
+          sequenceNumber: idx
+        };
+        return {
+          ...q,
+          sequenceNumber: idx,
+          metadata
+        };
+      });
+      return { questSequence: normalizedSequence, map_repo_link: draftQuests?.map_repo_link };
+    } catch (e) {
+      return draftQuests;
+    }
+  }, [draftQuests]);
+  
+  // Test repositories state
+  const [testUsernames, setTestUsernames] = useState("");
+  const [testRepos, setTestRepos] = useState([]);
+  const [isCreatingTestRepos, setIsCreatingTestRepos] = useState(false);
   // 1. Add new state for multiple tasks in questFormData
   const [questFormData, setQuestFormData] = useState({
     title: "",
@@ -130,6 +167,12 @@ const GenerateJson = () => {
   const [showDeleteTaskDialog, setShowDeleteTaskDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [questToDeleteFrom, setQuestToDeleteFrom] = useState(null);
+
+  // Quest deployment dialog state
+  const [showDeployDialog, setShowDeployDialog] = useState(false);
+  const [questToDeploy, setQuestToDeploy] = useState(null);
+  const [deploymentStatus, setDeploymentStatus] = useState("");
+  const [isDeploying, setIsDeploying] = useState(false);
 
   // Initial JSON content with state management
   const [jsonContent, setJsonContent] = useState({
@@ -789,6 +832,297 @@ const GenerateJson = () => {
     });
   };
 
+  // Load draft quests configuration
+  const loadDraftQuests = async () => {
+    if (!classId) return;
+
+    try {
+      setIsDraftLoading(true);
+      console.log("🔄 Loading draft quests for class:", classId);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/group/${classId}/draft-quest-config`
+      );
+
+      if (response.data.success) {
+        const draftConfig = response.data.data.draftQuestConfig || { questSequence: [] };
+        setDraftQuests(draftConfig);
+        console.log("✅ Loaded draft quests:", draftConfig.questSequence?.length || 0);
+      }
+    } catch (error) {
+      console.error("Error loading draft quests:", error);
+      setDraftQuests({ questSequence: [] });
+    } finally {
+      setIsDraftLoading(false);
+    }
+  };
+
+  // Save draft quests configuration
+  const saveDraftQuests = async (newDraftQuests = draftQuests) => {
+    if (!classId) {
+      console.log("❌ [DRAFT-SAVE] No classId available");
+      return;
+    }
+
+    try {
+      setIsDraftLoading(true);
+      console.log("💾 [DRAFT-SAVE] Saving draft quests for class:", classId);
+      console.log("📊 [DRAFT-SAVE] Quest count:", newDraftQuests.questSequence?.length || 0);
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/group/${classId}/draft-quest-config`,
+        { draftQuestConfig: newDraftQuests }
+      );
+
+      if (response.data.success) {
+        console.log("✅ [DRAFT-SAVE] Draft quests saved successfully to backend");
+        setDraftSaveStatus("✅ Draft quests saved successfully!");
+        setTimeout(() => setDraftSaveStatus(""), 3000);
+      } else {
+        console.log("❌ [DRAFT-SAVE] Backend reported save failure:", response.data);
+        setDraftSaveStatus("❌ Failed to save draft quests");
+        setTimeout(() => setDraftSaveStatus(""), 3000);
+      }
+    } catch (error) {
+      console.error("❌ [DRAFT-SAVE] Error saving draft quests:", error);
+      if (error.response) {
+        console.error("❌ [DRAFT-SAVE] Response status:", error.response.status);
+        console.error("❌ [DRAFT-SAVE] Response data:", error.response.data);
+      }
+      setDraftSaveStatus("❌ Error saving draft quests");
+      setTimeout(() => setDraftSaveStatus(""), 3000);
+    } finally {
+      setIsDraftLoading(false);
+    }
+  };
+
+  // Delete a draft quest
+  const deleteDraftQuest = async (questIndex) => {
+    if (!classId) return;
+
+    try {
+      // Optimistically update the UI first
+      const updatedDraftQuests = {
+        ...draftQuests,
+        questSequence: draftQuests.questSequence.filter((_, index) => index !== questIndex)
+      };
+      setDraftQuests(updatedDraftQuests);
+      setDraftSaveStatus("🔄 Deleting draft quest...");
+
+      const response = await axios.delete(
+        `${API_BASE_URL}/api/group/${classId}/draft-quest-config/${questIndex}`
+      );
+
+      if (response.data.success) {
+        setDraftSaveStatus("✅ Draft quest deleted successfully!");
+        setTimeout(() => setDraftSaveStatus(""), 3000);
+      } else {
+        // If backend failed, reload to get correct state
+        await loadDraftQuests();
+        setDraftSaveStatus("❌ Failed to delete draft quest");
+        setTimeout(() => setDraftSaveStatus(""), 3000);
+      }
+    } catch (error) {
+      console.error("Error deleting draft quest:", error);
+      // Reload to get correct state
+      await loadDraftQuests();
+      setDraftSaveStatus("❌ Error deleting draft quest");
+      setTimeout(() => setDraftSaveStatus(""), 3000);
+    }
+  };
+
+  // Move quest from draft to main sequence - now shows deployment dialog
+  const moveDraftToMain = (questIndex) => {
+    const draftQuest = draftQuests.questSequence[questIndex];
+    if (!draftQuest) return;
+
+    // Calculate the next quest number
+    const nextQuestNumber = jsonContent.questSequence.length + 1;
+    
+    setQuestToDeploy({
+      ...draftQuest,
+      draftIndex: questIndex,
+      nextQuestId: `Q${nextQuestNumber}`
+    });
+    setShowDeployDialog(true);
+  };
+
+  // Handle the actual deployment after dialog confirmation
+  const handleDeployQuest = async () => {
+    if (!questToDeploy) return;
+    
+    console.log(`🚀 [FRONTEND] Starting quest deployment:`, {
+      title: questToDeploy.title,
+      draftIndex: questToDeploy.draftIndex,
+      nextQuestId: questToDeploy.nextQuestId,
+      classId
+    });
+    
+    setIsDeploying(true);
+    setDeploymentStatus("Deploying quest to class...");
+
+    try {
+      console.log(`📡 [FRONTEND] Calling backend deployment endpoint...`);
+      // Call the backend deployment endpoint
+      const response = await axios.post(`${API_BASE_URL}/api/gamification/deployQuest`, {
+        classId: classId,
+        draftQuestData: questToDeploy
+      });
+
+      const { newQuestId, studentsReadyForNewQuest } = response.data;
+      console.log(`✅ [FRONTEND] Backend deployment successful:`, response.data);
+      
+      setDeploymentStatus(`Successfully deployed ${newQuestId}! Found ${studentsReadyForNewQuest.length} students ready for the new quest.`);
+
+      // If students are ready, unlock the quest for them
+      if (studentsReadyForNewQuest.length > 0) {
+        console.log(`🔓 [FRONTEND] Unlocking quest for ${studentsReadyForNewQuest.length} ready students...`);
+        setDeploymentStatus(`Unlocking ${newQuestId} for ${studentsReadyForNewQuest.length} ready students...`);
+        
+        try {
+          const unlockResponse = await axios.post(`${API_BASE_URL}/api/gamification/unlockQuestForStudents`, {
+            org: "OSS-Doorway-Dev",
+            students: studentsReadyForNewQuest,
+            questId: newQuestId
+          });
+          
+          console.log(`✅ [FRONTEND] Quest unlock successful:`, unlockResponse.data);
+          setDeploymentStatus(`Quest deployed and unlocked for all ready students!`);
+        } catch (unlockError) {
+          console.error(`❌ [FRONTEND] Quest unlock failed:`, unlockError);
+          setDeploymentStatus(`Quest deployed but failed to unlock for some students. Check logs for details.`);
+        }
+      } else {
+        console.log(`ℹ️ [FRONTEND] No students ready for new quest - they will unlock automatically when they complete prerequisites`);
+      }
+
+      console.log(`🔄 [FRONTEND] Updating local state...`);
+      // Remove from draft quests
+      const updatedDraftQuests = {
+        ...draftQuests,
+        questSequence: draftQuests.questSequence.filter((_, index) => index !== questToDeploy.draftIndex)
+      };
+      setDraftQuests(updatedDraftQuests);
+      saveDraftQuests(updatedDraftQuests);
+      console.log(`✅ [FRONTEND] Draft quests updated, removed index ${questToDeploy.draftIndex}`);
+
+      // Add to main sequence for UI display
+      const questForMain = {
+        ...questToDeploy,
+        questId: newQuestId
+      };
+      setJsonContent(prev => ({
+        ...prev,
+        questSequence: [...prev.questSequence, questForMain]
+      }));
+      console.log(`✅ [FRONTEND] Main quest sequence updated with ${newQuestId}`);
+
+      // Auto-close dialog after 3 seconds
+      console.log(`⏰ [FRONTEND] Auto-closing dialog in 3 seconds...`);
+      setTimeout(() => {
+        setShowDeployDialog(false);
+        setQuestToDeploy(null);
+        setDeploymentStatus("");
+        console.log(`✅ [FRONTEND] Deployment dialog closed and state reset`);
+      }, 3000);
+
+    } catch (error) {
+      console.error(`❌ [FRONTEND] Quest deployment failed:`, error);
+      if (error.response) {
+        console.error(`❌ [FRONTEND] Response status: ${error.response.status}`);
+        console.error(`❌ [FRONTEND] Response data:`, error.response.data);
+      } else {
+        console.error(`❌ [FRONTEND] Network or other error:`, error.message);
+      }
+      setDeploymentStatus(`Error: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setIsDeploying(false);
+      console.log(`🔄 [FRONTEND] Deployment process completed, loading state reset`);
+    }
+  };
+
+  // Function to create test repositories using draft quest configuration
+  const createTestRepositories = async () => {
+    if (!testUsernames.trim()) return;
+
+    const usernames = testUsernames
+      .split(',')
+      .map(name => name.trim())
+      .filter(name => name.length > 0);
+
+    if (usernames.length === 0) return;
+
+    setIsCreatingTestRepos(true);
+    setTestRepos([]);
+
+    const results = [];
+
+    for (const username of usernames) {
+      try {
+        // Create test repository with draft quest configuration
+        // Normalize draft quests: set sequence numbers and prerequisites in order
+        const normalizedSequence = (draftQuests.questSequence || []).map((q, idx, arr) => {
+          const prevQuestId = idx > 0 ? (arr[idx - 1]?.questId || null) : null;
+          const metadata = {
+            ...(q.metadata || {}),
+            prerequisite: prevQuestId,
+            type: q.metadata?.type || q.questType || "custom",
+            title: q.metadata?.title || q.title || "",
+            description: q.metadata?.description || q.description || "",
+            sequenceNumber: idx
+          };
+          return {
+            ...q,
+            sequenceNumber: idx,
+            metadata
+          };
+        });
+
+        const testConfig = {
+          questSequence: normalizedSequence,
+          map_repo_link: "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map"
+        };
+
+        // Call the backend to create test repository
+        const response = await axios.post(
+          `${API_BASE_URL}/api/group/${classId}/create-test-repo`,
+          {
+            username,
+            questConfig: testConfig,
+            isTestRepo: true
+          }
+        );
+
+        if (response.data.success) {
+          results.push({
+            username,
+            success: true,
+            url: response.data.repositoryUrl,
+            error: null
+          });
+        } else {
+          results.push({
+            username,
+            success: false,
+            url: null,
+            error: response.data.message || "Failed to create repository"
+          });
+        }
+      } catch (error) {
+        console.error(`Error creating test repo for ${username}:`, error);
+        results.push({
+          username,
+          success: false,
+          url: null,
+          error: error.response?.data?.message || error.message || "Unknown error"
+        });
+      }
+    }
+
+    setTestRepos(results);
+    setIsCreatingTestRepos(false);
+  };
+
   // Load saved configuration on component mount
   useEffect(() => {
     const loadSavedConfig = async () => {
@@ -867,6 +1201,7 @@ const GenerateJson = () => {
     };
 
     loadSavedConfig();
+    loadDraftQuests(); // Load draft quests too
   }, [classId]);
 
   // Also refresh stored values when we save the JSON
@@ -1078,10 +1413,21 @@ Student can now start their quest journey!`);
     
     // When editing a quest, preserve existing tasks
     if (editingQuestIndex !== null) {
-      const existingQuest = jsonContent.questSequence[editingQuestIndex];
-      Object.entries(existingQuest.tasks).forEach(([taskId, task]) => {
-        tasksObj[taskId] = task;
-      });
+      let existingQuest;
+      
+      // Check if editing a draft quest (index >= 10000)
+      if (editingQuestIndex >= 10000) {
+        const draftIndex = editingQuestIndex - 10000;
+        existingQuest = draftQuests.questSequence[draftIndex];
+      } else {
+        existingQuest = jsonContent.questSequence[editingQuestIndex];
+      }
+      
+      if (existingQuest && existingQuest.tasks) {
+        Object.entries(existingQuest.tasks).forEach(([taskId, task]) => {
+          tasksObj[taskId] = task;
+        });
+      }
     } else {
       // When adding a new quest, build tasks from form data
       questFormData.tasks.forEach((task, idx) => {
@@ -1249,6 +1595,7 @@ Student can now start their quest journey!`);
     const newQuest = {
       questId: `TEMP_${Date.now()}`, // Temporary ID, will be replaced
       title: questFormData.title,
+      description: questFormData.description, // Add description to main quest object
       isQ0: false,
       questType: "custom",
       sequenceNumber: sequenceNumber,
@@ -1262,15 +1609,34 @@ Student can now start their quest journey!`);
       tasks: tasksObj,
     };
 
-    setJsonContent((prev) => {
-      let newSequence = [...prev.questSequence];
-      if (editingQuestIndex !== null) {
-        newSequence[editingQuestIndex] = newQuest;
+    // Check if editing an existing quest
+    if (editingQuestIndex !== null) {
+      // Check if editing a draft quest (index >= 10000)
+      if (editingQuestIndex >= 10000) {
+        // Editing draft quest
+        const draftIndex = editingQuestIndex - 10000;
+        const updatedDraftQuests = {
+          ...draftQuests,
+          questSequence: draftQuests.questSequence.map((quest, index) =>
+            index === draftIndex ? {
+              ...quest, // Preserve existing quest properties
+              title: newQuest.title,
+              description: newQuest.description,
+              tasks: newQuest.tasks,
+              metadata: newQuest.metadata
+            } : quest
+          ),
+        };
+        setDraftQuests(updatedDraftQuests);
+        saveDraftQuests(updatedDraftQuests);
+        console.log("Updated draft quest:", newQuest.title);
       } else {
-        newSequence = [...newSequence, newQuest];
-      }
-      // Update quest IDs to be sequential
-      const updatedSequence = updateQuestIds(newSequence);
+        // Editing existing main sequence quest
+        setJsonContent((prev) => {
+          let newSequence = [...prev.questSequence];
+          newSequence[editingQuestIndex] = newQuest;
+          // Update quest IDs to be sequential
+          const updatedSequence = updateQuestIds(newSequence);
 
       // Save the updated quest to Quest Bank with correct ID
       const updatedQuest =
@@ -1362,11 +1728,24 @@ Student can now start their quest journey!`);
         questTitle: updatedQuest.title,
         tasks: tasksArray,
       };
-      console.log("Saving to Quest Bank:", questBankPayload);
-      saveQuestToBank(questBankPayload);
+        console.log("Saving to Quest Bank:", questBankPayload);
+        saveQuestToBank(questBankPayload);
 
-      return { ...prev, questSequence: updatedSequence };
-    });
+        return { ...prev, questSequence: updatedSequence };
+      });
+      }
+    } else {
+      // Adding new quest - goes to drafts
+      const updatedDraftQuests = {
+        ...draftQuests,
+        questSequence: [...draftQuests.questSequence, newQuest],
+      };
+      setDraftQuests(updatedDraftQuests);
+      saveDraftQuests(updatedDraftQuests);
+      
+      console.log("Added new quest to drafts:", newQuest.title);
+    }
+
     // Reset form and close modal
     setQuestFormData({ title: "", description: "", tasks: [] });
     setShowAddQuestModal(false);
@@ -1752,124 +2131,175 @@ Student can now start their quest journey!`);
   };
 
   const editTask = (questIndex, taskId) => {
-    // Open the edit task modal for the specific task
-    const quest = jsonContent.questSequence[questIndex];
-    const task = quest.tasks[taskId];
+    console.log(`✏️ [TASK-EDIT] Opening task editor:`, { questIndex, taskId, isDraft: questIndex >= 10000 });
     
-    // Map task data to form format
+    // Get the quest and task
+    let quest;
+    if (questIndex >= 10000) {
+      const draftIndex = questIndex - 10000;
+      quest = draftQuests.questSequence[draftIndex];
+      console.log(`🟡 [TASK-EDIT] Loading from draft quest at index ${draftIndex}`);
+    } else {
+      quest = jsonContent.questSequence[questIndex];
+      console.log(`🔵 [TASK-EDIT] Loading from main sequence at index ${questIndex}`);
+    }
+    
+    const task = quest.tasks[taskId];
+    console.log(`📋 [TASK-EDIT] Original task data:`, task);
+    
+    // Create proper task data object with all required fields
     const taskData = {
-      ...task,
-      taskType: task.type,
+      taskType: task.type || "multiple-choice",
       title: task.title || task.taskTitle || "",
-      taskDesc: task.title || task.taskTitle || task.desc || "",
-      points: task.points ?? 0,
-      xp: task.xp ?? 0,
+      taskDesc: task.desc || task.title || task.taskTitle || "",
+      points: task.points || 0,
+      xp: task.xp || 0,
       acceptText: task.accept || task.responses?.accept || "",
       successText: task.success || task.responses?.success || "",
       errorText: task.error || task.responses?.error || "",
+      question: task.question || "",
+      correctAnswer: task.correctAnswer || task.answer || "",
       answer: task.answer || "",
       answerType: task.answerType || "",
       repository: task.repository || task.ossRepository || "",
       issueNumber: task.issueNumber || "",
-      options: Array.isArray(task.options)
-        ? task.options
-        : [
-            { label: "A", value: task.optionA || "" },
-            { label: "B", value: task.optionB || "" },
-            ...(task.optionC ? [{ label: "C", value: task.optionC }] : []),
-            ...(task.optionD ? [{ label: "D", value: task.optionD }] : []),
-            ...(task.optionE ? [{ label: "E", value: task.optionE }] : []),
-            // Support for additional options beyond E (legacy format)
-            ...(task.optionF ? [{ label: "F", value: task.optionF }] : []),
-            ...(task.optionG ? [{ label: "G", value: task.optionG }] : []),
-            ...(task.optionH ? [{ label: "H", value: task.optionH }] : []),
-            ...(task.optionI ? [{ label: "I", value: task.optionI }] : []),
-            ...(task.optionJ ? [{ label: "J", value: task.optionJ }] : []),
-          ],
-      correctAnswer: task.correctAnswer || task.answer || "",
-      question: task.question || "",
-      questions: Array.isArray(task.questions) ? task.questions : [],
-      hints: Array.isArray(task.hints) ? task.hints : [],
-      detailedHints: Array.isArray(task.detailedHints)
-        ? task.detailedHints
-        : [],
+      apiEndpoint: task.apiEndpoint || "",
+      responsePath: task.responsePath || "",
+      expectedAnswerType: task.expectedAnswerType || "Number",
       enableTolerance: task.enableTolerance || false,
       toleranceRange: task.toleranceRange || 10,
-      // Persist per-user save controls
-      saveValidatedData: (task.saveValidatedData || (task.config && task.config.saveValidatedData)) || (task.type === "collect-info" ? true : false),
-      savedDataName: (task.savedDataName || (task.config && task.config.savedDataName)) || (task.type === "collect-info" ? "collected_info" : ""),
-      // Ensure llmTextValidation is properly initialized
+      saveValidatedData: task.saveValidatedData || false,
+      savedDataName: task.savedDataName || "",
+      options: Array.isArray(task.options) ? task.options : [
+        { label: "A", value: task.optionA || "" },
+        { label: "B", value: task.optionB || "" },
+        ...(task.optionC ? [{ label: "C", value: task.optionC }] : []),
+        ...(task.optionD ? [{ label: "D", value: task.optionD }] : []),
+        ...(task.optionE ? [{ label: "E", value: task.optionE }] : []),
+      ],
+      questions: Array.isArray(task.questions) ? task.questions : [],
+      hints: Array.isArray(task.hints) ? task.hints : [],
+      detailedHints: Array.isArray(task.detailedHints) ? task.detailedHints : [],
       llmTextValidation: task.llmTextValidation || {
         question: "",
         validationParameters: [],
         temperature: 0.1,
         enableDetailedFeedback: false,
       },
-      // Quest Notes field
-      questNotes: task.questNotes || task.taskDesc || "",
+      questNotes: task.questNotes || "",
     };
     
+    console.log(`🔧 [TASK-EDIT] Mapped task data:`, {
+      taskType: taskData.taskType,
+      acceptText: taskData.acceptText.substring(0, 50) + '...',
+      successText: taskData.successText.substring(0, 50) + '...',
+      errorText: taskData.errorText.substring(0, 50) + '...'
+    });
+    
+    // Set state
     setEditingTaskData(taskData);
     setEditingTaskQuestIndex(questIndex);
     setEditingTaskId(taskId);
     setShowEditTaskModal(true);
+    
+    console.log(`✅ [TASK-EDIT] Task editor opened`);
   };
 
   const saveEditedTask = () => {
-    if (!editingTaskData || editingTaskQuestIndex === null || editingTaskId === null) return;
+    console.log(`💾 [TASK-EDIT] Starting save process...`);
+    console.log(`📋 [TASK-EDIT] editingTaskData:`, editingTaskData);
     
-    setJsonContent((prev) => {
-      const newQuestSequence = [...prev.questSequence];
-      const quest = newQuestSequence[editingTaskQuestIndex];
+    if (!editingTaskData || editingTaskQuestIndex === null || editingTaskId === null) {
+      console.log(`❌ [TASK-EDIT] Save aborted - missing required data`);
+      return;
+    }
+    
+    // Create updated task object directly from form data
+    const updatedTask = {
+      type: editingTaskData.taskType,
+      title: editingTaskData.taskDesc || editingTaskData.title || "",
+      taskTitle: editingTaskData.taskDesc || editingTaskData.title || "",
+      desc: editingTaskData.taskDesc || "",
+      points: parseInt(editingTaskData.points) || 0,
+      xp: parseInt(editingTaskData.xp) || 0,
+      accept: editingTaskData.acceptText || "",
+      success: editingTaskData.successText || "",
+      error: editingTaskData.errorText || "",
+      answer: editingTaskData.correctAnswer || editingTaskData.answer || "",
+      correctAnswer: editingTaskData.correctAnswer || editingTaskData.answer || "",
+      question: editingTaskData.question || "",
+      options: editingTaskData.options || [],
+      repository: editingTaskData.repository || "",
+      ossRepository: editingTaskData.repository || "",
+      issueNumber: editingTaskData.issueNumber || "",
+      apiEndpoint: editingTaskData.apiEndpoint || "",
+      responsePath: editingTaskData.responsePath || "",
+      expectedAnswerType: editingTaskData.expectedAnswerType || "Number",
+      enableTolerance: editingTaskData.enableTolerance || false,
+      toleranceRange: parseInt(editingTaskData.toleranceRange) || 10,
+      saveValidatedData: editingTaskData.saveValidatedData || false,
+      savedDataName: editingTaskData.savedDataName || "",
+      questions: editingTaskData.questions || [],
+      hints: editingTaskData.hints || [],
+      detailedHints: editingTaskData.detailedHints || [],
+      llmTextValidation: editingTaskData.llmTextValidation || {
+        question: "",
+        validationParameters: [],
+        temperature: 0.1,
+        enableDetailedFeedback: false
+      },
+      questNotes: editingTaskData.questNotes || "",
+      answerType: editingTaskData.answerType || ""
+    };
+    
+    console.log(`📝 [TASK-EDIT] Updated task:`, updatedTask);
+    
+    
+    // Update the appropriate quest
+    if (editingTaskQuestIndex >= 10000) {
+      console.log(`🟡 [TASK-EDIT] Updating draft quest...`);
+      const draftIndex = editingTaskQuestIndex - 10000;
       
-      // Update the task with edited data
-      quest.tasks[editingTaskId] = {
-        ...quest.tasks[editingTaskId],
-        title: editingTaskData.taskDesc || editingTaskData.title,
-        taskTitle: editingTaskData.taskDesc || editingTaskData.title,
-        desc: editingTaskData.taskDesc || editingTaskData.title, // Use taskDesc as primary value
-        points: editingTaskData.points,
-        xp: editingTaskData.xp,
-        type: editingTaskData.taskType,
-        accept: editingTaskData.acceptText,
-        success: editingTaskData.successText,
-        error: editingTaskData.errorText,
-        answer: editingTaskData.correctAnswer || editingTaskData.answer, // Use correctAnswer for MCQ
-        answerType: editingTaskData.answerType,
-        repository: editingTaskData.repository,
-        issueNumber: editingTaskData.issueNumber,
-        options: editingTaskData.options,
-        correctAnswer: editingTaskData.correctAnswer,
-        question: editingTaskData.question,
-        questions: editingTaskData.questions,
-        hints: editingTaskData.hints,
-        detailedHints: editingTaskData.detailedHints,
-        enableTolerance: editingTaskData.enableTolerance,
-        toleranceRange: editingTaskData.toleranceRange,
-        // Save Custom API Call fields
-        apiEndpoint: editingTaskData.apiEndpoint,
-        responsePath: editingTaskData.responsePath,
-        expectedAnswerType: editingTaskData.expectedAnswerType,
-        // Save per-user persistence controls
-        saveValidatedData: editingTaskData.saveValidatedData,
-        savedDataName: editingTaskData.savedDataName,
-        // Save LLM Text Validation fields
-        llmTextValidation: editingTaskData.llmTextValidation,
-        // Save Quest Notes field
-        questNotes: editingTaskData.questNotes,
+      const updatedDraftQuests = {
+        ...draftQuests,
+        questSequence: draftQuests.questSequence.map((quest, index) => {
+          if (index === draftIndex) {
+            return {
+              ...quest,
+              tasks: {
+                ...quest.tasks,
+                [editingTaskId]: updatedTask
+              }
+            };
+          }
+          return quest;
+        })
       };
       
-      return { ...prev, questSequence: newQuestSequence };
-    });
+      console.log(`✅ [TASK-EDIT] Draft quest updated, saving...`);
+      setDraftQuests(updatedDraftQuests);
+      saveDraftQuests(updatedDraftQuests);
+    } else {
+      console.log(`🔵 [TASK-EDIT] Updating main sequence quest...`);
+      setJsonContent((prev) => {
+        const newQuestSequence = [...prev.questSequence];
+        newQuestSequence[editingTaskQuestIndex].tasks[editingTaskId] = updatedTask;
+        return { ...prev, questSequence: newQuestSequence };
+      });
+    }
     
-    // Close modal and reset state
+    console.log(`🎉 [TASK-EDIT] Task save completed!`);
+    
+    // Close modal
     setShowEditTaskModal(false);
     setEditingTaskData(null);
     setEditingTaskQuestIndex(null);
     setEditingTaskId(null);
     
-    // Refresh stored data list after saving task
+    // Refresh stored data
     loadStoredValues();
+    
+    console.log(`✅ [TASK-EDIT] Complete!`);
   };
 
   const deleteTask = (questIndex, taskId) => {
@@ -1889,24 +2319,51 @@ Student can now start their quest journey!`);
         }));
       }
     } else if (taskToDelete && questToDeleteFrom !== null) {
-      // Delete from main quest sequence
-      setJsonContent((prev) => {
-        const newQuestSequence = [...prev.questSequence];
-        const quest = newQuestSequence[questToDeleteFrom];
-        delete quest.tasks[taskToDelete];
+      // Check if deleting from a draft quest (index >= 10000)
+      if (questToDeleteFrom >= 10000) {
+        // Delete from draft quest
+        const draftIndex = questToDeleteFrom - 10000;
+        const updatedDraftQuests = {
+          ...draftQuests,
+          questSequence: draftQuests.questSequence.map((quest, index) => {
+            if (index === draftIndex) {
+              const updatedQuest = { ...quest };
+              delete updatedQuest.tasks[taskToDelete];
 
-        // Renumber remaining tasks
-        const taskEntries = Object.entries(quest.tasks);
-        quest.tasks = {};
-        taskEntries.forEach(([_, taskData], index) => {
-          quest.tasks[`T${index + 1}`] = taskData;
+              // Renumber remaining tasks
+              const taskEntries = Object.entries(updatedQuest.tasks);
+              updatedQuest.tasks = {};
+              taskEntries.forEach(([_, taskData], taskIndex) => {
+                updatedQuest.tasks[`T${taskIndex + 1}`] = taskData;
+              });
+
+              return updatedQuest;
+            }
+            return quest;
+          })
+        };
+        setDraftQuests(updatedDraftQuests);
+        saveDraftQuests(updatedDraftQuests);
+      } else {
+        // Delete from main quest sequence
+        setJsonContent((prev) => {
+          const newQuestSequence = [...prev.questSequence];
+          const quest = newQuestSequence[questToDeleteFrom];
+          delete quest.tasks[taskToDelete];
+
+          // Renumber remaining tasks
+          const taskEntries = Object.entries(quest.tasks);
+          quest.tasks = {};
+          taskEntries.forEach(([_, taskData], index) => {
+            quest.tasks[`T${index + 1}`] = taskData;
+          });
+
+          return { ...prev, questSequence: newQuestSequence };
         });
-
-        return { ...prev, questSequence: newQuestSequence };
-      });
-      
-      // Refresh stored data list after deleting task
-      loadStoredValues();
+        
+        // Refresh stored data list after deleting task
+        loadStoredValues();
+      }
     }
     
     // Close dialog and reset state
@@ -2733,6 +3190,273 @@ Student can now start their quest journey!`);
                 <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
                   {JSON.stringify(jsonContent, null, 2)}
                 </pre>
+              </Paper>
+            )}
+          </Box>
+        </Card>
+
+        {/* Draft Quests Section */}
+        <Card sx={{ 
+          mb: 4, 
+          borderRadius: 4, 
+          boxShadow: "none", 
+          border: "2px dashed #ffa726",
+          backgroundColor: "#fff8e1" // Light yellow background
+        }}>
+          <Box p={3}>
+            <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+              <EditIcon sx={{ color: "#ffa726" }} />
+              <Typography variant="h6" sx={{ color: "#ffa726", fontWeight: 600 }}>
+                Draft Quests ({draftQuests.questSequence?.length || 0})
+              </Typography>
+              {draftSaveStatus && (
+                <Typography variant="body2" sx={{ color: "#666", fontStyle: "italic" }}>
+                  {draftSaveStatus}
+                </Typography>
+              )}
+            </Stack>
+
+            <Typography variant="body2" sx={{ color: "#666", mb: 3 }}>
+              New quests are created as drafts. Review, edit, and move them to the main sequence when ready.
+            </Typography>
+
+            {isDraftLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : draftQuests.questSequence?.length > 0 ? (
+              <Stack spacing={2}>
+                {draftQuests.questSequence.map((quest, index) => (
+                  <QuestBlock
+                    key={index}
+                    quest={quest}
+                    questIndex={10000 + index} // Use high numbers to distinguish drafts
+                    totalQuests={draftQuests.questSequence.length}
+                    isDraftQuest={true} // Mark as draft quest for yellow tint
+                    onMoveQuest={() => {}} // Draft quests don't support reordering
+                    onEditQuest={(questIndex) => {
+                      // Load quest into edit mode
+                      const questForEdit = {
+                        title: quest.title,
+                        description: quest.description,
+                        tasks: Object.values(quest.tasks || {}).map((task, taskIndex) => ({
+                          taskType: task.type || "multiple-choice",
+                          title: task.title || task.taskTitle || `Task ${taskIndex + 1}`,
+                          points: task.points || 100,
+                          acceptText: task.accept || "",
+                          successText: task.success || "",
+                          errorText: task.error || "",
+                          ...task
+                        }))
+                      };
+                      setQuestFormData(questForEdit);
+                      setEditingQuestIndex(10000 + index); // Use high numbers to distinguish drafts
+                      setShowAddQuestModal(true);
+                    }}
+                    onDeleteQuest={() => deleteDraftQuest(index)}
+                    onMoveTask={() => {}} // Draft quests don't support task reordering
+                    onEditTask={editTask}
+                    onDeleteTask={deleteTask}
+                    onAddTask={(questIndex) => {
+                      // Add task to draft quest
+                      console.log("onAddTask called with questIndex:", questIndex, "type:", typeof questIndex);
+                      
+                      // Validate questIndex
+                      if (typeof questIndex !== 'number' || isNaN(questIndex)) {
+                        console.error("Invalid questIndex:", questIndex);
+                        return;
+                      }
+                      
+                      const draftIndex = questIndex - 10000;
+                      console.log("Calculated draftIndex:", draftIndex);
+                      
+                      // Add safety checks
+                      if (!draftQuests.questSequence || !draftQuests.questSequence[draftIndex]) {
+                        console.error("Draft quest not found at index:", draftIndex);
+                        console.error("Available draft quests:", draftQuests.questSequence?.length || 0);
+                        return;
+                      }
+                      
+                      const quest = draftQuests.questSequence[draftIndex];
+                      const existingTasks = quest.tasks || {};
+                      const taskCount = Object.keys(existingTasks).length;
+                      const newTaskId = `T${taskCount + 1}`;
+                      
+                      const newTask = {
+                        type: "multiple-choice",
+                        title: `New Task ${taskCount + 1}`,
+                        points: 100,
+                        accept: "",
+                        success: "",
+                        error: "",
+                        taskTitle: `New Task ${taskCount + 1}`,
+                        desc: `New Task ${taskCount + 1}`,
+                      };
+                      
+                      const updatedDraftQuests = {
+                        ...draftQuests,
+                        questSequence: draftQuests.questSequence.map((q, index) =>
+                          index === draftIndex ? {
+                            ...q,
+                            tasks: {
+                              ...existingTasks,
+                              [newTaskId]: newTask
+                            }
+                          } : q
+                        ),
+                      };
+                      
+                      setDraftQuests(updatedDraftQuests);
+                      saveDraftQuests(updatedDraftQuests);
+                      console.log("Added task to draft quest:", newTaskId);
+                    }}
+                    onPublishQuest={() => moveDraftToMain(index)} // Add publish functionality
+                  />
+                ))}
+              </Stack>
+            ) : (
+              <Paper sx={{ p: 3, textAlign: "center", backgroundColor: "#f9f9f9" }}>
+                <Typography variant="body2" sx={{ color: "#666" }}>
+                  No draft quests yet. Create a new quest to get started!
+                </Typography>
+              </Paper>
+            )}
+
+            {/* Toggle Draft JSON View */}
+            <Box sx={{ mt: 3, textAlign: "center" }}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setShowDraftJsonPreview(!showDraftJsonPreview)}
+                sx={{ borderRadius: 4 }}
+              >
+                {showDraftJsonPreview ? "Hide Draft JSON" : "Show Draft JSON"}
+              </Button>
+            </Box>
+
+            {/* Collapsible Draft JSON Preview */}
+            {showDraftJsonPreview && (
+              <Paper
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  bgcolor: "#fff3e0",
+                  maxHeight: "400px",
+                  overflow: "auto",
+                  fontFamily: "monospace",
+                  fontSize: "0.875rem",
+                  borderRadius: 4,
+                  border: "1px solid #ffa726",
+                }}
+              >
+                <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
+                  {JSON.stringify(normalizedDraftForPreview, null, 2)}
+                </pre>
+              </Paper>
+            )}
+
+            {/* Test Draft Quests Section */}
+            {draftQuests.questSequence?.length > 0 && (
+              <Paper sx={{ 
+                mt: 3,
+                p: 3, 
+                backgroundColor: "#fff8e1",
+                border: "2px solid #ffb74d",
+                borderRadius: 3
+              }}>
+                <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: "#ff9800" }}>
+                  🧪 Test Draft Quests
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 3, color: "#666" }}>
+                  Create test repositories using only the draft quest configuration to test your quests before publishing.
+                </Typography>
+                
+                <Box sx={{ mb: 3 }}>
+                  <TextField
+                    label="Test Usernames (comma-separated)"
+                    placeholder="e.g., testuser1, testuser2, testuser3"
+                    value={testUsernames}
+                    onChange={(e) => setTestUsernames(e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={2}
+                    helperText="Enter usernames separated by commas. Each will get a test repository with draft quests."
+                    sx={{ mb: 2 }}
+                  />
+                  
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    startIcon={<PlayArrowIcon />}
+                    onClick={createTestRepositories}
+                    disabled={!testUsernames.trim() || isCreatingTestRepos}
+                    sx={{ mr: 2 }}
+                  >
+                    {isCreatingTestRepos ? "Creating..." : "Create Test Repositories"}
+                  </Button>
+                  
+                  {testRepos.length > 0 && (
+                    <Button
+                      variant="outlined"
+                      onClick={() => setTestRepos([])}
+                      sx={{ mr: 2 }}
+                    >
+                      Clear Results
+                    </Button>
+                  )}
+                </Box>
+
+                {isCreatingTestRepos && (
+                  <Box sx={{ mb: 2 }}>
+                    <LinearProgress />
+                    <Typography variant="body2" sx={{ mt: 1, color: "#666" }}>
+                      Creating test repositories...
+                    </Typography>
+                  </Box>
+                )}
+
+                {testRepos.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                      Test Repositories Created:
+                    </Typography>
+                    <Stack spacing={1}>
+                      {testRepos.map((repo, index) => (
+                        <Box key={index} sx={{ 
+                          p: 2, 
+                          backgroundColor: "#fff", 
+                          borderRadius: 2,
+                          border: "1px solid #e0e0e0"
+                        }}>
+                          <Stack direction="row" alignItems="center" spacing={2}>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {repo.username}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: repo.success ? "#4caf50" : "#f44336" }}>
+                              {repo.success ? "✅ Created" : "❌ Failed"}
+                            </Typography>
+                            {repo.success && repo.url && (
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                href={repo.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                View Repository
+                              </Button>
+                            )}
+                          </Stack>
+                          {repo.error && (
+                            <Typography variant="caption" sx={{ color: "#f44336", mt: 1, display: "block" }}>
+                              Error: {repo.error}
+                            </Typography>
+                          )}
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
               </Paper>
             )}
           </Box>
@@ -4871,13 +5595,14 @@ Student can now start their quest journey!`);
                   <FormControl fullWidth sx={{ mb: 2 }}>
                     <InputLabel>Task Type</InputLabel>
                     <Select
-                      value={editingTaskData.taskType || "multiple-choice"}
-                      onChange={(e) =>
-                        setEditingTaskData({
-                          ...editingTaskData,
+                      value={editingTaskData?.taskType || "multiple-choice"}
+                      onChange={(e) => {
+                        console.log(`🔄 [TASK-EDIT] Changing task type from "${editingTaskData?.taskType}" to "${e.target.value}"`);
+                        setEditingTaskData(prev => ({
+                          ...prev,
                           taskType: e.target.value,
-                        })
-                      }
+                        }));
+                      }}
                       label="Task Type"
                       sx={{ borderRadius: 2 }}
                     >
@@ -4947,32 +5672,34 @@ Student can now start their quest journey!`);
 
                   <Divider sx={{ my: 3 }} />
 
-                  {/* Question Text Field */}
-                  <Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 700,
-                        mb: 2,
-                        color: "primary.main",
-                      }}
-                    >
-                      Question Text
-                    </Typography>
-                    <TextEditor
-                      value={editingTaskData.acceptText || ""}
-                      onChange={(value) =>
-                        setEditingTaskData({
-                          ...editingTaskData,
-                          acceptText: value,
-                        })
-                      }
-                      label="Question Text"
-                      placeholder="This text appears when the task is first presented to students"
-                      helperText="This is the main question text. You can use markdown formatting with live preview."
-                      acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
-                    />
-                  </Box>
+                  {/* Question Text Field - Hidden for MCQ tasks */}
+                  {editingTaskData.taskType !== "multiple-choice" && (
+                    <Box>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 700,
+                          mb: 2,
+                          color: "primary.main",
+                        }}
+                      >
+                        Question Text
+                      </Typography>
+                      <TextEditor
+                        value={editingTaskData.acceptText || ""}
+                        onChange={(value) =>
+                          setEditingTaskData({
+                            ...editingTaskData,
+                            acceptText: value,
+                          })
+                        }
+                        label="Question Text"
+                        placeholder="This text appears when the task is first presented to students"
+                        helperText="This is the main question text. You can use markdown formatting with live preview."
+                        acceptFileTypes=".txt,.md,.markdown,text/plain,text/markdown"
+                      />
+                    </Box>
+                  )}
 
                   {/* Multiple Choice-specific Question Field */}
                   {editingTaskData.taskType === "multiple-choice" && (
@@ -7059,6 +7786,72 @@ Good luck! 🚀"
         taskToDelete={taskToDelete}
         questToDeleteFrom={questToDeleteFrom}
       />
+
+      {/* Quest Deployment Dialog */}
+      <Dialog 
+        open={showDeployDialog} 
+        onClose={() => !isDeploying && setShowDeployDialog(false)}
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle>
+          Deploy Quest to Class
+        </DialogTitle>
+        <DialogContent>
+          {questToDeploy && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Deploy "{questToDeploy.title}" as {questToDeploy.nextQuestId}?
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                This will:
+              </Typography>
+              <Box component="ul" sx={{ pl: 2, mb: 2 }}>
+                <Typography component="li" variant="body2">
+                  Add the quest to the class configuration as {questToDeploy.nextQuestId}
+                </Typography>
+                <Typography component="li" variant="body2">
+                  Update all students to use the new configuration
+                </Typography>
+                <Typography component="li" variant="body2">
+                  Automatically unlock {questToDeploy.nextQuestId} for students who have completed previous quests
+                </Typography>
+                <Typography component="li" variant="body2">
+                  Clear the old configuration cache so changes take effect immediately
+                </Typography>
+              </Box>
+              
+              {deploymentStatus && (
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                    {deploymentStatus}
+                  </Typography>
+                  {isDeploying && (
+                    <LinearProgress sx={{ mt: 1 }} />
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setShowDeployDialog(false)}
+            disabled={isDeploying}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDeployQuest}
+            variant="contained"
+            color="warning"
+            disabled={isDeploying}
+            startIcon={isDeploying ? <CircularProgress size={16} /> : null}
+          >
+            {isDeploying ? 'Deploying...' : 'Deploy Quest'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
@@ -7142,6 +7935,8 @@ const QuestBlock = ({
   onEditTask,
   onDeleteTask,
   onAddTask,
+  onPublishQuest, // New prop for draft quest publishing
+  isDraftQuest = false, // New prop to indicate if this is a draft quest
 }) => {
   const [expanded, setExpanded] = useState(true);
   const taskEntries = Object.entries(quest.tasks);
@@ -7152,10 +7947,15 @@ const QuestBlock = ({
       onChange={() => setExpanded(!expanded)}
       sx={{
         mb: 2,
-        bgcolor: quest.isQ0 ? "#f8f9fa" : (expanded ? "white" : "#f5f5f5"),
+        bgcolor: isDraftQuest 
+          ? (expanded ? "#fff8e1" : "#fff3c4") // Yellow tint for draft quests
+          : quest.isQ0 
+            ? "#f8f9fa" 
+            : (expanded ? "white" : "#f5f5f5"),
         borderRadius: 4,
         boxShadow: "none",
         transition: "background-color 0.2s ease-in-out",
+        border: isDraftQuest ? "1px solid #ffb74d" : "none", // Orange border for draft quests
       }}
     >
       <AccordionSummary>
@@ -7278,10 +8078,38 @@ const QuestBlock = ({
                 </IconButton>
               </span>
             </Tooltip>
+            {onPublishQuest && (
+              <Tooltip title="Publish to Main Sequence">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPublishQuest(questIndex);
+                    }}
+                    sx={{
+                      border: "1px solid #ff9800",
+                      borderRadius: 4,
+                      ml: 0.5,
+                      backgroundColor: "#ff9800",
+                      color: "white",
+                      "&:hover": { backgroundColor: "#f57c00" },
+                    }}
+                  >
+                    <PlayArrowIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
           </Box>
         </Box>
       </AccordionSummary>
-      <AccordionDetails>
+      <AccordionDetails sx={{
+        backgroundColor: isDraftQuest ? "#fff8e1" : "transparent", // Yellow background for draft quest tasks
+        borderRadius: isDraftQuest ? 2 : 0,
+        border: isDraftQuest ? "1px solid #ffb74d" : "none",
+        margin: isDraftQuest ? 1 : 0,
+      }}>
         {/* Tasks header inside details */}
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
           Tasks
@@ -7302,6 +8130,7 @@ const QuestBlock = ({
                 onDeleteTask={onDeleteTask}
                 getTaskTypeColor={getTaskTypeColor}
                 getTaskTypeLabel={getTaskTypeLabel}
+                isDraftQuest={isDraftQuest}
               />
             ))}
           </Box>
@@ -7311,7 +8140,7 @@ const QuestBlock = ({
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Button
             variant="outlined"
-            onClick={() => onAddTask()}
+            onClick={() => onAddTask(questIndex)}
             startIcon={<AddIcon />}
             sx={{
               borderRadius: 4,
@@ -7343,6 +8172,7 @@ const TaskBlock = ({
   onDeleteTask,
   getTaskTypeColor,
   getTaskTypeLabel,
+  isDraftQuest = false,
 }) => {
   return (
     <Card
@@ -7352,10 +8182,11 @@ const TaskBlock = ({
         mb: 2,
         borderRadius: 4,
         boxShadow: "none",
-        border: "1px solid #e0e0e0",
+        border: isDraftQuest ? "1px solid #ffb74d" : "1px solid #e0e0e0",
+        backgroundColor: isDraftQuest ? "#fff8e1" : "white",
         "&:hover": {
-          borderColor: "primary.main",
-          backgroundColor: "#f8f9fa",
+          borderColor: isDraftQuest ? "#ff9800" : "primary.main",
+          backgroundColor: isDraftQuest ? "#fff3c4" : "#f8f9fa",
         },
       }}
     >

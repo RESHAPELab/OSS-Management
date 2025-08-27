@@ -120,6 +120,15 @@ const GroupSchema = mongoose.Schema({
     questJsonLastUpdated: {
         type: Date,
         default: null
+    },
+    draftQuestConfig: {
+        type: Object,
+        default: null,
+        description: 'Stores draft quests that are not yet published to main sequence'
+    },
+    draftQuestLastUpdated: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true
