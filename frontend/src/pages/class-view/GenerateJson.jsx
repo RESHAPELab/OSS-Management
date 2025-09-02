@@ -792,6 +792,16 @@ const GenerateJson = () => {
           if (value === "quiz" && !updated.questions) {
             updated.questions = [];
           }
+          
+          // Initialize options array for multiple choice tasks
+          if (value === "multiple-choice" && (!updated.options || updated.options.length < 2)) {
+            updated.options = [
+              { label: "A", value: "" },
+              { label: "B", value: "" },
+              { label: "C", value: "" },
+              { label: "D", value: "" }
+            ];
+          }
         }
         return updated;
       });
@@ -945,6 +955,116 @@ const GenerateJson = () => {
       nextQuestId: `Q${nextQuestNumber}`
     });
     setShowDeployDialog(true);
+  };
+
+  // Handle purple deployment - creates new config with appended quest
+  const handlePurpleDeployQuest = async (questIndex) => {
+    const draftQuest = draftQuests.questSequence[questIndex];
+    if (!draftQuest) return;
+
+    console.log(`🟣 [FRONTEND] Starting purple quest deployment:`, {
+      title: draftQuest.title,
+      draftIndex: questIndex,
+      classId
+    });
+
+    try {
+      // Calculate the next quest number
+      const nextQuestNumber = jsonContent.questSequence.length + 1;
+      
+      const questToDeploy = {
+        ...draftQuest,
+        draftIndex: questIndex,
+        nextQuestId: `Q${nextQuestNumber}`
+      };
+
+      console.log(`📡 [FRONTEND] Calling purple deployment endpoint...`);
+      // Call the purple deployment endpoint
+      const response = await axios.post(`${API_BASE_URL}/api/gamification/purpleDeployQuest`, {
+        classId: classId,
+        draftQuestData: questToDeploy
+      });
+
+      const { 
+        originalConfigId, 
+        newConfigId, 
+        newQuestId, 
+        originalQuests, 
+        newTotalQuests,
+        studentsReadyForNewQuest,
+        autoUnlockedCount
+      } = response.data;
+      console.log(`✅ [FRONTEND] Purple deployment successful:`, response.data);
+      
+      console.log(`🟣 [FRONTEND] Purple deployment summary:`);
+      console.log(`   Original Config: ${originalConfigId} (${originalQuests} quests)`);
+      console.log(`   New Config: ${newConfigId} (${newTotalQuests} quests)`);
+      console.log(`   New Quest: ${newQuestId}`);
+      console.log(`   Students Ready: ${studentsReadyForNewQuest || 0}`);
+      console.log(`   Auto-Unlocked: ${autoUnlockedCount || 0}`);
+
+      // Show deployment success message with auto-unlock info
+      let successMessage = `✅ Successfully deployed ${newQuestId}!\n\n`;
+      successMessage += `📊 Deployment Summary:\n`;
+      successMessage += `   • Original Config: ${originalQuests} quests\n`;
+      successMessage += `   • New Config: ${newTotalQuests} quests\n`;
+      successMessage += `   • Students Ready: ${studentsReadyForNewQuest || 0}\n`;
+      
+      if (autoUnlockedCount && autoUnlockedCount > 0) {
+        successMessage += `   • Auto-Unlocked: ${autoUnlockedCount} students\n`;
+        successMessage += `\n🎉 The new quest has been automatically unlocked for eligible students!`;
+        successMessage += `\n💬 "accept ${newQuestId}" comments were posted to their last closed issues.`;
+      } else if (studentsReadyForNewQuest && studentsReadyForNewQuest > 0) {
+        successMessage += `\n⚠️ Quest deployed but auto-unlock failed for some students.`;
+        successMessage += `\n💡 Students will need to unlock manually when they complete prerequisites.`;
+      } else {
+        successMessage += `\nℹ️ No students are ready for this quest yet.`;
+        successMessage += `\n💡 Students will unlock automatically when they complete prerequisites.`;
+      }
+
+      alert(successMessage);
+
+      // Remove from draft quests
+      const updatedDraftQuests = {
+        ...draftQuests,
+        questSequence: draftQuests.questSequence.filter((_, index) => index !== questIndex)
+      };
+      setDraftQuests(updatedDraftQuests);
+      saveDraftQuests(updatedDraftQuests);
+      console.log(`✅ [FRONTEND] Draft quest removed from index ${questIndex}`);
+
+      // Add to main sequence for UI display
+      const questForMain = {
+        ...draftQuest,
+        questId: newQuestId
+      };
+      setJsonContent(prev => ({
+        ...prev,
+        questSequence: [...prev.questSequence, questForMain]
+      }));
+      console.log(`✅ [FRONTEND] Main quest sequence updated with ${newQuestId}`);
+
+      // Refresh quest data without full page reload
+      console.log(`🔄 [FRONTEND] Refreshing quest data...`);
+      // Reload the quest config from backend
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/quest-json-config`);
+        if (response.data.success && response.data.data.hasConfig && response.data.data.questJsonConfig) {
+          const validatedConfig = validateAndFixQuestConfig(response.data.data.questJsonConfig);
+          const configWithSequentialIds = {
+            ...validatedConfig,
+            questSequence: updateQuestIds(validatedConfig.questSequence),
+          };
+          setJsonContent(configWithSequentialIds);
+          console.log(`✅ [FRONTEND] Quest data refreshed successfully`);
+        }
+      } catch (refreshError) {
+        console.error(`❌ [FRONTEND] Failed to refresh quest data:`, refreshError);
+      }
+    } catch (error) {
+      console.error(`❌ [FRONTEND] Purple deployment failed:`, error);
+      alert(`❌ Failed to deploy quest: ${error.response?.data?.message || error.message}`);
+    }
   };
 
   // Handle the actual deployment after dialog confirmation
@@ -1688,6 +1808,10 @@ Student can now start their quest journey!`);
               : "metric"),
           answer: task.answer || "",
           type: task.taskType || task.type,
+          // Multiple choice specific fields
+          question: task.question || "",
+          correctAnswer: task.correctAnswer || task.answer || "",
+          options: task.options || [],
           // Custom API call fields
           apiEndpoint: task.apiEndpoint || "",
           responsePath: task.responsePath || "",
@@ -3145,7 +3269,7 @@ Student can now start their quest journey!`);
 
               {jsonContent.questSequence.map((quest, questIndex) => (
                 <QuestBlock
-                  key={quest.questId}
+                  key={`main-${quest.questId}-${questIndex}`}
                   quest={quest}
                   questIndex={questIndex}
                   totalQuests={jsonContent.questSequence.length}
@@ -3228,7 +3352,7 @@ Student can now start their quest journey!`);
               <Stack spacing={2}>
                 {draftQuests.questSequence.map((quest, index) => (
                   <QuestBlock
-                    key={index}
+                    key={`draft-${quest.questId}-${index}`}
                     quest={quest}
                     questIndex={10000 + index} // Use high numbers to distinguish drafts
                     totalQuests={draftQuests.questSequence.length}
@@ -3311,6 +3435,7 @@ Student can now start their quest journey!`);
                       console.log("Added task to draft quest:", newTaskId);
                     }}
                     onPublishQuest={() => moveDraftToMain(index)} // Add publish functionality
+                    onPurpleDeployQuest={() => handlePurpleDeployQuest(index)} // Add purple deploy functionality
                   />
                 ))}
               </Stack>
@@ -7936,6 +8061,7 @@ const QuestBlock = ({
   onDeleteTask,
   onAddTask,
   onPublishQuest, // New prop for draft quest publishing
+  onPurpleDeployQuest, // New prop for purple deployment
   isDraftQuest = false, // New prop to indicate if this is a draft quest
 }) => {
   const [expanded, setExpanded] = useState(true);
@@ -7975,7 +8101,7 @@ const QuestBlock = ({
                   border: "1px solid #ffcc02",
                 }}
               >
-                Q{questIndex}
+                Q{questIndex + 1}
               </Typography>
               {quest.title}
             </Typography>
@@ -8079,27 +8205,50 @@ const QuestBlock = ({
               </span>
             </Tooltip>
             {onPublishQuest && (
-              <Tooltip title="Publish to Main Sequence">
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPublishQuest(questIndex);
-                    }}
-                    sx={{
-                      border: "1px solid #ff9800",
-                      borderRadius: 4,
-                      ml: 0.5,
-                      backgroundColor: "#ff9800",
-                      color: "white",
-                      "&:hover": { backgroundColor: "#f57c00" },
-                    }}
-                  >
-                    <PlayArrowIcon fontSize="small" />
-                  </IconButton>
-                </span>
-              </Tooltip>
+              <>
+                <Tooltip title="Publish to Main Sequence">
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPublishQuest(questIndex);
+                      }}
+                      sx={{
+                        border: "1px solid #ff9800",
+                        borderRadius: 4,
+                        ml: 0.5,
+                        backgroundColor: "#ff9800",
+                        color: "white",
+                        "&:hover": { backgroundColor: "#f57c00" },
+                      }}
+                    >
+                      <PlayArrowIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <Tooltip title="Purple Deploy - Create New Config with Appended Quest">
+                  <span>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPurpleDeployQuest(questIndex);
+                      }}
+                      sx={{
+                        border: "1px solid #9c27b0",
+                        borderRadius: 4,
+                        ml: 0.5,
+                        backgroundColor: "#9c27b0",
+                        color: "white",
+                        "&:hover": { backgroundColor: "#7b1fa2" },
+                      }}
+                    >
+                      <PlayArrowIcon fontSize="small" />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </>
             )}
           </Box>
         </Box>

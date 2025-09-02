@@ -106,6 +106,25 @@ const TaskSchema = mongoose.Schema({
     answerRepoReference: {
         type: String,
     },
+    // Multiple choice question fields
+    question: {
+        type: String,
+        required: false
+    },
+    correctAnswer: {
+        type: String,
+        required: false
+    },
+    options: [{
+        label: {
+            type: String,
+            required: true
+        },
+        value: {
+            type: String,
+            required: true
+        }
+    }],
     // Custom API call fields
     apiEndpoint: {
         type: String,

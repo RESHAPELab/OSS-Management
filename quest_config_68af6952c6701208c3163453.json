@@ -1,0 +1,119 @@
+{
+  "_id": "68af69c02aed8eaf8c92dee2",
+  "configId": "68af6952c6701208c3163453",
+  "__v": 0,
+  "classId": "68af6952c6701208c3163453",
+  "config": {
+    "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+    "Q1": {
+      "metadata": {
+        "title": "Q1: Understanding OSS Projects and GitHub Basics",
+        "description": "Learn the fundamentals of open source software and GitHub workflow",
+        "prerequisite": null,
+        "type": "general",
+        "groupId": "68af6952c6701208c3163453"
+      },
+      "T1": {
+        "desc": "Explore the readme file",
+        "points": 20,
+        "xp": 20,
+        "type": "multiple-choice",
+        "accept": "**Question:** ### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Instructions:** Select the correct answer.",
+        "success": "### 🌟 Congratulations! You've Got It Right!\n\nYou've successfully identified a key piece of information or instruction from the README file, demonstrating your thorough attention to detail and commitment to understanding the project.\n\nAs a reward for your keen observation and learning skills, you've earned ${experiencePoints} experience points!\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you're just **${pointsRemaining} points away** from leveling up!.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of open-source collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon! \n\nThere will be a new task in your issues tab.\n\nThe adventure continues! 🌟\n\n",
+        "error": "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the information you've shared from the README file doesn't quite match what we were looking for, or perhaps it was misunderstood.\n\nDon't fret, though! Each step, including the missteps, is part of the journey towards greater knowledge and proficiency.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nConsider this a chance to dive deeper 🤿.\n\nThe README file is packed with insights about the project, often hiding gems of information crucial for new contributors. By revisiting and reflecting on its content, you're not just completing a task but also building a foundation for meaningful contributions.\n\nReady to give it another go? The README file awaits with the details you need to move forward!\n\n**Please select the correct answer from the options below based on the sessions described in the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Type** the letter in the comment box to complete this task.",
+        "answer": "D",
+        "question": "### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Instructions:** Select the correct answer.",
+        "options": [
+          {
+            "label": "A",
+            "value": "Functionality"
+          },
+          {
+            "label": "B",
+            "value": "Design"
+          },
+          {
+            "label": "C",
+            "value": "Architecture"
+          },
+          {
+            "label": "D",
+            "value": "Contributing"
+          }
+        ],
+        "hints": []
+      },
+      "T2": {
+        "desc": "Explore the contributors",
+        "points": 20,
+        "xp": 20,
+        "type": "get-top-contributor",
+        "ossRepository": "probot-test-org/test-repo",
+        "accept": "### 🎯 Task 5: Discover the Contributors \n\n**Objective:** Understanding who has contributed to a project can provide insights into the project's community and potentially whom to reach out to for collaboration or questions.\n\n**Task:** Go to the GitHub repository using the link below, locate the **number 1** contributor, and **TYPE** their username in the comment box. Do NOT include any symbols.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Outcome:** This task will help you become familiar with the collaborative nature of open-source projects on GitHub. Identifying contributors helps you understand the project's community size and diversity, offering a window into the people behind the project.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+        "success": "### 🌟 Congratulations! You've Reached a New Level!\n\nWith your latest achievement, you've accurately identified the number of contributors to our project, demonstrating not just your ability to navigate GitHub but also your appreciation for community collaboration.\n\nAs a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You've now accomplished a total of **${currentPoints} points**, achieving a remarkable milestone in your journey. This success is a testament to your dedication, learning, and contributions thus far.\n\n🎯 **Quest Completion:** You've successfully completed the tasks for this quest, leaving only the remaining quiz. This accomplishment signifies your mastery over the tasks at hand and your readiness to embark on new challenges and quests within the GitHub realm and beyond.\n\n> 🌟 🌟 🌟\n\nIncredible work! Your journey through this quest has been a tale of persistence, learning, and growth. Each task you've completed has not only contributed to your knowledge but has also paved the way for future adventures in open-source collaboration.\n\n**🚀 Ready for New Horizons:** With this quest behind you, new quests await, brimming with opportunities for exploration, learning, and making an impact.\n\nTo begin your next adventure, keep an eye out for the command or instructions that will introduce your next task. Your dedication and skills are invaluable assets on this journey of continuous learning and contribution.\n\nOnward to new quests and achievements! 🌟\n\n",
+        "error": "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the number of contributors you've mentioned doesn't align with the current roster of contributors to our project.\n\nBut remember, every error is a stepping stone towards greater understanding and skill.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThink of this as honing your analytical skills 🔍.\n\nEach contributor represents a unique contribution to the project, from code commits to documentation. Recognizing the breadth and depth of the community's engagement is crucial for appreciating the collective effort involved in open-source projects.\n\nAre you ready for another attempt? The correct number, and a chance to deepen your understanding of our project's community, is just a few clicks away!",
+        "answer": "",
+        "hints": []
+      }
+    },
+    "Q2": {
+      "metadata": {
+        "title": "wdxcxaxdaxdaxddaxw",
+        "description": "wqdxqxqxqxq",
+        "prerequisite": "Q1",
+        "type": "custom",
+        "groupId": "68af6952c6701208c3163453"
+      },
+      "T1": {
+        "type": "collect-info",
+        "title": "xwdxqdxqdxw",
+        "taskTitle": "xwdxqdxqdxw",
+        "desc": "xwdxqdxqdxw",
+        "points": 20,
+        "xp": 20,
+        "accept": "xwxqxqsxqsxqdxdq",
+        "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** 20\n\nGreat contribution! 📋",
+        "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": true,
+        "savedDataName": "collected_info",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      }
+    }
+  },
+  "createdAt": "2025-08-27T20:25:35.105Z",
+  "createdBy": "oss-management",
+  "originalFilePath": "quest_config_68af6952c6701208c3163453.json",
+  "updatedAt": "2025-08-27T20:35:11.060Z",
+  "version": 2
+}

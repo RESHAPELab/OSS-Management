@@ -1875,8 +1875,38 @@ typings/
                   console.log(`📋 [QUEST-CONFIG-SHARED] Database save already completed for class ${uniqueGroupId}`);
                 }
                 
-                // Store the unique groupId in the user's database entry
-                userDoc.user_data.customGroupId = uniqueGroupId;
+                // Check if there's a purple deployment for this class and use the latest one
+                let configToUse = uniqueGroupId; // Default to original classId
+                try {
+                  const { MongoClient } = require('mongodb');
+                  const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+                  const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+                  
+                  const client = new MongoClient(ossDoorwayUri);
+                  await client.connect();
+                  const db = client.db(ossDoorwayDbName);
+                  const questConfigsCollection = db.collection('questconfigs');
+                  
+                  // Find the latest purple config for this class
+                  const latestPurpleConfig = await questConfigsCollection.findOne(
+                    { classId: { $regex: new RegExp(`^${uniqueGroupId}_purple_`) } },
+                    { sort: { createdAt: -1 } }
+                  );
+                  
+                  if (latestPurpleConfig) {
+                    configToUse = latestPurpleConfig.classId;
+                    console.log(`🟣 [REPO-CREATION] Using latest purple config: ${configToUse} (instead of ${uniqueGroupId})`);
+                  } else {
+                    console.log(`📋 [REPO-CREATION] No purple config found, using original: ${uniqueGroupId}`);
+                  }
+                  
+                  await client.close();
+                } catch (purpleError) {
+                  console.warn(`⚠️ [REPO-CREATION] Could not check for purple config (using original):`, purpleError.message);
+                }
+                
+                // Store the config ID in the user's database entry
+                userDoc.user_data.customGroupId = configToUse;
                 userDoc.user_data.customSequenceFile = sequenceFile;
               }
               // Find the first quest (no prerequisite or isQ0)
@@ -2307,6 +2337,164 @@ const deleteRepository = async (req, res) => {
     }
 };
 
+// Add user as collaborator to existing repositories
+const addUserAsCollaborator = async (req, res) => {
+    try {
+        const { username, targetUsername, classId, permission = 'push' } = req.body;
+        
+        console.log(`👥 [ADD-COLLABORATOR] Adding ${username} as collaborator to ${targetUsername}'s repository`);
+        console.log(`📊 [ADD-COLLABORATOR] Class ID: ${classId}, Permission: ${permission}`);
+        
+        if (!username || !targetUsername || !classId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: username, targetUsername, classId'
+            });
+        }
+        
+        // Validate required environment variables
+        if (!process.env.OSS_DOORWAY_APP_ID || !process.env.OSS_DOORWAY_PRIVATE_KEY || !process.env.GITHUB_ORG) {
+            return res.status(500).json({
+                success: false,
+                message: 'Missing required environment variables for GitHub App authentication'
+            });
+        }
+        
+        // Initialize GitHub App authentication
+        const { Octokit } = await import('@octokit/rest');
+        const { createAppAuth } = await import('@octokit/auth-app');
+        
+        let privateKey = process.env.OSS_DOORWAY_PRIVATE_KEY;
+        if (privateKey && privateKey.includes('\\n')) {
+            privateKey = privateKey.replace(/\\n/g, '\n');
+        }
+        
+        const auth = createAppAuth({
+            appId: process.env.OSS_DOORWAY_APP_ID,
+            privateKey: privateKey,
+        });
+        
+        const { token } = await auth({ type: "app" });
+        const octokit = new Octokit({ auth: token, userAgent: 'OSS-Management' });
+        
+        // Find installation for the org
+        const { data: installations } = await octokit.apps.listInstallations();
+        const installation = installations.find(inst => inst.account.login === process.env.GITHUB_ORG);
+        
+        if (!installation) {
+            return res.status(500).json({
+                success: false,
+                message: `GitHub App not installed in organization: ${process.env.GITHUB_ORG}`
+            });
+        }
+        
+        const { token: installationToken } = await auth({
+            type: "installation",
+            installationId: installation.id,
+        });
+        
+        const orgOctokit = new Octokit({
+            auth: installationToken,
+            userAgent: 'OSS-Management'
+        });
+        
+        // Get class information to determine repository naming pattern
+        const Group = require('../models/GroupModel');
+        const group = await Group.findById(classId);
+        
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: `Class not found with ID: ${classId}`
+            });
+        }
+        
+        // Determine repository name based on class pattern
+        let repoName;
+        if (group.repositoryPattern) {
+            repoName = group.repositoryPattern
+                .replace('{classCode}', group.groupName || 'test-class')
+                .replace('{username}', targetUsername);
+        } else {
+            repoName = `${targetUsername}-test-class`;
+        }
+        
+        console.log(`📁 [ADD-COLLABORATOR] Target repository: ${process.env.GITHUB_ORG}/${repoName}`);
+        
+        // Check if repository exists
+        try {
+            await orgOctokit.repos.get({
+                owner: process.env.GITHUB_ORG,
+                repo: repoName
+            });
+            console.log(`✅ [ADD-COLLABORATOR] Repository ${repoName} found`);
+        } catch (repoError) {
+            if (repoError.status === 404) {
+                return res.status(404).json({
+                    success: false,
+                    message: `Repository ${repoName} not found in organization ${process.env.GITHUB_ORG}`
+                });
+            }
+            throw repoError;
+        }
+        
+        // Add user as collaborator
+        try {
+            await orgOctokit.repos.addCollaborator({
+                owner: process.env.GITHUB_ORG,
+                repo: repoName,
+                username: username,
+                permission: permission
+            });
+            
+            console.log(`✅ [ADD-COLLABORATOR] User ${username} successfully added as collaborator to ${repoName}`);
+            
+            res.status(200).json({
+                success: true,
+                message: `User ${username} added as collaborator to ${repoName}`,
+                data: {
+                    username,
+                    targetUsername,
+                    repoName,
+                    permission,
+                    classId,
+                    addedAt: new Date().toISOString()
+                }
+            });
+            
+        } catch (collabError) {
+            console.error(`❌ [ADD-COLLABORATOR] Failed to add ${username} as collaborator to ${repoName}:`, collabError.message);
+            
+            if (collabError.status === 422) {
+                return res.status(422).json({
+                    success: false,
+                    message: `User ${username} is already a collaborator on ${repoName}`,
+                    error: collabError.message
+                });
+            }
+            
+            if (collabError.status === 404) {
+                return res.status(404).json({
+                    success: false,
+                    message: `User ${username} not found on GitHub`,
+                    error: collabError.message
+                });
+            }
+            
+            throw collabError;
+        }
+        
+    } catch (error) {
+        console.error(`❌ [ADD-COLLABORATOR] Error adding collaborator:`, error);
+        
+        res.status(500).json({
+            success: false,
+            message: `Error adding collaborator: ${error.message}`,
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createRepo,
     getProductionStatus,
@@ -2316,5 +2504,6 @@ module.exports = {
     listOrganizationRepos,
     checkRepoReadme,
     getStudentScores,
-    deleteRepository
+    deleteRepository,
+    addUserAsCollaborator
 };

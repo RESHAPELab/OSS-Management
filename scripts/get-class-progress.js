@@ -1,208 +1,131 @@
 const { MongoClient } = require('mongodb');
 
-// OSS-Doorway database connection (where student progress is stored)
-const ossDoorwayURI = 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
-const ossDoorwayDBName = 'test';
+// Configuration
+const OSS_DOORWAY_URI = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+const OSS_DOORWAY_DB_NAME = process.env.OSS_DOORWAY_DB_NAME || 'test';
 
-// OSS-Management database connection (where class info is stored)
-const managementURI = 'mongodb+srv://jadyn:290794@gamification.nwes9ze.mongodb.net/management?retryWrites=true&w=majority&appName=gamification';
-const managementDBName = 'gamification-management';
+// Target class ID
+const TARGET_CLASS_ID = '68af5d5889ab74b26644347d';
 
-async function getClassProgress(classId) {
-  console.log(`🔍 [CLASS-PROGRESS] Analyzing progress for class: ${classId}`);
-  
-  const ossDoorwayClient = new MongoClient(ossDoorwayURI);
-  const managementClient = new MongoClient(managementURI);
-  
-  try {
-    await ossDoorwayClient.connect();
-    await managementClient.connect();
+async function getClassProgress() {
+    console.log(`🔍 Getting progress for class ID: ${TARGET_CLASS_ID}`);
     
-    const ossDoorwayDb = ossDoorwayClient.db(ossDoorwayDBName);
-    const managementDb = managementClient.db(managementDBName);
+    const client = new MongoClient(OSS_DOORWAY_URI);
     
-    // Get class info from management database
-    const classInfo = await managementDb.collection('groups').findOne({ _id: classId });
-    if (!classInfo) {
-      console.log(`❌ Class not found: ${classId}`);
-      return;
+    try {
+        await client.connect();
+        console.log(`✅ Connected to OSS-Doorway database`);
+        
+        const db = client.db(OSS_DOORWAY_DB_NAME);
+        
+        // Find students with this customGroupId
+        const students = await db.collection('user_data').find({
+            'user_data.customGroupId': TARGET_CLASS_ID
+        }).toArray();
+        
+        console.log(`✅ Found ${students.length} students in class ${TARGET_CLASS_ID}`);
+        
+        // Show each student's progress
+        console.log(`\n📊 CLASS STUDENT PROGRESS:`);
+        console.log(`=====================================`);
+        
+        for (const student of students) {
+            const username = student._id;
+            const userData = student.user_data || {};
+            const completed = userData.completed || {};
+            const accepted = userData.accepted || {};
+            const current = userData.current || {};
+            const customGroupId = userData.customGroupId || 'None';
+            const points = userData.points || 0;
+            const xp = userData.xp || 0;
+            const completion = userData.completion || 0;
+            
+            // Extract repo name (remove class suffix if present)
+            const repoName = username.includes('-') ? username.split('-').slice(0, -1).join('-') : username;
+            
+            // Determine status
+            const completedQuests = Object.keys(completed);
+            const acceptedQuests = Object.keys(accepted);
+            const currentQuest = current.quest || 'None';
+            const currentTask = current.task || 'None';
+            
+            let status = '';
+            if (completedQuests.includes('Q1')) {
+                status = '✅ Completed Q1';
+            } else if (acceptedQuests.includes('Q1') || currentQuest === 'Q1') {
+                status = '🔄 Working on Q1';
+            } else if (currentQuest && currentQuest !== 'None') {
+                status = `🔄 Working on ${currentQuest}`;
+            } else {
+                status = '❓ No quest started';
+            }
+            
+            console.log(`\n👤 ${username}`);
+            console.log(`   📁 Repo: ${repoName}`);
+            console.log(`   🔗 CustomGroupId: ${customGroupId}`);
+            console.log(`   🎯 Status: ${status}`);
+            console.log(`   💰 Points: ${points} | XP: ${xp} | Completion: ${completion}%`);
+            console.log(`   ✅ Completed: ${completedQuests.length > 0 ? completedQuests.join(', ') : 'None'}`);
+            console.log(`   🔓 Accepted: ${acceptedQuests.length > 0 ? acceptedQuests.join(', ') : 'None'}`);
+            console.log(`   🎯 Current: ${currentQuest} → ${currentTask}`);
+            
+            // Show detailed completed quest info
+            if (completedQuests.length > 0) {
+                console.log(`   📋 Completion Details:`);
+                completedQuests.forEach(questId => {
+                    const questData = completed[questId];
+                    if (questData) {
+                        console.log(`      ${questId}: ${questData.title || 'No title'} (${questData.points || 0} points, ${questData.xp || 0} XP)`);
+                    }
+                });
+            }
+        }
+        
+        // Summary
+        console.log(`\n📊 CLASS SUMMARY:`);
+        console.log(`=====================================`);
+        console.log(`Total Students: ${students.length}`);
+        
+        const completedQ1 = students.filter(s => Object.keys(s.user_data?.completed || {}).includes('Q1')).length;
+        const onQ1 = students.filter(s => s.user_data?.current?.quest === 'Q1' || s.user_data?.accepted?.['Q1']).length;
+        const otherStatus = students.length - completedQ1 - onQ1;
+        
+        console.log(`✅ Completed Q1: ${completedQ1}`);
+        console.log(`🔄 Working on Q1: ${onQ1}`);
+        console.log(`❓ Other status: ${otherStatus}`);
+        
+        // Quest deployment readiness
+        if (completedQ1 > 0) {
+            console.log(`\n🚀 QUEST DEPLOYMENT READINESS:`);
+            console.log(`=====================================`);
+            console.log(`When you deploy Q2:`);
+            console.log(`• ${completedQ1} students will get Q2 auto-unlocked immediately`);
+            console.log(`• ${onQ1 + otherStatus} students will continue their current quests`);
+            console.log(`• All students will get the new quest configuration`);
+        }
+        
+        // Show students eligible for Q2 unlock
+        if (completedQ1 > 0) {
+            console.log(`\n🎯 STUDENTS ELIGIBLE FOR Q2 UNLOCK:`);
+            console.log(`=====================================`);
+            students.forEach(student => {
+                const userData = student.user_data || {};
+                const hasCompletedQ1 = Object.keys(userData.completed || {}).includes('Q1');
+                const hasQ2 = Object.keys(userData.completed || {}).includes('Q2') || Object.keys(userData.accepted || {}).includes('Q2');
+                const hasCurrentQuest = userData.current && userData.current.quest;
+                
+                if (hasCompletedQ1 && !hasQ2 && !hasCurrentQuest) {
+                    console.log(`• ${student._id} - Ready for Q2 unlock`);
+                }
+            });
+        }
+        
+    } catch (error) {
+        console.error(`❌ Error:`, error);
+    } finally {
+        await client.close();
     }
-    
-    console.log(`📚 Class: ${classInfo.name}`);
-    console.log(`👥 Students: ${classInfo.users?.length || 0}`);
-    console.log(`---`);
-    
-    // Get quest config for this class
-    const questConfig = await ossDoorwayDb.collection('questconfigs').findOne({
-      $or: [
-        { groupId: classId },
-        { configId: classId },
-        { classId: classId }
-      ]
-    });
-    
-    if (!questConfig) {
-      console.log(`❌ No quest config found for class ${classId}`);
-      return;
-    }
-    
-    console.log(`📋 Quest Config: ${questConfig.configId || questConfig.groupId || questConfig.classId}`);
-    console.log(`---`);
-    
-    // Parse quest config to understand quest sequence
-    let questSequence = [];
-    if (questConfig.configData) {
-      try {
-        const configData = typeof questConfig.configData === 'string' 
-          ? JSON.parse(questConfig.configData) 
-          : questConfig.configData;
-        questSequence = configData.questSequence || [];
-      } catch (e) {
-        console.log(`⚠️ Could not parse configData: ${e.message}`);
-      }
-    }
-    
-    if (questSequence.length === 0) {
-      console.log(`⚠️ No quest sequence found in config`);
-    } else {
-      console.log(`📊 Quest Sequence: ${questSequence.map(q => q.questId).join(' → ')}`);
-    }
-    console.log(`---`);
-    
-    // Find all students in this class using the pattern: username-formattedclassname
-    const formattedClassName = classInfo.name.toLowerCase().replace(/\s+/g, '-');
-    const searchSuffix = `-${formattedClassName}`;
-    
-    console.log(`🔍 Searching for students with suffix: ${searchSuffix}`);
-    
-    const students = await ossDoorwayDb.collection('user_data').find({
-      _id: { $regex: new RegExp(`${searchSuffix}$`, 'i') }
-    }).toArray();
-    
-    console.log(`👥 Found ${students.length} students in OSS-Doorway database`);
-    console.log(`---`);
-    
-    if (students.length === 0) {
-      console.log(`❌ No students found. Trying alternative search...`);
-      
-      // Alternative: search by customGroupId
-      const altStudents = await ossDoorwayDb.collection('user_data').find({
-        'user_data.customGroupId': classId
-      }).toArray();
-      
-      console.log(`🔍 Alternative search found ${altStudents.length} students by customGroupId`);
-      
-      if (altStudents.length > 0) {
-        await analyzeStudents(altStudents, questSequence, classInfo);
-      }
-    } else {
-      await analyzeStudents(students, questSequence, classInfo);
-    }
-    
-  } catch (error) {
-    console.error(`❌ Error getting class progress:`, error);
-  } finally {
-    await ossDoorwayClient.close();
-    await managementClient.close();
-  }
 }
 
-async function analyzeStudents(students, questSequence, classInfo) {
-  console.log(`📊 Analyzing ${students.length} students...`);
-  console.log(`---`);
-  
-  // Sort students by username for better readability
-  students.sort((a, b) => {
-    const usernameA = a._id || a.user_data?.username || '';
-    const usernameB = b._id || b.user_data?.username || '';
-    return usernameA.localeCompare(usernameB);
-  });
-  
-  for (const student of students) {
-    const username = student._id || student.user_data?.username || 'unknown';
-    const userData = student.user_data || {};
-    
-    console.log(`👤 ${username}`);
-    
-    // Show current quest
-    if (userData.current?.quest) {
-      console.log(`   🎯 Current: ${userData.current.quest}`);
-    } else {
-      console.log(`   🎯 Current: None`);
-    }
-    
-    // Show accepted quests
-    const acceptedQuests = userData.accepted || {};
-    const acceptedCount = Object.keys(acceptedQuests).length;
-    if (acceptedCount > 0) {
-      console.log(`   ✅ Accepted: ${acceptedCount} quest(s)`);
-      Object.entries(acceptedQuests).forEach(([questId, questData]) => {
-        console.log(`      - ${questId}: ${questData.title || 'No title'}`);
-      });
-    } else {
-      console.log(`   ✅ Accepted: None`);
-    }
-    
-    // Show completed quests
-    const completedQuests = userData.completed || {};
-    const completedCount = Object.keys(completedQuests).length;
-    if (completedCount > 0) {
-      console.log(`   🏆 Completed: ${completedCount} quest(s)`);
-      Object.entries(completedQuests).forEach(([questId, questData]) => {
-        console.log(`      - ${questId}: ${questData.title || 'No title'}`);
-      });
-    } else {
-      console.log(`   🏆 Completed: None`);
-    }
-    
-    // Show custom group info
-    if (userData.customGroupId) {
-      console.log(`   🔗 Group ID: ${userData.customGroupId}`);
-    }
-    
-    // Show points and XP
-    if (userData.points !== undefined) {
-      console.log(`   💰 Points: ${userData.points}`);
-    }
-    if (userData.xp !== undefined) {
-      console.log(`   ⭐ XP: ${userData.xp}`);
-    }
-    
-    console.log(`---`);
-  }
-  
-  // Summary
-  const totalStudents = students.length;
-  const studentsWithProgress = students.filter(s => {
-    const userData = s.user_data || {};
-    return userData.accepted || userData.completed || userData.current?.quest;
-  }).length;
-  
-  console.log(`📊 SUMMARY:`);
-  console.log(`   Total Students: ${totalStudents}`);
-  console.log(`   Students with Progress: ${studentsWithProgress}`);
-  console.log(`   Students without Progress: ${totalStudents - studentsWithProgress}`);
-  
-  if (questSequence.length > 0) {
-    console.log(`   Quest Sequence: ${questSequence.map(q => q.questId).join(' → ')}`);
-  }
-}
-
-// Main execution
-const classId = process.argv[2] || '68ab703e6ceb965e0759df11';
-
-if (!classId) {
-  console.log('❌ Please provide a class ID as an argument');
-  console.log('Usage: node get-class-progress.js <classId>');
-  process.exit(1);
-}
-
-getClassProgress(classId)
-  .then(() => {
-    console.log('✅ Class progress analysis complete');
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error('❌ Script failed:', error);
-    process.exit(1);
-  });
+console.log(`🚀 Getting class progress for ID: ${TARGET_CLASS_ID}`);
+getClassProgress();
