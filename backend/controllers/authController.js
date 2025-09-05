@@ -330,4 +330,68 @@ const debugProfessor = async (req, res) => {
     }
 };
 
-module.exports = {signup, verifyCode, login, generatePasswordRecoveringCode, recoverPassword, registerStudent, verifyEmail, debugProfessor}
+// Update professor GitHub usernames
+const updateProfessorGitHubUsernames = async (req, res) => {
+    const githubMappings = [
+        { email: 'marco.gerosa@nau.edu', githubUsername: 'marcogerosa' },
+        { email: 'seo@fake.com', githubUsername: 'misanetc' },
+        { email: 'misanetchie17@gmail.com', githubUsername: 'misanetc' },
+        { email: 'mpe45@nau.edu', githubUsername: 'misanetc' },
+        { email: 'prm85@nau.edu', githubUsername: 'peterpalmer05' }
+    ];
+
+    try {
+        console.log('📋 Updating professor GitHub usernames...');
+        const results = [];
+        
+        for (const mapping of githubMappings) {
+            console.log(`🔍 Looking for professor with email: ${mapping.email}`);
+            
+            const professor = await Professor.findOne({ email: mapping.email.toLowerCase() });
+            
+            if (professor) {
+                console.log(`✅ Found professor: ${professor.name} (${professor.email})`);
+                
+                // Update the GitHub username
+                professor.githubUsername = mapping.githubUsername;
+                await professor.save();
+                
+                console.log(`✅ Updated GitHub username to: ${mapping.githubUsername}`);
+                results.push({
+                    email: mapping.email,
+                    name: professor.name,
+                    githubUsername: mapping.githubUsername,
+                    status: 'updated'
+                });
+            } else {
+                console.log(`❌ Professor not found with email: ${mapping.email}`);
+                results.push({
+                    email: mapping.email,
+                    status: 'not_found'
+                });
+            }
+        }
+
+        console.log('📊 Final verification - All professors with GitHub usernames:');
+        const allProfessors = await Professor.find({ githubUsername: { $exists: true, $ne: null } });
+        allProfessors.forEach(prof => {
+            console.log(`   - ${prof.name} (${prof.email}) → ${prof.githubUsername}`);
+        });
+
+        res.status(200).json({
+            message: 'Update completed successfully!',
+            results: results,
+            professorsWithGithub: allProfessors.map(p => ({
+                name: p.name,
+                email: p.email,
+                githubUsername: p.githubUsername
+            }))
+        });
+        
+    } catch (error) {
+        console.error('❌ Error updating professor GitHub usernames:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports = {signup, verifyCode, login, generatePasswordRecoveringCode, recoverPassword, registerStudent, verifyEmail, debugProfessor, updateProfessorGitHubUsernames}

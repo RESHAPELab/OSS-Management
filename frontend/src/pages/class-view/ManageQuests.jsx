@@ -2106,7 +2106,15 @@ const ManageQuests = () => {
       {/* Quest Creation/Edit Modal */}
       <Dialog
         open={showQuestModal}
-        onClose={isEditMode ? handleCancelEdit : () => setShowQuestModal(false)}
+        onClose={(event, reason) => {
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+          if (isEditMode) {
+            handleCancelEdit();
+          } else {
+            setShowQuestModal(false);
+          }
+        }}
+        disableEscapeKeyDown
         maxWidth="md"
         fullWidth
       >

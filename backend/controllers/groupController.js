@@ -259,29 +259,59 @@ const createGroup = async (req, res) =>  {
 
 
 // given professorID
-// get a list of all the professor's groups
+// get a list of all the professor's groups (owned + admin)
 const getGroups = async (req, res) => {
     const { professorID } = req.params;
 
     try{ 
-        const prof = await Professor.findById(professorID).populate({
-            path: 'ownedGroups',
-            select: 'groupName classCode active students createdAt updatedAt',
-            options: { sort: { createdAt: -1 } } // Sort by creation date descending
-        });
+        const prof = await Professor.findById(professorID);
         
         if (!prof) { 
             return res.status(400).json({error: "No professor provided"})
         }
 
-        // Add student count to each group
-        const groupsWithCount = prof.ownedGroups.map(group => ({
-            ...group.toObject(),
-            studentCount: group.students ? group.students.length : 0
-        }));
+        // Get owned groups
+        const ownedGroups = await Group.find({
+            _id: { $in: prof.ownedGroups }
+        }).select('groupName classCode active students createdAt updatedAt admins professor')
+          .populate('professor', 'name email')
+          .sort({ createdAt: -1 });
+
+        // Get groups where this professor is an admin
+        const adminGroups = await Group.find({
+            'admins.githubUsername': { $regex: new RegExp(`^${prof.githubUsername}$`, 'i') },
+            'admins.role': { $in: ['professor', 'assistant', 'grader'] }
+        }).select('groupName classCode active students createdAt updatedAt admins professor')
+          .populate('professor', 'name email')
+          .sort({ createdAt: -1 });
+
+        // Combine and deduplicate groups
+        const allGroups = [...ownedGroups];
+        const ownedGroupIds = ownedGroups.map(g => g._id.toString());
+        
+        adminGroups.forEach(adminGroup => {
+            if (!ownedGroupIds.includes(adminGroup._id.toString())) {
+                allGroups.push(adminGroup);
+            }
+        });
+
+        // Add student count and access level to each group
+        const groupsWithMetadata = allGroups.map(group => {
+            const isOwner = group.professor._id.toString() === professorID;
+            const adminRole = group.admins.find(admin => 
+                admin.githubUsername.toLowerCase() === prof.githubUsername.toLowerCase()
+            )?.role;
+
+            return {
+                ...group.toObject(),
+                studentCount: group.students ? group.students.length : 0,
+                accessLevel: isOwner ? 'owner' : (adminRole || 'unknown'),
+                isOwner: isOwner
+            };
+        });
 
         res.status(200).json({
-            groups: groupsWithCount
+            groups: groupsWithMetadata
         });
         
     } catch(error) { 

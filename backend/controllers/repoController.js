@@ -1756,7 +1756,37 @@ typings/
               };
               if (!isDefaultSequence) {
                 // Use class-based groupId for shared quest config (instead of unique per repo)
-                const uniqueGroupId = classId; // All users in same class share the same config
+                let uniqueGroupId = classId; // All users in same class share the same config
+                
+                // 🟣 PRIORITY FIX: Check for purple config BEFORE creating files
+                try {
+                  const { MongoClient } = require('mongodb');
+                  const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+                  const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+                  
+                  const client = new MongoClient(ossDoorwayUri);
+                  await client.connect();
+                  const db = client.db(ossDoorwayDbName);
+                  const questConfigsCollection = db.collection('questconfigs');
+                  
+                  // Find the latest purple config for this class
+                  const latestPurpleConfig = await questConfigsCollection.findOne(
+                    { classId: { $regex: new RegExp(`^${uniqueGroupId}_purple_`) } },
+                    { sort: { createdAt: -1 } }
+                  );
+                  
+                  if (latestPurpleConfig) {
+                    uniqueGroupId = latestPurpleConfig.classId;
+                    console.log(`🟣 [REPO-CREATION] Using latest purple config: ${uniqueGroupId} (instead of ${classId})`);
+                  } else {
+                    console.log(`📋 [REPO-CREATION] No purple config found, using original: ${uniqueGroupId}`);
+                  }
+                  
+                  await client.close();
+                } catch (purpleError) {
+                  console.warn(`⚠️ [REPO-CREATION] Could not check for purple config (using original):`, purpleError.message);
+                }
+                
                 repoUniqueGroupId = uniqueGroupId; // Store in higher scope for issue creation
                 
                 // Create a deep copy of the quest config template for this repo
@@ -1875,38 +1905,8 @@ typings/
                   console.log(`📋 [QUEST-CONFIG-SHARED] Database save already completed for class ${uniqueGroupId}`);
                 }
                 
-                // Check if there's a purple deployment for this class and use the latest one
-                let configToUse = uniqueGroupId; // Default to original classId
-                try {
-                  const { MongoClient } = require('mongodb');
-                  const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
-                  const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
-                  
-                  const client = new MongoClient(ossDoorwayUri);
-                  await client.connect();
-                  const db = client.db(ossDoorwayDbName);
-                  const questConfigsCollection = db.collection('questconfigs');
-                  
-                  // Find the latest purple config for this class
-                  const latestPurpleConfig = await questConfigsCollection.findOne(
-                    { classId: { $regex: new RegExp(`^${uniqueGroupId}_purple_`) } },
-                    { sort: { createdAt: -1 } }
-                  );
-                  
-                  if (latestPurpleConfig) {
-                    configToUse = latestPurpleConfig.classId;
-                    console.log(`🟣 [REPO-CREATION] Using latest purple config: ${configToUse} (instead of ${uniqueGroupId})`);
-                  } else {
-                    console.log(`📋 [REPO-CREATION] No purple config found, using original: ${uniqueGroupId}`);
-                  }
-                  
-                  await client.close();
-                } catch (purpleError) {
-                  console.warn(`⚠️ [REPO-CREATION] Could not check for purple config (using original):`, purpleError.message);
-                }
-                
-                // Store the config ID in the user's database entry
-                userDoc.user_data.customGroupId = configToUse;
+                // Store the config ID in the user's database entry (uniqueGroupId now contains purple config if available)
+                userDoc.user_data.customGroupId = uniqueGroupId;
                 userDoc.user_data.customSequenceFile = sequenceFile;
               }
               // Find the first quest (no prerequisite or isQ0)
@@ -1940,9 +1940,9 @@ typings/
                     ? JSON.parse(fs.readFileSync(defaultConfigPath, 'utf8'))
                     : {};
                 } else {
-                  // Use the unique groupId that was created for this specific repo
-                  const uniqueGroupId = repoUniqueGroupId;
-                  const groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${uniqueGroupId}.json`);
+                  // Use the unique groupId that was created for this specific repo (includes purple config if available)
+                  const configGroupId = repoUniqueGroupId;
+                  const groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${configGroupId}.json`);
                   questConfig = fs.existsSync(groupConfigPath)
                     ? JSON.parse(fs.readFileSync(groupConfigPath, 'utf8'))
                     : {};

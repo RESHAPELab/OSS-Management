@@ -1,9 +1,9 @@
 {
-  "_id": "68ae285da55121ce00725643",
-  "groupId": "68a770b8140b9c0174c13ce7",
-  "configId": "68a770b8140b9c0174c13ce7",
-  "classId": "68a770b8140b9c0174c13ce7",
-  "configData": {
+  "_id": "68af797cd31162fe1a6e7d16",
+  "groupId": "68a770b8140b9c0174c13ce8",
+  "configId": "68a770b8140b9c0174c13ce8",
+  "classId": "68a770b8140b9c0174c13ce8",
+  "config": {
     "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
     "Q1": {
       "metadata": {
@@ -81,7 +81,7 @@
         "llmTextValidation": {
           "question": "",
           "validationParameters": [
-            "10/15 (accept multiple formats, like October 15, 2025, etc.)"
+            "10/15 (accept multiple formats, like October 15, 2025, 10/15, 15/10, 2025, Wed 10/15, Wednesday 10/15, etc.)"
           ],
           "temperature": 0.1,
           "enableDetailedFeedback": false
@@ -171,7 +171,7 @@
           "enableDetailedFeedback": true
         },
         "accept": "According to the team project instructions, what four roles should be rotated among team members?",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** -4\n\nGreat work! 🎉",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
         "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
         "answer": ""
       },
@@ -265,318 +265,6 @@
         "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
         "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
         "answer": ""
-      }
-    }
-  },
-  "config": {
-    "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
-    "Q1": {
-      "metadata": {
-        "title": "A-0.1 - Intro to the Course",
-        "description": "",
-        "prerequisite": null,
-        "type": "custom",
-        "groupId": "68a770b8140b9c0174c13ce7"
-      },
-      "T1": {
-        "desc": "",
-        "points": 0,
-        "xp": 0,
-        "hints": [],
-        "detailedHints": [],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "Accept all answers as correct."
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": true
-        },
-        "accept": "Provide the names of the students who worked with you on this assignment. Answer 'none' if you worked individually.",
-        "success": "Thank you. ",
-        "error": "❌ **Something went wrong**\n\nPlease review the question and try again.",
-        "answer": "",
-        "title": "",
-        "taskTitle": "",
-        "answerType": "",
-        "repository": "",
-        "issueNumber": "",
-        "options": [
-          {
-            "label": "A",
-            "value": ""
-          },
-          {
-            "label": "B",
-            "value": ""
-          }
-        ],
-        "correctAnswer": "",
-        "question": "",
-        "questions": [],
-        "enableTolerance": false,
-        "toleranceRange": 10,
-        "saveValidatedData": false,
-        "savedDataName": "",
-        "questNotes": ""
-      },
-      "T2": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [
-          {
-            "content": "Check the syllabus, section \"Assessment Methods and Grading\". The syllabus is accessible on the Canvas menu, after selecting the course. ",
-            "image": "",
-            "video": null,
-            "sequence": 1,
-            "penalty": 1
-          }
-        ],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "Team project: 35%",
-            "Quizzes and Assignments: 40%",
-            "Midterm exam: 10%",
-            "Final Exam: 15%"
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": true
-        },
-        "accept": "Course components: How much does each of these activities represent in the final grade in this course? \n1) Team Project:\n2) Quizzes and Assignments:   \n3) Mid-term Exam:\n4) Final Exam:",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        "answer": ""
-      },
-      "T3": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [
-          {
-            "content": "The course schedule can be found in the module => Start Here <= ",
-            "image": "",
-            "video": null,
-            "sequence": 1,
-            "penalty": 1
-          }
-        ],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "10/15 (accept multiple formats, like October 15, 2025, etc.)"
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": false
-        },
-        "accept": "According to the course schedule, on which day will the mid-term exam be?",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        "answer": ""
-      },
-      "T4": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [
-          {
-            "content": "Make sure your answer covers something similar to: \"Active learning: You are expected to participate fully in the lectures (...) difference between participating in a class vs. watching a pre-recorded course.\".",
-            "image": "",
-            "video": null,
-            "sequence": 1,
-            "penalty": 1
-          }
-        ],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "Something similar to: \"Active learning: You are expected to participate fully in the lectures (not only watch them) by asking and answering questions and discussing the topics. Important: ASK QUESTIONS! Every question is valid and needs to be heard. That’s the main difference between participating in a class vs. watching a pre-recorded course.\""
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": true
-        },
-        "accept": "Copy and paste the explanation from the syllabus about active learning.",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        "answer": ""
-      },
-      "T5": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [
-          {
-            "content": "The link is available in the module => Start Here <= or on the syllabus",
-            "image": "",
-            "video": null,
-            "sequence": 1,
-            "penalty": 1
-          }
-        ],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "Accept any of thes: https://forms.gle/UEKx76wRdM6mK2AU6 or https://docs.google.com/forms/d/e/1FAIpQLScpTd6QuaesmRwCnSxCSYUeMnAs8sIH3b_gqZOKIvkBYJBWSg/viewform"
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": false
-        },
-        "accept": "What's the link for submitting anonymous feedback?",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        "answer": ""
-      },
-      "T6": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [
-          {
-            "content": "Find the roles in the \"Team Project | Overview\" document on Canvas.",
-            "image": "",
-            "video": null,
-            "sequence": 1,
-            "penalty": 1
-          }
-        ],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "The roles should be: Team Leader, Product Owner, Reviewer, Minute-taker"
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": true
-        },
-        "accept": "According to the team project instructions, what four roles should be rotated among team members?",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** -4\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        "answer": ""
-      },
-      "T7": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [
-          {
-            "content": "You can find the URL in the \"Team Project First Steps\" document.",
-            "image": "",
-            "video": null,
-            "sequence": 1,
-            "penalty": 1
-          }
-        ],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "Accept any of these: https://docs.google.com/document/d/1njFE2i9ashyp4A441-7TJA3wIiBnj7YiSJV6E-1zREw/edit?tab=t.0 or https://docs.google.com/document/d/1njFE2i9ashyp4A441-7TJA3wIiBnj7YiSJV6E-1zREw/edit"
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": false
-        },
-        "accept": "Where should you go if you have a project idea or want to explore and join existing projects? Answer with the URL.",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        "answer": ""
-      },
-      "T8": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [],
-        "type": "multiple-choice",
-        "accept": "**Question:** What should you submit to Canvas for a project deliverable? Answer only the Option letter.\n\nA) A PDF\nB) A Microsoft Word file\nC) A pull request URL\nD) An MD file\nE) An HTML file\n\n**Instructions:** Select the correct answer.",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again. Answer only with the option letter.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
-        "answer": "A",
-        "question": "What should you submit to Canvas for a project deliverable? Answer only the Option letter.",
-        "options": [
-          {
-            "label": "A",
-            "value": "A PDF"
-          },
-          {
-            "label": "B",
-            "value": "A Microsoft Word file"
-          },
-          {
-            "label": "C",
-            "value": "A pull request URL"
-          },
-          {
-            "label": "D",
-            "value": "An MD file"
-          },
-          {
-            "label": "E",
-            "value": "An HTML file"
-          }
-        ]
-      },
-      "T9": {
-        "desc": "",
-        "points": 1,
-        "xp": 1,
-        "hints": [],
-        "detailedHints": [
-          {
-            "content": "Just type OK when you have finished answering the survey.",
-            "image": "",
-            "video": null,
-            "sequence": 1,
-            "penalty": 1
-          }
-        ],
-        "type": "llm-text-validation",
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [
-            "The answer should be \"OK\" or any variation of this."
-          ],
-          "temperature": 0.1,
-          "enableDetailedFeedback": true
-        },
-        "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A0.1\nAnswer \"ok\" when done.",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
-        "answer": "",
-        "title": "",
-        "taskTitle": "",
-        "answerType": "",
-        "repository": "",
-        "issueNumber": "",
-        "options": [
-          {
-            "label": "A",
-            "value": ""
-          },
-          {
-            "label": "B",
-            "value": ""
-          }
-        ],
-        "correctAnswer": "",
-        "question": "",
-        "questions": [],
-        "enableTolerance": false,
-        "toleranceRange": 10,
-        "saveValidatedData": false,
-        "savedDataName": "",
-        "questNotes": ""
       }
     },
     "Q2": {
@@ -584,12 +272,9 @@
         "title": "A-1.1",
         "description": "A-1.1",
         "prerequisite": "Q1",
-        "type": "custom",
-        "groupId": "68a770b8140b9c0174c13ce7"
+        "type": "custom"
       },
       "T1": {
-        "title": "Group Information",
-        "taskTitle": "Group Information",
         "desc": "Group Information",
         "points": 1,
         "xp": 1,
@@ -604,39 +289,9 @@
         "savedDataName": "collected_info"
       },
       "T2": {
-        "type": "llm-text-validation",
-        "title": "Understanding Software Complexity in Practice",
-        "taskTitle": "Understanding Software Complexity in Practice",
         "desc": "Understanding Software Complexity in Practice",
         "points": 1,
         "xp": 1,
-        "accept": "PART I - Understanding Software Complexity\n\nAs a group, discuss the software projects each member has worked on and identify the largest or most complex project represented in your group. Once you've selected this project, have the relevant group member provide the following information:\n\na) Purpose and objectives - What problem did this software solve? Who was the target audience?\nb) Your role and responsibilities - What specific tasks, components, or phases of the project did you work on?\nc) Project scale - Provide relevant indicators such as the duration of the project, team size, lines of code (approximate), number of users or systems affected, budget, or business impact (if appropriate to share)\nd) What lessons were learned that might apply to this class team project?\n\nReport here the answer to each question above (choose one project for the group).",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
-        "answer": "",
-        "correctAnswer": "",
-        "question": "",
-        "options": [
-          {
-            "label": "A",
-            "value": ""
-          },
-          {
-            "label": "B",
-            "value": ""
-          }
-        ],
-        "repository": "",
-        "ossRepository": "",
-        "issueNumber": "",
-        "apiEndpoint": "",
-        "responsePath": "",
-        "expectedAnswerType": "Number",
-        "enableTolerance": false,
-        "toleranceRange": 10,
-        "saveValidatedData": false,
-        "savedDataName": "",
-        "questions": [],
         "hints": [],
         "detailedHints": [
           {
@@ -647,79 +302,54 @@
             "penalty": 0
           }
         ],
+        "type": "llm-text-validation",
         "llmTextValidation": {
           "question": "",
           "validationParameters": [
-            "Provide the purpose of a software system, including the problem solved by the system and the target audience of the system. This is quite open, any software system is acceptable.",
-            "Provide a software development role",
-            "List some metrics of scale (e.g., duration of the project, team size, lines of code, number of users or systems affected, budget or business impact). Any number of  metrics is fine.",
+            "Describe the purpose of a software system, including the problem solved by the system and the target audience of the system.",
+            "Describe a software development role",
+            "Provide metrics of scale (e.g., duration of the project, team size, lines of code, number of users or systems affected, budget or business impact",
             "Describe lessons learned from a software development project"
           ],
           "temperature": 0.1,
           "enableDetailedFeedback": true
         },
-        "questNotes": "",
-        "answerType": ""
+        "accept": "PART I - Understanding Software Complexity\n\nAs a group, discuss the software projects each member has worked on and identify the largest or most complex project represented in your group. Once you've selected this project, have the relevant group member provide the following information:\n\na) Purpose and objectives - What problem did this software solve? Who was the target audience?\nb) Your role and responsibilities - What specific tasks, components, or phases of the project did you work on?\nc) Project scale - Provide relevant indicators such as the duration of the project, team size, lines of code (approximate), number of users or systems affected, budget or business impact (if appropriate to share)\nd) What lessons were learned that might apply to this class team project?\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
       },
       "T3": {
-        "type": "llm-text-validation",
-        "title": "Software Engineering Challenges",
-        "taskTitle": "Software Engineering Challenges",
         "desc": "Software Engineering Challenges",
         "points": 1,
         "xp": 1,
-        "accept": "Based on the software project your group discussed in the previous task, identify and analyze specific engineering difficulties that emerged due to the system's scale and complexity. These are challenges that typically don't occur in smaller, simpler projects. List up to 3 challenges. For each challenge you identify, please:\n\na) Describe the specific difficulty encountered\nb) Explain why this difficulty emerged (what made it different from very small and simple projects?)\nc) Discuss how the development team addressed or attempted to solve this challenge\n\nYou can consider challenges related to activities such as code organization and maintenance, team coordination and communication, testing and debugging, requirements management, integration, deployment, etc.\n",
-        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
-        "answer": "",
-        "correctAnswer": "",
-        "question": "",
-        "options": [
-          {
-            "label": "A",
-            "value": ""
-          },
-          {
-            "label": "B",
-            "value": ""
-          }
-        ],
-        "repository": "",
-        "ossRepository": "",
-        "issueNumber": "",
-        "apiEndpoint": "",
-        "responsePath": "",
-        "expectedAnswerType": "Number",
-        "enableTolerance": false,
-        "toleranceRange": 10,
-        "saveValidatedData": false,
-        "savedDataName": "",
-        "questions": [],
         "hints": [],
         "detailedHints": [
           {
-            "content": "Make sure your answer covers: A) At least one software development difficulty, B) An explanation why the difficulty emerged due to the complexity of the project, C) How the difficulty was addressed.",
+            "content": "Make sure your answer covers: A) At least one software development difficulty, B) An explanation why the difficulty emerged, C) How the difficulty was addressed.",
             "image": "",
             "video": null,
             "sequence": 1,
             "penalty": 0
           }
         ],
+        "type": "llm-text-validation",
         "llmTextValidation": {
           "question": "",
           "validationParameters": [
-            "Describe at least one difficulty related to software development",
-            "Provide an activity employed to address the issue"
+            "Describe at least one software development difficulty",
+            "Provide an explanation why the difficulty emerged",
+            "Describe how the difficulty was addressed"
           ],
           "temperature": 0.1,
           "enableDetailedFeedback": true
         },
-        "questNotes": "",
-        "answerType": ""
+        "accept": "Based on the large software project your group discussed, identify and analyze specific engineering difficulties that emerged due to the system's scale and complexity. These are challenges that typically don't occur in smaller, simpler projects. List up to 3 challenges. For each challenge you identify, please:\n\na) Describe the specific difficulty encountered\nb) Explain why this difficulty emerged at scale (what made it different from small projects?)\nc) Discuss how the development team addressed or attempted to solve this challenge\n\nYou can consider challenges related to activities such as code organization and maintenance, team coordination and communication, testing and debugging, requirements management, integration, deployment, etc.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": ""
       },
       "T4": {
-        "title": "Estimation of Size",
-        "taskTitle": "Estimation of Size",
         "desc": "Estimation of Size",
         "points": 1,
         "xp": 1,
@@ -740,8 +370,6 @@
         "answer": ""
       },
       "T5": {
-        "title": "OSS Project Size and Development Effort",
-        "taskTitle": "OSS Project Size and Development Effort",
         "desc": "OSS Project Size and Development Effort",
         "points": 1,
         "xp": 1,
@@ -770,8 +398,6 @@
         "answer": ""
       },
       "T6": {
-        "title": "Software Engineering Strategies",
-        "taskTitle": "Software Engineering Strategies",
         "desc": "Software Engineering Strategies",
         "points": 1,
         "xp": 1,
@@ -794,14 +420,12 @@
           "temperature": 0.1,
           "enableDetailedFeedback": true
         },
-        "accept": "Based on the effort estimation you provided in the previous question, it’s clear that a project of this scale and complexity would be difficult to execute successfully without applying formal software engineering practices.\n\nIf you were to start a similar project from scratch, propose three specific strategies you would prioritize. For each strategy, briefly explain (i) what the strategy entails and (ii) why it is critical for a project of this scale.",
+        "accept": "Based on the effort estimation you provided in the previous question, it's clear that a project of this scale and complexity would be difficult to execute successfully without applying formal software engineering practices.\n\nIf you were to start a similar project from scratch, propose three specific strategies you would prioritize. For each strategy, briefly explain (i) what the strategy entails and (ii) why it is critical for a project of this scale.",
         "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
         "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
         "answer": ""
       },
       "T7": {
-        "title": "Coordination Challenges",
-        "taskTitle": "Coordination Challenges",
         "desc": "Coordination Challenges",
         "points": 1,
         "xp": 1,
@@ -830,53 +454,63 @@
         "answer": ""
       },
       "T8": {
-        "type": "llm-text-validation",
-        "title": "Software Engineering Ethics",
-        "taskTitle": "Software Engineering Ethics",
         "desc": "Software Engineering Ethics",
         "points": 1,
         "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Consider fundamental ethical principles: Privacy (protecting user data), Security (preventing harm), Transparency (being honest about system capabilities), and Accountability (taking responsibility for system outcomes).",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          },
+          {
+            "content": "As systems scale, consider: Bias and Fairness (ensuring systems don't discriminate), Accessibility (making systems usable by diverse populations), Environmental Impact (energy consumption, carbon footprint), and Social Impact (how systems affect society).",
+            "image": "",
+            "video": null,
+            "sequence": 2,
+            "penalty": 0
+          },
+          {
+            "content": "Think about professional obligations: Code of Ethics (following ACM/IEEE guidelines), Continuous Learning (staying updated on best practices), Whistleblowing (reporting unethical practices), and Advocacy (promoting ethical development practices).",
+            "image": "",
+            "video": null,
+            "sequence": 3,
+            "penalty": 0
+          },
+          {
+            "content": "Provide specific examples: Social media algorithms affecting mental health, autonomous vehicles making life-or-death decisions, AI systems used in hiring/justice, and surveillance systems impacting privacy rights.",
+            "image": "",
+            "video": null,
+            "sequence": 4,
+            "penalty": 0
+          },
+          {
+            "content": "Discuss practical actions: Ethical Design (building ethics into the development process), Testing for Bias (evaluating systems for discrimination), Documentation (clearly explaining system limitations), and User Consent (ensuring informed user agreement).",
+            "image": "",
+            "video": null,
+            "sequence": 5,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Must discuss at least 1 ethical responsibility",
+            "Must explain why this responsibility has become more important at scale"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
         "accept": "As software systems become larger and more influential, what ethical responsibilities do software engineers have?",
         "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
         "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
-        "answer": "",
-        "correctAnswer": "",
-        "question": "",
-        "options": [
-          {
-            "label": "A",
-            "value": ""
-          },
-          {
-            "label": "B",
-            "value": ""
-          }
-        ],
-        "repository": "",
-        "ossRepository": "",
-        "issueNumber": "",
-        "apiEndpoint": "",
-        "responsePath": "",
-        "expectedAnswerType": "Number",
-        "enableTolerance": false,
-        "toleranceRange": 10,
-        "saveValidatedData": true,
-        "savedDataName": "collected_info",
-        "questions": [],
-        "hints": [],
-        "detailedHints": [],
-        "llmTextValidation": {
-          "question": "",
-          "validationParameters": [],
-          "temperature": 0.1,
-          "enableDetailedFeedback": false
-        },
-        "questNotes": "",
-        "answerType": ""
+        "answer": ""
       },
       "T9": {
-        "title": "AI and Software Engineering",
-        "taskTitle": "AI and Software Engineering",
         "desc": "AI and Software Engineering",
         "points": 1,
         "xp": 1,
@@ -905,8 +539,6 @@
         "answer": ""
       },
       "T10": {
-        "title": "Challenges introduced by AI",
-        "taskTitle": "Challenges introduced by AI",
         "desc": "Challenges introduced by AI",
         "points": 1,
         "xp": 1,
@@ -931,12 +563,10 @@
         },
         "accept": "What new challenges do AI tools introduce to software engineering?",
         "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
         "answer": ""
       },
       "T11": {
-        "title": "Reflection",
-        "taskTitle": "Reflection",
         "desc": "Reflection",
         "points": 1,
         "xp": 1,
@@ -953,12 +583,10 @@
         },
         "accept": "Reflect on how this assignment has changed your understanding of the necessity and complexity of software engineering. ",
         "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
         "answer": ""
       },
       "T12": {
-        "title": "Software Engineering Skills",
-        "taskTitle": "Software Engineering Skills",
         "desc": "Software Engineering Skills",
         "points": 1,
         "xp": 1,
@@ -983,12 +611,10 @@
         },
         "accept": "Reflection: What skills do you need to develop as a future software engineer? ",
         "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
         "answer": ""
       },
       "T13": {
-        "title": "Feedback",
-        "taskTitle": "Feedback",
         "desc": "Feedback",
         "points": 1,
         "xp": 1,
@@ -1013,16 +639,13 @@
         },
         "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A0.1\nAnswer \"ok\" when done.\n\n\n",
         "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
-        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
         "answer": ""
       }
     }
   },
-  "createdAt": "2025-09-02T15:01:09.123Z",
-  "updatedAt": "2025-09-02T15:01:09.123Z",
-  "source": "file_upload",
-  "createdBy": "oss-management",
-  "originalFilePath": "quest_config_68a770b8140b9c0174c13ce7.json",
-  "version": 1,
-  "__v": 0
+  "createdAt": "2025-08-27T21:32:44.724Z",
+  "updatedAt": "2025-09-02T17:30:06.906Z",
+  "createdBy": "migration-script",
+  "source": "quest_configs-migration"
 }

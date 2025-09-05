@@ -139,6 +139,11 @@ const GenerateJson = () => {
     }
   }, [draftQuests]);
   
+  // Saved Quests from Database State
+  const [savedQuests, setSavedQuests] = useState([]);
+  const [isLoadingSavedQuests, setIsLoadingSavedQuests] = useState(false);
+  const [savedQuestsError, setSavedQuestsError] = useState("");
+  
   // Test repositories state
   const [testUsernames, setTestUsernames] = useState("");
   const [testRepos, setTestRepos] = useState([]);
@@ -2100,6 +2105,13 @@ Student can now start their quest journey!`);
     }
   }, [showReadmeModal, classId]);
 
+  // Fetch saved quests from database when component loads
+  useEffect(() => {
+    if (classId) {
+      fetchSavedQuests();
+    }
+  }, [classId]);
+
   const handleReadmeRemove = () => {
     setJsonContent((prev) => {
       const newContent = { ...prev };
@@ -2147,6 +2159,45 @@ Student can now start their quest journey!`);
       console.error("Error removing README across repositories:", error);
       setBatchUpdateStatus("❌ Error removing README across repositories.");
       setIsBatchUpdating(false);
+    }
+  };
+
+  // Function to fetch saved quests from database
+  const fetchSavedQuests = async () => {
+    if (!classId) return;
+    
+    setIsLoadingSavedQuests(true);
+    setSavedQuestsError("");
+    
+    try {
+      console.log('🔍 [fetchSavedQuests] Fetching saved quests for class:', classId);
+      
+      // First, get the class/group information to find the professor
+      const groupResponse = await axios.get(`${API_BASE_URL}/api/group/${classId}`);
+      
+      if (!groupResponse.data || !groupResponse.data.success) {
+        throw new Error('Failed to fetch class information');
+      }
+      
+      const group = groupResponse.data.data;
+      console.log('✅ [fetchSavedQuests] Found group:', group);
+      
+      // Now fetch all quests from the database (we'll filter them later)
+      const questsResponse = await axios.get(`${API_BASE_URL}/api/quest/all`);
+      
+      if (questsResponse.data && questsResponse.data.success) {
+        console.log('✅ [fetchSavedQuests] Successfully fetched all quests:', questsResponse.data.data);
+        setSavedQuests(questsResponse.data.data || []);
+      } else {
+        console.log('⚠️ [fetchSavedQuests] No quests found or invalid response');
+        setSavedQuests([]);
+      }
+    } catch (error) {
+      console.error('❌ [fetchSavedQuests] Error fetching saved quests:', error);
+      setSavedQuestsError(error.response?.data?.message || 'Failed to fetch saved quests');
+      setSavedQuests([]);
+    } finally {
+      setIsLoadingSavedQuests(false);
     }
   };
 
@@ -3319,6 +3370,188 @@ Student can now start their quest journey!`);
           </Box>
         </Card>
 
+        {/* Saved Quests from Database Section */}
+        <Card sx={{ 
+          mb: 4, 
+          borderRadius: 4, 
+          boxShadow: "none", 
+          border: "2px solid #2196f3",
+          backgroundColor: "#f3f8ff" // Light blue background
+        }}>
+          <Box p={3}>
+            <Stack direction="row" alignItems="center" spacing={2} mb={2}>
+              <LibraryBooksIcon sx={{ color: "#2196f3" }} />
+              <Typography variant="h6" sx={{ color: "#2196f3", fontWeight: 600 }}>
+                Saved Quests from Database ({savedQuests.length})
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={fetchSavedQuests}
+                disabled={isLoadingSavedQuests}
+                sx={{ borderRadius: 4, borderColor: "#2196f3", color: "#2196f3" }}
+                startIcon={isLoadingSavedQuests ? <CircularProgress size={16} /> : <AutoAwesomeIcon />}
+              >
+                {isLoadingSavedQuests ? "Loading..." : "Refresh"}
+              </Button>
+            </Stack>
+
+            <Typography variant="body2" sx={{ color: "#666", mb: 3 }}>
+              Quests saved in the database that can be imported into your quest sequence.
+            </Typography>
+
+            {savedQuestsError && (
+              <Alert severity="error" sx={{ mb: 3 }}>
+                {savedQuestsError}
+              </Alert>
+            )}
+
+            {isLoadingSavedQuests ? (
+              <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : savedQuests.length > 0 ? (
+              <Stack spacing={2}>
+                {savedQuests.map((quest, index) => (
+                  <Card
+                    key={`saved-${quest._id}-${index}`}
+                    sx={{
+                      border: "1px solid #e0e0e0",
+                      borderRadius: 4,
+                      boxShadow: "none",
+                      p: 3,
+                      "&:hover": {
+                        borderColor: "#2196f3",
+                        backgroundColor: "#f8f9fa",
+                      },
+                    }}
+                  >
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          {quest.questTitle || quest.title || `Quest ${index + 1}`}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          {quest.description || "No description available"}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Tasks: {quest.tasks?.length || 0} | Created: {new Date(quest.createdAt).toLocaleDateString()}
+                          {quest.professor && typeof quest.professor === 'object' && (
+                            <> | Professor: {quest.professor.name || quest.professor.email}</>
+                          )}
+                        </Typography>
+                      </Box>
+                      <Stack direction="row" spacing={1}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => {
+                            // Import quest into draft quests
+                            const importedQuest = {
+                              questId: `Q${Date.now()}`, // Generate unique ID
+                              title: quest.questTitle || quest.title,
+                              description: quest.description || "",
+                              tasks: quest.tasks?.map((task, taskIndex) => ({
+                                taskId: `T${taskIndex + 1}`,
+                                title: task.title || task.taskTitle,
+                                description: task.description || task.objective || "",
+                                points: task.points || 10,
+                                type: task.type || "text",
+                                hints: task.hints || [],
+                                llmTextValidation: task.llmTextValidation || null,
+                                options: task.options || [],
+                                correctAnswer: task.correctAnswer || null,
+                                answerType: task.answerType || "singleAnswer"
+                              })) || [],
+                              metadata: {
+                                type: "imported",
+                                source: "database",
+                                originalId: quest._id,
+                                importedAt: new Date().toISOString()
+                              }
+                            };
+                            
+                            setDraftQuests(prev => ({
+                              ...prev,
+                              questSequence: [...(prev.questSequence || []), importedQuest]
+                            }));
+                            
+                            setDraftSaveStatus("✅ Quest imported to drafts!");
+                            setTimeout(() => setDraftSaveStatus(""), 3000);
+                          }}
+                          sx={{ 
+                            borderRadius: 4, 
+                            fontWeight: "bold",
+                            bgcolor: "#2196f3",
+                            "&:hover": { bgcolor: "#1976d2" }
+                          }}
+                        >
+                          Import to Drafts
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => {
+                            // Show quest details in a modal or expandable section
+                            console.log("Quest details:", quest);
+                            // You can implement a detailed view here
+                          }}
+                          sx={{ borderRadius: 4, borderColor: "#2196f3", color: "#2196f3" }}
+                        >
+                          View Details
+                        </Button>
+                      </Stack>
+                    </Stack>
+                    
+                    {/* Show task preview */}
+                    {quest.tasks && quest.tasks.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
+                          Tasks Preview:
+                        </Typography>
+                        <Stack spacing={1}>
+                          {quest.tasks.slice(0, 3).map((task, taskIndex) => (
+                            <Box
+                              key={taskIndex}
+                              sx={{
+                                p: 1,
+                                bgcolor: "#f8f9fa",
+                                borderRadius: 2,
+                                border: "1px solid #e0e0e0"
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {task.title || task.taskTitle || `Task ${taskIndex + 1}`}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {task.type || "text"} • {task.points || 10} points
+                              </Typography>
+                            </Box>
+                          ))}
+                          {quest.tasks.length > 3 && (
+                            <Typography variant="caption" color="text.secondary">
+                              +{quest.tasks.length - 3} more tasks...
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Box>
+                    )}
+                  </Card>
+                ))}
+              </Stack>
+            ) : (
+              <Box sx={{ textAlign: "center", p: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  No saved quests found in the database.
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Create quests using the "Add New Quest" button above to see them here.
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        </Card>
+
         {/* Draft Quests Section */}
         <Card sx={{ 
           mb: 4, 
@@ -3590,11 +3823,13 @@ Student can now start their quest journey!`);
         {/* Add Quest Modal */}
         <Dialog
           open={showAddQuestModal}
-          onClose={() => {
+          onClose={(event, reason) => {
+            if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
             setShowAddQuestModal(false);
             setEditingQuestIndex(null);
             setQuestFormData({ title: "", description: "", tasks: [] });
           }}
+          disableEscapeKeyDown
           maxWidth="lg"
           fullWidth
           PaperProps={{
@@ -5618,12 +5853,14 @@ Student can now start their quest journey!`);
         {/* Edit Task Modal */}
         <Dialog
           open={showEditTaskModal}
-          onClose={() => {
+          onClose={(event, reason) => {
+            if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
             setShowEditTaskModal(false);
             setEditingTaskData(null);
             setEditingTaskQuestIndex(null);
             setEditingTaskId(null);
           }}
+          disableEscapeKeyDown
           maxWidth="lg"
           fullWidth
           PaperProps={{
@@ -7202,7 +7439,11 @@ Student can now start their quest journey!`);
         {/* README Preview/Edit Modal */}
         <Dialog
           open={showReadmeModal}
-          onClose={() => setShowReadmeModal(false)}
+          onClose={(event, reason) => {
+            if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+            setShowReadmeModal(false);
+          }}
+          disableEscapeKeyDown
           maxWidth="md"
           fullWidth
           PaperProps={{
@@ -7397,7 +7638,11 @@ Good luck! 🚀"
         {/* Remove README Confirmation Dialog */}
         <Dialog
           open={showRemoveReadmeConfirm}
-          onClose={() => setShowRemoveReadmeConfirm(false)}
+          onClose={(event, reason) => {
+            if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+            setShowRemoveReadmeConfirm(false);
+          }}
+          disableEscapeKeyDown
           maxWidth="sm"
           fullWidth
         >
@@ -7433,7 +7678,11 @@ Good luck! 🚀"
         {/* Batch Update Confirmation Dialog */}
         <Dialog
           open={showBatchUpdateConfirm}
-          onClose={() => setShowBatchUpdateConfirm(false)}
+          onClose={(event, reason) => {
+            if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+            setShowBatchUpdateConfirm(false);
+          }}
+          disableEscapeKeyDown
           maxWidth="sm"
           fullWidth
         >
@@ -7915,7 +8164,11 @@ Good luck! 🚀"
       {/* Quest Deployment Dialog */}
       <Dialog 
         open={showDeployDialog} 
-        onClose={() => !isDeploying && setShowDeployDialog(false)}
+        onClose={(event, reason) => {
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+          if (!isDeploying) setShowDeployDialog(false);
+        }}
+        disableEscapeKeyDown
         maxWidth="sm" 
         fullWidth
       >
@@ -8524,7 +8777,16 @@ const TaskDeleteConfirmationDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={(event, reason) => {
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+        onClose();
+      }}
+      disableEscapeKeyDown
+      maxWidth="sm" 
+      fullWidth
+    >
       <DialogTitle>Delete Task</DialogTitle>
       <DialogContent>
         <Typography>

@@ -368,6 +368,29 @@ const getQuestsByProfessor = async (req, res) => {
     }
 };
 
+// Get all quests from database (for importing)
+const getAllQuests = async (req, res) => {
+    try {
+        const quests = await Quest.find({})
+            .populate('tasks')
+            .populate('professor', 'name email')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({
+            success: true,
+            data: quests
+        });
+
+    } catch (error) {
+        console.error("Error fetching all quests:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error.message
+        });
+    }
+};
+
 // Delete a quest
 const deleteQuest = async (req, res) => {
     try {
@@ -695,6 +718,7 @@ const getQuestTaskTypes = async (req, res) => {
 module.exports = {
     uploadMCQQuest,
     getQuestsByProfessor,
+    getAllQuests,
     deleteQuest,
     updateQuest,
     getQuestById,

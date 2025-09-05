@@ -21,6 +21,10 @@ const ProfessorSchema = mongoose.Schema({
     verificationCode: {
         type: String
     },
+    githubUsername: {
+        type: String,
+        sparse: true
+    },
     ownedGroups: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Group"

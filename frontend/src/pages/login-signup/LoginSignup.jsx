@@ -7,6 +7,8 @@ let baseURL = API_BASE_URL;
 
 const LoginSignup = () => {
   const [isSignup, setIsSignup] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const [profRegisterData, setProfRegisterData] = useState({
     name: "",
@@ -44,6 +46,9 @@ const LoginSignup = () => {
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+    
     try {
       const response = await axios.post(
         `${baseURL}/api/auth`,
@@ -61,11 +66,23 @@ const LoginSignup = () => {
       }
     } catch (error) {
       console.log(`Error registering:`, error);
+      if (error.response?.data) {
+        setError(error.response.data);
+      } else if (error.message) {
+        setError(error.message);
+      } else {
+        setError("Registration failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+    
     try {
       const response = await axios.post(
         `${baseURL}/api/auth/login`,
@@ -77,7 +94,7 @@ const LoginSignup = () => {
         );
         if (professor) {
           localStorage.setItem("professor", JSON.stringify(professor.data));
-          if (!professor.verified) {
+          if (!professor.data.verified) {
             window.location.href = "/verify";
           } else {
             window.location.href = "/";
@@ -86,11 +103,41 @@ const LoginSignup = () => {
       }
     } catch (error) {
       console.log(`Error logging in:`, error);
+      if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.response?.data) {
+        setError(error.response.data);
+      } else if (error.message) {
+        setError(error.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className={`container ${isSignup ? "active" : ""}`} id="container">
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#ff4444',
+          color: 'white',
+          padding: '10px 20px',
+          borderRadius: '5px',
+          zIndex: 1000,
+          maxWidth: '400px',
+          textAlign: 'center'
+        }}>
+          {error}
+        </div>
+      )}
+      
       {/* Sign Up Form */}
       <div className="form-container sign-up">
         <form onSubmit={handleRegisterSubmit}>
@@ -101,6 +148,7 @@ const LoginSignup = () => {
             name="name"
             value={profRegisterData.name}
             onChange={handleChange}
+            required
           />
           <input
             type="email"
@@ -108,6 +156,7 @@ const LoginSignup = () => {
             name="email"
             value={profRegisterData.email}
             onChange={handleChange}
+            required
           />
           <input
             type="password"
@@ -115,8 +164,11 @@ const LoginSignup = () => {
             name="password"
             value={profRegisterData.password}
             onChange={handleChange}
+            required
           />
-          <button type="submit">Sign Up</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Signing Up..." : "Sign Up"}
+          </button>
         </form>
       </div>
 
@@ -130,6 +182,7 @@ const LoginSignup = () => {
             name="email"
             value={profLoginData.email}
             onChange={handleChange}
+            required
           />
           <input
             type="password"
@@ -137,9 +190,12 @@ const LoginSignup = () => {
             name="password"
             value={profLoginData.password}
             onChange={handleChange}
+            required
           />
           <a href="#">Forgot Your Password?</a>
-          <button type="submit">Sign In</button>
+          <button type="submit" disabled={loading}>
+            {loading ? "Signing In..." : "Sign In"}
+          </button>
         </form>
       </div>
 
