@@ -412,9 +412,14 @@ const updateReadme = async(req, res) => {
     const userRepo = await UserRepo.findOne({ student: studentId, group: groupId });
     
     let fileContent = readme.content
-    const currentQuestsDescription = await CurrentQuestDescription(studentId, groupId);
     
-    fileContent = fileContent + currentQuestsDescription;
+    // Generate quest progress section
+    const availableQuestsDescription = await CurrentQuestDescription(studentId, groupId);
+    const completedQuestsDescription = await CompletedQuestsDescription(studentId, groupId);
+    
+    const questProgressSection = `\n\n⚙️ Available Quests\n${availableQuestsDescription}\n✅ Completed Quests\n${completedQuestsDescription}`;
+    
+    fileContent = fileContent + questProgressSection;
 
     const org = userRepo.org; 
     const repoName = userRepo.repository_url; 
@@ -1440,7 +1445,8 @@ const purpleDeployQuest = async (req, res) => {
                     username: user._id,
                     repo: user._id // For OSS-Doorway repos, username is the repo name
                 }));
-                
+            }
+            
             console.log(`🔍 [PURPLE-DEPLOYMENT] Step 9: Updating class information...`);
             // 8. Update class information to reference the new config
             await Group.findByIdAndUpdate(classId, {
@@ -1464,9 +1470,13 @@ const purpleDeployQuest = async (req, res) => {
             
             console.log(`👥 [PURPLE-DEPLOYMENT] Found ${usersToMigrate.length} users to migrate`);
             
+            // Track migration failures for comprehensive error handling
+            const migrationFailures = [];
+            const migrationSuccesses = [];
+            
             for (const user of usersToMigrate) {
                 try {
-                    await userDataCollection.updateOne(
+                    const updateResult = await userDataCollection.updateOne(
                             { _id: user._id },
                         { 
                             $set: { 
@@ -1475,14 +1485,72 @@ const purpleDeployQuest = async (req, res) => {
                             }
                         }
                     );
+                    
+                    if (updateResult.modifiedCount > 0) {
                             migratedUsers++;
-                    usersWithNewQuestAccess.push(user._id);
+                        usersWithNewQuestAccess.push(user._id);
+                        migrationSuccesses.push(user._id);
+                        console.log(`✅ [PURPLE-DEPLOYMENT] Migrated user: ${user._id}`);
+                        } else {
+                        const errorMsg = `No changes made to user ${user._id} (may already be migrated)`;
+                        console.log(`⚠️ [PURPLE-DEPLOYMENT] ${errorMsg}`);
+                        migrationFailures.push({ user: user._id, error: errorMsg });
+                    }
                 } catch (migrationError) {
-                    console.error(`❌ [PURPLE-DEPLOYMENT] Failed to migrate user ${user._id}:`, migrationError.message);
+                    const errorMsg = `Failed to migrate user ${user._id}: ${migrationError.message}`;
+                    console.error(`❌ [PURPLE-DEPLOYMENT] ${errorMsg}`);
+                    migrationFailures.push({ user: user._id, error: errorMsg });
                 }
             }
             
-            console.log(`✅ [PURPLE-DEPLOYMENT] Migrated ${migratedUsers} users to new configuration`);
+            console.log(`✅ [PURPLE-DEPLOYMENT] Migration completed: ${migratedUsers} successful, ${migrationFailures.length} failed`);
+            
+            // VERIFICATION: Double-check that all users are properly migrated
+            console.log(`🔍 [PURPLE-DEPLOYMENT] Step 10.5: Verifying migration...`);
+            const verificationQuery = await userDataCollection.find({
+                $or: [
+                    { 'user_data.customGroupId': classId },
+                    { 'user_data.customGroupId': { $regex: new RegExp(`^${classId}_purple_(?!${newConfig.classId.split('_purple_')[1]})`) } }
+                ]
+            }).toArray();
+            
+            if (verificationQuery.length > 0) {
+                console.error(`❌ [PURPLE-DEPLOYMENT] VERIFICATION FAILED: ${verificationQuery.length} users still not migrated:`);
+                for (const user of verificationQuery) {
+                    console.error(`  - ${user._id}: customGroupId=${user.user_data?.customGroupId}`);
+                }
+                
+                // Attempt to fix remaining users
+                console.log(`🔧 [PURPLE-DEPLOYMENT] Attempting to fix remaining users...`);
+                for (const user of verificationQuery) {
+                    try {
+                        await userDataCollection.updateOne(
+                            { _id: user._id },
+                            { 
+                                $set: { 
+                                    'user_data.customGroupId': newConfig.classId,
+                                    'user_data.customSequenceFile': `${newConfig.classId}.json`
+                                }
+                            }
+                        );
+                        console.log(`🔧 [PURPLE-DEPLOYMENT] Fixed user: ${user._id}`);
+                        migratedUsers++;
+                    } catch (fixError) {
+                        console.error(`❌ [PURPLE-DEPLOYMENT] Failed to fix user ${user._id}:`, fixError.message);
+                    }
+                }
+            } else {
+                console.log(`✅ [PURPLE-DEPLOYMENT] Verification passed: All users properly migrated`);
+            }
+            
+            // Log detailed migration summary
+            console.log(`📊 [PURPLE-DEPLOYMENT] Migration Summary:`);
+            console.log(`  - Total users found: ${usersToMigrate.length}`);
+            console.log(`  - Successfully migrated: ${migratedUsers}`);
+            console.log(`  - Migration failures: ${migrationFailures.length}`);
+            if (migrationFailures.length > 0) {
+                console.log(`  - Failed users:`, migrationFailures.map(f => f.user).join(', '));
+            }
 
             console.log(`🔍 [PURPLE-DEPLOYMENT] Step 11: Clearing bot cache for new configuration...`);
             // Get GitHub access token for both cache clearing and auto-unlock
@@ -1529,9 +1597,12 @@ const purpleDeployQuest = async (req, res) => {
                 console.warn(`⚠️ [PURPLE-DEPLOYMENT] Failed to clear bot cache (non-critical):`, cacheError.message);
             }
 
-                // AUTO-UNLOCK: Now unlock the new quest for ready students by posting comments to their last closed issue
-                if (studentsReadyForNewQuest.length > 0) {
-                    console.log(`🚀 [PURPLE-DEPLOYMENT] Step 12: Auto-unlocking ${newQuestId} for ${studentsReadyForNewQuest.length} ready students...`);
+                // AUTO-UNLOCK: Now unlock the new quest for all migrated users by posting /accept to their repo
+                {
+                    const targetUsers = usersWithNewQuestAccess || [];
+                    console.log(`🚀 [PURPLE-DEPLOYMENT] Step 12: Auto-accepting ${newQuestId} for ${targetUsers.length} users (override prerequisite)`);
+                    
+                    let autoUnlockSuccess = 0;
                     
                     try {
                         if (!accessToken) {
@@ -1543,45 +1614,40 @@ const purpleDeployQuest = async (req, res) => {
                         let successCount = 0;
                         let unlockErrors = [];
                         
-                        for (const student of studentsReadyForNewQuest) {
+                        for (const student of targetUsers) {
                             try {
-                                const { username, repo } = student;
-                                console.log(`🔓 [PURPLE-DEPLOYMENT] Auto-unlocking ${newQuestId} for ${username}...`);
+                                // student is a string (user ID), not an object
+                                const username = student;
+                                const repo = student; // For OSS-Doorway repos, username is the repo name
+                                console.log(`🔓 [PURPLE-DEPLOYMENT] Auto-accepting ${newQuestId} for ${username}...`);
                                 
-                                                                 // Get closed issues for this student's repo (most recent first)
-                                 const issuesResponse = await axios.get(`https://api.github.com/repos/OSS-Doorway-Dev/${repo}/issues`, {
+                                // Prefer latest closed issue; fallback to latest open
+                                const closedIssuesResponse = await axios.get(`https://api.github.com/repos/OSS-Doorway-Dev/${repo}/issues`, {
                                      headers: {
                                          'Authorization': `token ${accessToken}`,
                                          'Accept': 'application/vnd.github.v3+json',
                                          'User-Agent': 'OSS-Management-Backend'
                                      },
-                                     params: { 
-                                         state: newQuestId === 'Q1' ? 'open' : 'closed', 
-                                         sort: 'updated', 
-                                         direction: 'desc',
-                                         per_page: 10 // Get last 10 closed issues
-                                     }
+                                     params: { state: 'closed', sort: 'updated', direction: 'desc', per_page: 10 }
                                  });
 
-                                                                 if (issuesResponse.data && issuesResponse.data.length > 0) {
-                                     // For Q1, use the first open issue. For other quests, find the most recent closed issue related to the prerequisite quest
-                                     let lastClosedIssue;
-                                     if (newQuestId === 'Q1') {
-                                         lastClosedIssue = issuesResponse.data[0]; // Use first open issue for Q1
-            } else {
-                                         lastClosedIssue = issuesResponse.data.find(issue => {
-                                             const title = issue.title.toLowerCase();
-                                             return title.includes(actualPrerequisiteQuestId.toLowerCase()) || 
-                                                    title.includes('quest') || 
-                                                    title.includes('task');
-                                         }) || issuesResponse.data[0]; // Fallback to most recent closed issue
-                                     }
-                                    
-                                    console.log(`📝 [PURPLE-DEPLOYMENT] Found last closed issue #${lastClosedIssue.number} for ${username}: "${lastClosedIssue.title}"`);
-                                    
-                                    // Post the accept command to the last closed issue
-                                    console.log(`💬 [PURPLE-DEPLOYMENT] Posting "/accept ${newQuestId}" to ${username}'s last closed issue...`);
-                                    await axios.post(`https://api.github.com/repos/OSS-Doorway-Dev/${repo}/issues/${lastClosedIssue.number}/comments`, {
+                                let targetIssue = closedIssuesResponse.data && closedIssuesResponse.data[0];
+                                if (!targetIssue) {
+                                    const openIssuesResponse = await axios.get(`https://api.github.com/repos/OSS-Doorway-Dev/${repo}/issues`, {
+                                        headers: {
+                                            'Authorization': `token ${accessToken}`,
+                                            'Accept': 'application/vnd.github.v3+json',
+                                            'User-Agent': 'OSS-Management-Backend'
+                                        },
+                                        params: { state: 'open', sort: 'updated', direction: 'desc', per_page: 10 }
+                                    });
+                                    targetIssue = openIssuesResponse.data && openIssuesResponse.data[0];
+                                }
+
+                                if (targetIssue) {
+                                    console.log(`📝 [PURPLE-DEPLOYMENT] Using issue #${targetIssue.number} for ${username}: "${targetIssue.title}"`);
+                                    console.log(`💬 [PURPLE-DEPLOYMENT] Posting "/accept ${newQuestId}" to ${username}'s issue...`);
+                                    await axios.post(`https://api.github.com/repos/OSS-Doorway-Dev/${repo}/issues/${targetIssue.number}/comments`, {
                                         body: `/accept ${newQuestId}`
                                     }, {
                                         headers: {
@@ -1592,26 +1658,28 @@ const purpleDeployQuest = async (req, res) => {
                                     });
                                     
                                     successCount++;
-                                    console.log(`✅ [PURPLE-DEPLOYMENT] Successfully unlocked ${newQuestId} for ${username} via last closed issue`);
+                                    console.log(`✅ [PURPLE-DEPLOYMENT] Successfully unlocked ${newQuestId} for ${username}`);
             } else {
-                                    const errorMsg = `${username}: No closed issues found`;
+                                    const errorMsg = `${username}: No issues found (open or closed)`;
                                     console.log(`⚠️ [PURPLE-DEPLOYMENT] ${errorMsg}`);
                                     unlockErrors.push(errorMsg);
                                 }
                             } catch (studentError) {
-                                const errorMsg = `${student.username}: ${studentError.message}`;
-                                console.error(`❌ [PURPLE-DEPLOYMENT] Error processing ${student.username}:`, studentError.message);
+                                const errorMsg = `${student}: ${studentError.message}`;
+                                console.error(`❌ [PURPLE-DEPLOYMENT] Error processing ${student}:`, studentError.message);
                                 unlockErrors.push(errorMsg);
                             }
                         }
+                        
+                        autoUnlockSuccess = successCount;
                         
                         console.log(`🎉 [PURPLE-DEPLOYMENT] Auto-unlock completed!`);
                         console.log(`📊 [PURPLE-DEPLOYMENT] Unlock summary:`, {
                             questId: newQuestId,
                             successCount,
-                            totalStudents: studentsReadyForNewQuest.length,
+                            totalStudents: targetUsers.length,
                             errorCount: unlockErrors.length,
-                            successRate: `${Math.round((successCount / studentsReadyForNewQuest.length) * 100)}%`
+                            successRate: `${targetUsers.length > 0 ? Math.round((successCount / targetUsers.length) * 100) : 0}%`
                         });
                         
                         if (unlockErrors.length > 0) {
@@ -1622,14 +1690,8 @@ const purpleDeployQuest = async (req, res) => {
                         console.error(`❌ [PURPLE-DEPLOYMENT] Auto-unlock failed:`, unlockError.message);
                         console.log(`⚠️ [PURPLE-DEPLOYMENT] Quest deployed but auto-unlock failed - students will need to unlock manually`);
                     }
-            } else {
-                    console.log(`ℹ️ [PURPLE-DEPLOYMENT] No students ready for ${newQuestId} - they will unlock automatically when they complete ${actualPrerequisiteQuestId}`);
-                }
-            } else {
-                console.log(`ℹ️ [PURPLE-DEPLOYMENT] No prerequisite quest - ${newQuestId} will be available to all students`);
-            }
-
-            // Close database connection
+                
+                    // Close database connection
             await ossDoorwayClient.close();
             console.log(`🔗 [PURPLE-DEPLOYMENT] Database connection closed`);
             
@@ -1641,21 +1703,24 @@ const purpleDeployQuest = async (req, res) => {
                 baseQuests: existingQuests.length, // Quests in the config we built from
                 newTotalQuests: newTotalQuests,   // Total quests in new config
                 migratedUsers,
+                        migrationFailures: migrationFailures.length,
+                        migrationFailureDetails: migrationFailures,
                 usersWithNewQuestAccess: usersWithNewQuestAccess.length,
-                studentsReadyForNewQuest: studentsReadyForNewQuest.length,
-                autoUnlockedCount: studentsReadyForNewQuest.length,
+                        studentsReadyForNewQuest: studentsReadyForNewQuest.length,
+                        autoUnlockedCount: autoUnlockSuccess,
                 class: classInfo.groupName,
                 isPurpleDeployment: true,
                 // Legacy fields for compatibility
                 originalConfigId,
                 originalQuests: existingQuests.length
             });
+                }
 
         } catch (error) {
             console.error(`❌ [PURPLE-DEPLOYMENT] Error:`, error);
-            if (ossDoorwayClient) {
-                await ossDoorwayClient.close();
-            }
+                if (ossDoorwayClient) {
+                    await ossDoorwayClient.close();
+                }
             return res.status(500).json({ message: 'Failed to deploy quest', error: error.message });
         }
     } catch (error) {

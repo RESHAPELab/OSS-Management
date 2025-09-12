@@ -41,27 +41,18 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Grid,
-  CardContent,
-  InputBase,
   FormHelperText,
 } from "@mui/material";
 import {
-  Download as DownloadIcon,
-  ArrowBack as ArrowBackIcon,
   Description as DescriptionIcon,
-  CheckCircle as CheckCircleIcon,
   Add as AddIcon,
-  DragIndicator as DragIndicatorIcon,
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  ExpandMore as ExpandMoreIcon,
   LibraryBooks as LibraryBooksIcon,
   AddCircleOutline as AddCircleOutlineIcon,
   AutoAwesome as AutoAwesomeIcon,
-  Info as InfoIcon,
   PlayArrow as PlayArrowIcon,
 } from "@mui/icons-material";
 import { useAuthContext } from "../../context/AuthContext";
@@ -174,10 +165,6 @@ const GenerateJson = () => {
   const [questToDeleteFrom, setQuestToDeleteFrom] = useState(null);
 
   // Quest deployment dialog state
-  const [showDeployDialog, setShowDeployDialog] = useState(false);
-  const [questToDeploy, setQuestToDeploy] = useState(null);
-  const [deploymentStatus, setDeploymentStatus] = useState("");
-  const [isDeploying, setIsDeploying] = useState(false);
 
   // Initial JSON content with state management
   const [jsonContent, setJsonContent] = useState({
@@ -946,22 +933,6 @@ const GenerateJson = () => {
     }
   };
 
-  // Move quest from draft to main sequence - now shows deployment dialog
-  const moveDraftToMain = (questIndex) => {
-    const draftQuest = draftQuests.questSequence[questIndex];
-    if (!draftQuest) return;
-
-    // Calculate the next quest number
-    const nextQuestNumber = jsonContent.questSequence.length + 1;
-    
-    setQuestToDeploy({
-      ...draftQuest,
-      draftIndex: questIndex,
-      nextQuestId: `Q${nextQuestNumber}`
-    });
-    setShowDeployDialog(true);
-  };
-
   // Handle purple deployment - creates new config with appended quest
   const handlePurpleDeployQuest = async (questIndex) => {
     const draftQuest = draftQuests.questSequence[questIndex];
@@ -1069,100 +1040,6 @@ const GenerateJson = () => {
     } catch (error) {
       console.error(`❌ [FRONTEND] Purple deployment failed:`, error);
       alert(`❌ Failed to deploy quest: ${error.response?.data?.message || error.message}`);
-    }
-  };
-
-  // Handle the actual deployment after dialog confirmation
-  const handleDeployQuest = async () => {
-    if (!questToDeploy) return;
-    
-    console.log(`🚀 [FRONTEND] Starting quest deployment:`, {
-      title: questToDeploy.title,
-      draftIndex: questToDeploy.draftIndex,
-      nextQuestId: questToDeploy.nextQuestId,
-      classId
-    });
-    
-    setIsDeploying(true);
-    setDeploymentStatus("Deploying quest to class...");
-
-    try {
-      console.log(`📡 [FRONTEND] Calling backend deployment endpoint...`);
-      // Call the backend deployment endpoint
-      const response = await axios.post(`${API_BASE_URL}/api/gamification/deployQuest`, {
-        classId: classId,
-        draftQuestData: questToDeploy
-      });
-
-      const { newQuestId, studentsReadyForNewQuest } = response.data;
-      console.log(`✅ [FRONTEND] Backend deployment successful:`, response.data);
-      
-      setDeploymentStatus(`Successfully deployed ${newQuestId}! Found ${studentsReadyForNewQuest.length} students ready for the new quest.`);
-
-      // If students are ready, unlock the quest for them
-      if (studentsReadyForNewQuest.length > 0) {
-        console.log(`🔓 [FRONTEND] Unlocking quest for ${studentsReadyForNewQuest.length} ready students...`);
-        setDeploymentStatus(`Unlocking ${newQuestId} for ${studentsReadyForNewQuest.length} ready students...`);
-        
-        try {
-          const unlockResponse = await axios.post(`${API_BASE_URL}/api/gamification/unlockQuestForStudents`, {
-            org: "OSS-Doorway-Dev",
-            students: studentsReadyForNewQuest,
-            questId: newQuestId
-          });
-          
-          console.log(`✅ [FRONTEND] Quest unlock successful:`, unlockResponse.data);
-          setDeploymentStatus(`Quest deployed and unlocked for all ready students!`);
-        } catch (unlockError) {
-          console.error(`❌ [FRONTEND] Quest unlock failed:`, unlockError);
-          setDeploymentStatus(`Quest deployed but failed to unlock for some students. Check logs for details.`);
-        }
-      } else {
-        console.log(`ℹ️ [FRONTEND] No students ready for new quest - they will unlock automatically when they complete prerequisites`);
-      }
-
-      console.log(`🔄 [FRONTEND] Updating local state...`);
-      // Remove from draft quests
-      const updatedDraftQuests = {
-        ...draftQuests,
-        questSequence: draftQuests.questSequence.filter((_, index) => index !== questToDeploy.draftIndex)
-      };
-      setDraftQuests(updatedDraftQuests);
-      saveDraftQuests(updatedDraftQuests);
-      console.log(`✅ [FRONTEND] Draft quests updated, removed index ${questToDeploy.draftIndex}`);
-
-      // Add to main sequence for UI display
-      const questForMain = {
-        ...questToDeploy,
-        questId: newQuestId
-      };
-      setJsonContent(prev => ({
-        ...prev,
-        questSequence: [...prev.questSequence, questForMain]
-      }));
-      console.log(`✅ [FRONTEND] Main quest sequence updated with ${newQuestId}`);
-
-      // Auto-close dialog after 3 seconds
-      console.log(`⏰ [FRONTEND] Auto-closing dialog in 3 seconds...`);
-      setTimeout(() => {
-        setShowDeployDialog(false);
-        setQuestToDeploy(null);
-        setDeploymentStatus("");
-        console.log(`✅ [FRONTEND] Deployment dialog closed and state reset`);
-      }, 3000);
-
-    } catch (error) {
-      console.error(`❌ [FRONTEND] Quest deployment failed:`, error);
-      if (error.response) {
-        console.error(`❌ [FRONTEND] Response status: ${error.response.status}`);
-        console.error(`❌ [FRONTEND] Response data:`, error.response.data);
-      } else {
-        console.error(`❌ [FRONTEND] Network or other error:`, error.message);
-      }
-      setDeploymentStatus(`Error: ${error.response?.data?.message || error.message}`);
-    } finally {
-      setIsDeploying(false);
-      console.log(`🔄 [FRONTEND] Deployment process completed, loading state reset`);
     }
   };
 
@@ -3370,188 +3247,6 @@ Student can now start their quest journey!`);
           </Box>
         </Card>
 
-        {/* Saved Quests from Database Section */}
-        <Card sx={{ 
-          mb: 4, 
-          borderRadius: 4, 
-          boxShadow: "none", 
-          border: "2px solid #2196f3",
-          backgroundColor: "#f3f8ff" // Light blue background
-        }}>
-          <Box p={3}>
-            <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-              <LibraryBooksIcon sx={{ color: "#2196f3" }} />
-              <Typography variant="h6" sx={{ color: "#2196f3", fontWeight: 600 }}>
-                Saved Quests from Database ({savedQuests.length})
-              </Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={fetchSavedQuests}
-                disabled={isLoadingSavedQuests}
-                sx={{ borderRadius: 4, borderColor: "#2196f3", color: "#2196f3" }}
-                startIcon={isLoadingSavedQuests ? <CircularProgress size={16} /> : <AutoAwesomeIcon />}
-              >
-                {isLoadingSavedQuests ? "Loading..." : "Refresh"}
-              </Button>
-            </Stack>
-
-            <Typography variant="body2" sx={{ color: "#666", mb: 3 }}>
-              Quests saved in the database that can be imported into your quest sequence.
-            </Typography>
-
-            {savedQuestsError && (
-              <Alert severity="error" sx={{ mb: 3 }}>
-                {savedQuestsError}
-              </Alert>
-            )}
-
-            {isLoadingSavedQuests ? (
-              <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
-                <CircularProgress size={30} />
-              </Box>
-            ) : savedQuests.length > 0 ? (
-              <Stack spacing={2}>
-                {savedQuests.map((quest, index) => (
-                  <Card
-                    key={`saved-${quest._id}-${index}`}
-                    sx={{
-                      border: "1px solid #e0e0e0",
-                      borderRadius: 4,
-                      boxShadow: "none",
-                      p: 3,
-                      "&:hover": {
-                        borderColor: "#2196f3",
-                        backgroundColor: "#f8f9fa",
-                      },
-                    }}
-                  >
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" mb={2}>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
-                          {quest.questTitle || quest.title || `Quest ${index + 1}`}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {quest.description || "No description available"}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          Tasks: {quest.tasks?.length || 0} | Created: {new Date(quest.createdAt).toLocaleDateString()}
-                          {quest.professor && typeof quest.professor === 'object' && (
-                            <> | Professor: {quest.professor.name || quest.professor.email}</>
-                          )}
-                        </Typography>
-                      </Box>
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => {
-                            // Import quest into draft quests
-                            const importedQuest = {
-                              questId: `Q${Date.now()}`, // Generate unique ID
-                              title: quest.questTitle || quest.title,
-                              description: quest.description || "",
-                              tasks: quest.tasks?.map((task, taskIndex) => ({
-                                taskId: `T${taskIndex + 1}`,
-                                title: task.title || task.taskTitle,
-                                description: task.description || task.objective || "",
-                                points: task.points || 10,
-                                type: task.type || "text",
-                                hints: task.hints || [],
-                                llmTextValidation: task.llmTextValidation || null,
-                                options: task.options || [],
-                                correctAnswer: task.correctAnswer || null,
-                                answerType: task.answerType || "singleAnswer"
-                              })) || [],
-                              metadata: {
-                                type: "imported",
-                                source: "database",
-                                originalId: quest._id,
-                                importedAt: new Date().toISOString()
-                              }
-                            };
-                            
-                            setDraftQuests(prev => ({
-                              ...prev,
-                              questSequence: [...(prev.questSequence || []), importedQuest]
-                            }));
-                            
-                            setDraftSaveStatus("✅ Quest imported to drafts!");
-                            setTimeout(() => setDraftSaveStatus(""), 3000);
-                          }}
-                          sx={{ 
-                            borderRadius: 4, 
-                            fontWeight: "bold",
-                            bgcolor: "#2196f3",
-                            "&:hover": { bgcolor: "#1976d2" }
-                          }}
-                        >
-                          Import to Drafts
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => {
-                            // Show quest details in a modal or expandable section
-                            console.log("Quest details:", quest);
-                            // You can implement a detailed view here
-                          }}
-                          sx={{ borderRadius: 4, borderColor: "#2196f3", color: "#2196f3" }}
-                        >
-                          View Details
-                        </Button>
-                      </Stack>
-                    </Stack>
-                    
-                    {/* Show task preview */}
-                    {quest.tasks && quest.tasks.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
-                          Tasks Preview:
-                        </Typography>
-                        <Stack spacing={1}>
-                          {quest.tasks.slice(0, 3).map((task, taskIndex) => (
-                            <Box
-                              key={taskIndex}
-                              sx={{
-                                p: 1,
-                                bgcolor: "#f8f9fa",
-                                borderRadius: 2,
-                                border: "1px solid #e0e0e0"
-                              }}
-                            >
-                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                {task.title || task.taskTitle || `Task ${taskIndex + 1}`}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {task.type || "text"} • {task.points || 10} points
-                              </Typography>
-                            </Box>
-                          ))}
-                          {quest.tasks.length > 3 && (
-                            <Typography variant="caption" color="text.secondary">
-                              +{quest.tasks.length - 3} more tasks...
-                            </Typography>
-                          )}
-                        </Stack>
-                      </Box>
-                    )}
-                  </Card>
-                ))}
-              </Stack>
-            ) : (
-              <Box sx={{ textAlign: "center", p: 3 }}>
-                <Typography variant="body2" color="text.secondary">
-                  No saved quests found in the database.
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Create quests using the "Add New Quest" button above to see them here.
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </Card>
-
         {/* Draft Quests Section */}
         <Card sx={{ 
           mb: 4, 
@@ -3667,7 +3362,6 @@ Student can now start their quest journey!`);
                       saveDraftQuests(updatedDraftQuests);
                       console.log("Added task to draft quest:", newTaskId);
                     }}
-                    onPublishQuest={() => moveDraftToMain(index)} // Add publish functionality
                     onPurpleDeployQuest={() => handlePurpleDeployQuest(index)} // Add purple deploy functionality
                   />
                 ))}
@@ -8161,75 +7855,6 @@ Good luck! 🚀"
         questToDeleteFrom={questToDeleteFrom}
       />
 
-      {/* Quest Deployment Dialog */}
-      <Dialog 
-        open={showDeployDialog} 
-        onClose={(event, reason) => {
-          if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
-          if (!isDeploying) setShowDeployDialog(false);
-        }}
-        disableEscapeKeyDown
-        maxWidth="sm" 
-        fullWidth
-      >
-        <DialogTitle>
-          Deploy Quest to Class
-        </DialogTitle>
-        <DialogContent>
-          {questToDeploy && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Deploy "{questToDeploy.title}" as {questToDeploy.nextQuestId}?
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                This will:
-              </Typography>
-              <Box component="ul" sx={{ pl: 2, mb: 2 }}>
-                <Typography component="li" variant="body2">
-                  Add the quest to the class configuration as {questToDeploy.nextQuestId}
-                </Typography>
-                <Typography component="li" variant="body2">
-                  Update all students to use the new configuration
-                </Typography>
-                <Typography component="li" variant="body2">
-                  Automatically unlock {questToDeploy.nextQuestId} for students who have completed previous quests
-                </Typography>
-                <Typography component="li" variant="body2">
-                  Clear the old configuration cache so changes take effect immediately
-                </Typography>
-              </Box>
-              
-              {deploymentStatus && (
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                    {deploymentStatus}
-                  </Typography>
-                  {isDeploying && (
-                    <LinearProgress sx={{ mt: 1 }} />
-                  )}
-                </Box>
-              )}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => setShowDeployDialog(false)}
-            disabled={isDeploying}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDeployQuest}
-            variant="contained"
-            color="warning"
-            disabled={isDeploying}
-            startIcon={isDeploying ? <CircularProgress size={16} /> : null}
-          >
-            {isDeploying ? 'Deploying...' : 'Deploy Quest'}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </div>
   );
 };
@@ -8313,7 +7938,6 @@ const QuestBlock = ({
   onEditTask,
   onDeleteTask,
   onAddTask,
-  onPublishQuest, // New prop for draft quest publishing
   onPurpleDeployQuest, // New prop for purple deployment
   isDraftQuest = false, // New prop to indicate if this is a draft quest
 }) => {
@@ -8457,30 +8081,8 @@ const QuestBlock = ({
                 </IconButton>
               </span>
             </Tooltip>
-            {onPublishQuest && (
-              <>
-                <Tooltip title="Publish to Main Sequence">
-                  <span>
-                    <IconButton
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPublishQuest(questIndex);
-                      }}
-                      sx={{
-                        border: "1px solid #ff9800",
-                        borderRadius: 4,
-                        ml: 0.5,
-                        backgroundColor: "#ff9800",
-                        color: "white",
-                        "&:hover": { backgroundColor: "#f57c00" },
-                      }}
-                    >
-                      <PlayArrowIcon fontSize="small" />
-                    </IconButton>
-                  </span>
-                </Tooltip>
-                <Tooltip title="Purple Deploy - Create New Config with Appended Quest">
+            {onPurpleDeployQuest && (
+              <Tooltip title="Purple Deploy - Create New Config with Appended Quest">
                   <span>
                     <IconButton
                       size="small"
@@ -8501,7 +8103,6 @@ const QuestBlock = ({
                     </IconButton>
                   </span>
                 </Tooltip>
-              </>
             )}
           </Box>
         </Box>

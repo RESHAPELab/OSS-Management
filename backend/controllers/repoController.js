@@ -39,6 +39,227 @@ function generateCustomQuestConfig(customSequence, groupId) {
   return config;
 }
 
+// Helper function to unlock a quest for a user (used by purple deploy)
+async function unlockQuestForUser(questId, username, repoName, questConfig, groupId, className = null) {
+  try {
+    console.log(`🌟 [UNLOCK-QUEST] Starting unlock for ${questId} - user: ${username}, repo: ${repoName}`);
+    
+    // Connect to OSS-Doorway database
+    const { MongoClient } = require('mongodb');
+    const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+    const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+    
+    const client = new MongoClient(ossDoorwayUri);
+    await client.connect();
+    const db = client.db(ossDoorwayDbName);
+    const collection = db.collection('user_data');
+    
+    // Find user by repository name (which matches the _id)
+    const userDoc = await collection.findOne({
+      _id: repoName
+    });
+    
+    if (!userDoc) {
+      throw new Error(`User not found with repo: ${repoName}`);
+    }
+    
+    // Check if quest exists in config
+    console.log(`🌟 [UNLOCK-QUEST] Available quests in config:`, Object.keys(questConfig).filter(key => key.startsWith('Q')));
+    console.log(`🌟 [UNLOCK-QUEST] Looking for quest: ${questId}`);
+    
+    if (!questConfig[questId]) {
+      console.error(`🌟 [UNLOCK-QUEST] Quest ${questId} not found in config. Available quests:`, Object.keys(questConfig));
+      throw new Error(`Quest ${questId} not found in config`);
+    }
+    
+    console.log(`🌟 [UNLOCK-QUEST] Found ${questId} with ${Object.keys(questConfig[questId]).filter(key => key !== 'metadata').length} tasks`);
+    
+    // Initialize accepted quests if not exists
+    if (!userDoc.user_data.accepted) {
+      userDoc.user_data.accepted = {};
+    }
+    
+    console.log(`🌟 [UNLOCK-QUEST] User ${username} current state:`);
+    console.log(`  - Accepted quests:`, Object.keys(userDoc.user_data.accepted || {}));
+    console.log(`  - Completed quests:`, Object.keys(userDoc.user_data.completed || {}));
+    console.log(`  - Current quest:`, userDoc.user_data.current);
+    
+    // Skip if quest is already completed (but not if just accepted - we might need to create issues)
+    if (userDoc.user_data.completed && userDoc.user_data.completed[questId]) {
+      console.log(`🌟 [UNLOCK-QUEST] Quest ${questId} already completed for ${username}, skipping`);
+      await client.close();
+      return;
+    }
+    
+    // Check if quest is already accepted
+    const questAlreadyAccepted = userDoc.user_data.accepted && userDoc.user_data.accepted[questId];
+    if (questAlreadyAccepted) {
+      console.log(`🌟 [UNLOCK-QUEST] Quest ${questId} already accepted for ${username}, checking if issues need to be created`);
+    }
+    
+    // Accept the quest (create task structure) only if not already accepted
+    if (!questAlreadyAccepted) {
+      console.log(`🌟 [UNLOCK-QUEST] Accepting ${questId} for ${username} - creating task structure`);
+      userDoc.user_data.accepted[questId] = {};
+      for (const task in questConfig[questId]) {
+        if (task !== "metadata") {
+          userDoc.user_data.accepted[questId][task] = {
+            completed: false,
+            attempts: 0,
+            hints: 0,
+            timeStart: 0,
+            timeEnd: 0.0,
+            issueNum: 0,
+          };
+        }
+      }
+      
+      // Set current quest for Q1
+      if (questId === 'Q1') {
+        userDoc.user_data.current = {
+          quest: questId,
+          task: "T1"
+        };
+        userDoc.user_data.completion = 0;
+        console.log(`🌟 [UNLOCK-QUEST] Set current quest to ${questId}.T1 for ${username}`);
+      }
+      
+      console.log(`🌟 [UNLOCK-QUEST] ${questId} task structure created for ${username} with ${Object.keys(userDoc.user_data.accepted[questId]).length} tasks`);
+    }
+    
+    // Update user document only if we made changes
+    if (!questAlreadyAccepted) {
+      const updateData = {
+        'user_data.accepted': userDoc.user_data.accepted
+      };
+      
+      // Also update current quest for Q1
+      if (questId === 'Q1') {
+        updateData['user_data.current'] = userDoc.user_data.current;
+        updateData['user_data.completion'] = userDoc.user_data.completion;
+      }
+      
+      await collection.updateOne(
+        { _id: userDoc._id },
+        { $set: updateData }
+      );
+      
+      console.log(`🌟 [UNLOCK-QUEST] Database updated for ${username} - ${questId} accepted`);
+    }
+    
+    console.log(`🌟 [UNLOCK-QUEST] ✅ Successfully unlocked ${questId} for ${username}`);
+    
+    // Create GitHub issues for the first few tasks (based on buffer size)
+    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+    const orderedTasks = Object.keys(questConfig[questId])
+      .filter((key) => /^T\d+$/i.test(key))
+      .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+    
+    const tasksToCreate = Math.min(bufferSize, orderedTasks.length);
+    
+    // Get fresh user data to check existing issue numbers
+    const freshUserDoc = await collection.findOne({ _id: repoName });
+    
+    for (let i = 0; i < tasksToCreate; i++) {
+      const taskId = orderedTasks[i];
+      const task = questConfig[questId][taskId];
+      
+      if (task) {
+        // Check if this task already has an issue created
+        const existingIssueNum = freshUserDoc?.user_data?.accepted?.[questId]?.[taskId]?.issueNum;
+        
+        if (existingIssueNum && existingIssueNum > 0) {
+          console.log(`🌟 [UNLOCK-QUEST] ✅ Issue already exists for ${questId}.${taskId} (issue #${existingIssueNum})`);
+          continue;
+        }
+        
+        try {
+          const classTitle = (className || groupId || 'class')
+            .toString()
+            .replace(/[^a-zA-Z0-9]+/g, '')
+            .replace(/^-+|-+$/g, '');
+          await createQuestIssue(questId, taskId, task, username, repoName, groupId, classTitle);
+          console.log(`🌟 [UNLOCK-QUEST] ✅ Created issue for ${questId}.${taskId}`);
+          
+          // Add delay between issue creations (except for last)
+          if (i < tasksToCreate - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+          }
+        } catch (issueError) {
+          console.error(`🌟 [UNLOCK-QUEST] ❌ Failed to create issue for ${questId}.${taskId}:`, issueError.message);
+        }
+      }
+    }
+    
+    // Close MongoDB connection
+    await client.close();
+    
+  } catch (error) {
+    console.error(`🌟 [UNLOCK-QUEST] ❌ Error unlocking ${questId} for ${username}:`, error.message);
+    // Make sure to close the client even if there's an error
+    try {
+      await client.close();
+    } catch (closeError) {
+      console.error(`🌟 [UNLOCK-QUEST] ❌ Error closing MongoDB client:`, closeError.message);
+    }
+    throw error;
+  }
+}
+
+// Helper function to create a quest issue
+async function createQuestIssue(questId, taskId, task, username, repoName, groupId, className = null) {
+  const { Octokit } = await import('@octokit/rest');
+  const { getGithubAppInstallationAccessToken } = require('../utils/botMessage');
+  
+  // Get GitHub App token
+  const accessToken = await getGithubAppInstallationAccessToken();
+  const octokit = new Octokit({ auth: accessToken });
+  
+  // Generate issue title
+  const questNumber = questId.match(/Q(\d+)/i)?.[1] || '1';
+  const taskNumber = taskId.match(/T(\d+)/i)?.[1] || '1';
+  
+  // Use className if provided, otherwise fall back to groupId
+  const classTitle = className || groupId;
+  const title = task.title || task.taskTitle || task.desc;
+  const issueTitle = `${classTitle}-Q${questNumber} T${taskNumber}: ${title}`;
+  
+  // Create the issue
+  const issueResponse = await octokit.rest.issues.create({
+    owner: process.env.GITHUB_ORG,
+    repo: repoName,
+    title: issueTitle,
+    body: task.accept || task.desc,
+    labels: [`quest-${questId.toLowerCase()}`, `task-${taskId.toLowerCase()}`]
+  });
+  
+  // Update user's task with issue number
+  const { MongoClient } = require('mongodb');
+  const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+  const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+  
+  const client = new MongoClient(ossDoorwayUri);
+  await client.connect();
+  const db = client.db(ossDoorwayDbName);
+  const collection = db.collection('users');
+  
+  await collection.updateOne(
+    { 
+      'user_data.github': username,
+      'user_data.repository_url': repoName
+    },
+    { 
+      $set: { 
+        [`user_data.accepted.${questId}.${taskId}.issueNum`]: issueResponse.data.number 
+      } 
+    }
+  );
+  
+  await client.close();
+  
+  return issueResponse.data.number;
+}
+
 const createRepo = async (req, res) => {
     const { organizationGh, studentId, studentGithubUsername, groupId, groupName } = req.body;
 
@@ -1417,7 +1638,7 @@ Repository for students in ${className}.`;
         second: '2-digit',
         hour12: false
       }).replace(',', '');
-      let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} MST\n\n### ⚙️ Current Quest\n\n`;
+      let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} MST\n\n### ⚙️ Available Quests\n\n`;
 
       // Determine the first quest (prefer Q0 or a quest without prerequisites)
       const firstQuest = customSequenceData.questSequence.find(q => !q.metadata?.prerequisite || q.isQ0 || q.metadata?.isQ0) || customSequenceData.questSequence[0];
@@ -1778,6 +1999,15 @@ typings/
                   if (latestPurpleConfig) {
                     uniqueGroupId = latestPurpleConfig.classId;
                     console.log(`🟣 [REPO-CREATION] Using latest purple config: ${uniqueGroupId} (instead of ${classId})`);
+                    
+                    // VERIFICATION: Ensure the purple config has the expected quests
+                    const questIds = Object.keys(latestPurpleConfig.config || {}).filter(k => k.startsWith('Q'));
+                    console.log(`🔍 [REPO-CREATION] Purple config quests: ${questIds.join(', ')}`);
+                    
+                    if (questIds.length === 0) {
+                        console.error(`❌ [REPO-CREATION] WARNING: Purple config ${uniqueGroupId} has no quests! Falling back to original config.`);
+                        uniqueGroupId = classId;
+                    }
                   } else {
                     console.log(`📋 [REPO-CREATION] No purple config found, using original: ${uniqueGroupId}`);
                   }
@@ -1908,6 +2138,13 @@ typings/
                 // Store the config ID in the user's database entry (uniqueGroupId now contains purple config if available)
                 userDoc.user_data.customGroupId = uniqueGroupId;
                 userDoc.user_data.customSequenceFile = sequenceFile;
+                
+                // 🟣 Enhanced Quest System: If purple config detected, mark for quest unlocking
+                const isPurpleConfig = uniqueGroupId.includes('_purple_');
+                if (isPurpleConfig) {
+                  console.log(`🌟 [PURPLE-DEPLOY] Purple config detected: ${uniqueGroupId} - will unlock all quests`);
+                  userDoc.user_data.unlockAllQuests = true; // Flag for later processing
+                }
               }
               // Find the first quest (no prerequisite or isQ0)
               let firstQuestId;
@@ -1930,45 +2167,84 @@ typings/
                 const firstQuestObj = customSequenceData.questSequence.find(q => !q.metadata.prerequisite || q.metadata.isQ0);
                 if (firstQuestObj) firstQuestId = firstQuestObj.questId;
               }
-              // Initialize accepted and current fields like acceptQuest
-              if (firstQuestId) {
-                // Load quest config
-                let questConfig;
-                if (isDefaultSequence) {
-                  const defaultConfigPath = path.join(__dirname, '../OSS-Doorway/src/config/quest_config.json');
-                  questConfig = fs.existsSync(defaultConfigPath)
-                    ? JSON.parse(fs.readFileSync(defaultConfigPath, 'utf8'))
-                    : {};
-                } else {
-                  // Use the unique groupId that was created for this specific repo (includes purple config if available)
-                  const configGroupId = repoUniqueGroupId;
-                  const groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${configGroupId}.json`);
-                  questConfig = fs.existsSync(groupConfigPath)
-                    ? JSON.parse(fs.readFileSync(groupConfigPath, 'utf8'))
-                    : {};
-                  console.log(`🔍 [QUEST-CONFIG-LOAD] Loading quest config for ${repoName}: ${groupConfigPath}`);
-                }
-                // Set up accepted
+              // Initialize user data structure and auto-accept Q1 for new users
                 userDoc.user_data.accepted = userDoc.user_data.accepted || {};
-                userDoc.user_data.accepted[firstQuestId] = {};
-                for (const task in questConfig[firstQuestId]) {
+              userDoc.user_data.current = userDoc.user_data.current || {};
+              
+              // Auto-accept Q1 for new users to start their quest journey
+              console.log(`🔍 [AUTO-ACCEPT] Checking Q1 acceptance for ${repoName}`);
+              console.log(`🔍 [AUTO-ACCEPT] Current accepted quests:`, Object.keys(userDoc.user_data.accepted || {}));
+              console.log(`🔍 [AUTO-ACCEPT] Config to use: ${uniqueGroupId}`);
+              
+              if (!userDoc.user_data.accepted.Q1) {
+                console.log(`🌟 [AUTO-ACCEPT] Auto-accepting Q1 for new user: ${repoName}`);
+                
+                // Get quest config to initialize Q1 tasks
+                const questConfigsCollection = ossDoorwayConnection.db.collection('questconfigs');
+                // Use sort to get the most recent config with Q1 (in case of duplicates)
+                const questConfig = await questConfigsCollection.findOne(
+                  { 
+                    classId: uniqueGroupId,
+                    'config.Q1': { $exists: true }  // Ensure it has Q1
+                  },
+                  { sort: { createdAt: -1 } }  // Get the most recent one
+                );
+                
+                console.log(`🔍 [AUTO-ACCEPT] Quest config search result:`);
+                console.log(`  - Config found: ${!!questConfig}`);
+                console.log(`  - Config ID: ${questConfig?._id}`);
+                console.log(`  - Config has Q1: ${!!(questConfig?.config?.Q1)}`);
+                
+                if (!questConfig) {
+                  // Fallback: try to find ANY config for this classId
+                  console.log(`⚠️ [AUTO-ACCEPT] No config with Q1 found, trying fallback search...`);
+                  const fallbackConfig = await questConfigsCollection.findOne(
+                    { classId: configToUse },
+                    { sort: { createdAt: -1 } }
+                  );
+                  console.log(`🔍 [AUTO-ACCEPT] Fallback config:`);
+                  console.log(`  - Found: ${!!fallbackConfig}`);
+                  console.log(`  - Has config field: ${!!(fallbackConfig?.config)}`);
+                  console.log(`  - Config keys: ${fallbackConfig?.config ? Object.keys(fallbackConfig.config).join(', ') : 'N/A'}`);
+                }
+                
+                if (questConfig && questConfig.config && questConfig.config.Q1) {
+                  console.log(`🔍 [AUTO-ACCEPT] Q1 tasks to initialize:`, Object.keys(questConfig.config.Q1).filter(key => key !== 'metadata'));
+                  
+                  // Initialize Q1 tasks
+                  userDoc.user_data.accepted.Q1 = {};
+                  for (const task in questConfig.config.Q1) {
                   if (task !== "metadata") {
-                    userDoc.user_data.accepted[firstQuestId][task] = {
+                      userDoc.user_data.accepted.Q1[task] = {
                       completed: false,
                       attempts: 0,
                       hints: 0,
                       timeStart: 0,
                       timeEnd: 0.0,
-                      issueNum: 0
+                        issueNum: 0,
                     };
                   }
                 }
-                // Set current
+                  
+                  // Set current quest and task
                 userDoc.user_data.current = {
-                  quest: firstQuestId,
-                  task: firstTaskId
-                };
+                    quest: "Q1",
+                    task: "T1",
+                  };
+                  userDoc.user_data.completion = 0;
+                  
+                  console.log(`✅ [AUTO-ACCEPT] Q1 initialized for ${repoName} with ${Object.keys(userDoc.user_data.accepted.Q1).length} tasks`);
+                  console.log(`✅ [AUTO-ACCEPT] Current quest set to: ${userDoc.user_data.current?.quest}.${userDoc.user_data.current?.task}`);
+                  } else {
+                    console.log(`⚠️ [AUTO-ACCEPT] Q1 not found in config for ${uniqueGroupId}, skipping auto-accept`);
+                    if (questConfig) {
+                      console.log(`🔍 [AUTO-ACCEPT] Available quest IDs in config:`, Object.keys(questConfig.config || {}).filter(key => key.startsWith('Q')));
+                    }
+                  }
+              } else {
+                console.log(`✅ [AUTO-ACCEPT] Q1 already accepted for ${repoName}, skipping`);
               }
+              
               await userDoc.save();
             }
             await ossDoorwayConnection.close();
@@ -2025,7 +2301,122 @@ typings/
                 } else {
                   console.warn(`[WARN] Group config file not found: ${groupConfigPath}`);
                 }
-                if (firstQuest.questId && questConfig[firstQuest.questId] && questConfig[firstQuest.questId][taskId]) {
+                
+                // 🌟 Enhanced Quest System: Check if enhanced quests are enabled
+                const isPurpleConfig = uniqueGroupId.includes('_purple_');
+                const enhancedQuestsEnabled = process.env.ENABLE_ENHANCED_QUESTS === 'true';
+                const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+                
+                console.log(`🌟 [ENHANCED-QUESTS] Enhanced mode: ${enhancedQuestsEnabled}, Purple config: ${isPurpleConfig}, Buffer size: ${taskBufferSize}`);
+                
+                if (enhancedQuestsEnabled) {
+                  if (isPurpleConfig) {
+                    // Purple config: Unlock all quests
+                    console.log(`🌟 [PURPLE-DEPLOY] Enhanced Quest System: Unlocking all quests for ${repoName}`);
+                    
+                    // Get all quest IDs from config (excluding map_repo_link)
+                    const allQuestIds = Object.keys(questConfig).filter(key => key !== 'map_repo_link');
+                    console.log(`🌟 [PURPLE-DEPLOY] Found ${allQuestIds.length} quests to unlock: ${allQuestIds.join(', ')}`);
+                    
+                    // Create batch processing function for quest unlocking
+                    const unlockQuestsBatch = async (questIds, batchSize = 2) => {
+                      for (let i = 0; i < questIds.length; i += batchSize) {
+                        const batch = questIds.slice(i, i + batchSize);
+                        console.log(`🌟 [PURPLE-DEPLOY] Processing batch ${Math.floor(i/batchSize) + 1}: ${batch.join(', ')}`);
+                        
+                        // Process quests in this batch with delays
+                        for (let j = 0; j < batch.length; j++) {
+                          const questId = batch[j];
+                          try {
+                            await unlockQuestForUser(questId, user, repoName, questConfig, uniqueGroupId, className);
+                            console.log(`🌟 [PURPLE-DEPLOY] ✅ Unlocked ${questId} for ${user}`);
+                            
+                            // Add delay between quests in batch (except last)
+                            if (j < batch.length - 1) {
+                              await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+                            }
+                          } catch (error) {
+                            console.error(`🌟 [PURPLE-DEPLOY] ❌ Failed to unlock ${questId}:`, error.message);
+                          }
+                        }
+                        
+                        // Add longer delay between batches (except last batch)
+                        if (i + batchSize < questIds.length) {
+                          await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay between batches
+                        }
+                      }
+                    };
+                    
+                    // Execute batch unlocking (but don't await to avoid blocking repo creation)
+                    unlockQuestsBatch(allQuestIds).then(() => {
+                      console.log(`🌟 [PURPLE-DEPLOY] ✅ All quests unlocked for ${repoName}`);
+                    }).catch(error => {
+                      console.error(`🌟 [PURPLE-DEPLOY] ❌ Error during batch quest unlocking:`, error.message);
+                    });
+                  } else {
+                    // Regular repo: Create enhanced task buffer for first quest
+                    console.log(`🌟 [ENHANCED-QUESTS] Creating enhanced task buffer for first quest: ${firstQuest.questId}`);
+                    
+                    // Create enhanced task buffer for the first quest (replicate legacy pattern)
+                    const orderedTasks = Object.keys(questConfig[firstQuest.questId])
+                      .filter((key) => /^T\d+$/i.test(key))
+                      .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+                    
+                    const tasksToCreate = Math.min(taskBufferSize, orderedTasks.length);
+                    console.log(`🌟 [ENHANCED-QUESTS] Creating ${tasksToCreate} tasks for ${firstQuest.questId}: ${orderedTasks.slice(0, tasksToCreate).join(', ')}`);
+                    
+                    // Generate class title for the issues (same as legacy)
+                    const classTitle = (className || groupName || "Class")
+                      .replace(/[^a-zA-Z0-9]+/g, '')
+                      .replace(/^-+|-+$/g, '');
+                    
+                    // Find quest number from questId (e.g., Q1, Q2, ...)
+                    let questNumber = 1;
+                    const questIdMatch = firstQuest.questId && firstQuest.questId.match(/Q(\d+)/i);
+                    if (questIdMatch) questNumber = parseInt(questIdMatch[1], 10);
+                    
+                    // Create issues for the buffer tasks (async, don't block repo creation)
+                    (async () => {
+                      try {
+                        for (let i = 0; i < tasksToCreate; i++) {
+                          const taskId = orderedTasks[i];
+                          const task = questConfig[firstQuest.questId][taskId];
+                          
+                          if (task) {
+                            try {
+                              // Use helper to create issue and persist issue number to DB
+                              await createQuestIssue(
+                                firstQuest.questId,
+                                taskId,
+                                task,
+                                user,
+                                repoName,
+                                uniqueGroupId || groupId,
+                                classTitle
+                              );
+                              
+                              console.log(`🌟 [ENHANCED-QUESTS] ✅ Created issue for ${firstQuest.questId}.${taskId}`);
+                              
+                              // Add delay between issue creations (except for last)
+                              if (i < tasksToCreate - 1) {
+                                await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+                              }
+                            } catch (issueError) {
+                              console.error(`🌟 [ENHANCED-QUESTS] ❌ Failed to create issue for ${firstQuest.questId}.${taskId}:`, issueError.message);
+                            }
+                          } else {
+                            console.warn(`🌟 [ENHANCED-QUESTS] ⚠️ Task ${firstQuest.questId}.${taskId} not found or missing description`);
+                          }
+                        }
+                        console.log(`🌟 [ENHANCED-QUESTS] ✅ Enhanced task buffer completed for ${repoName}`);
+                      } catch (error) {
+                        console.error(`🌟 [ENHANCED-QUESTS] ❌ Error during enhanced task buffer creation:`, error.message);
+                      }
+                    })();
+                  }
+                }
+                // Legacy mode: Only create T1 issue if enhanced mode is disabled
+                if (!enhancedQuestsEnabled && firstQuest.questId && questConfig[firstQuest.questId] && questConfig[firstQuest.questId][taskId]) {
                   const task = questConfig[firstQuest.questId][taskId];
                   // Generate class title for the issue
                   const classTitle = (className || groupName || "Class")
@@ -2037,6 +2428,7 @@ typings/
                   if (questIdMatch) questNumber = parseInt(questIdMatch[1], 10);
                   // Always T1 for first task
                   const issueTitle = `${classTitle}-Q${questNumber} T1: ${task.desc}`;
+                  console.log(`📝 [LEGACY-MODE] Creating single T1 issue: ${issueTitle}`);
                   await orgOctokit.issues.create({
                     owner: process.env.GITHUB_ORG,
                     repo: repoName,
@@ -2044,6 +2436,9 @@ typings/
                     body: task.accept,
                     labels: ['quest', 'task']
                   });
+                  console.log(`✅ [LEGACY-MODE] T1 issue created successfully`);
+                } else if (enhancedQuestsEnabled) {
+                  console.log(`🌟 [ENHANCED-MODE] Skipping legacy T1 creation - enhanced task buffer will handle this`);
                 } else {
                   console.warn(`[WARN] Could not find real task for questId=${firstQuest.questId}, taskId=${taskId} in group config. Falling back to default.`);
                 }
@@ -2507,3 +2902,4 @@ module.exports = {
     deleteRepository,
     addUserAsCollaborator
 };
+

@@ -65,7 +65,6 @@ const ClassView = () => {
     const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'manage-quests', 'manage-admins', or 'manage-students'
     const [csvFile, setCsvFile] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [currentProcessingUser, setCurrentProcessingUser] = useState('');
     const [processedCount, setProcessedCount] = useState(0);
     const [totalUsers, setTotalUsers] = useState(0);
     const [processingResults, setProcessingResults] = useState({ successful: [], unsuccessful: [] });
@@ -146,35 +145,6 @@ const ClassView = () => {
     const [generateJsonConfig, setGenerateJsonConfig] = useState(null);
     // Add state to track total repos fetched
     const [totalReposFetched, setTotalReposFetched] = useState(null);
-
-    const handleUnlockQ2 = async (studentUsername) => {
-        try {
-            const formattedClassName = (classInfo.groupName || '')
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-+|-+$/g, '');
-            const repoName = `${studentUsername}-${formattedClassName}`;
-            
-            console.log('🚀 Unlocking Q2 for:', { 
-                org: organizationGh, 
-                repoName, 
-                questId: 'Q2',
-                studentUsername,
-                formattedClassName
-            });
-            
-            const response = await axios.post(`${baseURL}/api/gamification/unlockQuest`, {
-                org: organizationGh,
-                repoName,
-                questId: 'Q2'
-            });
-            
-            alert(`✅ Sent unlock command for Q2 to ${organizationGh}/${repoName}!\nIssue: #${response.data.issueNumber} - ${response.data.issueTitle}`);
-        } catch (err) {
-            console.error('Failed to unlock Q2:', err?.response?.data || err.message);
-            alert(`❌ Failed to unlock Q2: ${err?.response?.data?.message || err.message}`);
-        }
-    };
 
     useEffect(() => {
         if (authUser && classId) {
@@ -498,7 +468,6 @@ const ClassView = () => {
                 setIsProcessing(true);
                 setTotalUsers(usernames.length);
                 setProcessedCount(0);
-                setCurrentProcessingUser('');
                 setProcessingResults({ successful: [], unsuccessful: [] });
 
                 // Use createCustomRepos (same as individual button) for each user
@@ -513,7 +482,6 @@ const ClassView = () => {
                     // console.log(`🔄 [CSV-UPLOAD] Building request for user: ${username}`); // Removed
                     
                     // Update progress state for UI
-                    setCurrentProcessingUser(username);
                     setProcessedCount(i);
                     
                     // Update status to show progress
@@ -659,7 +627,6 @@ const ClassView = () => {
 
                 // Mark processing as complete
                 setProcessedCount(usernames.length);
-                setCurrentProcessingUser('');
                 setIsProcessing(false);
 
                     setCreateReposStatus(
@@ -2354,34 +2321,6 @@ const ClassView = () => {
                             </Box>
                         </Card>
 
-                        {/* Force-Unlock Q2 Section */}
-                        <Card sx={{ mb: 4, borderRadius: 4, boxShadow: 'none' }}>
-                            <Box p={3}>
-                                <Typography variant="h5" component="h3" gutterBottom sx={{ fontWeight: 700 }}>
-                                    Force Unlock Q2
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    Enter a GitHub username to unlock Q2 for their class repository.
-                                </Typography>
-                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-                                    <TextField
-                                        size="small"
-                                        placeholder="GitHub username (e.g., dfscsfcscs)"
-                                        value={currentProcessingUser}
-                                        onChange={(e) => setCurrentProcessingUser(e.target.value)}
-                                    />
-                                    <Button
-                                        variant="contained"
-                                        color="secondary"
-                                        disabled={!organizationGh || !classInfo?.groupName || !currentProcessingUser}
-                                        onClick={() => handleUnlockQ2(currentProcessingUser)}
-                                    >
-                                        Unlock Q2
-                                    </Button>
-                                </Stack>
-                            </Box>
-                        </Card>
-
                         {/* Quest Completion Section */}
                         <Card sx={{ 
                             mb: 4, 
@@ -2700,13 +2639,6 @@ const ClassView = () => {
                                 value={(processedCount / totalUsers) * 100}
                                 sx={{ mb: 2, height: 8, borderRadius: 4 }}
                             />
-                            {currentProcessingUser && (
-                                <Alert severity="info" sx={{ mb: 2 }}>
-                                    <Typography variant="body2">
-                                        Currently processing: <strong>{currentProcessingUser}</strong>
-                                    </Typography>
-                                </Alert>
-                            )}
                             
                             {processingResults.successful.length > 0 && (
                                 <Paper sx={{ p: 2, mb: 2, bgcolor: '#f0f9ff' }}>
