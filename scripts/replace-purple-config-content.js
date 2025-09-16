@@ -119,3 +119,5 @@ console.log('This will replace the content of the purple config with your prefer
 console.log('');
 
 replacePurpleConfigContent();
+
+

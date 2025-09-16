@@ -22,19 +22,26 @@ function generateCustomQuestConfig(customSequence, groupId) {
     map_repo_link: "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map"
   };
   // Convert quest sequence to quest config format
-  customSequence.questSequence.forEach(quest => {
-    const questId = quest.questId;
+  customSequence.questSequence.forEach((quest, index) => {
+    // Convert TEMP_ IDs to sequential Q1, Q2, etc.
+    const sequentialQuestId = `Q${index + 1}`;
     let tasks = quest.tasks;
     // If tasks is nested under a 'tasks' key, flatten it
     if (tasks && tasks.tasks && typeof tasks.tasks === 'object') {
       tasks = tasks.tasks;
     }
-    config[questId] = {
-      metadata: quest.metadata,
-      ...tasks // spread T1, T2, etc. at the top level
+    
+    // Preserve the exact structure from the draft JSON
+    config[sequentialQuestId] = {
+      metadata: {
+        ...quest.metadata,
+        // Update prerequisite to use sequential IDs
+        prerequisite: index === 0 ? null : `Q${index}`
+      },
+      ...tasks // spread T1, T2, etc. at the top level exactly as they are in the draft
     };
     // Log the final config for this quest
-    console.log(`[DEBUG] [generateCustomQuestConfig] Final config for questId=${questId}:`, JSON.stringify(config[questId], null, 2));
+    console.log(`[DEBUG] [generateCustomQuestConfig] Converted ${quest.questId} -> ${sequentialQuestId}:`, JSON.stringify(config[sequentialQuestId], null, 2));
   });
   return config;
 }
@@ -150,7 +157,7 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
     console.log(`🌟 [UNLOCK-QUEST] ✅ Successfully unlocked ${questId} for ${username}`);
     
     // Create GitHub issues for the first few tasks (based on buffer size)
-    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 20;
     const orderedTasks = Object.keys(questConfig[questId])
       .filter((key) => /^T\d+$/i.test(key))
       .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
@@ -1626,52 +1633,7 @@ Repository for students in ${className}.`;
       console.log(`🎯 [createCustomRepos] README length: ${readmeContent.length} characters`);
     }
 
-    // Inject initial quest progress section if we have a quest sequence
-    if (customSequenceData && customSequenceData.questSequence && customSequenceData.questSequence.length > 0) {
-      const timestamp = new Date().toLocaleString('en-US', {
-        timeZone: 'America/Phoenix',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      }).replace(',', '');
-      let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} MST\n\n### ⚙️ Available Quests\n\n`;
-
-      // Determine the first quest (prefer Q0 or a quest without prerequisites)
-      const firstQuest = customSequenceData.questSequence.find(q => !q.metadata?.prerequisite || q.isQ0 || q.metadata?.isQ0) || customSequenceData.questSequence[0];
-      if (firstQuest) {
-        const questTitle = firstQuest.metadata?.title || firstQuest.title || '';
-        progressSection += `- ${firstQuest.questId} - ${questTitle}\n`;
-        if (firstQuest.tasks && typeof firstQuest.tasks === 'object') {
-          Object.entries(firstQuest.tasks).forEach(([taskKey, taskVal]) => {
-            if (taskKey === 'metadata') return;
-            const taskDesc = taskVal.desc || taskVal.description || taskVal.name || '';
-            
-            // For the first task (T1), add a clickable link to issue #1
-            if (taskKey === 'T1') {
-              progressSection += `  - ${taskKey} - ${taskDesc} [[Click here to start](https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues/1)]\n`;
-            } else {
-              progressSection += `  - ${taskKey} - ${taskDesc}\n`;
-            }
-          });
-        }
-      }
-
-      progressSection += `\n### ✅ Completed Quests\n\n- None yet\n`;
-
-      // Append the section only if it's not already present
-      if (readmeContent) {
-        if (!readmeContent.includes('### 🕒 Progress Update')) {
-          readmeContent += progressSection;
-        }
-      } else {
-        // Initialize README content if it was null and add progress section
-        readmeContent = progressSection;
-      }
-    }
+    // README progress section will be generated later after quest config is properly created
 
     // 3. Check if this is the default quest-sequence.json
     const isDefaultSequence = sequenceFile === 'quest-sequence.json';
@@ -1701,6 +1663,64 @@ Repository for students in ${className}.`;
       // Fallback to sequence-based naming
       repoIdentifier = sequenceFile ? sequenceFile.replace(/\.json$/i, '') : 'custom';
       console.log(`📁 [createCustomRepos] Using sequence-based naming: ${repoIdentifier}`);
+    }
+    
+    // Generate quest config once outside the loop for reuse
+    let sharedQuestConfig = null;
+    if (!isDefaultSequence && customSequenceData && customSequenceData.questSequence && customSequenceData.questSequence.length > 0) {
+      const templateGroupId = `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      sharedQuestConfig = generateCustomQuestConfig(customSequenceData, templateGroupId);
+      console.log(`🔍 [SHARED-QUEST-CONFIG] Generated shared quest config with keys:`, Object.keys(sharedQuestConfig));
+    }
+    
+    // Generate README progress section using the properly generated quest config
+    if (customSequenceData && customSequenceData.questSequence && customSequenceData.questSequence.length > 0) {
+      const timestamp = new Date().toLocaleString('en-US', {
+        timeZone: 'America/Phoenix',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(',', '');
+      let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} MST\n\n### ⚙️ Available Quests\n\n`;
+
+      // Determine the first quest (prefer Q0 or a quest without prerequisites)
+      const firstQuest = customSequenceData.questSequence.find(q => !q.metadata?.prerequisite || q.isQ0 || q.metadata?.isQ0) || customSequenceData.questSequence[0];
+      if (firstQuest) {
+        const questTitle = firstQuest.metadata?.title || firstQuest.title || '';
+        progressSection += `- ${firstQuest.questId} - ${questTitle}\n`;
+        if (firstQuest.tasks && typeof firstQuest.tasks === 'object') {
+          const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+          const taskEntries = Object.entries(firstQuest.tasks).filter(([key]) => key !== 'metadata');
+          
+          taskEntries.forEach(([taskKey, taskVal], index) => {
+            const taskDesc = taskVal.desc || taskVal.description || taskVal.name || '';
+            
+            // Add clickable link for tasks up to buffer size
+            if (index < taskBufferSize) {
+              const issueNumber = index + 1;
+              progressSection += `  - ${taskKey} - ${taskDesc} [[Click here to start](https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues/${issueNumber})]\n`;
+            } else {
+              progressSection += `  - ${taskKey} - ${taskDesc}\n`;
+            }
+          });
+        }
+      }
+
+      progressSection += `\n### ✅ Completed Quests\n\n- None yet\n`;
+
+      // Append the section only if it's not already present
+      if (readmeContent) {
+        if (!readmeContent.includes('### 🕒 Progress Update')) {
+          readmeContent += progressSection;
+        }
+      } else {
+        // Initialize README content if it was null and add progress section
+        readmeContent = progressSection;
+      }
     }
     
     const results = { successful: [], unsuccessful: [] };
@@ -2100,7 +2120,7 @@ typings/
                       { 
                         configId: uniqueGroupId,
                         classId: uniqueGroupId,
-                        config: repoQuestConfig,
+                        config: questConfig, // Use the newly generated quest config with updated validation parameters
                         createdAt: new Date(),
                         updatedAt: new Date(),
                         createdBy: 'oss-management',
@@ -2113,6 +2133,23 @@ typings/
                     console.log(`✅ [QUEST-CONFIG-REPO] Quest config saved to database: ${uniqueGroupId}`);
                     console.log(`📄 [QUEST-CONFIG-REPO] Document ID: ${result._id}`);
                     console.log(`🔍 [QUEST-CONFIG-REPO] Config keys: ${Object.keys(result.config)}`);
+                    
+                    // Clear cache to ensure bot loads the new config
+                    console.log(`🗑️ [QUEST-CONFIG-REPO] Clearing cache for group: ${uniqueGroupId}`);
+                    try {
+                        // Clear both cache keys that the bot uses
+                        const cacheKeys = [
+                            `quest-config-${uniqueGroupId}`,
+                            `processed-quest-config-${uniqueGroupId}`
+                        ];
+                        
+                        // Note: Cache clearing would need to be implemented in the OSS-Doorway service
+                        // For now, we'll log the cache keys that need to be cleared
+                        console.log(`🗑️ [QUEST-CONFIG-REPO] Cache keys to clear: ${cacheKeys.join(', ')}`);
+                        console.log(`⚠️ [QUEST-CONFIG-REPO] Manual cache clearing may be required in OSS-Doorway service`);
+                    } catch (cacheError) {
+                        console.warn(`⚠️ [QUEST-CONFIG-REPO] Cache clearing failed: ${cacheError.message}`);
+                    }
                     
                     await ossDoorwayConnection.close();
                     console.log(`🔌 [QUEST-CONFIG-SHARED] Database connection closed`);
@@ -2174,7 +2211,7 @@ typings/
               // Auto-accept Q1 for new users to start their quest journey
               console.log(`🔍 [AUTO-ACCEPT] Checking Q1 acceptance for ${repoName}`);
               console.log(`🔍 [AUTO-ACCEPT] Current accepted quests:`, Object.keys(userDoc.user_data.accepted || {}));
-              console.log(`🔍 [AUTO-ACCEPT] Config to use: ${uniqueGroupId}`);
+              console.log(`🔍 [AUTO-ACCEPT] Config to use: ${repoUniqueGroupId || classId}`);
               
               if (!userDoc.user_data.accepted.Q1) {
                 console.log(`🌟 [AUTO-ACCEPT] Auto-accepting Q1 for new user: ${repoName}`);
@@ -2184,7 +2221,7 @@ typings/
                 // Use sort to get the most recent config with Q1 (in case of duplicates)
                 const questConfig = await questConfigsCollection.findOne(
                   { 
-                    classId: uniqueGroupId,
+                    classId: repoUniqueGroupId || classId,
                     'config.Q1': { $exists: true }  // Ensure it has Q1
                   },
                   { sort: { createdAt: -1 } }  // Get the most recent one
@@ -2199,7 +2236,7 @@ typings/
                   // Fallback: try to find ANY config for this classId
                   console.log(`⚠️ [AUTO-ACCEPT] No config with Q1 found, trying fallback search...`);
                   const fallbackConfig = await questConfigsCollection.findOne(
-                    { classId: configToUse },
+                    { classId: repoUniqueGroupId || classId },
                     { sort: { createdAt: -1 } }
                   );
                   console.log(`🔍 [AUTO-ACCEPT] Fallback config:`);
@@ -2236,7 +2273,7 @@ typings/
                   console.log(`✅ [AUTO-ACCEPT] Q1 initialized for ${repoName} with ${Object.keys(userDoc.user_data.accepted.Q1).length} tasks`);
                   console.log(`✅ [AUTO-ACCEPT] Current quest set to: ${userDoc.user_data.current?.quest}.${userDoc.user_data.current?.task}`);
                   } else {
-                    console.log(`⚠️ [AUTO-ACCEPT] Q1 not found in config for ${uniqueGroupId}, skipping auto-accept`);
+                    console.log(`⚠️ [AUTO-ACCEPT] Q1 not found in config for ${repoUniqueGroupId || classId}, skipping auto-accept`);
                     if (questConfig) {
                       console.log(`🔍 [AUTO-ACCEPT] Available quest IDs in config:`, Object.keys(questConfig.config || {}).filter(key => key.startsWith('Q')));
                     }
@@ -2272,7 +2309,19 @@ typings/
                 }
               }
             } else {
-              firstQuest = customSequenceData.questSequence.find(q => !q.metadata.prerequisite || q.metadata.isQ0);
+              // Convert TEMP IDs to sequential Q1, Q2, etc. before finding first quest
+              const processedSequence = customSequenceData.questSequence.map((quest, index) => ({
+                ...quest,
+                questId: `Q${index + 1}`,
+                metadata: {
+                  ...quest.metadata,
+                  prerequisite: index === 0 ? null : `Q${index}`
+                }
+              }));
+              
+              firstQuest = processedSequence.find(q => !q.metadata.prerequisite || q.metadata.isQ0);
+              console.log(`🔍 [FIRST-QUEST] Processed sequence:`, processedSequence.map(q => ({ id: q.questId, title: q.title })));
+              console.log(`🔍 [FIRST-QUEST] Selected first quest:`, firstQuest ? { id: firstQuest.questId, title: firstQuest.title } : 'None');
             }
             // Create the first quest issue (if any)
             if (firstQuest) {
@@ -2283,24 +2332,23 @@ typings/
               if (!isDefaultSequence) {
                 // Use the unique groupId for this specific repo
                 const uniqueGroupId = repoUniqueGroupId;
-                groupConfigPath = path.join(__dirname, '../../../OSS-Doorway/src/config/generated', `quest_config_${uniqueGroupId}.json`);
-                if (fs.existsSync(groupConfigPath)) {
-                  questConfig = JSON.parse(fs.readFileSync(groupConfigPath, 'utf8'));
-                  console.log(`🔍 [QUEST-CONFIG-LOAD] Loaded quest config for repo ${repoName}: ${groupConfigPath}`);
-                  // Print all quests and their tasks
-                  Object.keys(questConfig).forEach(qid => {
-                    if (qid === 'map_repo_link') return;
-                    const quest = questConfig[qid];
-                    console.log(`[DEBUG] Quest: ${qid}`);
-                    Object.keys(quest).forEach(key => {
-                      if (key === 'metadata') return;
-                      const task = quest[key];
-                      console.log(`  [DEBUG] Task: ${key} ->`, task);
-                    });
+                
+                // Use the shared quest config generated outside the loop
+                console.log(`🔍 [QUEST-CONFIG-REUSE] Using shared quest config`);
+                questConfig = sharedQuestConfig;
+                console.log(`🔍 [QUEST-CONFIG-REUSE] Quest config keys:`, Object.keys(questConfig));
+                
+                // Print all quests and their tasks
+                Object.keys(questConfig).forEach(qid => {
+                  if (qid === 'map_repo_link') return;
+                  const quest = questConfig[qid];
+                  console.log(`[DEBUG] Quest: ${qid}`);
+                  Object.keys(quest).forEach(key => {
+                    if (key === 'metadata') return;
+                    const task = quest[key];
+                    console.log(`  [DEBUG] Task: ${key} ->`, task);
                   });
-                } else {
-                  console.warn(`[WARN] Group config file not found: ${groupConfigPath}`);
-                }
+                });
                 
                 // 🌟 Enhanced Quest System: Check if enhanced quests are enabled
                 const isPurpleConfig = uniqueGroupId.includes('_purple_');
@@ -2358,6 +2406,79 @@ typings/
                     console.log(`🌟 [ENHANCED-QUESTS] Creating enhanced task buffer for first quest: ${firstQuest.questId}`);
                     
                     // Create enhanced task buffer for the first quest (replicate legacy pattern)
+                    console.log(`🔍 [DEBUG] firstQuest.questId: ${firstQuest.questId}`);
+                    console.log(`🔍 [DEBUG] questConfig keys:`, Object.keys(questConfig));
+                    
+                    // Check if the quest exists in the config
+                    if (!questConfig[firstQuest.questId]) {
+                      console.error(`❌ [ERROR] Quest ${firstQuest.questId} not found in questConfig`);
+                      console.log(`🔍 [DEBUG] Available quests:`, Object.keys(questConfig).filter(key => key !== 'map_repo_link'));
+                      
+                      // Try to use the first available quest instead
+                      const availableQuests = Object.keys(questConfig).filter(key => key !== 'map_repo_link');
+                      if (availableQuests.length > 0) {
+                        const fallbackQuestId = availableQuests[0];
+                        console.log(`🔄 [FALLBACK] Using fallback quest: ${fallbackQuestId}`);
+                        
+                        // Update the quest configuration to use the fallback quest
+                        const orderedTasks = Object.keys(questConfig[fallbackQuestId])
+                          .filter((key) => /^T\d+$/i.test(key))
+                          .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+                        
+                        const tasksToCreate = Math.min(taskBufferSize, orderedTasks.length);
+                        console.log(`🌟 [ENHANCED-QUESTS] Creating ${tasksToCreate} tasks for ${fallbackQuestId}: ${orderedTasks.slice(0, tasksToCreate).join(', ')}`);
+                        
+                        // Generate class title for the issues (same as legacy)
+                        const classTitle = (className || groupName || "Class")
+                          .replace(/[^a-zA-Z0-9]+/g, '')
+                          .replace(/^-+|-+$/g, '');
+                        
+                        // Find quest number from questId (e.g., Q1, Q2, ...)
+                        let questNumber = 1;
+                        const questIdMatch = fallbackQuestId && fallbackQuestId.match(/Q(\d+)/i);
+                        if (questIdMatch) questNumber = parseInt(questIdMatch[1], 10);
+                        
+                        // Create issues for the buffer tasks (async, don't block repo creation)
+                        (async () => {
+                          try {
+                            for (let i = 0; i < tasksToCreate; i++) {
+                              const taskId = orderedTasks[i];
+                              const task = questConfig[fallbackQuestId][taskId];
+                              
+                              if (task) {
+                                try {
+                                  // Use helper to create issue and persist issue number to DB
+                                  await createQuestIssue(
+                                    fallbackQuestId,
+                                    taskId,
+                                    task,
+                                    user,
+                                    repoName,
+                                    repoUniqueGroupId || groupId,
+                                    classTitle
+                                  );
+                                  console.log(`🌟 [ENHANCED-QUESTS] ✅ Created issue for ${fallbackQuestId}.${taskId} in ${repoName}`);
+                                  
+                                  // Add delay between issue creations
+                                  if (i < tasksToCreate - 1) {
+                                    await new Promise(resolve => setTimeout(resolve, 1000));
+                                  }
+                                } catch (error) {
+                                  console.error(`🌟 [ENHANCED-QUESTS] ❌ Failed to create issue for ${fallbackQuestId}.${taskId}:`, error.message);
+                                }
+                              }
+                            }
+                            console.log(`🌟 [ENHANCED-QUESTS] ✅ Enhanced task buffer completed for ${repoName} (fallback quest)`);
+                          } catch (error) {
+                            console.error(`🌟 [ENHANCED-QUESTS] ❌ Error during fallback enhanced task buffer creation:`, error.message);
+                          }
+                        })();
+                      } else {
+                        console.warn(`⚠️ [WARN] No available quests found, skipping task creation`);
+                        // Continue without creating tasks - the repo is still created successfully
+                      }
+                    } else {
+                    
                     const orderedTasks = Object.keys(questConfig[firstQuest.questId])
                       .filter((key) => /^T\d+$/i.test(key))
                       .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
@@ -2413,6 +2534,7 @@ typings/
                         console.error(`🌟 [ENHANCED-QUESTS] ❌ Error during enhanced task buffer creation:`, error.message);
                       }
                     })();
+                    }
                   }
                 }
                 // Legacy mode: Only create T1 issue if enhanced mode is disabled

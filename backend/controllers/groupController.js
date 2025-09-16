@@ -1603,7 +1603,7 @@ const getQuestJsonConfig = async (req, res) => {
 
         console.log(`📖 [getQuestJsonConfig] Retrieving quest JSON for class: ${classId}`);
 
-        // Find the group and return quest JSON config
+        // Find the group for basic info
         const group = await Group.findById(classId);
         if (!group) {
             return res.status(404).json({
@@ -1612,32 +1612,126 @@ const getQuestJsonConfig = async (req, res) => {
             });
         }
 
-        if (!group.questJsonConfig) {
-            console.log(`📭 [getQuestJsonConfig] No quest JSON found for class: ${group.groupName}`);
-            return res.status(200).json({
-                success: true,
-                message: 'No quest JSON configuration found',
-                data: {
-                    questJsonConfig: null,
-                    lastUpdated: null,
-                    hasConfig: false
+        // 🔄 NEW: Check questconfigs collection for latest configuration (including purple deploys)
+        const { MongoClient } = require('mongodb');
+        const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+        const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+        
+        let latestConfig = null;
+        let configSource = 'groups';
+        
+        try {
+            const client = new MongoClient(ossDoorwayUri);
+            await client.connect();
+            const db = client.db(ossDoorwayDbName);
+            
+            // Find all configurations for this class, sorted by creation date (newest first)
+            const allConfigs = await db.collection('questconfigs').find({
+                $or: [
+                    { classId: classId },
+                    { classId: { $regex: `${classId}_purple_` } },
+                    { groupId: classId },
+                    { groupId: { $regex: `${classId}_purple_` } },
+                    { configId: classId },
+                    { configId: { $regex: `${classId}_purple_` } }
+                ]
+            }).sort({ createdAt: -1 }).toArray();
+            
+            await client.close();
+            
+            if (allConfigs.length > 0) {
+                // Use the most recent configuration (first in sorted list)
+                const mostRecentConfig = allConfigs[0];
+                const configData = mostRecentConfig.config || mostRecentConfig.configData || mostRecentConfig.questConfig || {};
+                
+                // Convert legacy format to questSequence format if needed
+                if (configData && !configData.questSequence) {
+                    const questKeys = Object.keys(configData).filter(k => k.startsWith('Q')).sort();
+                    const questSequence = questKeys.map((questId, index) => {
+                        const quest = configData[questId];
+                        
+                        // Extract tasks from the quest object
+                        const tasks = {};
+                        Object.keys(quest).forEach(key => {
+                            if (key.startsWith('T') && key !== 'metadata') {
+                                tasks[key] = quest[key];
+                            }
+                        });
+                        
+                        return {
+                            questId: questId,
+                            title: quest.metadata?.title || questId,
+                            isQ0: questId === 'Q0',
+                            questType: quest.metadata?.type || 'custom',
+                            sequenceNumber: index,
+                            tasks: tasks, // Include tasks object
+                            metadata: quest.metadata || {
+                                title: quest.metadata?.title || questId,
+                                description: quest.metadata?.description || '',
+                                prerequisite: index > 0 ? questKeys[index - 1] : null,
+                                type: quest.metadata?.type || 'custom'
+                            }
+                        };
+                    });
+                    
+                    latestConfig = {
+                        map_repo_link: configData.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+                        questSequence: questSequence
+                    };
+                } else if (configData.questSequence) {
+                    latestConfig = configData;
+                } else {
+                    latestConfig = mostRecentConfig;
                 }
-            });
+                
+                configSource = mostRecentConfig.isPurpleDeployment ? 'questconfigs (purple deploy)' : 'questconfigs';
+                
+                console.log(`✅ [getQuestJsonConfig] Found latest config in questconfigs collection`);
+                console.log(`📊 [getQuestJsonConfig] Config source: ${configSource}`);
+                console.log(`📊 [getQuestJsonConfig] Config ID: ${mostRecentConfig._id}`);
+                console.log(`📊 [getQuestJsonConfig] Quest count: ${latestConfig.questSequence?.length || Object.keys(configData).filter(k => k.startsWith('Q')).length}`);
+                console.log(`📊 [getQuestJsonConfig] Last updated: ${mostRecentConfig.updatedAt || mostRecentConfig.createdAt}`);
+            }
+            
+        } catch (mongoError) {
+            console.warn(`⚠️ [getQuestJsonConfig] Could not check questconfigs collection: ${mongoError.message}`);
+            console.log(`📖 [getQuestJsonConfig] Falling back to groups collection`);
+        }
+        
+        // Fallback to groups collection if no config found in questconfigs
+        if (!latestConfig) {
+            if (!group.questJsonConfig) {
+                console.log(`📭 [getQuestJsonConfig] No quest JSON found for class: ${group.groupName}`);
+                return res.status(200).json({
+                    success: true,
+                    message: 'No quest JSON configuration found',
+                    data: {
+                        questJsonConfig: null,
+                        lastUpdated: null,
+                        hasConfig: false
+                    }
+                });
+            }
+            
+            latestConfig = group.questJsonConfig;
+            configSource = 'groups';
         }
 
         console.log(`✅ [getQuestJsonConfig] Successfully retrieved quest JSON for class: ${group.groupName}`);
-        console.log(`📊 [getQuestJsonConfig] Quest count: ${group.questJsonConfig.questSequence?.length || 0}`);
+        console.log(`📊 [getQuestJsonConfig] Final quest count: ${latestConfig.questSequence?.length || 0}`);
+        console.log(`📊 [getQuestJsonConfig] Configuration source: ${configSource}`);
 
         res.status(200).json({
             success: true,
             message: 'Quest JSON configuration retrieved successfully',
             data: {
-                questJsonConfig: group.questJsonConfig,
+                questJsonConfig: latestConfig,
                 lastUpdated: group.questJsonLastUpdated,
                 hasConfig: true,
-                questCount: group.questJsonConfig.questSequence?.length || 0,
+                questCount: latestConfig.questSequence?.length || 0,
                 className: group.groupName,
-                classCode: group.classCode
+                classCode: group.classCode,
+                configSource: configSource
             }
         });
 

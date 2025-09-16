@@ -456,11 +456,22 @@ const GenerateJson = () => {
 
   // Function to assign sequential quest IDs based on position
   const assignSequentialQuestIds = (questSequence) => {
-    return questSequence.map((quest, index) => ({
-      ...quest,
-      questId: `Q${index + 1}`,
-      sequenceNumber: index,
-    }));
+    return questSequence.map((quest, index) => {
+      const updatedQuest = {
+        ...quest,
+        questId: `Q${index + 1}`,
+        sequenceNumber: index,
+      };
+      
+      // Debug logging to check if tasks are preserved
+      console.log(`🔍 [assignSequentialQuestIds] Quest ${index + 1}:`, {
+        originalTasks: quest.tasks,
+        updatedTasks: updatedQuest.tasks,
+        tasksPreserved: !!updatedQuest.tasks
+      });
+      
+      return updatedQuest;
+    });
   };
 
   // Function to update quest IDs whenever quest sequence changes
@@ -719,7 +730,7 @@ const GenerateJson = () => {
   // 4. Add a function to add a new blank task to existing quests in the sequence builder
   const handleAddTaskToExistingQuest = (questIndex) => {
     // Generate the next task ID before creating the task
-    const existingTaskIds = Object.keys(jsonContent.questSequence[questIndex].tasks);
+    const existingTaskIds = Object.keys(jsonContent.questSequence[questIndex].tasks || {});
     const nextTaskNumber = existingTaskIds.length + 1;
     const newTaskId = `T${nextTaskNumber}`;
     
@@ -1151,6 +1162,19 @@ const GenerateJson = () => {
           "🔍 questSequence length:",
           response.data.data?.questJsonConfig?.questSequence?.length
         );
+        
+        // Debug each quest's tasks from backend
+        if (response.data.data?.questJsonConfig?.questSequence) {
+          response.data.data.questJsonConfig.questSequence.forEach((quest, index) => {
+            console.log(`🔍 [BACKEND] Quest ${index + 1} tasks:`, {
+              questId: quest.questId,
+              title: quest.title,
+              tasks: quest.tasks,
+              tasksType: typeof quest.tasks,
+              hasTasksProperty: 'tasks' in quest
+            });
+          });
+        }
 
         if (
           response.data.success &&
@@ -2142,7 +2166,7 @@ Student can now start their quest journey!`);
     setJsonContent((prev) => {
       const newQuestSequence = [...prev.questSequence];
       const quest = newQuestSequence[questIndex];
-      const taskEntries = Object.entries(quest.tasks);
+      const taskEntries = Object.entries(quest.tasks || {});
       const currentIndex = taskEntries.findIndex(([key]) => key === taskId);
       const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
 
@@ -2404,7 +2428,7 @@ Student can now start their quest journey!`);
           delete quest.tasks[taskToDelete];
 
           // Renumber remaining tasks
-          const taskEntries = Object.entries(quest.tasks);
+          const taskEntries = Object.entries(quest.tasks || {});
           quest.tasks = {};
           taskEntries.forEach(([_, taskData], index) => {
             quest.tasks[`T${index + 1}`] = taskData;
@@ -2633,7 +2657,7 @@ Student can now start their quest journey!`);
 
   const questCount = jsonContent.questSequence.length;
   const totalTasks = jsonContent.questSequence.reduce((total, quest) => {
-    return total + Object.keys(quest.tasks).length;
+    return total + Object.keys(quest.tasks || {}).length;
   }, 0);
 
   // Show loading state
@@ -3331,7 +3355,7 @@ Student can now start their quest journey!`);
                       
                       const quest = draftQuests.questSequence[draftIndex];
                       const existingTasks = quest.tasks || {};
-                      const taskCount = Object.keys(existingTasks).length;
+                      const taskCount = Object.keys(existingTasks || {}).length;
                       const newTaskId = `T${taskCount + 1}`;
                       
                       const newTask = {
@@ -7942,7 +7966,18 @@ const QuestBlock = ({
   isDraftQuest = false, // New prop to indicate if this is a draft quest
 }) => {
   const [expanded, setExpanded] = useState(true);
-  const taskEntries = Object.entries(quest.tasks);
+  
+  // Debug logging to understand quest structure
+  console.log(`🔍 [QuestBlock] Quest ${questIndex + 1} data:`, {
+    questId: quest.questId,
+    title: quest.title,
+    tasks: quest.tasks,
+    tasksType: typeof quest.tasks,
+    tasksKeys: quest.tasks ? Object.keys(quest.tasks) : 'N/A',
+    tasksLength: quest.tasks ? Object.keys(quest.tasks).length : 0
+  });
+  
+  const taskEntries = Object.entries(quest.tasks || {});
   return (
     <Accordion
       data-quest-id={quest.questId || `Q${questIndex}`}

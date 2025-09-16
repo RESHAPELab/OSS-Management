@@ -78,3 +78,5 @@ async function findConfigsInAllDbs() {
 
 console.log('🔍 Searching for quest configs in all possible databases...');
 findConfigsInAllDbs();
+
+
