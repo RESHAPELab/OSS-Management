@@ -7965,7 +7965,7 @@ const QuestBlock = ({
   onPurpleDeployQuest, // New prop for purple deployment
   isDraftQuest = false, // New prop to indicate if this is a draft quest
 }) => {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   
   // Debug logging to understand quest structure
   console.log(`🔍 [QuestBlock] Quest ${questIndex + 1} data:`, {

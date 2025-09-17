@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router(); 
 const { getProfessor, createGroup, getGroup, getGroups, getGroupByCode, deleteGroup, createQuest, addQuestToGroup, removeQuestFromGroup, getQuests, getQuestsInGroup, updateQuest, deleteQuest, getQuest, addTask,
-    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, updateReadmeAcrossRepos, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, saveDraftQuestConfig, getDraftQuestConfig, deleteDraftQuest, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, getCollectedInfoForClass, createTestRepo } = require("../controllers/groupController")
+    getTasks, updateTask, deleteTask, getTask, addHint, getHints, updateHint, deleteHint, getHint, saveGroupReadme, getGroupReadme, updateReadmeAcrossRepos, saveQuestOrder, getQuestOrder, resetQuestOrder, getClassIdFromRepo, saveQuestJsonConfig, getQuestJsonConfig, saveDraftQuestConfig, getDraftQuestConfig, deleteDraftQuest, getStoredValuesForClass, upsertStoredValue, getStoredValuesBackend, getCollectedInfoForClass, createTestRepo, deployQuestToRepo } = require("../controllers/groupController")
 const { generateHint } = require("../controllers/aiController")
 const { getStudents } = require("../controllers/studentController")
 
