@@ -2469,6 +2469,5 @@ module.exports = {
     upsertStoredValue,
     getStoredValuesBackend,
     getCollectedInfoForClass,
-    createTestRepo,
-    deployQuestToRepo
+    createTestRepo
 }
