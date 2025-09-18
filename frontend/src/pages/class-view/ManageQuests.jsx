@@ -960,8 +960,8 @@ const ManageQuests = () => {
 
             outcome: task.outcome,
             helpText: task.helpText,
-            points: task.points || 100,
-            xp: task.xp || task.points || 100,
+            points: task.points || 0,
+            xp: task.xp || task.points || 0,
             type: task.type || "multiple-choice",
             responses: {
               accept: task.accept || "",
@@ -2448,38 +2448,38 @@ const ManageQuests = () => {
                   <TextField
                     label="Points"
                     type="number"
-                    value={task.points || 1}
+                    value={task.points || 0}
                     onChange={(e) => {
-                      const value = e.target.value === "" ? 1 : parseInt(e.target.value);
-                      if (value < 1) {
-                        // Prevent setting points below 1
+                      const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                      if (value < 0) {
+                        // Prevent setting points below 0
                         return;
                       }
                       const tasks = [...questFormData.tasks];
                       tasks[taskIndex].points = value;
                       setQuestFormData({ ...questFormData, tasks });
                     }}
-                    inputProps={{ min: 1 }}
+                    inputProps={{ min: 0 }}
                     sx={{ width: 120 }}
-                    helperText="Min: 1"
+                    helperText="Min: 0"
                   />
                   <TextField
                     label="XP Points"
                     type="number"
-                    value={task.xp || 1}
+                    value={task.xp || 0}
                     onChange={(e) => {
-                      const value = e.target.value === "" ? 1 : parseInt(e.target.value);
-                      if (value < 1) {
-                        // Prevent setting XP below 1
+                      const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                      if (value < 0) {
+                        // Prevent setting XP below 0
                         return;
                       }
                       const tasks = [...questFormData.tasks];
                       tasks[taskIndex].xp = value;
                       setQuestFormData({ ...questFormData, tasks });
                     }}
-                    inputProps={{ min: 1 }}
+                    inputProps={{ min: 0 }}
                     sx={{ width: 120 }}
-                    helperText="Min: 1"
+                    helperText="Min: 0"
                   />
                 </Stack>
 
@@ -3305,7 +3305,7 @@ const ManageQuests = () => {
                     const penalty = parseInt(hint.penalty) || 0;
                     return sum + penalty;
                   }, 0);
-                  const taskPoints = parseInt(task.points) || 1;
+                  const taskPoints = parseInt(task.points) || 0;
                   return totalPenalty > taskPoints;
                 }
                 return false;
@@ -3315,7 +3315,7 @@ const ManageQuests = () => {
                 if (questFormData.hints && questFormData.hints.enabled) {
                   const mainPenalty = parseInt(questFormData.hints.penalty) || 0;
                   // For main hints, we need to check against the total points of all tasks
-                  const totalTaskPoints = questFormData.tasks.reduce((sum, task) => sum + (parseInt(task.points) || 1), 0);
+                  const totalTaskPoints = questFormData.tasks.reduce((sum, task) => sum + (parseInt(task.points) || 0), 0);
                   return mainPenalty > totalTaskPoints;
                 }
                 return false;

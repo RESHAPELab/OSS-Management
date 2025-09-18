@@ -698,7 +698,7 @@ const GenerateJson = () => {
       { label: "B", value: "" }
     ],
     detailedHints: [],
-    taskType: "collect-info",
+    taskType: "llm-text-validation",
     taskDesc: "",
     successText: "",
     errorText: "",
@@ -719,9 +719,9 @@ const GenerateJson = () => {
       temperature: 0.1,
       enableDetailedFeedback: false,
     },
-    // Per-user save controls (enabled by default for collect-info)
+    // Per-user save controls (enabled by default for llm-text-validation)
     saveValidatedData: true,
-    savedDataName: "collected_info",
+    savedDataName: "llm_validated_response",
   });
 
   // 3. Add a function to add a new blank task to questFormData (for Add New Quest modal)
@@ -756,21 +756,21 @@ const GenerateJson = () => {
         desc: `Task ${nextTaskNumber}`,
         points: 20,
         xp: 20,
-        type: "collect-info",
-        accept: "### 📝 Information Collection Task\n\n**Task:** This is a non-graded information collection task. Please provide the requested information below.\n\n**Instructions:** Simply type your response in the comment box. Any response will be accepted.\n\n**Note:** This task is designed to collect information and does not require a specific answer format.",
-        success: "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**Points earned:** 20\n\nGreat contribution! 📋",
-        error: "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+        type: "llm-text-validation",
+        accept: "### 🤖 LLM Text Validation Task\n\n**Task:** This task uses AI to validate your text response.\n\n**Instructions:** Provide a detailed response to the question below. The AI will evaluate your answer based on the validation criteria.\n\n**Note:** Your response will be analyzed for accuracy, completeness, and relevance.",
+        success: "✅ **Response Validated!**\n\nYour response has been successfully validated by the AI system.\n\n**Points earned:** 20\n\nGreat work! 🤖",
+        error: "❌ **Response Needs Improvement**\n\nYour response didn't meet the validation criteria.\n\n**Please:** Review the question and provide a more detailed, accurate response.\n\n**Note:** The AI will re-evaluate your response when you submit again.",
         answer: "",
         answerType: "text",
-        question: "[What information would you like to collect?]",
+        question: "[What would you like students to explain or analyze?]",
         options: [],
         correctAnswer: "",
         hints: [],
         detailedHints: [],
         questions: [],
-        // Per-user save controls (enabled by default for collect-info)
+        // Per-user save controls (enabled by default for llm-text-validation)
         saveValidatedData: true,
-        savedDataName: "collected_info"
+        savedDataName: "llm_validated_response"
       };
       
       // Add the template task to the quest
@@ -2841,7 +2841,7 @@ Student can now start their quest journey!`);
           const penalty = parseInt(hint.penalty) || 0;
           return sum + penalty;
         }, 0);
-        const taskPoints = parseInt(task.points) || 1;
+        const taskPoints = parseInt(task.points) || 0;
         if (totalPenalty > taskPoints) {
           errors.push(`Task ${taskIndex + 1}: Hint penalties (${totalPenalty}) exceed task points (${taskPoints})`);
         }
@@ -3954,19 +3954,19 @@ Student can now start their quest journey!`);
                       <TextField
                         label="Points/XP"
                         type="number"
-                        value={task.points || 1}
+                        value={task.points || 0}
                         onChange={(e) => {
-                          const value = e.target.value === "" ? 1 : parseInt(e.target.value);
-                          if (value < 1) {
-                            // Prevent setting points below 1
+                          const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                          if (value < 0) {
+                            // Prevent setting points below 0
                             return;
                           }
                           handleTaskChange(taskIdx, "points", value);
                         }}
-                        inputProps={{ min: 1 }}
+                        inputProps={{ min: 0 }}
                         fullWidth
                         sx={{ borderRadius: 2 }}
-                        helperText="Minimum value: 1"
+                        helperText="Minimum value: 0"
                       />
 
                       <Divider />
@@ -5735,19 +5735,19 @@ Student can now start their quest journey!`);
                   <TextField
                     label="Points/XP"
                     type="number"
-                    value={editingTaskData.points || 1}
+                    value={editingTaskData.points || 0}
                     onChange={(e) => {
-                      const value = e.target.value === "" ? 1 : parseInt(e.target.value);
-                      if (value < 1) return;
+                      const value = e.target.value === "" ? 0 : parseInt(e.target.value);
+                      if (value < 0) return;
                       setEditingTaskData({
                         ...editingTaskData,
                         points: value,
                         xp: value, // Keep XP in sync with points
                       });
                     }}
-                    inputProps={{ min: 1 }}
+                    inputProps={{ min: 0 }}
                     sx={{ width: 200 }}
-                    helperText="Points and XP are the same value (Min: 1)"
+                    helperText="Points and XP are the same value (Min: 0)"
                   />
                 </Box>
 
