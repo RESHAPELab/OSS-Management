@@ -2344,23 +2344,111 @@ const createTestRepo = async (req, res) => {
     
     console.log(`🧪 [CREATE-TEST-REPO] Original class name: ${actualClassName}`);
     console.log(`🧪 [CREATE-TEST-REPO] Test class name: ${testClassName}`);
-    console.log(`🧪 [CREATE-TEST-REPO] Quest config has ${questConfig?.questSequence?.length || 0} quests`);
+    // Use the current draft quests from the group's draftQuestConfig
+    // This ensures that when creating a draft repo, it uses the latest saved draft quests
+    const effectiveQuestConfig = group.draftQuestConfig && typeof group.draftQuestConfig === 'object' 
+      ? group.draftQuestConfig 
+      : { questSequence: [] };
 
-    // Create test-specific class ID to avoid conflicts with main system
-    const testClassId = `${classId}-test`;
+    console.log(`🧪 [CREATE-TEST-REPO] Using draft quest config with ${effectiveQuestConfig?.questSequence?.length || 0} quests`);
+    console.log(`🧪 [CREATE-TEST-REPO] Draft quest titles: ${effectiveQuestConfig?.questSequence?.map(q => q.title || q.questId).join(', ') || 'None'}`);
+    
+    // Log the quest config being used for debugging
+    if (effectiveQuestConfig.questSequence && effectiveQuestConfig.questSequence.length > 0) {
+      console.log(`🧪 [CREATE-TEST-REPO] First quest details:`, {
+        questId: effectiveQuestConfig.questSequence[0]?.questId,
+        title: effectiveQuestConfig.questSequence[0]?.title,
+        taskCount: Object.keys(effectiveQuestConfig.questSequence[0]?.tasks || {}).length
+      });
+    }
+
+    // Create timestamped test-specific class ID to ensure uniqueness
+    const timestamp = Date.now();
+    const testClassId = `${classId}-test-${timestamp}`;
     
     console.log(`🧪 [CREATE-TEST-REPO] Test class ID: ${testClassId}`);
     
-    // Use the existing createCustomRepos function but with test parameters
+    // 1) Convert questSequence format to bot-compatible format and save to questconfigs collection
+    try {
+      const mongoose = require('mongoose');
+      const connection = mongoose.connection;
+      const questConfigSchema = new mongoose.Schema({
+        groupId: String,
+        configId: String,
+        classId: String,
+        configData: Object,
+        config: mongoose.Schema.Types.Mixed,
+        createdAt: Date,
+        updatedAt: Date,
+        source: String,
+        createdBy: String,
+        originalFilePath: String,
+        version: Number
+      }, { collection: 'questconfigs' });
+
+      const QuestConfig = (connection.models.QuestConfig || connection.model('QuestConfig', questConfigSchema));
+
+      // Convert questSequence format to bot format (Q1, Q2, etc. as top-level keys)
+      const botCompatibleConfig = {
+        map_repo_link: "https://github.com/OSS-Doorway-Dev/{{repoName}}"
+      };
+
+      if (effectiveQuestConfig.questSequence && effectiveQuestConfig.questSequence.length > 0) {
+        effectiveQuestConfig.questSequence.forEach((quest, index) => {
+          const questKey = quest.questId || `Q${index + 1}`;
+          botCompatibleConfig[questKey] = {
+            title: quest.title || questKey,
+            description: quest.description || '',
+            tasks: quest.tasks || {}
+          };
+        });
+      }
+
+      console.log(`🔄 [CREATE-TEST-REPO] Converted to bot format with keys: ${Object.keys(botCompatibleConfig)}`);
+
+      const now = new Date();
+      await QuestConfig.findOneAndUpdate(
+        { $or: [ { groupId: testClassId }, { configId: testClassId }, { classId: testClassId } ] },
+        {
+          groupId: testClassId,
+          configId: testClassId,
+          classId: testClassId,
+          configData: botCompatibleConfig,
+          config: botCompatibleConfig,
+          updatedAt: now,
+          source: 'management:createTestRepo',
+          createdAt: now
+        },
+        { upsert: true, new: true }
+      );
+      console.log(`💾 [CREATE-TEST-REPO] Saved bot-compatible test quest config to questconfigs for ${testClassId}`);
+    } catch (saveErr) {
+      console.warn(`⚠️ [CREATE-TEST-REPO] Could not save test quest config: ${saveErr.message}`);
+      console.error(saveErr);
+    }
+
+    // 2) Attempt cache invalidation on OSS-Doorway (best-effort)
+    try {
+      const axios = require('axios');
+      const cacheBase = process.env.OSS_DOORWAY_CACHE_BASE || 'http://localhost:3000';
+      await axios.delete(`${cacheBase}/api/cache/delete/${encodeURIComponent(testClassId)}`).catch(()=>{});
+      await axios.post(`${cacheBase}/api/cache/clear`).catch(()=>{});
+      console.log(`🗑️ [CREATE-TEST-REPO] Attempted cache invalidation for ${testClassId}`);
+    } catch (cacheErr) {
+      console.warn(`⚠️ [CREATE-TEST-REPO] Cache invalidation skipped/failed: ${cacheErr.message}`);
+    }
+
+    // 3) Use the existing createCustomRepos function but with test parameters
     const repoController = require('./repoController');
     
     // Prepare the request for the existing createCustomRepos function
     const testReq = {
       body: {
         users: [username],
-        customSequence: questConfig, // Use draft quest configuration
+        customSequence: effectiveQuestConfig, // Use draft/determined quest configuration
         className: testClassName, // Use test class name
-        classId: testClassId, // Use test-specific class ID
+        classId: testClassId, // Use timestamped test-specific class ID
+        customGroupId: testClassId, // CRITICAL: Set customGroupId to match the saved config
         isTestRepo: true // Mark as test repository
       }
     };
@@ -2398,7 +2486,9 @@ const createTestRepo = async (req, res) => {
           repositoryUrl: repoUrl,
           repositoryName: `${username}-${formattedClassName}-test`,
           className: testClassName,
-          questConfig: questConfig
+          customGroupId: testClassId, // Return the timestamped ID for reference
+          questConfig: effectiveQuestConfig,
+          timestamp: timestamp
         });
       } else if (unsuccessful && unsuccessful.length > 0) {
         const error = unsuccessful[0];

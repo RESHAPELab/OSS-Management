@@ -54,6 +54,9 @@ import {
   AddCircleOutline as AddCircleOutlineIcon,
   AutoAwesome as AutoAwesomeIcon,
   PlayArrow as PlayArrowIcon,
+  Info as InfoIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
 } from "@mui/icons-material";
 import { useAuthContext } from "../../context/AuthContext";
 
@@ -163,6 +166,14 @@ const GenerateJson = () => {
   const [showDeleteTaskDialog, setShowDeleteTaskDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [questToDeleteFrom, setQuestToDeleteFrom] = useState(null);
+
+  // Task edit confirmation dialog state
+  const [showTaskEditConfirmationDialog, setShowTaskEditConfirmationDialog] = useState(false);
+  
+  // Task edit success/error dialog state
+  const [showTaskEditSuccessDialog, setShowTaskEditSuccessDialog] = useState(false);
+  const [showTaskEditErrorDialog, setShowTaskEditErrorDialog] = useState(false);
+  const [taskEditMessage, setTaskEditMessage] = useState('');
 
   // Quest deployment dialog state
 
@@ -2289,6 +2300,18 @@ Student can now start their quest journey!`);
       console.log(`❌ [TASK-EDIT] Save aborted - missing required data`);
       return;
     }
+
+    // Show confirmation dialog before saving
+    setShowTaskEditConfirmationDialog(true);
+  };
+
+  const confirmSaveEditedTask = async () => {
+    console.log(`✅ [TASK-EDIT-CONFIRM] User confirmed save, proceeding...`);
+    
+    if (!editingTaskData || editingTaskQuestIndex === null || editingTaskId === null) {
+      console.log(`❌ [TASK-EDIT-CONFIRM] Save aborted - missing required data`);
+      return;
+    }
     
     // Create updated task object directly from form data
     const updatedTask = {
@@ -2328,54 +2351,121 @@ Student can now start their quest journey!`);
       answerType: editingTaskData.answerType || ""
     };
     
-    console.log(`📝 [TASK-EDIT] Updated task:`, updatedTask);
+    console.log(`📝 [TASK-EDIT-CONFIRM] Updated task:`, updatedTask);
     
-    
-    // Update the appropriate quest
-    if (editingTaskQuestIndex >= 10000) {
-      console.log(`🟡 [TASK-EDIT] Updating draft quest...`);
-      const draftIndex = editingTaskQuestIndex - 10000;
+    try {
+      // Update the appropriate quest
+      if (editingTaskQuestIndex >= 10000) {
+        console.log(`🟡 [TASK-EDIT-CONFIRM] Updating draft quest...`);
+        const draftIndex = editingTaskQuestIndex - 10000;
+        
+        const updatedDraftQuests = {
+          ...draftQuests,
+          questSequence: draftQuests.questSequence.map((quest, index) => {
+            if (index === draftIndex) {
+              return {
+                ...quest,
+                tasks: {
+                  ...quest.tasks,
+                  [editingTaskId]: updatedTask
+                }
+              };
+            }
+            return quest;
+          })
+        };
+        
+        console.log(`✅ [TASK-EDIT-CONFIRM] Draft quest updated, saving...`);
+        setDraftQuests(updatedDraftQuests);
+        saveDraftQuests(updatedDraftQuests);
+      } else {
+        console.log(`🔵 [TASK-EDIT-CONFIRM] Updating main sequence quest...`);
+        setJsonContent((prev) => {
+          const newQuestSequence = [...prev.questSequence];
+          newQuestSequence[editingTaskQuestIndex].tasks[editingTaskId] = updatedTask;
+          return { ...prev, questSequence: newQuestSequence };
+        });
+
+        // Update the live config for current users
+        const configUpdateResult = await updateLiveConfigForCurrentUsers(updatedTask, editingTaskQuestIndex, editingTaskId);
+        
+        // Show success dialog
+        const migratedUsers = configUpdateResult.data?.migratedUsers || 0;
+        const configName = configUpdateResult.data?.configName || 'Unknown';
+        setTaskEditMessage(`Task updated successfully! Created new purple configuration "${configName}" and migrated ${migratedUsers} students to use the updated task.`);
+        setShowTaskEditSuccessDialog(true);
+      }
       
-      const updatedDraftQuests = {
-        ...draftQuests,
-        questSequence: draftQuests.questSequence.map((quest, index) => {
-          if (index === draftIndex) {
-            return {
-              ...quest,
-              tasks: {
-                ...quest.tasks,
-                [editingTaskId]: updatedTask
-              }
-            };
-          }
-          return quest;
-        })
-      };
+      console.log(`🎉 [TASK-EDIT-CONFIRM] Task save completed!`);
       
-      console.log(`✅ [TASK-EDIT] Draft quest updated, saving...`);
-      setDraftQuests(updatedDraftQuests);
-      saveDraftQuests(updatedDraftQuests);
-    } else {
-      console.log(`🔵 [TASK-EDIT] Updating main sequence quest...`);
-      setJsonContent((prev) => {
-        const newQuestSequence = [...prev.questSequence];
-        newQuestSequence[editingTaskQuestIndex].tasks[editingTaskId] = updatedTask;
-        return { ...prev, questSequence: newQuestSequence };
-      });
+      // Close confirmation dialog
+      setShowTaskEditConfirmationDialog(false);
+      
+      // Close modal
+      setShowEditTaskModal(false);
+      setEditingTaskData(null);
+      setEditingTaskQuestIndex(null);
+      setEditingTaskId(null);
+      
+      // Refresh stored data
+      loadStoredValues();
+      
+      console.log(`✅ [TASK-EDIT-CONFIRM] Complete!`);
+    } catch (error) {
+      console.error(`❌ [TASK-EDIT-CONFIRM] Error saving task:`, error);
+      
+      // Show error dialog
+      setTaskEditMessage(`Failed to update task: ${error.message || 'Unknown error occurred'}`);
+      setShowTaskEditErrorDialog(true);
+      
+      // Still close the dialogs even if config update fails
+      setShowTaskEditConfirmationDialog(false);
+      setShowEditTaskModal(false);
+      setEditingTaskData(null);
+      setEditingTaskQuestIndex(null);
+      setEditingTaskId(null);
     }
-    
-    console.log(`🎉 [TASK-EDIT] Task save completed!`);
-    
-    // Close modal
-    setShowEditTaskModal(false);
-    setEditingTaskData(null);
-    setEditingTaskQuestIndex(null);
-    setEditingTaskId(null);
-    
-    // Refresh stored data
-    loadStoredValues();
-    
-    console.log(`✅ [TASK-EDIT] Complete!`);
+  };
+
+  // Function to update the live config for current users
+  const updateLiveConfigForCurrentUsers = async (updatedTask, questIndex, taskId) => {
+    try {
+      console.log(`🔄 [CONFIG-UPDATE] Starting live config update...`);
+      
+      // Get the class ID from the current URL or state
+      const classId = window.location.pathname.split('/').pop();
+      console.log(`🔍 [CONFIG-UPDATE] Class ID: ${classId}`);
+      
+      if (!classId) {
+        throw new Error('Could not determine class ID');
+      }
+
+      // Call the backend API to update the latest config
+      const response = await fetch(`${API_BASE_URL}/api/gamification/update-live-task-config`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          classId: classId,
+          questIndex: questIndex,
+          taskId: taskId,
+          updatedTask: updatedTask
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update live config: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log(`✅ [CONFIG-UPDATE] Live config updated successfully:`, result);
+      
+      return result;
+    } catch (error) {
+      console.error(`❌ [CONFIG-UPDATE] Error updating live config:`, error);
+      throw error;
+    }
   };
 
   const deleteTask = (questIndex, taskId) => {
@@ -7879,6 +7969,29 @@ Good luck! 🚀"
         questToDeleteFrom={questToDeleteFrom}
       />
 
+      {/* Task Edit Confirmation Dialog */}
+      <TaskEditConfirmationDialog
+        open={showTaskEditConfirmationDialog}
+        onClose={() => setShowTaskEditConfirmationDialog(false)}
+        onConfirm={confirmSaveEditedTask}
+        taskData={editingTaskData}
+        questIndex={editingTaskQuestIndex}
+      />
+
+      {/* Task Edit Success Dialog */}
+      <TaskEditSuccessDialog
+        open={showTaskEditSuccessDialog}
+        onClose={() => setShowTaskEditSuccessDialog(false)}
+        message={taskEditMessage}
+      />
+
+      {/* Task Edit Error Dialog */}
+      <TaskEditErrorDialog
+        open={showTaskEditErrorDialog}
+        onClose={() => setShowTaskEditErrorDialog(false)}
+        message={taskEditMessage}
+      />
+
     </div>
   );
 };
@@ -8022,7 +8135,7 @@ const QuestBlock = ({
             </Typography>
             <Stack direction="row" spacing={1} mt={1}></Stack>
           </Box>
-          {/* Rearrangement Arrows */}
+          {/* Rearrangement Arrows - COMMENTED OUT */}
           <Box
             sx={{
               display: "flex",
@@ -8032,7 +8145,7 @@ const QuestBlock = ({
               minWidth: "fit-content",
             }}
           >
-            <button
+            {/* <button
               className="btn btn-outline-secondary btn-sm"
               title="Move Up"
               onClick={(e) => {
@@ -8073,7 +8186,7 @@ const QuestBlock = ({
               }}
             >
               ↓
-            </button>
+            </button> */}
             <Tooltip title="Edit Quest">
               <span>
                 <IconButton
@@ -8095,7 +8208,8 @@ const QuestBlock = ({
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Delete Quest">
+            {/* Delete Quest Button - COMMENTED OUT */}
+            {/* <Tooltip title="Delete Quest">
               <span>
                 <IconButton
                   size="small"
@@ -8115,7 +8229,7 @@ const QuestBlock = ({
                   <DeleteIcon fontSize="small" />
                 </IconButton>
               </span>
-            </Tooltip>
+            </Tooltip> */}
             {onPurpleDeployQuest && (
               <Tooltip title="Purple Deploy - Create New Config with Appended Quest">
                   <span>
@@ -8292,7 +8406,7 @@ const TaskBlock = ({
           />
         </Box>
 
-        {/* Action Buttons Row */}
+        {/* Action Buttons Row - ARROW BUTTONS COMMENTED OUT */}
         <Box
           sx={{
             display: "flex",
@@ -8302,7 +8416,7 @@ const TaskBlock = ({
             mb: 2,
           }}
         >
-          <Tooltip title="Move Up">
+          {/* <Tooltip title="Move Up">
             <span>
               <IconButton
                 size="small"
@@ -8347,7 +8461,7 @@ const TaskBlock = ({
                 <ArrowDownwardIcon fontSize="small" />
               </IconButton>
             </span>
-          </Tooltip>
+          </Tooltip> */}
           <Tooltip title="Edit Task">
             <span>
               <IconButton
@@ -8365,7 +8479,8 @@ const TaskBlock = ({
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="Delete Task">
+          {/* Delete Task Button - COMMENTED OUT */}
+          {/* <Tooltip title="Delete Task">
             <span>
               <IconButton
                 size="small"
@@ -8381,10 +8496,204 @@ const TaskBlock = ({
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </span>
-          </Tooltip>
+          </Tooltip> */}
         </Box>
       </Box>
     </Card>
+  );
+};
+
+// Task Edit Confirmation Dialog Component
+const TaskEditConfirmationDialog = ({ 
+  open, 
+  onClose, 
+  onConfirm,
+  taskData,
+  questIndex 
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1,
+        bgcolor: '#fff3e0',
+        color: '#e65100'
+      }}>
+        <InfoIcon />
+        Confirm Task Changes
+      </DialogTitle>
+      <DialogContent sx={{ pt: 3 }}>
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          <AlertTitle>This will create a new purple configuration</AlertTitle>
+          A new quest configuration will be created and all students will be migrated to use the updated task.
+        </Alert>
+        
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          You are about to modify:
+        </Typography>
+        
+        <Box sx={{ 
+          bgcolor: '#f5f5f5', 
+          p: 2, 
+          borderRadius: 2, 
+          mb: 2 
+        }}>
+          <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 600 }}>
+            Quest {questIndex + 1} - Task: {taskData?.taskDesc || taskData?.title || 'Untitled Task'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Task Type: {taskData?.taskType || 'Unknown'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Points: {taskData?.points || 0} | XP: {taskData?.xp || 0}
+          </Typography>
+        </Box>
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          This will create a new purple configuration and migrate all students to use it. 
+          The original configuration will be preserved for rollback purposes.
+        </Typography>
+
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          Do you want to proceed with creating the new configuration?
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ p: 3, pt: 1 }}>
+        <Button 
+          onClick={onClose} 
+          color="inherit"
+          variant="outlined"
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={onConfirm} 
+          color="primary" 
+          variant="contained"
+          sx={{ 
+            bgcolor: '#1976d2',
+            '&:hover': { bgcolor: '#1565c0' }
+          }}
+        >
+          Create New Configuration
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// Task Edit Success Dialog Component
+const TaskEditSuccessDialog = ({ 
+  open, 
+  onClose, 
+  message 
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1,
+        bgcolor: '#e8f5e8',
+        color: '#2e7d32'
+      }}>
+        <CheckCircleIcon sx={{ color: '#4caf50' }} />
+        Task Updated Successfully
+      </DialogTitle>
+      <DialogContent sx={{ pt: 3 }}>
+        <Alert severity="success" sx={{ mb: 2 }}>
+          <AlertTitle>Purple Configuration Created</AlertTitle>
+          A new quest configuration has been created and all students have been migrated to it.
+        </Alert>
+        
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          {message}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary">
+          All students have been migrated to the new configuration and will see the updated task content.
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ p: 3, pt: 1 }}>
+        <Button 
+          onClick={onClose} 
+          color="primary" 
+          variant="contained"
+          sx={{ 
+            bgcolor: '#4caf50',
+            '&:hover': { bgcolor: '#388e3c' }
+          }}
+        >
+          Got It
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// Task Edit Error Dialog Component
+const TaskEditErrorDialog = ({ 
+  open, 
+  onClose, 
+  message 
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1,
+        bgcolor: '#ffebee',
+        color: '#c62828'
+      }}>
+        <ErrorIcon sx={{ color: '#f44336' }} />
+        Task Update Failed
+      </DialogTitle>
+      <DialogContent sx={{ pt: 3 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          <AlertTitle>Update Failed</AlertTitle>
+          There was an error updating the task configuration.
+        </Alert>
+        
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          {message}
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary">
+          The task has been updated locally, but the live configuration could not be updated. 
+          You may need to try again or check your connection.
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ p: 3, pt: 1 }}>
+        <Button 
+          onClick={onClose} 
+          color="error" 
+          variant="contained"
+          sx={{ 
+            bgcolor: '#f44336',
+            '&:hover': { bgcolor: '#d32f2f' }
+          }}
+        >
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 

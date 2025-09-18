@@ -1,113 +1,115 @@
-// pull-new-purple-config.js
-// Pull the latest purple config from the database
+import { MongoClient } from 'mongodb';
 
-const { MongoClient } = require('mongodb');
+const TEST_URI = "mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/test?retryWrites=true&w=majority&appName=gamification";
 
-async function main() {
-  const classId = '68a770b8140b9c0174c13ce7';
+async function pullNewPurpleConfig() {
+  console.log('🔍 Pulling new purple config: 68a770b8140b9c0174c13ce7_purple_1758142017627');
   
-  const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
-  const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
-
-  let client;
+  const testClient = new MongoClient(TEST_URI);
+  
   try {
-    client = new MongoClient(ossDoorwayUri);
-    await client.connect();
-    const db = client.db(ossDoorwayDbName);
-
-    const questConfigsCol = db.collection('questconfigs');
-
-    console.log('📋 PULLING NEW PURPLE CONFIG');
-    console.log('=' .repeat(50));
-
-    // Find the latest purple config
-    console.log('\n🔍 Finding latest purple config...');
-    const latestPurpleConfig = await questConfigsCol.findOne(
-      { classId: { $regex: new RegExp(`^${classId}_purple_`) } },
-      { sort: { createdAt: -1 } }
-    );
-
-    if (!latestPurpleConfig) {
-      console.error('❌ No purple config found');
-      return;
-    }
-
-    console.log('✅ Latest purple config found:');
-    console.log('  - Config ID:', latestPurpleConfig.classId);
-    console.log('  - Created:', latestPurpleConfig.createdAt);
-    console.log('  - Updated:', latestPurpleConfig.updatedAt);
-    console.log('  - Base Config ID:', latestPurpleConfig.baseConfigId);
-    console.log('  - Deployed Quest ID:', latestPurpleConfig.deployedQuestId);
-
-    // Show the config structure
-    console.log('\n📋 Config structure:');
-    if (latestPurpleConfig.config) {
-      const allKeys = Object.keys(latestPurpleConfig.config);
-      const questKeys = allKeys.filter(k => k.startsWith('Q'));
+    await testClient.connect();
+    const testDb = testClient.db('test');
+    const questConfigsCollection = testDb.collection('questconfigs');
+    
+    // Find the specific config
+    const config = await questConfigsCollection.findOne({
+      $or: [
+        { classId: '68a770b8140b9c0174c13ce7_purple_1758142017627' },
+        { configId: '68a770b8140b9c0174c13ce7_purple_1758142017627' },
+        { groupId: '68a770b8140b9c0174c13ce7_purple_1758142017627' },
+        { _id: '68a770b8140b9c0174c13ce7_purple_1758142017627' }
+      ]
+    });
+    
+    if (config) {
+      console.log('✅ Found the new purple config!');
+      console.log(`   - Database ID: ${config._id}`);
+      console.log(`   - ClassId: ${config.classId}`);
+      console.log(`   - ConfigId: ${config.configId}`);
+      console.log(`   - GroupId: ${config.groupId}`);
+      console.log(`   - Created: ${config.createdAt}`);
+      console.log(`   - Updated: ${config.updatedAt}`);
+      console.log(`   - Is Purple Deployment: ${config.isPurpleDeployment}`);
+      console.log(`   - Base Config ID: ${config.baseConfigId}`);
+      console.log(`   - Deployed Quest ID: ${config.deployedQuestId}`);
+      console.log(`   - Deployed At: ${config.deployedAt}`);
       
-      console.log('  - All keys:', allKeys);
-      console.log('  - Quest keys:', questKeys);
-
-      // Show quest details
-      for (const questKey of questKeys) {
-        const quest = latestPurpleConfig.config[questKey];
-        if (quest && typeof quest === 'object') {
-          const taskKeys = Object.keys(quest).filter(k => k !== 'metadata');
-          console.log(`  - ${questKey}: ${taskKeys.length} tasks [${taskKeys.join(', ')}]`);
+      // Show quest content
+      if (config.config) {
+        const questConfig = config.config;
+        if (typeof questConfig === 'object') {
+          const quests = Object.keys(questConfig).filter(k => k.startsWith('Q'));
+          console.log(`\n🔧 Quest content:`);
+          console.log(`   - Total Quests: ${quests.length}`);
+          console.log(`   - Quests: ${quests.join(', ')}`);
           
-          if (quest.metadata) {
-            console.log(`    Metadata: ${JSON.stringify(quest.metadata)}`);
+          for (const quest of quests) {
+            if (questConfig[quest] && typeof questConfig[quest] === 'object') {
+              const tasks = Object.keys(questConfig[quest]).filter(k => k.startsWith('T'));
+              console.log(`   - ${quest}: ${tasks.length} tasks`);
+              
+              // Show metadata for each quest
+              if (questConfig[quest].metadata) {
+                const meta = questConfig[quest].metadata;
+                console.log(`     Title: ${meta.title || 'N/A'}`);
+                console.log(`     Description: ${meta.description || 'N/A'}`);
+                console.log(`     Prerequisite: ${meta.prerequisite || 'N/A'}`);
+                console.log(`     Type: ${meta.type || 'N/A'}`);
+              }
+              
+              // Show Q6 details specifically
+              if (quest === 'Q6') {
+                console.log(`\n📝 Q6 Details:`);
+                console.log(`   - Title: ${questConfig[quest].metadata?.title || 'N/A'}`);
+                console.log(`   - Tasks: ${tasks.join(', ')}`);
+                
+                // Show first few tasks
+                for (let i = 1; i <= Math.min(3, tasks.length); i++) {
+                  const taskKey = `T${i}`;
+                  if (questConfig[quest][taskKey]) {
+                    const task = questConfig[quest][taskKey];
+                    console.log(`   - ${taskKey}: ${task.title || task.desc || 'N/A'}`);
+                    console.log(`     Points: ${task.points || 'N/A'}, Type: ${task.type || 'N/A'}`);
+                  }
+                }
+              }
+            }
           }
         }
       }
-    }
-
-    // Save to file
-    console.log('\n💾 Saving config to file...');
-    const fs = require('fs');
-    const filename = `new-purple-config-${latestPurpleConfig.classId}.json`;
-    
-    // Clean up the config for readability
-    const cleanConfig = {
-      _id: latestPurpleConfig._id,
-      classId: latestPurpleConfig.classId,
-      createdAt: latestPurpleConfig.createdAt,
-      updatedAt: latestPurpleConfig.updatedAt,
-      baseConfigId: latestPurpleConfig.baseConfigId,
-      deployedQuestId: latestPurpleConfig.deployedQuestId,
-      deployedAt: latestPurpleConfig.deployedAt,
-      isPurpleDeployment: latestPurpleConfig.isPurpleDeployment,
-      config: latestPurpleConfig.config
-    };
-
-    fs.writeFileSync(filename, JSON.stringify(cleanConfig, null, 2));
-    console.log(`✅ Config saved to: ${filename}`);
-
-    // Show Q4 specifically
-    console.log('\n🔍 Q4 Details:');
-    if (latestPurpleConfig.config && latestPurpleConfig.config.Q4) {
-      const q4 = latestPurpleConfig.config.Q4;
-      console.log('  - Q4 metadata:', JSON.stringify(q4.metadata, null, 2));
-      console.log('  - Q4 tasks:', Object.keys(q4).filter(k => k !== 'metadata'));
       
-      // Show first few tasks
-      const taskKeys = Object.keys(q4).filter(k => k !== 'metadata').slice(0, 3);
-      for (const taskKey of taskKeys) {
-        const task = q4[taskKey];
-        console.log(`  - ${taskKey}:`);
-        console.log(`    Type: ${task.type}`);
-        console.log(`    Points: ${task.points}`);
-        console.log(`    Accept: ${task.accept?.substring(0, 100)}...`);
+      // Save to file for inspection
+      const fs = await import('fs');
+      const filename = `quest_config_68a770b8140b9c0174c13ce7_purple_1758142017627.json`;
+      fs.writeFileSync(filename, JSON.stringify(config, null, 2));
+      console.log(`\n💾 Config saved to: ${filename}`);
+      
+    } else {
+      console.log('❌ Config not found');
+      
+      // Search for any config with this timestamp
+      const timestampConfigs = await questConfigsCollection.find({
+        $or: [
+          { classId: { $regex: '1758142017627', $options: 'i' } },
+          { configId: { $regex: '1758142017627', $options: 'i' } },
+          { groupId: { $regex: '1758142017627', $options: 'i' } }
+        ]
+      }).toArray();
+      
+      if (timestampConfigs.length > 0) {
+        console.log(`\n🔍 Found ${timestampConfigs.length} configs with timestamp 1758142017627:`);
+        for (const config of timestampConfigs) {
+          console.log(`   - ${config.classId || config.configId || config.groupId}`);
+        }
       }
     }
-
+    
   } catch (error) {
     console.error('❌ Error:', error.message);
   } finally {
-    if (client) await client.close();
+    await testClient.close();
   }
 }
 
-main();
-
-
+pullNewPurpleConfig();
