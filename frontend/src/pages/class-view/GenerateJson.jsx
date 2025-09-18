@@ -166,6 +166,10 @@ const GenerateJson = () => {
   const [showDeleteTaskDialog, setShowDeleteTaskDialog] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [questToDeleteFrom, setQuestToDeleteFrom] = useState(null);
+  
+  // Quest deletion confirmation dialog state
+  const [showDeleteQuestDialog, setShowDeleteQuestDialog] = useState(false);
+  const [questToDelete, setQuestToDelete] = useState(null);
 
   // Task edit confirmation dialog state
   const [showTaskEditConfirmationDialog, setShowTaskEditConfirmationDialog] = useState(false);
@@ -719,6 +723,17 @@ const GenerateJson = () => {
       temperature: 0.1,
       enableDetailedFeedback: false,
     },
+    // Image Validation fields
+    imageValidation: {
+      validationCriteria: "",
+      expectedContent: "",
+      temperature: 0.1,
+      maxTokens: 1000,
+      maxImageSizeMB: 5,
+      maxDimensions: 1024,
+      compressionQuality: 0.8,
+    },
+    validationCriteria: "",
     // Per-user save controls (enabled by default for llm-text-validation)
     saveValidatedData: true,
     savedDataName: "llm_validated_response",
@@ -920,39 +935,94 @@ const GenerateJson = () => {
     }
   };
 
-  // Delete a draft quest
-  const deleteDraftQuest = async (questIndex) => {
-    if (!classId) return;
+  // Move a draft quest up or down
+  const moveDraftQuest = (questIndex, direction) => {
+    setDraftQuests((prev) => {
+      const newQuestSequence = [...prev.questSequence];
+      const currentIndex = questIndex;
+      const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (newIndex < 0 || newIndex >= newQuestSequence.length) return prev;
+
+      // Swap the quests
+      [newQuestSequence[currentIndex], newQuestSequence[newIndex]] = [
+        newQuestSequence[newIndex],
+        newQuestSequence[currentIndex],
+      ];
+
+      return { ...prev, questSequence: newQuestSequence };
+    });
+  };
+
+  // Move a task within a draft quest
+  const moveDraftTask = (questIndex, taskId, direction) => {
+    setDraftQuests((prev) => {
+      const newQuestSequence = [...prev.questSequence];
+      const quest = newQuestSequence[questIndex];
+      const taskEntries = Object.entries(quest.tasks || {});
+      const currentIndex = taskEntries.findIndex(([key]) => key === taskId);
+      const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+
+      if (newIndex < 0 || newIndex >= taskEntries.length) return prev;
+
+      // Swap the tasks in the array
+      [taskEntries[currentIndex], taskEntries[newIndex]] = [
+        taskEntries[newIndex],
+        taskEntries[currentIndex],
+      ];
+
+      // Rebuild tasks object with new ordering but keeping T1, T2, T3... keys
+      const newTasks = {};
+      taskEntries.forEach(([_, taskData], index) => {
+        newTasks[`T${index + 1}`] = taskData;
+      });
+
+      quest.tasks = newTasks;
+      
+      return { ...prev, questSequence: newQuestSequence };
+    });
+  };
+
+  // Delete a draft quest (shows confirmation dialog)
+  const deleteDraftQuest = (questIndex) => {
+    setQuestToDelete(questIndex);
+    setShowDeleteQuestDialog(true);
+  };
+
+  // Confirm deletion of draft quest
+  const confirmDeleteDraftQuest = async () => {
+    if (questToDelete === null) return;
 
     try {
-      // Optimistically update the UI first
+      // Update the UI by removing the quest from draftQuests
       const updatedDraftQuests = {
         ...draftQuests,
-        questSequence: draftQuests.questSequence.filter((_, index) => index !== questIndex)
+        questSequence: draftQuests.questSequence.filter((_, index) => index !== questToDelete)
       };
+      
       setDraftQuests(updatedDraftQuests);
       setDraftSaveStatus("🔄 Deleting draft quest...");
 
-      const response = await axios.delete(
-        `${API_BASE_URL}/api/group/${classId}/draft-quest-config/${questIndex}`
-      );
-
-      if (response.data.success) {
-        setDraftSaveStatus("✅ Draft quest deleted successfully!");
-        setTimeout(() => setDraftSaveStatus(""), 3000);
-      } else {
-        // If backend failed, reload to get correct state
-        await loadDraftQuests();
-        setDraftSaveStatus("❌ Failed to delete draft quest");
-        setTimeout(() => setDraftSaveStatus(""), 3000);
-      }
+      // Save the updated draft quests to backend
+      await saveDraftQuests(updatedDraftQuests);
+      
+      setDraftSaveStatus("✅ Draft quest deleted successfully!");
+      setTimeout(() => setDraftSaveStatus(""), 3000);
     } catch (error) {
       console.error("Error deleting draft quest:", error);
-      // Reload to get correct state
-      await loadDraftQuests();
       setDraftSaveStatus("❌ Error deleting draft quest");
       setTimeout(() => setDraftSaveStatus(""), 3000);
     }
+
+    // Close dialog and reset state
+    setShowDeleteQuestDialog(false);
+    setQuestToDelete(null);
+  };
+
+  // Cancel deletion of draft quest
+  const cancelDeleteDraftQuest = () => {
+    setShowDeleteQuestDialog(false);
+    setQuestToDelete(null);
   };
 
   // Handle purple deployment - creates new config with appended quest
@@ -1613,6 +1683,27 @@ Student can now start their quest journey!`);
           error: task.errorText,
           answer: "",
         };
+      } else if (task.taskType === "image-validation") {
+        taskData = {
+          ...taskData,
+          type: "image-validation",
+          imageValidation: {
+            validationCriteria: task.imageValidation?.validationCriteria || task.validationCriteria || "",
+            expectedContent: task.imageValidation?.expectedContent || "",
+            temperature: task.imageValidation?.temperature || 0.1,
+            maxTokens: task.imageValidation?.maxTokens || 1000,
+            maxImageSizeMB: task.imageValidation?.maxImageSizeMB || 5,
+            maxDimensions: task.imageValidation?.maxDimensions || 1024,
+            compressionQuality: task.imageValidation?.compressionQuality || 0.8,
+          },
+          validationCriteria: task.imageValidation?.validationCriteria || task.validationCriteria || "",
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
+          answer: "",
+          saveValidatedData: Boolean(task.saveValidatedData),
+          savedDataName: task.savedDataName || "image_validation_results",
+        };
       } else if (task.taskType === "collect-info") {
         taskData = {
           ...taskData,
@@ -1722,6 +1813,8 @@ Student can now start their quest journey!`);
               ? "multipleAnswers"
               : task.taskType === "llm-text-validation"
               ? "llm-validation"
+              : task.taskType === "image-validation"
+              ? "image-validation"
               : "metric"),
           answer: task.answer || "",
           type: task.taskType || task.type,
@@ -1756,6 +1849,23 @@ Student can now start their quest journey!`);
             enableDetailedFeedback: Boolean(
               task.llmTextValidation?.enableDetailedFeedback
             ),
+          },
+          // Image Validation fields
+          imageValidation: {
+            validationCriteria:
+              task.imageValidation?.validationCriteria ||
+              task.validationCriteria ||
+              "",
+            expectedContent:
+              task.imageValidation?.expectedContent || "",
+            temperature:
+              typeof task.imageValidation?.temperature === "number"
+                ? task.imageValidation.temperature
+                : 0.1,
+            maxTokens:
+              typeof task.imageValidation?.maxTokens === "number"
+                ? task.imageValidation.maxTokens
+                : 1000,
           },
           // Hints
           detailedHints: task.detailedHints || [],
@@ -2295,14 +2405,23 @@ Student can now start their quest journey!`);
   const saveEditedTask = () => {
     console.log(`💾 [TASK-EDIT] Starting save process...`);
     console.log(`📋 [TASK-EDIT] editingTaskData:`, editingTaskData);
+    console.log(`📋 [TASK-EDIT] editingTaskQuestIndex:`, editingTaskQuestIndex);
     
     if (!editingTaskData || editingTaskQuestIndex === null || editingTaskId === null) {
       console.log(`❌ [TASK-EDIT] Save aborted - missing required data`);
       return;
     }
 
-    // Show confirmation dialog before saving
-    setShowTaskEditConfirmationDialog(true);
+    // Check if this is a draft quest edit (index >= 10000)
+    if (editingTaskQuestIndex >= 10000) {
+      console.log(`🟡 [TASK-EDIT] Draft quest edit - no confirmation needed`);
+      // For draft quests, save directly without confirmation
+      confirmSaveEditedTask();
+    } else {
+      console.log(`🔵 [TASK-EDIT] Main quest edit - showing confirmation dialog`);
+      // For main quest edits, show confirmation dialog
+      setShowTaskEditConfirmationDialog(true);
+    }
   };
 
   const confirmSaveEditedTask = async () => {
@@ -2312,6 +2431,10 @@ Student can now start their quest journey!`);
       console.log(`❌ [TASK-EDIT-CONFIRM] Save aborted - missing required data`);
       return;
     }
+
+    // Check if this is a draft quest edit
+    const isDraftQuest = editingTaskQuestIndex >= 10000;
+    console.log(`🔍 [TASK-EDIT-CONFIRM] Is draft quest: ${isDraftQuest}`);
     
     // Create updated task object directly from form data
     const updatedTask = {
@@ -2355,7 +2478,7 @@ Student can now start their quest journey!`);
     
     try {
       // Update the appropriate quest
-      if (editingTaskQuestIndex >= 10000) {
+      if (isDraftQuest) {
         console.log(`🟡 [TASK-EDIT-CONFIRM] Updating draft quest...`);
         const draftIndex = editingTaskQuestIndex - 10000;
         
@@ -2378,6 +2501,9 @@ Student can now start their quest journey!`);
         console.log(`✅ [TASK-EDIT-CONFIRM] Draft quest updated, saving...`);
         setDraftQuests(updatedDraftQuests);
         saveDraftQuests(updatedDraftQuests);
+        
+        // For draft quests, no success dialog needed - just close the modal
+        console.log(`✅ [TASK-EDIT-CONFIRM] Draft quest save completed!`);
       } else {
         console.log(`🔵 [TASK-EDIT-CONFIRM] Updating main sequence quest...`);
         setJsonContent((prev) => {
@@ -2386,7 +2512,7 @@ Student can now start their quest journey!`);
           return { ...prev, questSequence: newQuestSequence };
         });
 
-        // Update the live config for current users
+        // Update the live config for current users (only for main quests)
         const configUpdateResult = await updateLiveConfigForCurrentUsers(updatedTask, editingTaskQuestIndex, editingTaskId);
         
         // Show success dialog
@@ -2398,8 +2524,10 @@ Student can now start their quest journey!`);
       
       console.log(`🎉 [TASK-EDIT-CONFIRM] Task save completed!`);
       
-      // Close confirmation dialog
-      setShowTaskEditConfirmationDialog(false);
+      // Close confirmation dialog (only if it was shown)
+      if (!isDraftQuest) {
+        setShowTaskEditConfirmationDialog(false);
+      }
       
       // Close modal
       setShowEditTaskModal(false);
@@ -2414,9 +2542,11 @@ Student can now start their quest journey!`);
     } catch (error) {
       console.error(`❌ [TASK-EDIT-CONFIRM] Error saving task:`, error);
       
-      // Show error dialog
-      setTaskEditMessage(`Failed to update task: ${error.message || 'Unknown error occurred'}`);
-      setShowTaskEditErrorDialog(true);
+      // Show error dialog (only for main quests)
+      if (!isDraftQuest) {
+        setTaskEditMessage(`Failed to update task: ${error.message || 'Unknown error occurred'}`);
+        setShowTaskEditErrorDialog(true);
+      }
       
       // Still close the dialogs even if config update fails
       setShowTaskEditConfirmationDialog(false);
@@ -3399,7 +3529,7 @@ Student can now start their quest journey!`);
                     questIndex={10000 + index} // Use high numbers to distinguish drafts
                     totalQuests={draftQuests.questSequence.length}
                     isDraftQuest={true} // Mark as draft quest for yellow tint
-                    onMoveQuest={() => {}} // Draft quests don't support reordering
+                    onMoveQuest={(questIndex, direction) => moveDraftQuest(index, direction)} // Use draft-specific move function
                     onEditQuest={(questIndex) => {
                       // Load quest into edit mode
                       const questForEdit = {
@@ -3420,7 +3550,7 @@ Student can now start their quest journey!`);
                       setShowAddQuestModal(true);
                     }}
                     onDeleteQuest={() => deleteDraftQuest(index)}
-                    onMoveTask={() => {}} // Draft quests don't support task reordering
+                    onMoveTask={(questIndex, taskId, direction) => moveDraftTask(index, taskId, direction)} // Use draft-specific move function
                     onEditTask={editTask}
                     onDeleteTask={deleteTask}
                     onAddTask={(questIndex) => {
@@ -3875,6 +4005,7 @@ Student can now start their quest journey!`);
                           </MenuItem>
                           <MenuItem value="quiz">Multi-Question Quiz</MenuItem>
                           <MenuItem value="collect-info">Collect Information (Non-graded)</MenuItem>
+                        <MenuItem value="image-validation">Image Validation</MenuItem>
                           <MenuItem value="get-issue-count">
                             Get Issue Count
                           </MenuItem>
@@ -5325,6 +5456,244 @@ Student can now start their quest journey!`);
                         </Box>
                       )}
 
+                      {/* Image Validation Configuration */}
+                      {task.taskType === "image-validation" && (
+                        <Box>
+                          <Divider sx={{ mb: 2 }} />
+                          <Box
+                            sx={{
+                              backgroundColor: "#e3f2fd",
+                              p: 3,
+                              borderRadius: 4,
+                              border: "2px solid #2196f3",
+                              mb: 2,
+                            }}
+                          >
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 1,
+                                color: "#1565c0",
+                              }}
+                            >
+                              🖼️ Image Validation Task
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              sx={{ mt: 1 }}
+                            >
+                              AI-powered image validation using OpenAI Vision API. Students submit images 
+                              that are analyzed against your validation criteria.
+                            </Typography>
+                            <Alert severity="info" sx={{ mt: 2 }}>
+                              <AlertTitle>Image Guidelines for Students</AlertTitle>
+                              • Maximum file size: 10MB (recommended: under 5MB)<br/>
+                              • Supported formats: PNG, JPG, JPEG, GIF, WebP<br/>
+                              • Use GitHub-hosted images or public URLs<br/>
+                              • Include images using: ![description](image-url) or &lt;img src="image-url"&gt;
+                            </Alert>
+                          </Box>
+
+                          {/* Validation Criteria */}
+                          <TextField
+                            label="Validation Criteria"
+                            value={task.imageValidation?.validationCriteria || task.validationCriteria || ""}
+                            onChange={(e) => {
+                              const newValidation = {
+                                ...(task.imageValidation || {}),
+                                validationCriteria: e.target.value
+                              };
+                              handleTaskChange(taskIdx, "imageValidation", newValidation);
+                              handleTaskChange(taskIdx, "validationCriteria", e.target.value);
+                            }}
+                            placeholder="e.g., Check if this image is a use case diagram with actors, use cases, and relationships"
+                            multiline
+                            rows={3}
+                            fullWidth
+                            helperText="Describe what the AI should look for in the submitted images"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                          />
+
+                          {/* Expected Content Description */}
+                          <TextField
+                            label="Expected Content (Optional)"
+                            value={task.imageValidation?.expectedContent || ""}
+                            onChange={(e) => {
+                              const newValidation = {
+                                ...(task.imageValidation || {}),
+                                expectedContent: e.target.value
+                              };
+                              handleTaskChange(taskIdx, "imageValidation", newValidation);
+                            }}
+                            placeholder="e.g., A UML use case diagram showing system interactions"
+                            multiline
+                            rows={2}
+                            fullWidth
+                            helperText="Additional context about what the image should contain"
+                            sx={{ mb: 2, borderRadius: 2 }}
+                          />
+
+                          {/* AI Configuration */}
+                          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                            <TextField
+                              label="AI Temperature"
+                              type="number"
+                              value={task.imageValidation?.temperature || 0.1}
+                              onChange={(e) => {
+                                const newValidation = {
+                                  ...(task.imageValidation || {}),
+                                  temperature: parseFloat(e.target.value) || 0.1
+                                };
+                                handleTaskChange(taskIdx, "imageValidation", newValidation);
+                              }}
+                              inputProps={{ min: 0, max: 2, step: 0.1 }}
+                              sx={{ width: 200 }}
+                              helperText="0.1 = focused, 1.0 = creative"
+                            />
+                            
+                            <TextField
+                              label="Max Response Tokens"
+                              type="number"
+                              value={task.imageValidation?.maxTokens || 1000}
+                              onChange={(e) => {
+                                const newValidation = {
+                                  ...(task.imageValidation || {}),
+                                  maxTokens: parseInt(e.target.value) || 1000
+                                };
+                                handleTaskChange(taskIdx, "imageValidation", newValidation);
+                              }}
+                              inputProps={{ min: 500, max: 2000, step: 100 }}
+                              sx={{ width: 200 }}
+                              helperText="500=minimal, 1000=balanced, 1500=detailed"
+                            />
+                          </Box>
+
+                          {/* Compression Settings */}
+                          <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                              🗜️ Image Compression Settings
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              Large images (&gt;5MB) are automatically compressed to reduce costs and improve performance.
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                              <TextField
+                                label="Max Image Size (MB)"
+                                type="number"
+                                value={task.imageValidation?.maxImageSizeMB || 5}
+                                onChange={(e) => {
+                                  const newValidation = {
+                                    ...(task.imageValidation || {}),
+                                    maxImageSizeMB: parseInt(e.target.value) || 5
+                                  };
+                                  handleTaskChange(taskIdx, "imageValidation", newValidation);
+                                }}
+                                inputProps={{ min: 2, max: 20 }}
+                                sx={{ width: 150 }}
+                                helperText="Trigger compression"
+                              />
+                              
+                              <TextField
+                                label="Max Dimensions"
+                                type="number"
+                                value={task.imageValidation?.maxDimensions || 1024}
+                                onChange={(e) => {
+                                  const newValidation = {
+                                    ...(task.imageValidation || {}),
+                                    maxDimensions: parseInt(e.target.value) || 1024
+                                  };
+                                  handleTaskChange(taskIdx, "imageValidation", newValidation);
+                                }}
+                                inputProps={{ min: 512, max: 2048 }}
+                                sx={{ width: 150 }}
+                                helperText="Width/height limit"
+                              />
+                              
+                              <TextField
+                                label="Compression Quality"
+                                type="number"
+                                value={task.imageValidation?.compressionQuality || 0.8}
+                                onChange={(e) => {
+                                  const newValidation = {
+                                    ...(task.imageValidation || {}),
+                                    compressionQuality: parseFloat(e.target.value) || 0.8
+                                  };
+                                  handleTaskChange(taskIdx, "imageValidation", newValidation);
+                                }}
+                                inputProps={{ min: 0.5, max: 1.0, step: 0.1 }}
+                                sx={{ width: 150 }}
+                                helperText="0.8 = 80% quality"
+                              />
+                            </Box>
+                            <Alert severity="info" sx={{ mt: 2 }}>
+                              <AlertTitle>Cost Optimization</AlertTitle>
+                              Compression can reduce API costs by 50-70% for large images while maintaining validation accuracy.
+                            </Alert>
+                          </Box>
+
+                          {/* Save validated data per-user */}
+                          <Box sx={{ mt: 2 }}>
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={task.saveValidatedData !== false}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "saveValidatedData",
+                                      e.target.checked
+                                    )
+                                  }
+                                  sx={{
+                                    "& .MuiSwitch-switchBase.Mui-checked": {
+                                      color: "#2196f3",
+                                    },
+                                  }}
+                                />
+                              }
+                              label="Save validation results per student"
+                              sx={{ mb: 1 }}
+                            />
+                            
+                            {task.saveValidatedData !== false && (
+                              <>
+                                <TextField
+                                  label="Data Storage Name"
+                                  value={task.savedDataName || "image_validation_results"}
+                                  onChange={(e) =>
+                                    handleTaskChange(
+                                      taskIdx,
+                                      "savedDataName",
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder="e.g., diagram_validation_results"
+                                  fullWidth
+                                  helperText="Unique key to reference these validation results in future tasks"
+                                  sx={{ mt: 1, borderRadius: 2 }}
+                                />
+                                <Alert
+                                  severity="info"
+                                  sx={{
+                                    mt: 1,
+                                    borderRadius: 4,
+                                    "& .MuiAlert-icon": { display: "none" },
+                                  }}
+                                >
+                                  <AlertTitle>Validation Results Storage</AlertTitle>
+                                  When enabled, detailed validation results including AI analysis and 
+                                  success/failure status are saved for each student separately.
+                                </Alert>
+                              </>
+                            )}
+                          </Box>
+                        </Box>
+                      )}
+
                       <Divider />
 
                       {/* Success and Error Text Fields */}
@@ -5804,6 +6173,7 @@ Student can now start their quest journey!`);
                       <MenuItem value="multiple-choice">Multiple Choice Question (MCQ)</MenuItem>
                       <MenuItem value="quiz">Multi-Question Quiz</MenuItem>
                       <MenuItem value="collect-info">Collect Information (Non-graded)</MenuItem>
+                      <MenuItem value="image-validation">Image Validation</MenuItem>
                       <MenuItem value="get-issue-count">Get Issue Count</MenuItem>
                       <MenuItem value="get-pr-count">Get Pull Request Count</MenuItem>
                       <MenuItem value="get-top-contributor">Get Top Contributor</MenuItem>
@@ -7969,6 +8339,14 @@ Good luck! 🚀"
         questToDeleteFrom={questToDeleteFrom}
       />
 
+      {/* Quest Deletion Confirmation Dialog */}
+      <QuestDeletionConfirmationDialog
+        open={showDeleteQuestDialog}
+        onClose={cancelDeleteDraftQuest}
+        onConfirm={confirmDeleteDraftQuest}
+        questIndex={questToDelete}
+      />
+
       {/* Task Edit Confirmation Dialog */}
       <TaskEditConfirmationDialog
         open={showTaskEditConfirmationDialog}
@@ -8078,7 +8456,7 @@ const QuestBlock = ({
   onPurpleDeployQuest, // New prop for purple deployment
   isDraftQuest = false, // New prop to indicate if this is a draft quest
 }) => {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(isDraftQuest); // Draft quests expanded by default
   
   // Debug logging to understand quest structure
   console.log(`🔍 [QuestBlock] Quest ${questIndex + 1} data:`, {
@@ -8145,48 +8523,53 @@ const QuestBlock = ({
               minWidth: "fit-content",
             }}
           >
-            {/* <button
-              className="btn btn-outline-secondary btn-sm"
-              title="Move Up"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoveQuest(questIndex, "up");
-              }}
-              disabled={questIndex === 0}
-              style={{
-                marginRight: 2,
-                borderRadius: 4,
-                padding: "4px 8px",
-                fontSize: 16,
-                opacity: questIndex === 0 ? 0.3 : 1,
-                border: "1px solid #1976d2",
-                backgroundColor: "#1976d2",
-                color: "white",
-              }}
-            >
-              ↑
-            </button>
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              title="Move Down"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoveQuest(questIndex, "down");
-              }}
-              disabled={questIndex === totalQuests - 1}
-              style={{
-                marginRight: 6,
-                borderRadius: 4,
-                padding: "4px 8px",
-                fontSize: 16,
-                opacity: questIndex === totalQuests - 1 ? 0.3 : 1,
-                border: "1px solid #1976d2",
-                backgroundColor: "#1976d2",
-                color: "white",
-              }}
-            >
-              ↓
-            </button> */}
+            {/* Show move buttons only for draft quests */}
+            {isDraftQuest && (
+              <>
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  title="Move Up"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveQuest(questIndex, "up");
+                  }}
+                  disabled={questIndex === 10000} // First draft quest (index 10000)
+                  style={{
+                    marginRight: 2,
+                    borderRadius: 4,
+                    padding: "4px 8px",
+                    fontSize: 16,
+                    opacity: questIndex === 10000 ? 0.3 : 1,
+                    border: "1px solid #1976d2",
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                  }}
+                >
+                  ↑
+                </button>
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  title="Move Down"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveQuest(questIndex, "down");
+                  }}
+                  disabled={questIndex === 10000 + totalQuests - 1} // Last draft quest
+                  style={{
+                    marginRight: 6,
+                    borderRadius: 4,
+                    padding: "4px 8px",
+                    fontSize: 16,
+                    opacity: questIndex === 10000 + totalQuests - 1 ? 0.3 : 1,
+                    border: "1px solid #1976d2",
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                  }}
+                >
+                  ↓
+                </button>
+              </>
+            )}
             <Tooltip title="Edit Quest">
               <span>
                 <IconButton
@@ -8208,28 +8591,30 @@ const QuestBlock = ({
                 </IconButton>
               </span>
             </Tooltip>
-            {/* Delete Quest Button - COMMENTED OUT */}
-            {/* <Tooltip title="Delete Quest">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteQuest(questIndex);
-                  }}
-                  sx={{
-                    border: "1px solid #f44336",
-                    borderRadius: 4,
-                    ml: 0.5,
-                    backgroundColor: "#f44336",
-                    color: "white",
-                    "&:hover": { backgroundColor: "#d32f2f" },
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip> */}
+            {/* Show delete button only for draft quests */}
+            {isDraftQuest && (
+              <Tooltip title="Delete Quest">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteQuest(questIndex);
+                    }}
+                    sx={{
+                      border: "1px solid #f44336",
+                      borderRadius: 4,
+                      ml: 0.5,
+                      backgroundColor: "#f44336",
+                      color: "white",
+                      "&:hover": { backgroundColor: "#d32f2f" },
+                    }}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
             {onPurpleDeployQuest && (
               <Tooltip title="Purple Deploy - Create New Config with Appended Quest">
                   <span>
@@ -8416,52 +8801,57 @@ const TaskBlock = ({
             mb: 2,
           }}
         >
-          {/* <Tooltip title="Move Up">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onMoveTask(questIndex, taskId, "up")}
-                disabled={taskIndex === 0}
-                sx={{
-                  border: "1px solid #1976d2",
-                  borderRadius: 4,
-                  backgroundColor: "#1976d2",
-                  color: "white",
-                  "&:hover": { backgroundColor: "#1565c0" },
-                  "&:disabled": {
-                    opacity: 0.3,
-                    backgroundColor: "#e0e0e0",
-                    color: "#666",
-                  },
-                }}
-              >
-                <ArrowUpwardIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Move Down">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onMoveTask(questIndex, taskId, "down")}
-                disabled={taskIndex === totalTasks - 1}
-                sx={{
-                  border: "1px solid #1976d2",
-                  borderRadius: 4,
-                  backgroundColor: "#1976d2",
-                  color: "white",
-                  "&:hover": { backgroundColor: "#1565c0" },
-                  "&:disabled": {
-                    opacity: 0.3,
-                    backgroundColor: "#e0e0e0",
-                    color: "#666",
-                  },
-                }}
-              >
-                <ArrowDownwardIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip> */}
+          {/* Show task move buttons only for draft quests */}
+          {isDraftQuest && (
+            <>
+              <Tooltip title="Move Up">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onMoveTask(questIndex, taskId, "up")}
+                    disabled={taskIndex === 0}
+                    sx={{
+                      border: "1px solid #1976d2",
+                      borderRadius: 4,
+                      backgroundColor: "#1976d2",
+                      color: "white",
+                      "&:hover": { backgroundColor: "#1565c0" },
+                      "&:disabled": {
+                        opacity: 0.3,
+                        backgroundColor: "#e0e0e0",
+                        color: "#666",
+                      },
+                    }}
+                  >
+                    <ArrowUpwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Move Down">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onMoveTask(questIndex, taskId, "down")}
+                    disabled={taskIndex === totalTasks - 1}
+                    sx={{
+                      border: "1px solid #1976d2",
+                      borderRadius: 4,
+                      backgroundColor: "#1976d2",
+                      color: "white",
+                      "&:hover": { backgroundColor: "#1565c0" },
+                      "&:disabled": {
+                        opacity: 0.3,
+                        backgroundColor: "#e0e0e0",
+                        color: "#666",
+                      },
+                    }}
+                  >
+                    <ArrowDownwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          )}
           <Tooltip title="Edit Task">
             <span>
               <IconButton
@@ -8479,24 +8869,26 @@ const TaskBlock = ({
               </IconButton>
             </span>
           </Tooltip>
-          {/* Delete Task Button - COMMENTED OUT */}
-          {/* <Tooltip title="Delete Task">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onDeleteTask(questIndex, taskId)}
-                sx={{
-                  border: "1px solid #f44336",
-                  borderRadius: 4,
-                  backgroundColor: "#f44336",
-                  color: "white",
-                  "&:hover": { backgroundColor: "#d32f2f" },
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip> */}
+          {/* Show delete task button only for draft quests */}
+          {isDraftQuest && (
+            <Tooltip title="Delete Task">
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => onDeleteTask(questIndex, taskId)}
+                  sx={{
+                    border: "1px solid #f44336",
+                    borderRadius: 4,
+                    backgroundColor: "#f44336",
+                    color: "white",
+                    "&:hover": { backgroundColor: "#d32f2f" },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </span>
+            </Tooltip>
+          )}
         </Box>
       </Box>
     </Card>
@@ -8755,6 +9147,53 @@ const TaskDeleteConfirmationDialog = ({
           }}
         >
           Delete Task
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+// Quest Deletion Confirmation Dialog Component
+const QuestDeletionConfirmationDialog = ({ 
+  open, 
+  onClose, 
+  onConfirm,
+  questIndex 
+}) => {
+  return (
+    <Dialog 
+      open={open} 
+      onClose={(event, reason) => {
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+        onClose();
+      }}
+      disableEscapeKeyDown
+      maxWidth="sm" 
+      fullWidth
+    >
+      <DialogTitle>Delete Draft Quest</DialogTitle>
+      <DialogContent>
+        <Typography>
+          Are you sure you want to delete <strong>Quest {questIndex + 1}</strong> from your draft quests?
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          This action cannot be undone. The quest and all its tasks will be permanently removed from your draft configuration.
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Cancel
+        </Button>
+        <Button 
+          onClick={onConfirm} 
+          color="error" 
+          variant="contained"
+          sx={{ 
+            bgcolor: 'error.main',
+            '&:hover': { bgcolor: 'error.dark' }
+          }}
+        >
+          Delete Quest
         </Button>
       </DialogActions>
     </Dialog>
