@@ -970,7 +970,7 @@ const GenerateJson = () => {
     }
   };
 
-  // Handle purple deployment - creates new config with appended quest
+  // Handle quest deployment - creates new config with appended quest
   const handlePurpleDeployQuest = async (questIndex) => {
     const draftQuest = draftQuests.questSequence[questIndex];
     if (!draftQuest) return;
@@ -2179,10 +2179,10 @@ Student can now start their quest journey!`);
     
     // Check if this is a draft quest (index >= 10000) or main sequence quest
     if (editingQuestIndex >= 10000) {
-      // This is a draft quest - save directly without purple config warning
+      // This is a draft quest - save directly without quest config warning
       confirmSaveEditedQuest();
     } else {
-      // This is a main sequence quest - show purple config warning
+      // This is a main sequence quest - show quest config warning
       setQuestEditMessage("This will create a new quest configuration and migrate all students to the updated version.");
       setShowQuestEditConfirmationDialog(true);
     }
@@ -2403,10 +2403,10 @@ Student can now start their quest journey!`);
     // Check if editing a draft quest (index >= 10000)
     if (editingTaskQuestIndex >= 10000) {
       console.log(`🟡 [TASK-EDIT] Editing draft quest - saving directly without confirmation`);
-      // For draft quests, save directly without showing purple config warning
+      // For draft quests, save directly without showing quest config warning
       confirmSaveEditedTask();
     } else {
-      console.log(`🔵 [TASK-EDIT] Editing main sequence - showing purple config confirmation`);
+      console.log(`🔵 [TASK-EDIT] Editing main sequence - showing quest config confirmation`);
       // For main sequence quests, show confirmation dialog
       setShowTaskEditConfirmationDialog(true);
     }
@@ -2509,7 +2509,7 @@ Student can now start their quest journey!`);
         // Show success dialog
         const migratedUsers = configUpdateResult.data?.migratedUsers || 0;
         const configName = configUpdateResult.data?.configName || 'Unknown';
-        setTaskEditMessage(`Task updated successfully! Created new purple configuration "${configName}" and migrated ${migratedUsers} students to use the updated task.`);
+        setTaskEditMessage(`Task updated successfully! Created new quest configuration "${configName}" and migrated ${migratedUsers} students to use the updated task.`);
         setShowTaskEditSuccessDialog(true);
       }
       
@@ -7620,7 +7620,7 @@ Student can now start their quest journey!`);
         >
           <DialogTitle sx={{ pb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, color: "#ff9800" }}>
-              ⚠️ Purple Configuration Required
+              ⚠️ Quest Configuration Required
             </Typography>
           </DialogTitle>
           <DialogContent sx={{ pt: 1 }}>
@@ -7652,7 +7652,7 @@ Student can now start their quest journey!`);
                 "&:hover": { bgcolor: "#f57c00" },
               }}
             >
-              Continue with Purple Deploy
+              Continue with Quest Deploy
             </Button>
           </DialogActions>
         </Dialog>
@@ -8723,7 +8723,7 @@ const QuestBlock = ({
               </span>
             </Tooltip> */}
             {onPurpleDeployQuest && (
-              <Tooltip title="Purple Deploy - Create New Config with Appended Quest">
+              <Tooltip title="Deploy Quest - Create New Config with Appended Quest">
                   <span>
                     <IconButton
                       size="small"
@@ -9029,7 +9029,7 @@ const TaskEditConfirmationDialog = ({
           </Alert>
         ) : (
           <Alert severity="warning" sx={{ mb: 3 }}>
-            <AlertTitle>This will create a new purple configuration</AlertTitle>
+            <AlertTitle>This will create a new quest configuration</AlertTitle>
             A new quest configuration will be created and all students will be migrated to use the updated task.
           </Alert>
         )}
@@ -9062,7 +9062,7 @@ const TaskEditConfirmationDialog = ({
           </Typography>
         ) : (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            This will create a new purple configuration and migrate all students to use it. 
+            This will create a new quest configuration and migrate all students to use it. 
             The original configuration will be preserved for rollback purposes.
           </Typography>
         )}
@@ -9128,7 +9128,7 @@ const TaskEditSuccessDialog = ({
           </Alert>
         ) : (
           <Alert severity="success" sx={{ mb: 2 }}>
-            <AlertTitle>Purple Configuration Created</AlertTitle>
+            <AlertTitle>Quest Configuration Created</AlertTitle>
             A new quest configuration has been created and all students have been migrated to it.
           </Alert>
         )}
