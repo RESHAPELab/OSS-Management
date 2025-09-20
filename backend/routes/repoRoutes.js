@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { createRepo, getProductionStatus, createMultipleRepos, getRepoCollaborationStatus, listOrganizationRepos, checkRepoReadme, createCustomRepos, getStudentScores, deleteRepository, addUserAsCollaborator } = require("../controllers/repoController");
+const { createRepo, getProductionStatus, createMultipleRepos, getRepoCollaborationStatus, listOrganizationRepos, checkRepoReadme, createCustomRepos, getStudentScores, deleteRepository, addUserAsCollaborator } = require("../controllers/repoController");
 
 router.route("/repository").post(createRepo);
 router.route("/createRepos").post(createMultipleRepos);

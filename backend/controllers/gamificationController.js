@@ -1988,7 +1988,277 @@ const updateLiveTaskConfig = async (req, res) => {
     }
 };
 
+// Update live quest configuration (creates new purple config)
+const updateLiveQuestConfig = async (req, res) => {
+    try {
+        const { classId, questIndex, updatedQuest } = req.body;
+        
+        console.log(`🟣 [PURPLE-QUEST-EDIT] Starting purple deployment for quest edit`);
+        console.log(`📋 [PURPLE-QUEST-EDIT] Class: ${classId}, Quest ${questIndex + 1}`);
+        
+        if (!classId || questIndex === undefined || !updatedQuest) {
+            console.log(`❌ [PURPLE-QUEST-EDIT] Missing required fields`);
+            return res.status(400).json({ 
+                success: false,
+                message: "Missing required fields: classId, questIndex, updatedQuest" 
+            });
+        }
+
+        // Import required modules
+        const Group = require('../models/GroupModel');
+        const { MongoClient } = require('mongodb');
+        const mongoose = require('mongoose');
+        
+        // Connect to OSS-Doorway database for quest configs
+        const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+        const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+        
+        console.log(`🔗 [PURPLE-QUEST-EDIT] Connecting to OSS-Doorway database: ${ossDoorwayDbName}`);
+        
+        let ossDoorwayClient = null;
+        let migratedUsers = 0;
+        let originalConfigId = null;
+        let newConfigId = null;
+        
+        try {
+            // Connect to OSS-Doorway database
+            ossDoorwayClient = new MongoClient(ossDoorwayUri);
+            await ossDoorwayClient.connect();
+            console.log(`✅ [PURPLE-QUEST-EDIT] Connected to OSS-Doorway database`);
+            
+            const ossDoorwayDb = ossDoorwayClient.db(ossDoorwayDbName);
+            const questConfigsCollection = ossDoorwayDb.collection('questconfigs');
+            const userDataCollection = ossDoorwayDb.collection('user_data');
+            
+            console.log(`🔍 [PURPLE-QUEST-EDIT] Step 1: Finding existing quest configuration...`);
+            // Step 1: Find existing quest configuration (same logic as purple deploy)
+            const existingConfig = await questConfigsCollection.findOne({
+                $or: [
+                    { classId: classId },
+                    { groupId: classId },
+                    { configId: classId }
+                ]
+            });
+            
+            if (!existingConfig) {
+                throw new Error(`No quest configuration found for class ${classId}`);
+            }
+            
+            // Check for latest purple config
+            const latestPurpleConfig = await questConfigsCollection.findOne(
+                { classId: { $regex: new RegExp(`^${classId}_purple_`) } },
+                { sort: { createdAt: -1 } }
+            );
+            
+            // Use the latest purple config if it exists, otherwise use the original config
+            const configToModify = latestPurpleConfig || existingConfig;
+            originalConfigId = configToModify._id.toString();
+            
+            console.log(`✅ [PURPLE-QUEST-EDIT] Found config to modify: ${configToModify.classId}`);
+            console.log(`📋 [PURPLE-QUEST-EDIT] Config ID: ${originalConfigId}`);
+            
+            console.log(`🔍 [PURPLE-QUEST-EDIT] Step 2: Creating modified configuration...`);
+            // Step 2: Create modified configuration with updated quest
+            const modifiedConfig = { ...configToModify };
+            
+            // Handle both legacy format and new questSequence format
+            if (modifiedConfig.config) {
+                // Legacy format: config.Q1, config.Q2, etc.
+                const questKeys = Object.keys(modifiedConfig.config).filter(key => key.startsWith('Q'));
+                const questKey = questKeys[questIndex];
+                
+                if (questKey && modifiedConfig.config[questKey]) {
+                    console.log(`🔄 [PURPLE-QUEST-EDIT] Updating legacy format: ${questKey}`);
+                    modifiedConfig.config[questKey].metadata = {
+                        ...modifiedConfig.config[questKey].metadata,
+                        title: updatedQuest.title,
+                        description: updatedQuest.description
+                    };
+                } else {
+                    console.log(`❌ [PURPLE-QUEST-EDIT] Quest not found in legacy format: ${questKey}`);
+                    return res.status(404).json({ 
+                        success: false,
+                        message: `Quest not found: ${questKey}` 
+                    });
+                }
+            } else if (modifiedConfig.questSequence && Array.isArray(modifiedConfig.questSequence)) {
+                // New format: questSequence array
+                if (modifiedConfig.questSequence[questIndex]) {
+                    console.log(`🔄 [PURPLE-QUEST-EDIT] Updating questSequence format: Quest ${questIndex}`);
+                    modifiedConfig.questSequence[questIndex].title = updatedQuest.title;
+                    if (!modifiedConfig.questSequence[questIndex].metadata) {
+                        modifiedConfig.questSequence[questIndex].metadata = {};
+                    }
+                    modifiedConfig.questSequence[questIndex].metadata.description = updatedQuest.description;
+                } else {
+                    console.log(`❌ [PURPLE-QUEST-EDIT] Quest not found in questSequence format: Quest ${questIndex}`);
+                    return res.status(404).json({ 
+                        success: false,
+                        message: `Quest not found: Quest ${questIndex}` 
+                    });
+                }
+            } else {
+                console.log(`❌ [PURPLE-QUEST-EDIT] Unknown config format`);
+                return res.status(400).json({ 
+                    success: false,
+                    message: "Unknown config format" 
+                });
+            }
+            
+            console.log(`🔍 [PURPLE-QUEST-EDIT] Step 3: Creating new purple configuration...`);
+            // Step 3: Create new quest configuration (keeping original intact)
+            const newConfig = {
+                ...modifiedConfig,
+                _id: new mongoose.Types.ObjectId(),
+                classId: `${classId}_purple_${Date.now()}`,
+                groupId: `${classId}_purple_${Date.now()}`,
+                configId: `${classId}_purple_${Date.now()}`,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                isPurpleDeployment: true,
+                isQuestEdit: true,
+                baseConfigId: originalConfigId,
+                editedQuest: { questIndex },
+                editedAt: new Date()
+            };
+            
+            newConfigId = newConfig._id.toString();
+            console.log(`✅ [PURPLE-QUEST-EDIT] New config created: ${newConfigId}`);
+            console.log(`📊 [PURPLE-QUEST-EDIT] Config name: ${newConfig.classId}`);
+            
+            console.log(`🔍 [PURPLE-QUEST-EDIT] Step 4: Saving new quest configuration...`);
+            // Step 4: Save the new quest configuration
+            await questConfigsCollection.insertOne(newConfig);
+            console.log(`✅ [PURPLE-QUEST-EDIT] New quest configuration saved`);
+            
+            console.log(`🔍 [PURPLE-QUEST-EDIT] Step 5: Updating class information...`);
+            // Step 5: Update class information to reference the new config
+            await Group.findByIdAndUpdate(classId, {
+                $set: {
+                    questJsonConfig: newConfig,
+                    questJsonLastUpdated: new Date(),
+                    'questOrderLastUpdated': new Date()
+                }
+            });
+            console.log(`✅ [PURPLE-QUEST-EDIT] Class information updated`);
+            
+            console.log(`🔍 [PURPLE-QUEST-EDIT] Step 6: Migrating users to new configuration...`);
+            // Step 6: Migrate users to the new configuration
+            const usersToMigrate = await userDataCollection.find({
+                $or: [
+                    { 'user_data.customGroupId': classId },
+                    { 'user_data.customGroupId': { $regex: new RegExp(`^${classId}_purple_`) } }
+                ]
+            }).toArray();
+            
+            console.log(`👥 [PURPLE-QUEST-EDIT] Found ${usersToMigrate.length} users to migrate`);
+            
+            // Track migration failures
+            const migrationFailures = [];
+            
+            for (const user of usersToMigrate) {
+                try {
+                    const updateResult = await userDataCollection.updateOne(
+                        { _id: user._id },
+                        { 
+                            $set: { 
+                                'user_data.customGroupId': newConfig.classId,
+                                'user_data.customSequenceFile': `${newConfig.classId}.json`
+                            }
+                        }
+                    );
+                    
+                    if (updateResult.modifiedCount > 0) {
+                        migratedUsers++;
+                        console.log(`✅ [PURPLE-QUEST-EDIT] Migrated user: ${user._id}`);
+                    } else {
+                        const errorMsg = `No changes made to user ${user._id} (may already be migrated)`;
+                        console.log(`⚠️ [PURPLE-QUEST-EDIT] ${errorMsg}`);
+                        migrationFailures.push({ user: user._id, error: errorMsg });
+                    }
+                } catch (migrationError) {
+                    const errorMsg = `Failed to migrate user ${user._id}: ${migrationError.message}`;
+                    console.error(`❌ [PURPLE-QUEST-EDIT] ${errorMsg}`);
+                    migrationFailures.push({ user: user._id, error: errorMsg });
+                }
+            }
+            
+            console.log(`✅ [PURPLE-QUEST-EDIT] Migration completed: ${migratedUsers} successful, ${migrationFailures.length} failed`);
+            
+            // VERIFICATION: Double-check that all users are properly migrated
+            console.log(`🔍 [PURPLE-QUEST-EDIT] Step 7: Verifying migration...`);
+            const verificationQuery = await userDataCollection.find({
+                $or: [
+                    { 'user_data.customGroupId': classId },
+                    { 'user_data.customGroupId': { $regex: new RegExp(`^${classId}_purple_(?!${newConfig.classId.split('_purple_')[1]})`) } }
+                ]
+            }).toArray();
+            
+            if (verificationQuery.length > 0) {
+                console.error(`❌ [PURPLE-QUEST-EDIT] VERIFICATION FAILED: ${verificationQuery.length} users still not migrated`);
+                
+                // Attempt to fix remaining users
+                console.log(`🔧 [PURPLE-QUEST-EDIT] Attempting to fix remaining users...`);
+                for (const user of verificationQuery) {
+                    try {
+                        await userDataCollection.updateOne(
+                            { _id: user._id },
+                            { 
+                                $set: { 
+                                    'user_data.customGroupId': newConfig.classId,
+                                    'user_data.customSequenceFile': `${newConfig.classId}.json`
+                                }
+                            }
+                        );
+                        console.log(`🔧 [PURPLE-QUEST-EDIT] Fixed user: ${user._id}`);
+                        migratedUsers++;
+                    } catch (fixError) {
+                        console.error(`❌ [PURPLE-QUEST-EDIT] Failed to fix user ${user._id}:`, fixError.message);
+                    }
+                }
+            } else {
+                console.log(`✅ [PURPLE-QUEST-EDIT] Verification passed: All users properly migrated`);
+            }
+            
+            console.log(`🎉 [PURPLE-QUEST-EDIT] Purple deployment completed successfully!`);
+            
+            return res.status(200).json({
+                success: true,
+                message: `Successfully created new configuration with updated quest and migrated ${migratedUsers} users`,
+                data: {
+                    baseConfigId: originalConfigId,
+                    newConfigId: newConfigId,
+                    configName: newConfig.classId,
+                    questIndex: questIndex,
+                    migratedUsers: migratedUsers,
+                    migrationFailures: migrationFailures.length,
+                    isPurpleDeployment: true,
+                    isQuestEdit: true,
+                    updatedAt: newConfig.updatedAt
+                }
+            });
+            
+        } finally {
+            if (ossDoorwayClient) {
+                await ossDoorwayClient.close();
+            }
+        }
+        
+    } catch (error) {
+        console.error(`❌ [PURPLE-QUEST-EDIT] Error:`, error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Internal server error", 
+            error: error.message 
+        });
+    }
+};
+
 module.exports.deployQuestToClass = deployQuestToClass;
 module.exports.unlockQuestForStudents = unlockQuestForStudents;
 module.exports.purpleDeployQuest = purpleDeployQuest;
 module.exports.updateLiveTaskConfig = updateLiveTaskConfig;
+module.exports.updateLiveQuestConfig = updateLiveQuestConfig;
+
+
+

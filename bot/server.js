@@ -17,7 +17,7 @@ app.use("/gamification", gamificationRoutes);
 // Use a different port for the bot service
 const port =
   process.env.BOT_PORT ||
-  (process.env.PORT ? parseInt(process.env.PORT) + 1 : 8081);
+  (process.env.PORT ? parseInt(process.env.PORT) + 1 : 10000);
 app.listen(port, "0.0.0.0", () => {
   console.log(`Bot server is running on port ${port}`);
 });

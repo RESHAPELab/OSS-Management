@@ -182,6 +182,28 @@ const TaskSchema = mongoose.Schema({
             description: 'Whether to provide detailed feedback (0, 1) instead of just (0, 1)'
         }
     },
+    // LLM Image Validation fields
+    imageValidation: {
+        question: {
+            type: String,
+            required: function() { return this.type === 'imageValidation'; }
+        },
+        validationParameters: [{
+            type: String,
+            required: function() { return this.type === 'imageValidation'; }
+        }],
+        temperature: {
+            type: Number,
+            default: 0.1,
+            min: 0,
+            max: 1
+        },
+        enableDetailedFeedback: {
+            type: Boolean,
+            default: false,
+            description: 'Whether to provide detailed feedback (0|detailed) instead of just (0, 1)'
+        }
+    },
     prerequisite: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Task",
