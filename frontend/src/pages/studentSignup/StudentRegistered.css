@@ -1,0 +1,17 @@
+.sign-up-container{
+    display: flex;
+}
+
+.congrats { 
+    font-size: 3rem;
+    margin-top: 90px;
+}
+
+.registered { 
+    font-size: larger;
+}
+
+.second { 
+    padding-top: 10%;
+    font-size: xx-large;
+}

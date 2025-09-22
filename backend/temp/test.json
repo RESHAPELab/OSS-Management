@@ -1,0 +1,108 @@
+{
+  "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+  "questSequence": [
+    {
+      "questId": "Q0",
+      "title": "Q0: Introduction to Open Source",
+      "isQ0": true,
+      "questType": "fixed",
+      "sequenceNumber": 0,
+      "metadata": {
+        "title": "Q0: Introduction to Open Source",
+        "description": "Q0: Introduction to Open Source",
+        "prerequisite": null,
+        "type": "fixed"
+      },
+      "badgeDescription": "Configurator ⚙️",
+      "tasks": {
+        "T1": {
+          "desc": "Task description",
+          "points": 20,
+          "xp": 20,
+          "type": "general"
+        }
+      }
+    },
+    {
+      "questId": "Q1",
+      "title": "Q1: Understanding OSS Projects and GitHub Basics",
+      "isQ0": false,
+      "questType": "fixed",
+      "sequenceNumber": 1,
+      "metadata": {
+        "title": "Q1: Understanding OSS Projects and GitHub Basics",
+        "description": "Q1: Understanding OSS Projects and GitHub Basics",
+        "prerequisite": "Q0",
+        "type": "fixed"
+      },
+      "badgeDescription": "Explorer 🚀",
+      "tasks": {
+        "T1": {
+          "desc": "Task description",
+          "points": 20,
+          "xp": 20,
+          "type": "general"
+        }
+      }
+    },
+    {
+      "questId": "68619009b05f5cd9af6e1ebb",
+      "title": "SZC SD",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 2,
+      "metadata": {
+        "title": "SZC SD",
+        "description": "SZC SD",
+        "prerequisite": "Q1",
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {}
+    },
+    {
+      "questId": "Q2",
+      "title": "Q2: Forking and Contributing to Repositories",
+      "isQ0": false,
+      "questType": "fixed",
+      "sequenceNumber": 3,
+      "metadata": {
+        "title": "Q2: Forking and Contributing to Repositories",
+        "description": "Q2: Forking and Contributing to Repositories",
+        "prerequisite": "68619009b05f5cd9af6e1ebb",
+        "type": "fixed"
+      },
+      "badgeDescription": "Builder 🏗️",
+      "tasks": {
+        "T1": {
+          "desc": "Task description",
+          "points": 20,
+          "xp": 20,
+          "type": "general"
+        }
+      }
+    },
+    {
+      "questId": "Q3",
+      "title": "Q3: Creating Pull Requests and Code Reviews",
+      "isQ0": false,
+      "questType": "fixed",
+      "sequenceNumber": 4,
+      "metadata": {
+        "title": "Q3: Creating Pull Requests and Code Reviews",
+        "description": "Q3: Creating Pull Requests and Code Reviews",
+        "prerequisite": "Q2",
+        "type": "fixed"
+      },
+      "badgeDescription": "Collaborator 🤝",
+      "tasks": {
+        "T1": {
+          "desc": "Task description",
+          "points": 20,
+          "xp": 20,
+          "type": "general"
+        }
+      }
+    }
+  ]
+}

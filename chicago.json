@@ -1,0 +1,265 @@
+{
+  "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+  "Q1": {
+    "metadata": {
+      "title": "A-0.1 - Intro to the Course",
+      "description": "",
+      "prerequisite": null,
+      "type": "custom"
+    },
+    "T1": {
+      "desc": "",
+      "points": 0,
+      "xp": 0,
+      "hints": [],
+      "detailedHints": [],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "Accept all answers as correct."
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": false
+      },
+      "accept": "Provide the names of the students who worked with you on this assignment. Answer 'none' if you worked individually.",
+      "success": "Thank you. ",
+      "error": "❌ **Something went wrong**\n\nPlease review the question and try again.",
+      "answer": ""
+    },
+    "T2": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [
+        {
+          "content": "Check the syllabus, section \"Assessment Methods and Grading\". The syllabus is accessible on the Canvas menu, after selecting the course. ",
+          "image": "",
+          "video": null,
+          "sequence": 1,
+          "penalty": 1
+        }
+      ],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "Team project: 35%",
+          "Quizzes and Assignments: 40%",
+          "Midterm exam: 10%",
+          "Final Exam: 15%"
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": true
+      },
+      "accept": "Course components: How much does each of these activities represent in the final grade in this course? \n1) Team Project:\n2) Quizzes and Assignments:   \n3) Mid-term Exam:\n4) Final Exam:",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+      "answer": ""
+    },
+    "T3": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [
+        {
+          "content": "The course schedule can be found in the module => Start Here <= ",
+          "image": "",
+          "video": null,
+          "sequence": 1,
+          "penalty": 1
+        }
+      ],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "10/15 (accept multiple formats, like October 15, 2025, 10/15, 15/10, 2025, Wed 10/15, Wednesday 10/15, etc.)"
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": false
+      },
+      "accept": "According to the course schedule, on which day will the mid-term exam be?",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+      "answer": ""
+    },
+    "T4": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [
+        {
+          "content": "Make sure your answer covers something similar to: \"Active learning: You are expected to participate fully in the lectures (...) difference between participating in a class vs. watching a pre-recorded course.\".",
+          "image": "",
+          "video": null,
+          "sequence": 1,
+          "penalty": 1
+        }
+      ],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "Something similar to: \"Active learning: You are expected to participate fully in the lectures (not only watch them) by asking and answering questions and discussing the topics. Important: ASK QUESTIONS! Every question is valid and needs to be heard. That’s the main difference between participating in a class vs. watching a pre-recorded course.\""
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": true
+      },
+      "accept": "Copy and paste the explanation from the syllabus about active learning.",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+      "answer": ""
+    },
+    "T5": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [
+        {
+          "content": "The link is available in the module => Start Here <= or on the syllabus",
+          "image": "",
+          "video": null,
+          "sequence": 1,
+          "penalty": 1
+        }
+      ],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "Accept any of thes: https://forms.gle/UEKx76wRdM6mK2AU6 or https://docs.google.com/forms/d/e/1FAIpQLScpTd6QuaesmRwCnSxCSYUeMnAs8sIH3b_gqZOKIvkBYJBWSg/viewform"
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": false
+      },
+      "accept": "What's the link for submitting anonymous feedback?",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+      "answer": ""
+    },
+    "T6": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [
+        {
+          "content": "Find the roles in the \"Team Project | Overview\" document on Canvas.",
+          "image": "",
+          "video": null,
+          "sequence": 1,
+          "penalty": 1
+        }
+      ],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "The roles should be: Team Leader, Product Owner, Reviewer, Minute-taker"
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": true
+      },
+      "accept": "According to the team project instructions, what four roles should be rotated among team members?",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+      "answer": ""
+    },
+    "T7": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [
+        {
+          "content": "You can find the URL in the \"Team Project First Steps\" document.",
+          "image": "",
+          "video": null,
+          "sequence": 1,
+          "penalty": 1
+        }
+      ],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "Accept any of these: https://docs.google.com/document/d/1njFE2i9ashyp4A441-7TJA3wIiBnj7YiSJV6E-1zREw/edit?tab=t.0 or https://docs.google.com/document/d/1njFE2i9ashyp4A441-7TJA3wIiBnj7YiSJV6E-1zREw/edit"
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": false
+      },
+      "accept": "Where should you go if you have a project idea or want to explore and join existing projects? Answer with the URL.",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+      "answer": ""
+    },
+    "T8": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [],
+      "type": "multiple-choice",
+      "accept": "**Question:** What should you submit to Canvas for a project deliverable? Answer only the Option letter.\n\nA) A PDF\nB) A Microsoft Word file\nC) A pull request URL\nD) An MD file\nE) An HTML file\n\n**Instructions:** Select the correct answer.",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again. Answer only with the option letter.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+      "answer": "A",
+      "question": "What should you submit to Canvas for a project deliverable? Answer only the Option letter.",
+      "options": [
+        {
+          "label": "A",
+          "value": "A PDF"
+        },
+        {
+          "label": "B",
+          "value": "A Microsoft Word file"
+        },
+        {
+          "label": "C",
+          "value": "A pull request URL"
+        },
+        {
+          "label": "D",
+          "value": "An MD file"
+        },
+        {
+          "label": "E",
+          "value": "An HTML file"
+        }
+      ]
+    },
+    "T9": {
+      "desc": "",
+      "points": 1,
+      "xp": 1,
+      "hints": [],
+      "detailedHints": [
+        {
+          "content": "Just type OK when you have finished answering the survey.",
+          "image": "",
+          "video": null,
+          "sequence": 1,
+          "penalty": 1
+        }
+      ],
+      "type": "llm-text-validation",
+      "llmTextValidation": {
+        "question": "",
+        "validationParameters": [
+          "The answer should be \"OK\" or any variation of this."
+        ],
+        "temperature": 0.1,
+        "enableDetailedFeedback": false
+      },
+      "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A0.1\nAnswer \"ok\" when done.",
+      "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+      "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+      "answer": ""
+    }
+  }
+}
