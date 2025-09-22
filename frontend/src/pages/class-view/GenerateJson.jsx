@@ -164,6 +164,14 @@ const GenerateJson = () => {
   const [showQuestEditSuccessDialog, setShowQuestEditSuccessDialog] = useState(false);
   const [showQuestEditErrorDialog, setShowQuestEditErrorDialog] = useState(false);
   const [questEditMessage, setQuestEditMessage] = useState("");
+  
+  // Add state for confirmation dialogs
+  const [showQuestDeleteConfirmationDialog, setShowQuestDeleteConfirmationDialog] = useState(false);
+  const [showTaskDeleteConfirmationDialog, setShowTaskDeleteConfirmationDialog] = useState(false);
+  const [showPurpleDeployConfirmationDialog, setShowPurpleDeployConfirmationDialog] = useState(false);
+  const [questToDelete, setQuestToDelete] = useState(null);
+  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [questToDeploy, setQuestToDeploy] = useState(null);
   const { authUser } = useAuthContext();
   const [showLibraryDialog, setShowLibraryDialog] = useState(false);
   const [libraryQuests, setLibraryQuests] = useState([]);
@@ -172,7 +180,6 @@ const GenerateJson = () => {
   
   // Task deletion confirmation dialog state
   const [showDeleteTaskDialog, setShowDeleteTaskDialog] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState(null);
   const [questToDeleteFrom, setQuestToDeleteFrom] = useState(null);
 
   // Task edit confirmation dialog state
@@ -967,6 +974,52 @@ const GenerateJson = () => {
       await loadDraftQuests();
       setDraftSaveStatus("❌ Error deleting draft quest");
       setTimeout(() => setDraftSaveStatus(""), 3000);
+    }
+  };
+
+  // Handle quest deletion confirmation
+  const handleQuestDeleteClick = (questIndex, questTitle) => {
+    setQuestToDelete({ index: questIndex, title: questTitle });
+    setShowQuestDeleteConfirmationDialog(true);
+  };
+
+  const confirmQuestDelete = () => {
+    if (questToDelete) {
+      deleteDraftQuest(questToDelete.index);
+      setShowQuestDeleteConfirmationDialog(false);
+      setQuestToDelete(null);
+    }
+  };
+
+  // Handle task deletion confirmation
+  const handleTaskDeleteClick = (questIndex, taskId, taskTitle) => {
+    setTaskToDelete({ questIndex, taskId, title: taskTitle });
+    setShowTaskDeleteConfirmationDialog(true);
+  };
+
+  const confirmTaskDelete = () => {
+    if (taskToDelete) {
+      // Call the existing deleteTask function
+      deleteTask(taskToDelete.questIndex, taskToDelete.taskId);
+      setShowTaskDeleteConfirmationDialog(false);
+      setTaskToDelete(null);
+    }
+  };
+
+  // Handle purple deploy confirmation
+  const handlePurpleDeployClick = (questIndex) => {
+    const draftQuest = draftQuests.questSequence[questIndex];
+    if (draftQuest) {
+      setQuestToDeploy({ index: questIndex, title: draftQuest.title });
+      setShowPurpleDeployConfirmationDialog(true);
+    }
+  };
+
+  const confirmPurpleDeploy = () => {
+    if (questToDeploy) {
+      handlePurpleDeployQuest(questToDeploy.index);
+      setShowPurpleDeployConfirmationDialog(false);
+      setQuestToDeploy(null);
     }
   };
 
@@ -2089,6 +2142,64 @@ Student can now start their quest journey!`);
     }
   };
 
+  // Ensure page returns to the edited item after saves instead of jumping
+  const scrollIntoCenter = (element) => {
+    if (!element) return;
+    element.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    if (typeof element.focus === 'function') {
+      element.focus({ preventScroll: true });
+    }
+  };
+
+  const scrollToQuestIndex = (questIndex) => {
+    // Use the same approach as moveQuest: rely on rendered order
+    const questElements = document.querySelectorAll('[data-quest-id]');
+    if (questElements && questElements[questIndex]) {
+      scrollIntoCenter(questElements[questIndex]);
+    }
+  };
+
+  const scrollToTask = (questIndex, taskId) => {
+    // Matches the selector used after moving tasks
+    const taskElement = document.querySelector(`[data-task-id="${taskId}"][data-quest-index="${questIndex}"]`);
+    if (taskElement) {
+      scrollIntoCenter(taskElement);
+    }
+  };
+
+  // Track last scroll and last edited targets to restore after save
+  const lastScrollYRef = React.useRef(0);
+  const lastEditedTaskRef = React.useRef({ questIndex: null, taskId: null });
+  const lastEditedQuestRef = React.useRef(null);
+
+  // When task success dialog opens, restore scroll to the edited task
+  React.useEffect(() => {
+    if (showTaskEditSuccessDialog) {
+      const { questIndex, taskId } = lastEditedTaskRef.current || {};
+      setTimeout(() => {
+        if (questIndex !== null && taskId) {
+          scrollToTask(questIndex, taskId);
+        } else {
+          window.scrollTo({ top: lastScrollYRef.current || 0 });
+        }
+      }, 0);
+    }
+  }, [showTaskEditSuccessDialog]);
+
+  // When quest success dialog opens, restore scroll to the edited quest
+  React.useEffect(() => {
+    if (showQuestEditSuccessDialog) {
+      const qIdx = lastEditedQuestRef.current;
+      setTimeout(() => {
+        if (qIdx !== null && typeof qIdx === 'number') {
+          scrollToQuestIndex(qIdx);
+        } else {
+          window.scrollTo({ top: lastScrollYRef.current || 0 });
+        }
+      }, 0);
+    }
+  }, [showQuestEditSuccessDialog]);
+
   // Function to fetch saved quests from database
   const fetchSavedQuests = async () => {
     if (!classId) return;
@@ -2170,6 +2281,9 @@ Student can now start their quest journey!`);
       description: quest.metadata?.description || "",
     });
     setEditingQuestIndex(questIndex);
+    // Remember current scroll and quest to restore after save
+    lastScrollYRef.current = window.scrollY;
+    lastEditedQuestRef.current = questIndex;
     setShowEditQuestModal(true);
   };
 
@@ -2216,6 +2330,8 @@ Student can now start their quest journey!`);
         
         setQuestEditMessage("Draft quest updated successfully!");
         setShowQuestEditSuccessDialog(true);
+        // Return user to the edited draft quest block
+        setTimeout(() => scrollToQuestIndex(editingQuestIndex - 10000 + 10000), 50);
       } else {
         // This is a main sequence quest - update live config
         console.log(`🔄 [QUEST-EDIT-CONFIRM] Updating live quest config for quest ${editingQuestIndex}`);
@@ -2238,6 +2354,8 @@ Student can now start their quest journey!`);
         
         setQuestEditMessage("Quest updated successfully! All students have been migrated to the new configuration.");
         setShowQuestEditSuccessDialog(true);
+        // Return user to the edited quest block in main sequence
+        setTimeout(() => scrollToQuestIndex(editingQuestIndex), 50);
       }
       
       // Close the edit modal
@@ -2386,6 +2504,9 @@ Student can now start their quest journey!`);
     setEditingTaskData(taskData);
     setEditingTaskQuestIndex(questIndex);
     setEditingTaskId(taskId);
+    // Remember current scroll and target to restore after save
+    lastScrollYRef.current = window.scrollY;
+    lastEditedTaskRef.current = { questIndex, taskId };
     setShowEditTaskModal(true);
     
     console.log(`✅ [TASK-EDIT] Task editor opened`);
@@ -2495,6 +2616,8 @@ Student can now start their quest journey!`);
         // Show success message for draft update
         setTaskEditMessage(`Draft task updated successfully! Changes have been saved to the draft configuration and will be used when creating new test repositories.`);
         setShowTaskEditSuccessDialog(true);
+        // Scroll back to the edited task in the draft quest
+        setTimeout(() => scrollToTask(editingTaskQuestIndex, editingTaskId), 50);
       } else {
         console.log(`🔵 [TASK-EDIT-CONFIRM] Updating main sequence quest...`);
         setJsonContent((prev) => {
@@ -2511,6 +2634,8 @@ Student can now start their quest journey!`);
         const configName = configUpdateResult.data?.configName || 'Unknown';
         setTaskEditMessage(`Task updated successfully! Created new quest configuration "${configName}" and migrated ${migratedUsers} students to use the updated task.`);
         setShowTaskEditSuccessDialog(true);
+        // Scroll back to the edited task in the main sequence
+        setTimeout(() => scrollToTask(editingTaskQuestIndex, editingTaskId), 50);
       }
       
       console.log(`🎉 [TASK-EDIT-CONFIRM] Task save completed!`);
@@ -2984,26 +3109,32 @@ Student can now start their quest journey!`);
   const hintPenaltyErrors = getHintPenaltyValidationErrors();
   const hasHintPenaltyErrors = hintPenaltyErrors.length > 0;
 
-      const isAddQuestDisabled =
-      !questFormData.title.trim() ||
-      // When editing a quest, don't require tasks (we're only editing title/description)
-      // When adding a new quest, require at least one task
-      (editingQuestIndex === null && questFormData.tasks.length === 0) ||
-      hasHintPenaltyErrors ||
-      questFormData.tasks.some((task) => {
-      if (task.taskType === "multiple-choice") {
-        return (
-          !task.question?.trim() ||
-          !task.options?.[0]?.value?.trim() ||
-          !task.options?.[1]?.value?.trim() ||
-          !task.correctAnswer ||
-          !task.successText?.trim() ||
-          !task.errorText?.trim()
-        );
-      }
-      // Add more task type checks if needed
-      return !task.successText?.trim() || !task.errorText?.trim();
-    });
+      // Check if editing a draft quest (index >= 10000)
+      const isDraftQuestEdit = editingQuestIndex !== null && editingQuestIndex >= 10000;
+      
+      const isAddQuestDisabled = isDraftQuestEdit 
+        ? // For draft quest editing, only require title
+          !questFormData.title.trim()
+        : // For regular quest creation/editing, use full validation
+          !questFormData.title.trim() ||
+          // When editing a quest, don't require tasks (we're only editing title/description)
+          // When adding a new quest, require at least one task
+          (editingQuestIndex === null && questFormData.tasks.length === 0) ||
+          hasHintPenaltyErrors ||
+          questFormData.tasks.some((task) => {
+          if (task.taskType === "multiple-choice") {
+            return (
+              !task.question?.trim() ||
+              !task.options?.[0]?.value?.trim() ||
+              !task.options?.[1]?.value?.trim() ||
+              !task.correctAnswer ||
+              !task.successText?.trim() ||
+              !task.errorText?.trim()
+            );
+          }
+          // Add more task type checks if needed
+          return !task.successText?.trim() || !task.errorText?.trim();
+        });
 
   const createBlankHint = () => ({
     content: "",
@@ -3530,7 +3661,27 @@ Student can now start their quest journey!`);
                     questIndex={10000 + index} // Use high numbers to distinguish drafts
                     totalQuests={draftQuests.questSequence.length}
                     isDraftQuest={true} // Mark as draft quest for yellow tint
-                    onMoveQuest={() => {}} // Draft quests don't support reordering
+                    onMoveQuest={(questIndex, direction) => {
+                      // Handle moving draft quests up/down
+                      const actualIndex = questIndex - 10000; // Convert back to draft index
+                      const totalDraftQuests = draftQuests.questSequence.length;
+                      
+                      if (direction === "up" && actualIndex > 0) {
+                        const newDraftQuests = { ...draftQuests };
+                        const quests = [...newDraftQuests.questSequence];
+                        [quests[actualIndex], quests[actualIndex - 1]] = [quests[actualIndex - 1], quests[actualIndex]];
+                        newDraftQuests.questSequence = quests;
+                        setDraftQuests(newDraftQuests);
+                        saveDraftQuests(newDraftQuests);
+                      } else if (direction === "down" && actualIndex < totalDraftQuests - 1) {
+                        const newDraftQuests = { ...draftQuests };
+                        const quests = [...newDraftQuests.questSequence];
+                        [quests[actualIndex], quests[actualIndex + 1]] = [quests[actualIndex + 1], quests[actualIndex]];
+                        newDraftQuests.questSequence = quests;
+                        setDraftQuests(newDraftQuests);
+                        saveDraftQuests(newDraftQuests);
+                      }
+                    }}
                     onEditQuest={(questIndex) => {
                       // Load quest into edit mode
                       const questForEdit = {
@@ -3550,8 +3701,61 @@ Student can now start their quest journey!`);
                       setEditingQuestIndex(10000 + index); // Use high numbers to distinguish drafts
                       setShowAddQuestModal(true);
                     }}
-                    onDeleteQuest={() => deleteDraftQuest(index)}
-                    onMoveTask={() => {}} // Draft quests don't support task reordering
+                    onDeleteQuest={(questIndex) => {
+                      const actualIndex = questIndex - 10000; // Convert back to draft index
+                      handleQuestDeleteClick(actualIndex, quest.title);
+                    }}
+                    onDeleteQuestClick={handleQuestDeleteClick}
+                    onTaskDeleteClick={handleTaskDeleteClick}
+                    onMoveTask={(questIndex, taskId, direction) => {
+                      // Handle moving tasks within draft quests
+                      const actualQuestIndex = questIndex - 10000; // Convert back to draft index
+                      const quest = draftQuests.questSequence[actualQuestIndex];
+                      if (!quest || !quest.tasks) return;
+                      
+                      const taskEntries = Object.entries(quest.tasks);
+                      const taskIndex = taskEntries.findIndex(([key]) => key === taskId);
+                      
+                      if (direction === "up" && taskIndex > 0) {
+                        // Move task up
+                        const newTaskEntries = [...taskEntries];
+                        [newTaskEntries[taskIndex], newTaskEntries[taskIndex - 1]] = [newTaskEntries[taskIndex - 1], newTaskEntries[taskIndex]];
+                        
+                        // Rebuild tasks object with new order
+                        const newTasks = {};
+                        newTaskEntries.forEach(([key, task], index) => {
+                          newTasks[`T${index + 1}`] = task;
+                        });
+                        
+                        const updatedDraftQuests = {
+                          ...draftQuests,
+                          questSequence: draftQuests.questSequence.map((q, idx) => 
+                            idx === actualQuestIndex ? { ...q, tasks: newTasks } : q
+                          )
+                        };
+                        setDraftQuests(updatedDraftQuests);
+                        saveDraftQuests(updatedDraftQuests);
+                      } else if (direction === "down" && taskIndex < taskEntries.length - 1) {
+                        // Move task down
+                        const newTaskEntries = [...taskEntries];
+                        [newTaskEntries[taskIndex], newTaskEntries[taskIndex + 1]] = [newTaskEntries[taskIndex + 1], newTaskEntries[taskIndex]];
+                        
+                        // Rebuild tasks object with new order
+                        const newTasks = {};
+                        newTaskEntries.forEach(([key, task], index) => {
+                          newTasks[`T${index + 1}`] = task;
+                        });
+                        
+                        const updatedDraftQuests = {
+                          ...draftQuests,
+                          questSequence: draftQuests.questSequence.map((q, idx) => 
+                            idx === actualQuestIndex ? { ...q, tasks: newTasks } : q
+                          )
+                        };
+                        setDraftQuests(updatedDraftQuests);
+                        saveDraftQuests(updatedDraftQuests);
+                      }
+                    }}
                     onEditTask={editTask}
                     onDeleteTask={deleteTask}
                     onAddTask={(questIndex) => {
@@ -3607,7 +3811,10 @@ Student can now start their quest journey!`);
                       saveDraftQuests(updatedDraftQuests);
                       console.log("Added task to draft quest:", newTaskId);
                     }}
-                    onPurpleDeployQuest={() => handlePurpleDeployQuest(index)} // Add purple deploy functionality
+                    onPurpleDeployQuest={(questIndex) => {
+                      const actualIndex = questIndex - 10000; // Convert back to draft index
+                      handlePurpleDeployClick(actualIndex);
+                    }}
                   />
                 ))}
               </Stack>
@@ -7733,9 +7940,180 @@ Student can now start their quest journey!`);
               OK
             </Button>
           </DialogActions>
-        </Dialog>
+         </Dialog>
 
-        {/* README Preview/Edit Modal */}
+         {/* Quest Delete Confirmation Dialog */}
+         <Dialog
+           open={showQuestDeleteConfirmationDialog}
+           onClose={(event, reason) => {
+             if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+             setShowQuestDeleteConfirmationDialog(false);
+             setQuestToDelete(null);
+           }}
+           disableEscapeKeyDown
+           maxWidth="sm"
+           PaperProps={{
+             sx: {
+               borderRadius: 4,
+               boxShadow: "none",
+               border: "1px solid #e0e0e0",
+             },
+           }}
+         >
+           <DialogTitle sx={{ pb: 2 }}>
+             <Typography variant="h6" sx={{ fontWeight: 700, color: "#f44336" }}>
+               ⚠️ Delete Quest
+             </Typography>
+           </DialogTitle>
+           <DialogContent sx={{ pt: 1 }}>
+             <Typography variant="body1" sx={{ mb: 2 }}>
+               Are you sure you want to delete the quest "{questToDelete?.title}"?
+             </Typography>
+             <Alert severity="warning" sx={{ borderRadius: 2 }}>
+               This action cannot be undone. All tasks within this quest will also be deleted.
+             </Alert>
+           </DialogContent>
+           <DialogActions sx={{ p: 3, pt: 0 }}>
+             <Button
+               onClick={() => {
+                 setShowQuestDeleteConfirmationDialog(false);
+                 setQuestToDelete(null);
+               }}
+               variant="outlined"
+               sx={{ borderRadius: 4, fontWeight: "bold" }}
+             >
+               Cancel
+             </Button>
+             <Button
+               onClick={confirmQuestDelete}
+               variant="contained"
+               sx={{
+                 bgcolor: "#f44336",
+                 borderRadius: 4,
+                 fontWeight: "bold",
+                 "&:hover": { bgcolor: "#d32f2f" },
+               }}
+             >
+               Delete Quest
+             </Button>
+           </DialogActions>
+         </Dialog>
+
+         {/* Task Delete Confirmation Dialog */}
+         <Dialog
+           open={showTaskDeleteConfirmationDialog}
+           onClose={(event, reason) => {
+             if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+             setShowTaskDeleteConfirmationDialog(false);
+             setTaskToDelete(null);
+           }}
+           disableEscapeKeyDown
+           maxWidth="sm"
+           PaperProps={{
+             sx: {
+               borderRadius: 4,
+               boxShadow: "none",
+               border: "1px solid #e0e0e0",
+             },
+           }}
+         >
+           <DialogTitle sx={{ pb: 2 }}>
+             <Typography variant="h6" sx={{ fontWeight: 700, color: "#f44336" }}>
+               ⚠️ Delete Task
+             </Typography>
+           </DialogTitle>
+           <DialogContent sx={{ pt: 1 }}>
+             <Typography variant="body1" sx={{ mb: 2 }}>
+               Are you sure you want to delete the task "{taskToDelete?.title}"?
+             </Typography>
+             <Alert severity="warning" sx={{ borderRadius: 2 }}>
+               This action cannot be undone.
+             </Alert>
+           </DialogContent>
+           <DialogActions sx={{ p: 3, pt: 0 }}>
+             <Button
+               onClick={() => {
+                 setShowTaskDeleteConfirmationDialog(false);
+                 setTaskToDelete(null);
+               }}
+               variant="outlined"
+               sx={{ borderRadius: 4, fontWeight: "bold" }}
+             >
+               Cancel
+             </Button>
+             <Button
+               onClick={confirmTaskDelete}
+               variant="contained"
+               sx={{
+                 bgcolor: "#f44336",
+                 borderRadius: 4,
+                 fontWeight: "bold",
+                 "&:hover": { bgcolor: "#d32f2f" },
+               }}
+             >
+               Delete Task
+             </Button>
+           </DialogActions>
+         </Dialog>
+
+         {/* Purple Deploy Confirmation Dialog */}
+         <Dialog
+           open={showPurpleDeployConfirmationDialog}
+           onClose={(event, reason) => {
+             if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+             setShowPurpleDeployConfirmationDialog(false);
+             setQuestToDeploy(null);
+           }}
+           disableEscapeKeyDown
+           maxWidth="sm"
+           PaperProps={{
+             sx: {
+               borderRadius: 4,
+               boxShadow: "none",
+               border: "1px solid #e0e0e0",
+             },
+           }}
+         >
+           <DialogTitle sx={{ pb: 2 }}>
+             <Typography variant="h6" sx={{ fontWeight: 700, color: "#9c27b0" }}>
+               🚀 Deploy Quest
+             </Typography>
+           </DialogTitle>
+           <DialogContent sx={{ pt: 1 }}>
+             <Typography variant="body1" sx={{ mb: 2 }}>
+               Are you sure you want to deploy the quest "{questToDeploy?.title}"?
+             </Typography>
+             <Alert severity="info" sx={{ borderRadius: 2 }}>
+               This will create a new quest configuration and migrate all students to the updated version. The quest will be removed from drafts after deployment.
+             </Alert>
+           </DialogContent>
+           <DialogActions sx={{ p: 3, pt: 0 }}>
+             <Button
+               onClick={() => {
+                 setShowPurpleDeployConfirmationDialog(false);
+                 setQuestToDeploy(null);
+               }}
+               variant="outlined"
+               sx={{ borderRadius: 4, fontWeight: "bold" }}
+             >
+               Cancel
+             </Button>
+             <Button
+               onClick={confirmPurpleDeploy}
+               variant="contained"
+               sx={{
+                 bgcolor: "#9c27b0",
+                 borderRadius: 4,
+                 fontWeight: "bold",
+                 "&:hover": { bgcolor: "#7b1fa2" },
+               }}
+             >
+               Deploy Quest
+             </Button>
+           </DialogActions>
+         </Dialog>
+
+         {/* README Preview/Edit Modal */}
         <Dialog
           open={showReadmeModal}
           onClose={(event, reason) => {
@@ -8563,6 +8941,8 @@ const QuestBlock = ({
   onMoveQuest,
   onEditQuest,
   onDeleteQuest,
+  onDeleteQuestClick,
+  onTaskDeleteClick,
   onMoveTask,
   onEditTask,
   onDeleteTask,
@@ -8627,7 +9007,7 @@ const QuestBlock = ({
             </Typography>
             <Stack direction="row" spacing={1} mt={1}></Stack>
           </Box>
-          {/* Rearrangement Arrows - COMMENTED OUT */}
+          {/* Quest Action Buttons */}
           <Box
             sx={{
               display: "flex",
@@ -8637,48 +9017,53 @@ const QuestBlock = ({
               minWidth: "fit-content",
             }}
           >
-            {/* <button
-              className="btn btn-outline-secondary btn-sm"
-              title="Move Up"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoveQuest(questIndex, "up");
-              }}
-              disabled={questIndex === 0}
-              style={{
-                marginRight: 2,
-                borderRadius: 4,
-                padding: "4px 8px",
-                fontSize: 16,
-                opacity: questIndex === 0 ? 0.3 : 1,
-                border: "1px solid #1976d2",
-                backgroundColor: "#1976d2",
-                color: "white",
-              }}
-            >
-              ↑
-            </button>
-            <button
-              className="btn btn-outline-secondary btn-sm"
-              title="Move Down"
-              onClick={(e) => {
-                e.stopPropagation();
-                onMoveQuest(questIndex, "down");
-              }}
-              disabled={questIndex === totalQuests - 1}
-              style={{
-                marginRight: 6,
-                borderRadius: 4,
-                padding: "4px 8px",
-                fontSize: 16,
-                opacity: questIndex === totalQuests - 1 ? 0.3 : 1,
-                border: "1px solid #1976d2",
-                backgroundColor: "#1976d2",
-                color: "white",
-              }}
-            >
-              ↓
-            </button> */}
+            {/* Rearrangement Arrows - Only show for draft quests */}
+            {isDraftQuest && (
+              <>
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  title="Move Up"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveQuest(questIndex, "up");
+                  }}
+                  disabled={questIndex === 0}
+                  style={{
+                    marginRight: 2,
+                    borderRadius: 4,
+                    padding: "4px 8px",
+                    fontSize: 16,
+                    opacity: questIndex === 0 ? 0.3 : 1,
+                    border: "1px solid #1976d2",
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                  }}
+                >
+                  ↑
+                </button>
+                <button
+                  className="btn btn-outline-secondary btn-sm"
+                  title="Move Down"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveQuest(questIndex, "down");
+                  }}
+                  disabled={questIndex === totalQuests - 1}
+                  style={{
+                    marginRight: 6,
+                    borderRadius: 4,
+                    padding: "4px 8px",
+                    fontSize: 16,
+                    opacity: questIndex === totalQuests - 1 ? 0.3 : 1,
+                    border: "1px solid #1976d2",
+                    backgroundColor: "#1976d2",
+                    color: "white",
+                  }}
+                >
+                  ↓
+                </button>
+              </>
+            )}
             <Tooltip title="Edit Quest">
               <span>
                 <IconButton
@@ -8700,28 +9085,30 @@ const QuestBlock = ({
                 </IconButton>
               </span>
             </Tooltip>
-            {/* Delete Quest Button - COMMENTED OUT */}
-            {/* <Tooltip title="Delete Quest">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteQuest(questIndex);
-                  }}
-                  sx={{
-                    border: "1px solid #f44336",
-                    borderRadius: 4,
-                    ml: 0.5,
-                    backgroundColor: "#f44336",
-                    color: "white",
-                    "&:hover": { backgroundColor: "#d32f2f" },
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip> */}
+             {/* Delete Quest Button - Only show for draft quests */}
+             {isDraftQuest && (
+               <Tooltip title="Delete Quest">
+                 <span>
+                   <IconButton
+                     size="small"
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       onDeleteQuest(questIndex);
+                     }}
+                     sx={{
+                       border: "1px solid #f44336",
+                       borderRadius: 4,
+                       ml: 0.5,
+                       backgroundColor: "#f44336",
+                       color: "white",
+                       "&:hover": { backgroundColor: "#d32f2f" },
+                     }}
+                   >
+                     <DeleteIcon fontSize="small" />
+                   </IconButton>
+                 </span>
+               </Tooltip>
+             )}
             {onPurpleDeployQuest && (
               <Tooltip title="Deploy Quest - Create New Config with Appended Quest">
                   <span>
@@ -8771,7 +9158,13 @@ const QuestBlock = ({
                 questIndex={questIndex}
                 onMoveTask={onMoveTask}
                 onEditTask={onEditTask}
-                onDeleteTask={onDeleteTask}
+                onDeleteTask={(questIndex, taskId, taskTitle) => {
+                  if (isDraftQuest && onTaskDeleteClick) {
+                    onTaskDeleteClick(questIndex, taskId, taskTitle);
+                  } else {
+                    onDeleteTask(questIndex, taskId);
+                  }
+                }}
                 getTaskTypeColor={getTaskTypeColor}
                 getTaskTypeLabel={getTaskTypeLabel}
                 isDraftQuest={isDraftQuest}
@@ -8898,7 +9291,7 @@ const TaskBlock = ({
           />
         </Box>
 
-        {/* Action Buttons Row - ARROW BUTTONS COMMENTED OUT */}
+        {/* Action Buttons Row - ARROW BUTTONS for draft quests only */}
         <Box
           sx={{
             display: "flex",
@@ -8908,52 +9301,56 @@ const TaskBlock = ({
             mb: 2,
           }}
         >
-          {/* <Tooltip title="Move Up">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onMoveTask(questIndex, taskId, "up")}
-                disabled={taskIndex === 0}
-                sx={{
-                  border: "1px solid #1976d2",
-                  borderRadius: 4,
-                  backgroundColor: "#1976d2",
-                  color: "white",
-                  "&:hover": { backgroundColor: "#1565c0" },
-                  "&:disabled": {
-                    opacity: 0.3,
-                    backgroundColor: "#e0e0e0",
-                    color: "#666",
-                  },
-                }}
-              >
-                <ArrowUpwardIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip>
-          <Tooltip title="Move Down">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onMoveTask(questIndex, taskId, "down")}
-                disabled={taskIndex === totalTasks - 1}
-                sx={{
-                  border: "1px solid #1976d2",
-                  borderRadius: 4,
-                  backgroundColor: "#1976d2",
-                  color: "white",
-                  "&:hover": { backgroundColor: "#1565c0" },
-                  "&:disabled": {
-                    opacity: 0.3,
-                    backgroundColor: "#e0e0e0",
-                    color: "#666",
-                  },
-                }}
-              >
-                <ArrowDownwardIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip> */}
+          {isDraftQuest && (
+            <>
+              <Tooltip title="Move Up">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onMoveTask(questIndex, taskId, "up")}
+                    disabled={taskIndex === 0}
+                    sx={{
+                      border: "1px solid #1976d2",
+                      borderRadius: 4,
+                      backgroundColor: "#1976d2",
+                      color: "white",
+                      "&:hover": { backgroundColor: "#1565c0" },
+                      "&:disabled": {
+                        opacity: 0.3,
+                        backgroundColor: "#e0e0e0",
+                        color: "#666",
+                      },
+                    }}
+                  >
+                    <ArrowUpwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Move Down">
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={() => onMoveTask(questIndex, taskId, "down")}
+                    disabled={taskIndex === totalTasks - 1}
+                    sx={{
+                      border: "1px solid #1976d2",
+                      borderRadius: 4,
+                      backgroundColor: "#1976d2",
+                      color: "white",
+                      "&:hover": { backgroundColor: "#1565c0" },
+                      "&:disabled": {
+                        opacity: 0.3,
+                        backgroundColor: "#e0e0e0",
+                        color: "#666",
+                      },
+                    }}
+                  >
+                    <ArrowDownwardIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          )}
           <Tooltip title="Edit Task">
             <span>
               <IconButton
@@ -8971,24 +9368,26 @@ const TaskBlock = ({
               </IconButton>
             </span>
           </Tooltip>
-          {/* Delete Task Button - COMMENTED OUT */}
-          {/* <Tooltip title="Delete Task">
-            <span>
-              <IconButton
-                size="small"
-                onClick={() => onDeleteTask(questIndex, taskId)}
-                sx={{
-                  border: "1px solid #f44336",
-                  borderRadius: 4,
-                  backgroundColor: "#f44336",
-                  color: "white",
-                  "&:hover": { backgroundColor: "#d32f2f" },
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </span>
-          </Tooltip> */}
+           {/* Delete Task Button - Only show for draft quests */}
+           {isDraftQuest && (
+             <Tooltip title="Delete Task">
+               <span>
+                 <IconButton
+                   size="small"
+                   onClick={() => onDeleteTask(questIndex, taskId, task.title || taskId)}
+                   sx={{
+                     border: "1px solid #f44336",
+                     borderRadius: 4,
+                     backgroundColor: "#f44336",
+                     color: "white",
+                     "&:hover": { backgroundColor: "#d32f2f" },
+                   }}
+                 >
+                   <DeleteIcon fontSize="small" />
+                 </IconButton>
+               </span>
+             </Tooltip>
+           )}
         </Box>
       </Box>
     </Card>

@@ -107,3 +107,5 @@ async function findPurpleConfigInDoorway() {
 }
 
 findPurpleConfigInDoorway();
+
+

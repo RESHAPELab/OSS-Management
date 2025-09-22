@@ -1,3 +1,4 @@
+
 // fix-q4-all-points.js
 // Fix all Q4 tasks to have 1 point and correct success message
 
@@ -89,5 +90,6 @@ async function main() {
 }
 
 main();
+
 
 
