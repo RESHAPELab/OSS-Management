@@ -11,6 +11,7 @@ const { MongoClient } = require('mongodb');
 const axios = require('axios');
 const UserStoredData = require('../models/UserStoredData');
 
+
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 const getProfessor = async(req, res) => {
@@ -1135,9 +1136,31 @@ const updateReadmeAcrossRepos = async (req, res) => {
                             console.log(`🔧 [BATCH-README] Preserving existing progress section for ${repoName}`);
                         }
                     } else {
-                        // Add default progress section if none exists
-                        secondSection = `\n\n${sectionBoundary}`;
-                        console.log(`🔧 [BATCH-README] Adding default progress section for ${repoName}`);
+                        // Call Doorway's updateReadme API endpoint directly
+                        console.log(`🔧 [BATCH-README] Calling Doorway's updateReadme API for ${repoName}`);
+                        
+                        try {
+                            // Call the Doorway's updateReadme API endpoint
+                            const doorwayUrl = process.env.OSS_DOORWAY_URL || 'http://localhost:4000';
+                            const updateResponse = await axios.post(`${doorwayUrl}/api/updateReadme`, {
+                                owner: organizationGh,
+                                repo: repoName,
+                                username: username
+                            });
+                            
+                            if (updateResponse.status === 200 && updateResponse.data?.success) {
+                                console.log(`✅ [BATCH-README] Doorway updateReadme completed for ${repoName}`);
+                                // Skip the manual update since Doorway already updated it
+                                continue;
+                            } else {
+                                console.log(`⚠️ [BATCH-README] Doorway updateReadme failed for ${repoName}, falling back to basic section`);
+                                secondSection = `\n\n${sectionBoundary}`;
+                            }
+                        } catch (err) {
+                            console.log(`⚠️ [BATCH-README] Error calling Doorway updateReadme for ${repoName}: ${err.message}`);
+                            // Fall back to basic section if Doorway is not available
+                            secondSection = `\n\n${sectionBoundary}`;
+                        }
                     }
 
                     // Combine sections (COPY from working test script)
@@ -2388,18 +2411,27 @@ const createTestRepo = async (req, res) => {
 
       const QuestConfig = (connection.models.QuestConfig || connection.model('QuestConfig', questConfigSchema));
 
-      // Convert questSequence format to bot format (Q1, Q2, etc. as top-level keys)
+      // Convert questSequence format to full bot format (Q1, Q2...) with metadata and tasks
       const botCompatibleConfig = {
-        map_repo_link: "https://github.com/OSS-Doorway-Dev/{{repoName}}"
+        map_repo_link: effectiveQuestConfig.map_repo_link || "https://github.com/OSS-Doorway-Dev/{{repoName}}"
       };
 
       if (effectiveQuestConfig.questSequence && effectiveQuestConfig.questSequence.length > 0) {
         effectiveQuestConfig.questSequence.forEach((quest, index) => {
           const questKey = quest.questId || `Q${index + 1}`;
+          // Flatten tasks if nested and preserve all task fields (T1, T2, ...)
+          let tasks = quest.tasks;
+          if (tasks && tasks.tasks && typeof tasks.tasks === 'object') {
+            tasks = tasks.tasks;
+          }
+          tasks = tasks || {};
+          // Build quest entry with metadata and tasks spread at top level
           botCompatibleConfig[questKey] = {
-            title: quest.title || questKey,
-            description: quest.description || '',
-            tasks: quest.tasks || {}
+            metadata: {
+              ...(quest.metadata || {}),
+              prerequisite: index === 0 ? null : `Q${index}`
+            },
+            ...tasks
           };
         });
       }
@@ -2421,7 +2453,52 @@ const createTestRepo = async (req, res) => {
         },
         { upsert: true, new: true }
       );
-      console.log(`💾 [CREATE-TEST-REPO] Saved bot-compatible test quest config to questconfigs for ${testClassId}`);
+      console.log(`💾 [CREATE-TEST-REPO] Saved test quest config to Management DB for ${testClassId}`);
+
+      // ALSO save to the OSS-Doorway database so the bot can load this config immediately
+      try {
+        const mongoose = require('mongoose');
+        const doorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+        const doorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+
+        const doorwayConn = await mongoose.createConnection(doorwayUri, { dbName: doorwayDbName });
+        await new Promise((resolve, reject) => {
+          doorwayConn.once('connected', resolve);
+          doorwayConn.once('error', reject);
+          setTimeout(() => reject(new Error('Doorway DB connection timeout')), 10000);
+        });
+
+        const doorwayQuestConfigSchema = new mongoose.Schema({
+          configId: String,
+          classId: String,
+          config: Object,
+          createdAt: Date,
+          updatedAt: Date,
+          createdBy: String,
+          originalFilePath: String,
+          version: Number
+        }, { collection: 'questconfigs' });
+
+        const DoorwayQuestConfig = doorwayConn.model('QuestConfig', doorwayQuestConfigSchema);
+        const saved = await DoorwayQuestConfig.findOneAndUpdate(
+          { configId: testClassId },
+          {
+            configId: testClassId,
+            classId: testClassId,
+            config: botCompatibleConfig,
+            createdAt: now,
+            updatedAt: now,
+            createdBy: 'oss-management:createTestRepo',
+            originalFilePath: `quest_config_${testClassId}.json`,
+            version: 1
+          },
+          { upsert: true, new: true }
+        );
+        await doorwayConn.close();
+        console.log(`💾 [CREATE-TEST-REPO] Saved test quest config to Doorway DB: ${saved?.configId}`);
+      } catch (doorwaySaveErr) {
+        console.warn(`⚠️ [CREATE-TEST-REPO] Could not save test quest config to Doorway DB: ${doorwaySaveErr.message}`);
+      }
     } catch (saveErr) {
       console.warn(`⚠️ [CREATE-TEST-REPO] Could not save test quest config: ${saveErr.message}`);
       console.error(saveErr);
@@ -2430,10 +2507,22 @@ const createTestRepo = async (req, res) => {
     // 2) Attempt cache invalidation on OSS-Doorway (best-effort)
     try {
       const axios = require('axios');
-      const cacheBase = process.env.OSS_DOORWAY_CACHE_BASE || 'http://localhost:3000';
-      await axios.delete(`${cacheBase}/api/cache/delete/${encodeURIComponent(testClassId)}`).catch(()=>{});
-      await axios.post(`${cacheBase}/api/cache/clear`).catch(()=>{});
-      console.log(`🗑️ [CREATE-TEST-REPO] Attempted cache invalidation for ${testClassId}`);
+      // Prefer full Doorway base; fall back to legacy cache base and localhost variants
+      const candidates = [
+        process.env.OSS_DOORWAY_URL,
+        process.env.OSS_DOORWAY_CACHE_BASE,
+        'http://localhost:4000',
+        'http://localhost:3000'
+      ].filter(Boolean);
+      for (const base of candidates) {
+        try {
+          await axios.delete(`${base}/api/cache/delete/${encodeURIComponent(testClassId)}`).catch(()=>{});
+          await axios.post(`${base}/api/cache/clear`).catch(()=>{});
+          console.log(`🗑️ [CREATE-TEST-REPO] Cache invalidation attempted at ${base} for ${testClassId}`);
+        } catch (_) {
+          // continue to next candidate
+        }
+      }
     } catch (cacheErr) {
       console.warn(`⚠️ [CREATE-TEST-REPO] Cache invalidation skipped/failed: ${cacheErr.message}`);
     }
@@ -2474,8 +2563,11 @@ const createTestRepo = async (req, res) => {
       
       if (successful && successful.length > 0) {
         const successResult = successful[0];
-        // Format the repository URL
-        const formattedClassName = actualClassName.toLowerCase().replace(/\s+/g, '-');
+        // Format the repository URL (collapse non-alphanumerics to single hyphen and trim)
+        const formattedClassName = actualClassName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
         const repoUrl = `https://github.com/OSS-Doorway-Dev/${username}-${formattedClassName}-test`;
         
         console.log(`✅ [CREATE-TEST-REPO] Test repository created successfully: ${repoUrl}`);

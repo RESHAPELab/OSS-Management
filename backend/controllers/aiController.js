@@ -27,7 +27,15 @@ async function generateHint(req, res) {
       contextParts.push(`Criteria: ${llmTextValidation.validationParameters.join('; ')}`);
     }
 
-    const system = `You are a helpful teaching assistant for an OSS learning platform. Generate a single actionable hint (1-3 sentences) that nudges the student toward the answer without revealing it.`;
+    // Build a task-aware system prompt to reduce hallucinations and irrelevant numeric hints
+    let system = `You are a helpful teaching assistant for an OSS learning platform. Generate ONE actionable hint (1-3 sentences) that nudges the student toward the answer without revealing it. Use ONLY the information provided. Do NOT invent requirements or reference data that is not present.`;
+
+    // Add guardrails by task type
+    if (type === 'llm-text-validation') {
+      system += ` Avoid mentioning numeric counts or letter counts unless the criteria explicitly require a number. Focus on restating or narrowing the criteria (if any) and pointing the student at how to satisfy them.`;
+    } else if (type === 'custom-api-call') {
+      system += ` Focus on verifying the endpoint, repository, and the exact responsePath; avoid revealing the final value.`;
+    }
 
     // Few-shot examples from default quests (kept concise)
     const examples = [
@@ -57,6 +65,9 @@ async function generateHint(req, res) {
       }
     ];
 
+    // Select only examples that match the current task type to avoid bias
+    const examplesForType = examples.filter(e => e.user.includes(`Task Type: ${type}`));
+
     const user = `Task Type: ${type}\n${contextParts.join('\n')}\n\nGenerate ONE concise hint. Avoid revealing the exact answer.`;
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -64,8 +75,8 @@ async function generateHint(req, res) {
       try {
         const messages = [
           { role: 'system', content: system },
-          // Insert few-shot pairs
-          ...examples.flatMap(e => ([{ role: 'user', content: e.user }, { role: 'assistant', content: e.assistant }])),
+          // Insert only task-relevant few-shot pairs
+          ...examplesForType.flatMap(e => ([{ role: 'user', content: e.user }, { role: 'assistant', content: e.assistant }])),
           { role: 'user', content: user }
         ];
 

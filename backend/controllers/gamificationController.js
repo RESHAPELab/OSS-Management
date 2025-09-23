@@ -10,6 +10,8 @@ const Hint = require("../models/HintModel");
 const Readme = require("../models/ReadmeModel");
 const UserQuestProgress = require("../models/UserQuestProgressModel");
 const UserRepo = require("../models/UserRepoModel");
+// Batch README updater (used post-migration/purple deploy)
+const { updateReadmeAcrossRepos } = require("./groupController");
 
 const generateNextTask = async (req, res) => {
     const { userId, questId } = req.body;
@@ -1694,7 +1696,29 @@ const purpleDeployQuest = async (req, res) => {
                     // Close database connection
             await ossDoorwayClient.close();
             console.log(`🔗 [PURPLE-DEPLOYMENT] Database connection closed`);
-            
+
+            // Post-migration: batch update README across all student repos in this class
+            try {
+                console.log(`📝 [PURPLE-DEPLOYMENT] Starting batch README update for class ${classId}...`);
+                // Load saved README content for the class (if any)
+                const savedReadme = await Readme.findOne({ group: classId });
+                const content = savedReadme ? savedReadme.content : `# ${classInfo.groupName}\n\n---\n\n### 🕒 Progress Update`;
+                const fileName = savedReadme?.fileName || 'README.md';
+
+                // Reuse existing controller logic via function call
+                const mockReq = { params: { groupId: classId }, body: { content, fileName, pushToRepos: true } };
+                const mockRes = {
+                    _status: 200,
+                    _json: null,
+                    status(code) { this._status = code; return this; },
+                    json(obj) { this._json = obj; return this; }
+                };
+                await updateReadmeAcrossRepos(mockReq, mockRes);
+                console.log(`✅ [PURPLE-DEPLOYMENT] Batch README update complete for class ${classId}`);
+            } catch (batchErr) {
+                console.error(`❌ [PURPLE-DEPLOYMENT] Batch README update failed:`, batchErr.message);
+            }
+
             return res.status(200).json({
                 message: `Successfully created new configuration with appended quest ${newQuestId} and migrated ${migratedUsers} users`,
                 baseConfigId: originalConfigId, // The config we built from (could be original or previous purple)

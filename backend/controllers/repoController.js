@@ -157,7 +157,7 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
     console.log(`🌟 [UNLOCK-QUEST] ✅ Successfully unlocked ${questId} for ${username}`);
     
     // Create GitHub issues for the first few tasks (based on buffer size)
-    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 20;
+    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
     const orderedTasks = Object.keys(questConfig[questId])
       .filter((key) => /^T\d+$/i.test(key))
       .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
@@ -1687,26 +1687,28 @@ Repository for students in ${className}.`;
       }).replace(',', '');
       let progressSection = `\n\n---\n\n### 🕒 Progress Update: ${timestamp} MST\n\n### ⚙️ Available Quests\n\n`;
 
-      // Determine the first quest (prefer Q0 or a quest without prerequisites)
-      const firstQuest = customSequenceData.questSequence.find(q => !q.metadata?.prerequisite || q.isQ0 || q.metadata?.isQ0) || customSequenceData.questSequence[0];
-      if (firstQuest) {
-        const questTitle = firstQuest.metadata?.title || firstQuest.title || '';
-        progressSection += `- ${firstQuest.questId} - ${questTitle}\n`;
-        if (firstQuest.tasks && typeof firstQuest.tasks === 'object') {
-          const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
-          const taskEntries = Object.entries(firstQuest.tasks).filter(([key]) => key !== 'metadata');
-          
-          taskEntries.forEach(([taskKey, taskVal], index) => {
-            const taskDesc = taskVal.desc || taskVal.description || taskVal.name || '';
-            
-            // Add clickable link for tasks up to buffer size
-            if (index < taskBufferSize) {
-              const issueNumber = index + 1;
-              progressSection += `  - ${taskKey} - ${taskDesc} [[Click here to start](https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues/${issueNumber})]\n`;
-            } else {
-              progressSection += `  - ${taskKey} - ${taskDesc}\n`;
-            }
-          });
+      // List all available quests and tasks; link only up to buffer size per quest
+      if (Array.isArray(customSequenceData.questSequence)) {
+        const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+        for (const quest of customSequenceData.questSequence) {
+          const questId = quest.questId || quest.metadata?.questId;
+          const questTitle = quest.metadata?.title || quest.title || '';
+          if (!questId) continue;
+          progressSection += `- ${questId} - ${questTitle}\n`;
+          if (quest.tasks && typeof quest.tasks === 'object') {
+            const taskEntries = Object.entries(quest.tasks).filter(([key]) => key !== 'metadata');
+            taskEntries.forEach(([taskKey, taskVal], index) => {
+              const taskDesc = taskVal.desc || taskVal.description || taskVal.name || '';
+              const qLower = String(questId).toLowerCase();
+              const tLower = String(taskKey).toLowerCase();
+              if (index < taskBufferSize) {
+                const issuesQueryUrl = `https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues?q=label:quest-${qLower}+label:task-${tLower}`;
+                progressSection += `  - ${taskKey} - ${taskDesc} [[Click here to start](${issuesQueryUrl})]\n`;
+              } else {
+                progressSection += `  - ${taskKey} - ${taskDesc}\n`;
+              }
+            });
+          }
         }
       }
 
