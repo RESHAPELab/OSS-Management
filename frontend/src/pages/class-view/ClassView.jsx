@@ -145,6 +145,10 @@ const ClassView = () => {
     const [generateJsonConfig, setGenerateJsonConfig] = useState(null);
     // Add state to track total repos fetched
     const [totalReposFetched, setTotalReposFetched] = useState(null);
+    
+    // Quest grades dialog state
+    const [showQuestGradesDialog, setShowQuestGradesDialog] = useState(false);
+    const [selectedQuest, setSelectedQuest] = useState(null);
 
     useEffect(() => {
         if (authUser && classId) {
@@ -191,6 +195,17 @@ const ClassView = () => {
     
     const toggleAccordion = (index) => {
         setActiveIndex(activeIndex === index ? null : index);
+    };
+    
+    // Handle quest grades dialog
+    const handleQuestClick = (quest, questIndex) => {
+        setSelectedQuest({ ...quest, questIndex });
+        setShowQuestGradesDialog(true);
+    };
+    
+    const handleCloseQuestGradesDialog = () => {
+        setShowQuestGradesDialog(false);
+        setSelectedQuest(null);
     };
     
     useEffect(() => {
@@ -2563,8 +2578,10 @@ const ClassView = () => {
                                                             gap: 2,
                                                             p: 2,
                                                             borderBottom: '1px solid #e0e0e0',
-                                                            '&:last-child': { borderBottom: 'none' }
-                                                        }}>
+                                                            '&:last-child': { borderBottom: 'none' },
+                                                            cursor: 'pointer',
+                                                            '&:hover': { backgroundColor: '#f5f5f5' }
+                                                        }} onClick={() => handleQuestClick(quest, questIndex)}>
                                                             <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                                 {questTitle}
                                                             </Typography>
@@ -3233,6 +3250,299 @@ Your current progress will be displayed here as you complete quests.
                 >
                   Copy Link
                 </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Quest Grades Dialog */}
+            <Dialog 
+              open={showQuestGradesDialog} 
+              onClose={handleCloseQuestGradesDialog} 
+              maxWidth="lg" 
+              fullWidth
+              PaperProps={{
+                sx: {
+                  height: '90vh',
+                  maxHeight: '90vh'
+                }
+              }}
+            >
+              <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AssessmentIcon />
+                Quest Grades: {selectedQuest?.title || selectedQuest?.questTitle || 'Unknown Quest'}
+              </DialogTitle>
+              <DialogContent sx={{ height: 'calc(100% - 120px)', overflow: 'hidden' }}>
+                {selectedQuest && (
+                  <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    
+                    <Box sx={{ flex: 1, overflow: 'auto' }}>
+                      <Box sx={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                        gap: 1,
+                        p: 1,
+                        bgcolor: '#f5f5f5',
+                        borderRadius: 1,
+                        mb: 1,
+                        fontWeight: 600
+                      }}>
+                        <Typography variant="body2">Student</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Completed</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Score</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Tasks</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Progress</Typography>
+                      </Box>
+                      
+                      {studentData.map((student) => {
+                        const scores = studentScores[student] || {};
+                        const questId = selectedQuest.id || selectedQuest._id || `Q${selectedQuest.questIndex + 1}`;
+                        const questTitle = selectedQuest.title || selectedQuest.questTitle || questId;
+                        
+                        // Debug logging for first student to understand data structure
+                        if (student === studentData[0]) {
+                          console.log('🔍 [QuestGradesDialog] Debug for student:', student);
+                          console.log('🔍 [QuestGradesDialog] Full scores object:', scores);
+                          console.log('🔍 [QuestGradesDialog] Quest ID being searched:', questId);
+                          console.log('🔍 [QuestGradesDialog] Quest title being searched:', questTitle);
+                          console.log('🔍 [QuestGradesDialog] Quest progress keys available:', scores.questProgress ? Object.keys(scores.questProgress) : 'No questProgress');
+                          console.log('🔍 [QuestGradesDialog] Completed array:', scores.completed);
+                          console.log('🔍 [QuestGradesDialog] Accepted array:', scores.accepted);
+                          console.log('🔍 [QuestGradesDialog] Overall points:', scores.points);
+                          console.log('🔍 [QuestGradesDialog] Overall XP:', scores.xp);
+                          console.log('🔍 [QuestGradesDialog] Overall completion:', scores.completion);
+                        }
+                        
+                        // Get quest-specific data
+                        const possibleQuestKeys = [
+                          questId,
+                          `${(classInfo.groupName || '').replace(/[^a-zA-Z0-9]+/g, '')}-${questId}`,
+                          questTitle,
+                          (selectedQuest.questId || selectedQuest.id || selectedQuest._id),
+                        ];
+                        
+                        let questProgress = null;
+                        if (scores.questProgress) {
+                          for (const key of possibleQuestKeys) {
+                            if (scores.questProgress[key]) {
+                              questProgress = scores.questProgress[key];
+                              if (student === studentData[0]) {
+                                console.log('🔍 [QuestGradesDialog] Found quest progress with key:', key);
+                                console.log('🔍 [QuestGradesDialog] Quest progress data:', questProgress);
+                                console.log('🔍 [QuestGradesDialog] Quest progress tasks:', questProgress.tasks);
+                                if (questProgress.tasks) {
+                                  console.log('🔍 [QuestGradesDialog] Task entries:', Object.entries(questProgress.tasks));
+                                  Object.entries(questProgress.tasks).forEach(([taskId, taskData]) => {
+                                    console.log(`🔍 [QuestGradesDialog] Task ${taskId}:`, taskData);
+                                  });
+                                }
+                              }
+                              break;
+                            }
+                          }
+                        }
+                        
+                        // Initialize values
+                        let isCompleted = questProgress?.completed || false;
+                        let score = questProgress?.score || 0;
+                        let completedTasks = 0;
+                        let totalTasks = 0;
+                        let progress = questProgress?.completion || 0;
+                        
+                        // Always try to calculate from tasks first (for both completed and incomplete)
+                        if (questProgress?.tasks) {
+                          let calculatedScore = 0;
+                          let hasTaskScoreData = false;
+                          
+                          Object.entries(questProgress.tasks).forEach(([taskId, taskData]) => {
+                            totalTasks++;
+                            if (taskData.completed) {
+                              completedTasks++;
+                              calculatedScore += taskData.score || 0;
+                              if (taskData.score > 0) {
+                                hasTaskScoreData = true;
+                              }
+                            }
+                          });
+                          
+                          // Use calculated values if we have any task data
+                          if (totalTasks > 0) {
+                            progress = Math.round((completedTasks / totalTasks) * 100);
+                            
+                            // If tasks don't have score data, estimate from quest configuration
+                            if (!hasTaskScoreData && completedTasks > 0) {
+                              const completionRatio = completedTasks / totalTasks;
+                              
+                              // Try to get quest points from the quest configuration
+                              const questConfig = questBreakdownQuests[selectedQuest.questIndex];
+                              let questPoints = 100; // Default fallback
+                              
+                              if (questConfig?.tasks) {
+                                // Calculate expected points from quest config
+                                let expectedPoints = 0;
+                                Object.entries(questConfig.tasks).forEach(([taskId, taskConfig]) => {
+                                  expectedPoints += taskConfig.points !== undefined ? taskConfig.points : 100;
+                                });
+                                
+                                // Calculate partial scores based on completed tasks
+                                calculatedScore = Math.round(expectedPoints * completionRatio);
+                              } else {
+                                // Fallback: estimate from overall scores
+                                const totalQuests = questBreakdownQuests.length;
+                                const estimatedScorePerQuest = Math.round(scores.points / totalQuests);
+                                calculatedScore = Math.round(estimatedScorePerQuest * completionRatio);
+                              }
+                            }
+                            
+                            score = calculatedScore;
+                            
+                            // Update completion status based on actual task completion
+                            isCompleted = completedTasks === totalTasks;
+                          }
+                        }
+                        
+                        // If no quest-specific data found, try to get from overall scores
+                        if (!questProgress) {
+                          // Try different data sources for completion and scores
+                          
+                          // 1. Check if quest is in completed array
+                          if (scores.completed && Array.isArray(scores.completed)) {
+                            const questInCompleted = scores.completed.find(q => 
+                              q.questId === questId || q.questTitle === questTitle || q === questId || q === questTitle
+                            );
+                            if (questInCompleted) {
+                              isCompleted = true;
+                              if (typeof questInCompleted === 'object') {
+                                score = questInCompleted.score || 0;
+                                progress = questInCompleted.progress || 100;
+                              } else {
+                                progress = 100;
+                              }
+                            }
+                          }
+                          
+                          // 2. Check if quest is in accepted quests
+                          if (scores.accepted && Array.isArray(scores.accepted)) {
+                            const questInAccepted = scores.accepted.find(q => 
+                              q.questId === questId || q.questTitle === questTitle || q === questId || q === questTitle
+                            );
+                            if (questInAccepted && !isCompleted) {
+                              isCompleted = true;
+                              if (typeof questInAccepted === 'object') {
+                                score = questInAccepted.score || 0;
+                                progress = questInAccepted.progress || 50; // Partial completion
+                              } else {
+                                progress = 50;
+                              }
+                            }
+                          }
+                          
+                          // 3. Try to get from overall completion percentage and distribute points
+                          if (isCompleted && score === 0 && scores.points && scores.completion) {
+                            // If we know it's completed but no specific score, estimate from overall progress
+                            const totalQuests = questBreakdownQuests.length;
+                            const estimatedScorePerQuest = Math.round(scores.points / totalQuests);
+                            
+                            score = estimatedScorePerQuest;
+                            progress = 100;
+                            // Estimate task completion based on overall progress
+                            if (totalTasks === 0) {
+                              completedTasks = totalTasks; // Assume all tasks completed if quest is completed
+                            }
+                          }
+                        }
+                        
+                        // Final fallback: if quest is completed but still no score, distribute overall scores
+                        if (isCompleted && score === 0 && scores.points > 0) {
+                          const totalQuests = questBreakdownQuests.length;
+                          score = Math.round(scores.points / totalQuests);
+                          progress = 100;
+                          // Estimate task completion based on overall progress
+                          if (totalTasks === 0) {
+                            completedTasks = totalTasks; // Assume all tasks completed if quest is completed
+                          }
+                        }
+                        
+                        
+                        // If still no progress data but student has overall progress, estimate based on quest position
+                        if (progress === 0 && scores.completion > 0) {
+                          const questPosition = selectedQuest.questIndex + 1;
+                          const totalQuests = questBreakdownQuests.length;
+                          
+                          // Estimate if student should have started this quest based on overall completion
+                          const questThreshold = (questPosition / totalQuests) * 100;
+                          if (scores.completion >= questThreshold * 0.5) { // Started if 50% of threshold reached
+                            progress = Math.min(Math.round((scores.completion / questThreshold) * 50), 50); // Max 50% for incomplete
+                            
+                            // Estimate partial scores
+                            if (scores.points > 0) {
+                              const estimatedScorePerQuest = Math.round(scores.points / totalQuests);
+                              score = Math.round(estimatedScorePerQuest * (progress / 100));
+                            }
+                            // Estimate task completion
+                            if (totalTasks === 0) {
+                              // If no task data, estimate based on progress
+                              completedTasks = Math.round((progress / 100) * 3); // Assume ~3 tasks per quest
+                              totalTasks = 3;
+                            }
+                          }
+                        }
+                        
+                        if (student === studentData[0]) {
+                          console.log('🔍 [QuestGradesDialog] Final values for first student:', {
+                            isCompleted,
+                            score,
+                            completedTasks,
+                            totalTasks,
+                            progress,
+                            questProgressExists: !!questProgress,
+                            questProgressTasks: questProgress?.tasks ? Object.keys(questProgress.tasks).length : 0,
+                            overallCompletion: scores.completion
+                          });
+                        }
+                        
+                        return (
+                          <Box key={student} sx={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                            gap: 1,
+                            p: 1,
+                            borderBottom: '1px solid #e0e0e0',
+                            '&:hover': { bgcolor: '#f8f9fa' }
+                          }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {student}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                              {isCompleted ? (
+                                <CheckCircleIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                              ) : (
+                                <Typography variant="body2" color="text.secondary"></Typography>
+                              )}
+                            </Box>
+                            <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 500 }}>
+                              {score}
+                            </Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 500 }}>
+                              {totalTasks > 0 ? `${completedTasks}/${totalTasks}` : '0/0'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={progress} 
+                                sx={{ flexGrow: 1, height: 6, borderRadius: 3 }}
+                              />
+                              <Typography variant="body2" sx={{ minWidth: 35 }}>
+                                {progress}%
+                              </Typography>
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseQuestGradesDialog}>Close</Button>
               </DialogActions>
             </Dialog>
             </Box>

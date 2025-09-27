@@ -897,6 +897,7 @@ const GenerateJson = () => {
         const draftConfig = response.data.data.draftQuestConfig || { questSequence: [] };
         setDraftQuests(draftConfig);
         console.log("✅ Loaded draft quests:", draftConfig.questSequence?.length || 0);
+        console.log("🔍 [LOAD-DRAFT-QUESTS] Quest titles:", draftConfig.questSequence?.map(q => q.title).join(', ') || 'none');
       }
     } catch (error) {
       console.error("Error loading draft quests:", error);
@@ -976,6 +977,10 @@ const GenerateJson = () => {
         setDraftSaveStatus("✅ Draft quest deleted successfully!");
         setTimeout(() => setDraftSaveStatus(""), 3000);
         console.log(`✅ [DELETE-DRAFT-QUEST] Successfully deleted quest at index ${questIndex}`);
+        
+        // Verify the deletion by reloading data from backend
+        console.log(`🔄 [DELETE-DRAFT-QUEST] Reloading data to verify deletion...`);
+        await loadDraftQuests();
       } else {
         // If backend failed, reload to get correct state
         console.log(`❌ [DELETE-DRAFT-QUEST] Backend reported failure, reloading...`);
@@ -3775,7 +3780,7 @@ Student can now start their quest journey!`);
             <Stack direction="row" alignItems="center" spacing={2} mb={2}>
               <EditIcon sx={{ color: "#ffa726" }} />
               <Typography variant="h6" sx={{ color: "#ffa726", fontWeight: 600 }}>
-                Draft Quests ({draftQuests.questSequence?.length || 0})
+                Draft Quest Sequence Builder ({draftQuests.questSequence?.length || 0})
               </Typography>
               {draftSaveStatus && (
                 <Typography variant="body2" sx={{ color: "#666", fontStyle: "italic" }}>

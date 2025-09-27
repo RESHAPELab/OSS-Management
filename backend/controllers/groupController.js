@@ -1885,13 +1885,20 @@ const deleteDraftQuest = async (req, res) => {
 
         const group = await Group.findById(classId);
         if (!group) {
+            console.log(`❌ [deleteDraftQuest] Class not found: ${classId}`);
             return res.status(404).json({
                 success: false,
                 message: 'Class not found'
             });
         }
 
+        console.log(`🔍 [deleteDraftQuest] Found group: ${group.groupName}`);
+        console.log(`🔍 [deleteDraftQuest] Draft config exists: ${!!group.draftQuestConfig}`);
+        console.log(`🔍 [deleteDraftQuest] Quest sequence exists: ${!!group.draftQuestConfig?.questSequence}`);
+        console.log(`🔍 [deleteDraftQuest] Quest sequence length: ${group.draftQuestConfig?.questSequence?.length || 0}`);
+
         if (!group.draftQuestConfig || !group.draftQuestConfig.questSequence) {
+            console.log(`❌ [deleteDraftQuest] No draft quests found for class: ${classId}`);
             return res.status(404).json({
                 success: false,
                 message: 'No draft quests found'
@@ -1899,30 +1906,61 @@ const deleteDraftQuest = async (req, res) => {
         }
 
         const questIndexNum = parseInt(questIndex, 10);
+        console.log(`🔍 [deleteDraftQuest] Parsed quest index: ${questIndexNum}`);
+        
         if (questIndexNum < 0 || questIndexNum >= group.draftQuestConfig.questSequence.length) {
+            console.log(`❌ [deleteDraftQuest] Invalid quest index ${questIndexNum}, valid range: 0-${group.draftQuestConfig.questSequence.length - 1}`);
             return res.status(400).json({
                 success: false,
-                message: 'Invalid quest index'
+                message: `Invalid quest index ${questIndexNum}, valid range: 0-${group.draftQuestConfig.questSequence.length - 1}`
             });
         }
 
-        // Remove the quest at the specified index
-        group.draftQuestConfig.questSequence.splice(questIndexNum, 1);
-        group.draftQuestLastUpdated = new Date();
-        await group.save();
+        // Log the quest being deleted
+        const questToDelete = group.draftQuestConfig.questSequence[questIndexNum];
+        console.log(`🗑️ [deleteDraftQuest] Deleting quest: "${questToDelete?.title || 'Unknown'}" at index ${questIndexNum}`);
 
-        console.log(`✅ [deleteDraftQuest] Successfully deleted draft quest for class: ${group.groupName}`);
+        // Create a new array without the quest to delete (more reliable than splice)
+        const updatedQuestSequence = group.draftQuestConfig.questSequence.filter((_, index) => index !== questIndexNum);
+        
+        console.log(`🔍 [deleteDraftQuest] Original length: ${group.draftQuestConfig.questSequence.length}`);
+        console.log(`🔍 [deleteDraftQuest] New length: ${updatedQuestSequence.length}`);
+
+        // Update the draft config with the new array
+        group.draftQuestConfig = {
+            ...group.draftQuestConfig,
+            questSequence: updatedQuestSequence
+        };
+        
+        group.draftQuestLastUpdated = new Date();
+        
+        console.log(`💾 [deleteDraftQuest] Saving changes to database...`);
+        const savedGroup = await group.save();
+        
+        console.log(`✅ [deleteDraftQuest] Database save completed`);
+        console.log(`🔍 [deleteDraftQuest] Final quest count: ${savedGroup.draftQuestConfig.questSequence.length}`);
+        
+        // Verify the deletion by re-fetching from database
+        const verificationGroup = await Group.findById(classId);
+        if (verificationGroup && verificationGroup.draftQuestConfig && verificationGroup.draftQuestConfig.questSequence) {
+            console.log(`🔍 [deleteDraftQuest] Verification - quest count after re-fetch: ${verificationGroup.draftQuestConfig.questSequence.length}`);
+            console.log(`🔍 [deleteDraftQuest] Verification - quest titles: ${verificationGroup.draftQuestConfig.questSequence.map(q => q.title).join(', ')}`);
+        } else {
+            console.log(`⚠️ [deleteDraftQuest] Verification - no draft config found after save`);
+        }
 
         res.status(200).json({
             success: true,
             message: 'Draft quest deleted successfully',
             data: {
-                questCount: group.draftQuestConfig.questSequence.length
+                questCount: savedGroup.draftQuestConfig.questSequence.length,
+                deletedQuestTitle: questToDelete?.title || 'Unknown'
             }
         });
 
     } catch (error) {
-        console.error('Error deleting draft quest:', error);
+        console.error('❌ [deleteDraftQuest] Error deleting draft quest:', error);
+        console.error('❌ [deleteDraftQuest] Stack trace:', error.stack);
         res.status(500).json({
             success: false,
             message: 'Error deleting draft quest',
