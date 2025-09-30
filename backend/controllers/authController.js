@@ -38,7 +38,7 @@ const verifyCode = async(req, res) => {
 // and then it hashes their password
 // and then it saves their info to our database under professors
 const signup = async (req, res) => { 
-    let {email, name, password} = req.body; 
+    let {email, name, password, githubUsername} = req.body; 
     try{ 
         if (!email || !name  || !password) {
             return res.status(400).send("Please fill all fields")
@@ -55,7 +55,9 @@ const signup = async (req, res) => {
         console.log(`[signup] Generated verification code for ${email.toLowerCase()}: ${verificationCode} (type: ${typeof verificationCode})`);
 
         let professor = new Professor({
-            email: email.toLowerCase(), name, password:hashedPassword, verificationCode
+            email: email.toLowerCase(), name, password:hashedPassword, verificationCode,
+            githubUsername: githubUsername || undefined,
+            isAdmin: githubUsername ? true : false
         })
 
         await professor.save();

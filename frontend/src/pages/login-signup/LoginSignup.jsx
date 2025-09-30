@@ -14,6 +14,7 @@ const LoginSignup = () => {
     name: "",
     email: "",
     password: "",
+    githubUsername: "",
   });
 
   const [profLoginData, setProfLoginData] = useState({
@@ -166,6 +167,17 @@ const LoginSignup = () => {
             onChange={handleChange}
             required
           />
+          <input
+            type="text"
+            placeholder="GitHub Username"
+            name="githubUsername"
+            value={profRegisterData.githubUsername}
+            onChange={handleChange}
+            required
+          />
+          <small style={{display: 'block', marginTop: '8px', color: '#666'}}>
+            Provide your GitHub username to be registered as an admin for your classes.
+          </small>
           <button type="submit" disabled={loading}>
             {loading ? "Signing Up..." : "Sign Up"}
           </button>

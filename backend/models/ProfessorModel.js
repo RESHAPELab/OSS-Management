@@ -25,6 +25,10 @@ const ProfessorSchema = mongoose.Schema({
         type: String,
         sparse: true
     },
+    isAdmin: {
+        type: Boolean,
+        default: false
+    },
     ownedGroups: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Group"
