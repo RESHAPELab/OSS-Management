@@ -1136,6 +1136,9 @@ const unlockQuestForStudents = async (req, res) => {
 // Purple Deploy Quest - Creates new config with appended quest while keeping original
 // Expected body: { classId, draftQuestData }
 const purpleDeployQuest = async (req, res) => {
+    // Import deployment state service
+    const axios = require('axios');
+    
     try {
         const { classId, draftQuestData } = req.body;
         
@@ -1162,6 +1165,20 @@ const purpleDeployQuest = async (req, res) => {
         const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
         
         console.log(`🔗 [PURPLE-DEPLOYMENT] Connecting to OSS-Doorway database: ${ossDoorwayDbName}`);
+        
+        // Notify OSS-Doorway that deployment is starting
+        try {
+            await axios.post('http://localhost:3000/api/deployment/start', {
+                classId,
+                questId: draftQuestData?.nextQuestId,
+                studentsCount: 0, // Will be updated later
+                expectedIssues: 0 // Will be calculated later
+            });
+            console.log(`📡 [PURPLE-DEPLOYMENT] Notified OSS-Doorway of deployment start`);
+        } catch (notifyError) {
+            console.warn(`⚠️ [PURPLE-DEPLOYMENT] Failed to notify OSS-Doorway of deployment start:`, notifyError.message);
+            // Continue deployment even if notification fails
+        }
         
         // Declare variables outside all try blocks so they're accessible throughout
         let migratedUsers = 0;
@@ -1243,9 +1260,21 @@ const purpleDeployQuest = async (req, res) => {
                 console.log(`📋 [PURPLE-DEPLOYMENT] Using legacy format with ${existingQuests.length} quests`);
             }
 
-            // Calculate the next quest number
-            nextQuestNumber = existingQuests.length + 1;
+            // Calculate the next quest number based on highest existing quest ID
+            const questNumbers = existingQuests.map(q => {
+                const match = (q.questId || '').match(/Q(\d+)/);
+                return match ? parseInt(match[1]) : 0;
+            }).filter(n => n > 0);
+            
+            nextQuestNumber = questNumbers.length > 0 ? Math.max(...questNumbers) + 1 : 1;
             newQuestId = `Q${nextQuestNumber}`;
+            
+            console.log(`🔍 [PURPLE-DEPLOYMENT] Quest numbering analysis:`, {
+                existingQuestIds: existingQuests.map(q => q.questId),
+                extractedNumbers: questNumbers,
+                nextQuestNumber,
+                newQuestId
+            });
 
             console.log(`🔍 [PURPLE-DEPLOYMENT] Step 4: Creating new quest configuration with appended quest...`);
             // 4. Create new quest with proper metadata
@@ -1476,32 +1505,32 @@ const purpleDeployQuest = async (req, res) => {
             const migrationFailures = [];
             const migrationSuccesses = [];
             
-            for (const user of usersToMigrate) {
-                try {
-                    const updateResult = await userDataCollection.updateOne(
+                for (const user of usersToMigrate) {
+                    try {
+                        const updateResult = await userDataCollection.updateOne(
                             { _id: user._id },
-                        { 
-                            $set: { 
-                                'user_data.customGroupId': newConfig.classId,
-                                'user_data.customSequenceFile': `${newConfig.classId}.json`
+                            { 
+                                $set: { 
+                                    'user_data.customGroupId': newConfig.classId,
+                                    'user_data.customSequenceFile': `${newConfig.classId}.json`
+                                }
                             }
-                        }
-                    );
-                    
-                    if (updateResult.modifiedCount > 0) {
+                        );
+                        
+                        if (updateResult.modifiedCount > 0) {
                             migratedUsers++;
-                        usersWithNewQuestAccess.push(user._id);
-                        migrationSuccesses.push(user._id);
-                        console.log(`✅ [PURPLE-DEPLOYMENT] Migrated user: ${user._id}`);
+                            usersWithNewQuestAccess.push(user._id);
+                            migrationSuccesses.push(user._id);
+                            console.log(`✅ [PURPLE-DEPLOYMENT] Migrated user: ${user._id}`);
                         } else {
-                        const errorMsg = `No changes made to user ${user._id} (may already be migrated)`;
-                        console.log(`⚠️ [PURPLE-DEPLOYMENT] ${errorMsg}`);
+                            const errorMsg = `No changes made to user ${user._id} (may already be migrated)`;
+                            console.log(`⚠️ [PURPLE-DEPLOYMENT] ${errorMsg}`);
+                            migrationFailures.push({ user: user._id, error: errorMsg });
+                        }
+                    } catch (migrationError) {
+                        const errorMsg = `Failed to migrate user ${user._id}: ${migrationError.message}`;
+                        console.error(`❌ [PURPLE-DEPLOYMENT] ${errorMsg}`);
                         migrationFailures.push({ user: user._id, error: errorMsg });
-                    }
-                } catch (migrationError) {
-                    const errorMsg = `Failed to migrate user ${user._id}: ${migrationError.message}`;
-                    console.error(`❌ [PURPLE-DEPLOYMENT] ${errorMsg}`);
-                    migrationFailures.push({ user: user._id, error: errorMsg });
                 }
             }
             
@@ -1625,11 +1654,11 @@ const purpleDeployQuest = async (req, res) => {
                                 
                                 // Prefer latest closed issue; fallback to latest open
                                 const closedIssuesResponse = await axios.get(`https://api.github.com/repos/OSS-Doorway-Dev/${repo}/issues`, {
-                                     headers: {
-                                         'Authorization': `token ${accessToken}`,
-                                         'Accept': 'application/vnd.github.v3+json',
-                                         'User-Agent': 'OSS-Management-Backend'
-                                     },
+                            headers: {
+                                'Authorization': `token ${accessToken}`,
+                                'Accept': 'application/vnd.github.v3+json',
+                                'User-Agent': 'OSS-Management-Backend'
+                            },
                                      params: { state: 'closed', sort: 'updated', direction: 'desc', per_page: 10 }
                                  });
 
@@ -1651,14 +1680,14 @@ const purpleDeployQuest = async (req, res) => {
                                     console.log(`💬 [PURPLE-DEPLOYMENT] Posting "/accept ${newQuestId}" to ${username}'s issue...`);
                                     await axios.post(`https://api.github.com/repos/OSS-Doorway-Dev/${repo}/issues/${targetIssue.number}/comments`, {
                                         body: `/accept ${newQuestId}`
-                                    }, {
-                                        headers: {
-                                            'Authorization': `token ${accessToken}`,
-                                            'Accept': 'application/vnd.github.v3+json',
-                                            'User-Agent': 'OSS-Management-Backend'
-                                        }
-                                    });
-                                    
+                            }, {
+                                headers: {
+                                    'Authorization': `token ${accessToken}`,
+                                    'Accept': 'application/vnd.github.v3+json',
+                                    'User-Agent': 'OSS-Management-Backend'
+                                }
+                            });
+                            
                                     successCount++;
                                     console.log(`✅ [PURPLE-DEPLOYMENT] Successfully unlocked ${newQuestId} for ${username}`);
             } else {
@@ -1719,11 +1748,28 @@ const purpleDeployQuest = async (req, res) => {
                 console.error(`❌ [PURPLE-DEPLOYMENT] Batch README update failed:`, batchErr.message);
             }
 
+            // Notify OSS-Doorway that deployment is complete
+            try {
+                await axios.post('http://localhost:3000/api/deployment/complete', {
+                    classId,
+                    results: {
+                        questId: newQuestId,
+                        migratedUsers,
+                        autoUnlockedCount: autoUnlockSuccess,
+                        studentsReadyForNewQuest: studentsReadyForNewQuest.length
+                    }
+                });
+                console.log(`📡 [PURPLE-DEPLOYMENT] Notified OSS-Doorway of deployment completion`);
+            } catch (notifyError) {
+                console.warn(`⚠️ [PURPLE-DEPLOYMENT] Failed to notify OSS-Doorway of deployment completion:`, notifyError.message);
+                // Continue with response even if notification fails
+            }
+
             return res.status(200).json({
                 message: `Successfully created new configuration with appended quest ${newQuestId} and migrated ${migratedUsers} users`,
                 baseConfigId: originalConfigId, // The config we built from (could be original or previous purple)
                 newConfigId,
-                newQuestId,
+                            newQuestId,
                 baseQuests: existingQuests.length, // Quests in the config we built from
                 newTotalQuests: newTotalQuests,   // Total quests in new config
                 migratedUsers,
@@ -1747,10 +1793,10 @@ const purpleDeployQuest = async (req, res) => {
                 }
             return res.status(500).json({ message: 'Failed to deploy quest', error: error.message });
         }
-    } catch (error) {
-        console.error(`❌ [PURPLE-DEPLOYMENT] Error:`, error);
-        return res.status(500).json({ message: 'Failed to deploy quest', error: error.message });
-    }
+        } catch (error) {
+            console.error(`❌ [PURPLE-DEPLOYMENT] Error:`, error);
+            return res.status(500).json({ message: 'Failed to deploy quest', error: error.message });
+        }
 };
 
 // Update live task config for current users using Purple Deploy approach

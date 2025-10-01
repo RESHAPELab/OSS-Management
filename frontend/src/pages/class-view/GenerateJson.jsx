@@ -484,16 +484,24 @@ const GenerateJson = () => {
   }, [lastSavedAt]);
 
   // Function to assign sequential quest IDs based on position
+  // For purple deploy, preserve original quest IDs to maintain append-only behavior
   const assignSequentialQuestIds = (questSequence) => {
     return questSequence.map((quest, index) => {
+      // Preserve original quest ID if it exists and is valid (Q1, Q2, etc.)
+      // Only assign new sequential ID if the original ID is not in the expected format
+      const originalId = quest.questId;
+      const isValidQuestId = originalId && /^Q\d+$/.test(originalId);
+      
       const updatedQuest = {
         ...quest,
-        questId: `Q${index + 1}`,
+        questId: isValidQuestId ? originalId : `Q${index + 1}`,
         sequenceNumber: index,
       };
       
       // Debug logging to check if tasks are preserved
       console.log(`🔍 [assignSequentialQuestIds] Quest ${index + 1}:`, {
+        originalId,
+        preservedId: updatedQuest.questId,
         originalTasks: quest.tasks,
         updatedTasks: updatedQuest.tasks,
         tasksPreserved: !!updatedQuest.tasks
@@ -1097,8 +1105,19 @@ const GenerateJson = () => {
     });
 
     try {
-      // Calculate the next quest number
-      const nextQuestNumber = jsonContent.questSequence.length + 1;
+      // Calculate the next quest number based on highest existing quest ID
+      const questNumbers = jsonContent.questSequence.map(q => {
+        const match = (q.questId || '').match(/Q(\d+)/);
+        return match ? parseInt(match[1]) : 0;
+      }).filter(n => n > 0);
+      
+      const nextQuestNumber = questNumbers.length > 0 ? Math.max(...questNumbers) + 1 : 1;
+      
+      console.log(`🔍 [FRONTEND] Quest numbering analysis:`, {
+        existingQuestIds: jsonContent.questSequence.map(q => q.questId),
+        extractedNumbers: questNumbers,
+        nextQuestNumber
+      });
       
       const questToDeploy = {
         ...draftQuest,
