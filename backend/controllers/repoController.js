@@ -168,7 +168,7 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
       console.log(`🌟 [UNLOCK-QUEST] Database updated for ${username} - ${questId} accepted`);
     }
     // Create GitHub issues for the first few tasks (based on buffer size)
-    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 3;
     const orderedTasks = Object.keys(questConfig[questId])
       .filter((key) => /^T\d+$/i.test(key))
       .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
@@ -1926,7 +1926,7 @@ Repository for students in ${className}.`;
 
       // List all available quests and tasks; link only up to buffer size per quest
       if (Array.isArray(customSequenceData.questSequence)) {
-        const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+        const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 3;
         let questCounter = 0; // Used to normalize TEMP_* IDs to Q1, Q2, ... ordering
         for (const quest of customSequenceData.questSequence) {
           questCounter += 1;
@@ -2596,7 +2596,7 @@ typings/
                 // 🌟 Enhanced Quest System: Check if enhanced quests are enabled
                 const isPurpleConfig = uniqueGroupId.includes('_purple_');
                 const enhancedQuestsEnabled = process.env.ENABLE_ENHANCED_QUESTS === 'true';
-                const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+                const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 3;
                 
                 console.log(`🌟 [ENHANCED-QUESTS] Enhanced mode: ${enhancedQuestsEnabled}, Purple config: ${isPurpleConfig}, Buffer size: ${taskBufferSize}`);
                 
