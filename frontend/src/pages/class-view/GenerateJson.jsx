@@ -483,6 +483,29 @@ const GenerateJson = () => {
     return `Saved successfully ${diffDay} days ago`;
   }, [lastSavedAt]);
 
+  // Helper function to sort quests by quest number
+  const sortQuestsByNumber = (questSequence) => {
+    return [...questSequence].sort((a, b) => {
+      const getQuestNumber = (quest) => {
+        // Try to get quest number from questId first (Q1, Q2, etc.)
+        const questId = quest.questId || quest.id;
+        if (questId && typeof questId === 'string') {
+          const match = questId.match(/Q(\d+)/i);
+          if (match) return parseInt(match[1], 10);
+        }
+        
+        // Try to get from title
+        const title = quest.title || quest.questTitle || '';
+        const match = title.match(/Q(\d+)/i);
+        return match ? parseInt(match[1], 10) : 999;
+      };
+      
+      const aNum = getQuestNumber(a);
+      const bNum = getQuestNumber(b);
+      return aNum - bNum;
+    });
+  };
+
   // Function to assign sequential quest IDs based on position
   // For purple deploy, preserve original quest IDs to maintain append-only behavior
   const assignSequentialQuestIds = (questSequence) => {
@@ -518,7 +541,9 @@ const GenerateJson = () => {
       questSequence.map((q) => ({ id: q.questId, title: q.title }))
     );
 
-    const updatedSequence = assignSequentialQuestIds(questSequence);
+    // Sort quests by quest number first
+    const sortedSequence = sortQuestsByNumber(questSequence);
+    const updatedSequence = assignSequentialQuestIds(sortedSequence);
 
     // Update prerequisites based on new IDs
     updatedSequence.forEach((quest, index) => {
@@ -1198,9 +1223,11 @@ const GenerateJson = () => {
         const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/quest-json-config`);
         if (response.data.success && response.data.data.hasConfig && response.data.data.questJsonConfig) {
           const validatedConfig = validateAndFixQuestConfig(response.data.data.questJsonConfig);
+          // Sort the quest sequence before updating IDs
+          const sortedSequence = sortQuestsByNumber(validatedConfig.questSequence);
           const configWithSequentialIds = {
             ...validatedConfig,
-            questSequence: updateQuestIds(validatedConfig.questSequence),
+            questSequence: updateQuestIds(sortedSequence),
           };
           setJsonContent(configWithSequentialIds);
           console.log(`✅ [FRONTEND] Quest data refreshed successfully`);
@@ -1460,9 +1487,11 @@ const GenerateJson = () => {
           const validatedConfig = validateAndFixQuestConfig(
             response.data.data.questJsonConfig
           );
+          // Sort the quest sequence before updating IDs
+          const sortedSequence = sortQuestsByNumber(validatedConfig.questSequence);
           const configWithSequentialIds = {
             ...validatedConfig,
-            questSequence: updateQuestIds(validatedConfig.questSequence),
+            questSequence: updateQuestIds(sortedSequence),
           };
           setJsonContent(configWithSequentialIds);
           setSaveStatusType("success");
@@ -1875,6 +1904,30 @@ Student can now start their quest journey!`);
             temperature: task.llmTextValidation?.temperature || 0.1,
             enableDetailedFeedback:
               task.llmTextValidation?.enableDetailedFeedback || false,
+          },
+          accept: acceptText,
+          success: successText,
+          error: errorText,
+          answer: "",
+        };
+      } else if (task.taskType === "imageValidation") {
+        const hasHints = Array.isArray(task.detailedHints) && task.detailedHints.length > 0;
+        const stripHelpLine = (text) =>
+          (text || "").replace(/\n?\s*You can type\s*\"help\"[^\n]*\n?/i, "");
+        const acceptText = task.acceptText;
+        const successText = (task.successText || "").replace("{points}", task.points);
+        const errorTextRaw = task.errorText;
+        const errorText = hasHints ? errorTextRaw : stripHelpLine(errorTextRaw);
+        taskData = {
+          ...taskData,
+          type: "imageValidation",
+          imageValidation: {
+            question: task.imageValidation?.question || "",
+            validationParameters:
+              task.imageValidation?.validationParameters || [],
+            temperature: task.imageValidation?.temperature || 0.1,
+            enableDetailedFeedback:
+              task.imageValidation?.enableDetailedFeedback || false,
           },
           accept: acceptText,
           success: successText,
@@ -9146,6 +9199,8 @@ const getTaskTypeColor = (taskType) => {
       return "#00bcd4";
     case "llm-text-validation":
       return "#ff9800";
+    case "imageValidation":
+      return "#673ab7";
     case "collect-info":
       return "#4caf50";
     default:
@@ -9179,6 +9234,8 @@ const getTaskTypeLabel = (taskType) => {
       return "Comment";
     case "llm-text-validation":
       return "LLM Text";
+    case "imageValidation":
+      return "LLM Image Validation";
     case "collect-info":
       return "Collect Info";
     default:
@@ -9514,9 +9571,15 @@ const TaskBlock = ({
         >
           <Chip
             label={getTaskTypeLabel(task.type)}
-            color="info"
             size="small"
-            sx={{ borderRadius: 2, width: "auto", flexShrink: 0 }}
+            sx={{ 
+              borderRadius: 2, 
+              width: "auto", 
+              flexShrink: 0,
+              backgroundColor: getTaskTypeColor(task.type),
+              color: "white",
+              fontWeight: 600
+            }}
           />
           <Chip
             label={`XP: ${task.xp ?? 0}`}

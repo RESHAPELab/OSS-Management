@@ -33,12 +33,14 @@ import {
   AccountCircle as AccountCircleIcon,
   EmojiEvents as EmojiEventsIcon,
   LocalFireDepartment as LocalFireDepartmentIcon,
-  AdminPanelSettings as AdminPanelSettingsIcon
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Route as RouteIcon
 } from '@mui/icons-material';
 import RepositoryStatusChecker from '../../components/RepositoryStatusChecker';
 import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
 import ManageAdmins from './ManageAdmins';
+import QuestRoadmap from './QuestRoadmap';
 
 let baseURL = API_BASE_URL;
 
@@ -1533,6 +1535,21 @@ const ClassView = () => {
                     isQ0: false,
                     tasks: quest.tasks // Keep tasks for other functionality
                 }));
+
+                // Sort custom quests by quest number (extract number from quest title)
+                const sortCustomQuests = (a, b) => {
+                    const getQuestNumber = (questTitle) => {
+                        // Extract quest number from titles like "Q10: A-6.1 - Conceptual Modeling"
+                        const match = questTitle.match(/Q(\d+)/i);
+                        return match ? parseInt(match[1], 10) : 999; // Default to 999 for quests without numbers
+                    };
+                    
+                    const aNum = getQuestNumber(a.title);
+                    const bNum = getQuestNumber(b.title);
+                    return aNum - bNum; // Sort numerically
+                };
+
+                customQuests.sort(sortCustomQuests);
                 
                 // Start with the fixed quests
                 const newUnifiedOrder = [
@@ -1986,7 +2003,28 @@ const ClassView = () => {
     };
 
     // Add this before the quest breakdown table rendering
-    const questBreakdownQuests = generateJsonConfig && generateJsonConfig.questSequence ? generateJsonConfig.questSequence : unifiedQuestOrder;
+    let questBreakdownQuests = generateJsonConfig && generateJsonConfig.questSequence ? generateJsonConfig.questSequence : unifiedQuestOrder;
+    
+    // Sort quest breakdown quests by quest number
+    questBreakdownQuests = [...questBreakdownQuests].sort((a, b) => {
+        const getQuestNumber = (quest) => {
+            // Try to get quest number from questId first (Q1, Q2, etc.)
+            const questId = quest.questId || quest.id;
+            if (questId && typeof questId === 'string') {
+                const match = questId.match(/Q(\d+)/i);
+                if (match) return parseInt(match[1], 10);
+            }
+            
+            // Try to get from title
+            const title = quest.title || quest.questTitle || '';
+            const match = title.match(/Q(\d+)/i);
+            return match ? parseInt(match[1], 10) : 999;
+        };
+        
+        const aNum = getQuestNumber(a);
+        const bNum = getQuestNumber(b);
+        return aNum - bNum;
+    });
 
     // Calculate total possible points for the class
     const totalPossiblePoints = (questBreakdownQuests || []).reduce((sum, quest) => {
@@ -2062,6 +2100,24 @@ const ClassView = () => {
                         }}
                     >
                         {sidebarOpen && 'Manage Quests'}
+                    </Button>
+
+                    <Button
+                        fullWidth
+                        startIcon={<RouteIcon />}
+                        onClick={() => setCurrentView('quest-roadmap')}
+                        sx={{
+                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                            mb: 1,
+                            py: 1.5,
+                            px: 2,
+                            bgcolor: currentView === 'quest-roadmap' ? '#fb5233' : 'transparent',
+                            color: currentView === 'quest-roadmap' ? 'white' : 'text.primary',
+                            borderRadius: 3,
+                            '&:hover': { bgcolor: currentView === 'quest-roadmap' ? '#e64a19' : 'rgba(0,0,0,0.04)' }
+                        }}
+                    >
+                        {sidebarOpen && 'Quest Roadmap'}
                     </Button>
 
                     <Button
@@ -2627,6 +2683,12 @@ const ClassView = () => {
                     </>
                 )}
                     </Container>
+                ) : currentView === 'quest-roadmap' ? (
+                    <QuestRoadmap 
+                        questBreakdownQuests={questBreakdownQuests}
+                    />
+                ) : currentView === 'manage-quests' ? (
+                    <GenerateJson />
                 ) : currentView === 'manage-admins' ? (
                     <ManageAdmins />
                 ) : currentView === 'manage-students' ? (
