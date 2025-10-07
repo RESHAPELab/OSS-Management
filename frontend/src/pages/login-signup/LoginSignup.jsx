@@ -8,6 +8,7 @@ let baseURL = API_BASE_URL;
 const LoginSignup = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
   const [profRegisterData, setProfRegisterData] = useState({
@@ -48,6 +49,7 @@ const LoginSignup = () => {
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
     
     try {
@@ -57,23 +59,30 @@ const LoginSignup = () => {
       );
       console.log(response.data);
       if (response.status === 201) {
+        setSuccess("Registration successful! Please check your email for verification code.");
         const professor = await axios.get(
           `${baseURL}/api/group/${response.data._id}`
         );
         if (professor) {
           localStorage.setItem("professor", JSON.stringify(professor.data));
-          window.location.href = "/verify";
+          setTimeout(() => {
+            window.location.href = "/verify";
+          }, 2000);
         }
       }
     } catch (error) {
       console.log(`Error registering:`, error);
+      let errorMessage = "Registration failed. Please try again.";
+      
       if (error.response?.data) {
-        setError(error.response.data);
+        errorMessage = typeof error.response.data === 'string' 
+          ? error.response.data 
+          : "Registration failed. Please try again.";
       } else if (error.message) {
-        setError(error.message);
-      } else {
-        setError("Registration failed. Please try again.");
+        errorMessage = error.message;
       }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -82,6 +91,7 @@ const LoginSignup = () => {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
     
     try {
@@ -90,29 +100,38 @@ const LoginSignup = () => {
         profLoginData
       );
       if (response.status === 200) {
+        setSuccess("Login successful! Redirecting...");
         const professor = await axios.get(
           `${baseURL}/api/group/${response.data._id}`
         );
         if (professor) {
           localStorage.setItem("professor", JSON.stringify(professor.data));
           if (!professor.data.verified) {
-            window.location.href = "/verify";
+            setTimeout(() => {
+              window.location.href = "/verify";
+            }, 1500);
           } else {
-            window.location.href = "/";
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 1500);
           }
         }
       }
     } catch (error) {
       console.log(`Error logging in:`, error);
+      let errorMessage = "Login failed. Please try again.";
+      
       if (error.response?.data?.error) {
-        setError(error.response.data.error);
+        errorMessage = error.response.data.error;
       } else if (error.response?.data) {
-        setError(error.response.data);
+        errorMessage = typeof error.response.data === 'string' 
+          ? error.response.data 
+          : "Login failed. Please try again.";
       } else if (error.message) {
-        setError(error.message);
-      } else {
-        setError("Login failed. Please try again.");
+        errorMessage = error.message;
       }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -129,13 +148,36 @@ const LoginSignup = () => {
           transform: 'translateX(-50%)',
           backgroundColor: '#ff4444',
           color: 'white',
-          padding: '10px 20px',
-          borderRadius: '5px',
-          zIndex: 1000,
-          maxWidth: '400px',
-          textAlign: 'center'
+          padding: '15px 25px',
+          borderRadius: '8px',
+          zIndex: 10000,
+          maxWidth: '450px',
+          textAlign: 'center',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          fontWeight: '500'
         }}>
           {error}
+        </div>
+      )}
+      
+      {/* Success Display */}
+      {success && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          backgroundColor: '#4CAF50',
+          color: 'white',
+          padding: '15px 25px',
+          borderRadius: '8px',
+          zIndex: 10000,
+          maxWidth: '450px',
+          textAlign: 'center',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+          fontWeight: '500'
+        }}>
+          {success}
         </div>
       )}
       
