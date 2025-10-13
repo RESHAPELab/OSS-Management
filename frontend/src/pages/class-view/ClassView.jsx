@@ -28,6 +28,7 @@ import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
+  Download as DownloadIcon,
   Assessment as AssessmentIcon,
   Close as CloseIcon,
   AccountCircle as AccountCircleIcon,
@@ -1984,6 +1985,182 @@ const ClassView = () => {
       }
     };
 
+    const generateCanvasGradeCSV = () => {
+        console.log('🔍 [Export] Starting CSV generation...');
+        console.log('🔍 [Export] studentData:', studentData);
+        console.log('🔍 [Export] studentScores:', studentScores);
+        console.log('🔍 [Export] questBreakdownQuests:', questBreakdownQuests);
+        
+        // Helper function to escape CSV values
+        const escapeCSV = (value) => {
+            if (value === null || value === undefined) return '';
+            const str = String(value);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
+
+        // Get all quests and tasks to create column headers
+        const allQuests = questBreakdownQuests || [];
+        const taskColumns = [];
+        
+        // Add basic student info columns
+        const basicColumns = [
+            'Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section'
+        ];
+        
+        // Add quest and task columns
+        allQuests.forEach(quest => {
+            if (quest.tasks && Array.isArray(quest.tasks)) {
+                quest.tasks.forEach(task => {
+                    const taskTitle = `${quest.title || quest.id} (${task.id || 'N/A'})`;
+                    taskColumns.push(taskTitle);
+                });
+            } else if (quest.tasks && typeof quest.tasks === 'object') {
+                Object.entries(quest.tasks).forEach(([taskId, task]) => {
+                    const taskTitle = `${quest.title || quest.id} (${taskId})`;
+                    taskColumns.push(taskTitle);
+                });
+            }
+        });
+        
+        // Add Canvas standard columns
+        const canvasColumns = [
+            'Quizzes & Assignments Current Score',
+            'Quizzes & Assignments Unposted Current Score', 
+            'Quizzes & Assignments Final Score',
+            'Quizzes & Assignments Unposted Final Score',
+            'Team Project Current Score',
+            'Team Project Unposted Current Score',
+            'Team Project Final Score', 
+            'Team Project Unposted Final Score',
+            'Midterm Exam Current Score',
+            'Midterm Exam Unposted Current Score',
+            'Midterm Exam Final Score',
+            'Midterm Exam Unposted Final Score',
+            'Final Exam Current Score',
+            'Final Exam Unposted Current Score',
+            'Final Exam Final Score',
+            'Final Exam Unposted Final Score',
+            'Current Score',
+            'Unposted Current Score',
+            'Final Score',
+            'Unposted Final Score',
+            'Current Grade',
+            'Unposted Current Grade',
+            'Final Grade',
+            'Unposted Final Grade'
+        ];
+        
+        const allColumns = [...basicColumns, ...taskColumns, ...canvasColumns];
+        
+        // Create CSV header
+        let csvContent = allColumns.map(escapeCSV).join(',') + '\n';
+        
+        // Add points possible row
+        const pointsRow = ['Points Possible', '', '', '', ''];
+        taskColumns.forEach(() => pointsRow.push(''));
+        canvasColumns.forEach(() => pointsRow.push(''));
+        csvContent += pointsRow.map(escapeCSV).join(',') + '\n';
+        
+        // Check if we have student data
+        if (!studentData || studentData.length === 0) {
+            console.log('⚠️ [Export] No student data found, adding placeholder row');
+            // Add a placeholder row to show the structure
+            const placeholderRow = ['No Students Found', '', '', '', ''];
+            taskColumns.forEach(() => placeholderRow.push(''));
+            canvasColumns.forEach(() => placeholderRow.push(''));
+            csvContent += placeholderRow.map(escapeCSV).join(',') + '\n';
+        } else {
+            // Add student data rows
+            studentData.forEach((student, index) => {
+                console.log(`🔍 [Export] Processing student ${index + 1}:`, student);
+                
+                const row = [];
+                
+                // Basic student info
+                row.push(student.name || student.username || 'Unknown Student');
+                row.push(student.studentId || student._id || '');
+                row.push(student.sisUserId || '');
+                row.push(student.sisLoginId || '');
+                row.push(`${classInfo.groupName || 'Class'} (${classInfo._id || 'N/A'})`);
+                
+                // Task scores
+                const studentScoreData = studentScores[student._id] || {};
+                console.log(`🔍 [Export] Student ${student.name} scores:`, studentScoreData);
+                
+                taskColumns.forEach(() => {
+                    // For now, we'll need to map this properly based on your data structure
+                    // This is a simplified version - you may need to adjust based on your actual data
+                    row.push('');
+                });
+                
+                // Canvas standard scores (calculated from student data)
+                const totalScore = studentScoreData.points || 0;
+                const completionRate = studentScoreData.completion || 0;
+                
+                console.log(`🔍 [Export] Student ${student.name} - Total Score: ${totalScore}, Completion: ${completionRate}%`);
+                
+                // Add Canvas columns
+                row.push(totalScore); // Quizzes & Assignments Current Score
+                row.push(''); // Unposted
+                row.push(totalScore); // Final Score
+                row.push(''); // Unposted Final
+                row.push(''); // Team Project (if applicable)
+                row.push('');
+                row.push('');
+                row.push('');
+                row.push(''); // Midterm (if applicable)
+                row.push('');
+                row.push('');
+                row.push('');
+                row.push(''); // Final Exam (if applicable)
+                row.push('');
+                row.push('');
+                row.push('');
+                row.push(totalScore); // Current Score
+                row.push(''); // Unposted Current
+                row.push(totalScore); // Final Score
+                row.push(''); // Unposted Final
+                row.push(completionRate >= 90 ? 'A' : completionRate >= 80 ? 'B' : completionRate >= 70 ? 'C' : completionRate >= 60 ? 'D' : 'F'); // Current Grade
+                row.push(''); // Unposted Current Grade
+                row.push(completionRate >= 90 ? 'A' : completionRate >= 80 ? 'B' : completionRate >= 70 ? 'C' : completionRate >= 60 ? 'D' : 'F'); // Final Grade
+                row.push(''); // Unposted Final Grade
+                
+                csvContent += row.map(escapeCSV).join(',') + '\n';
+            });
+        }
+        
+        console.log('🔍 [Export] Generated CSV content length:', csvContent.length);
+        console.log('🔍 [Export] CSV preview (first 500 chars):', csvContent.substring(0, 500));
+        
+        return csvContent;
+    };
+
+    const handleExportGrades = async () => {
+        try {
+            // Generate CSV data in Canvas format
+            const csvData = generateCanvasGradeCSV();
+            
+            // Create and download the file
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${classInfo.groupName}_grades_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('Grades exported successfully');
+        } catch (error) {
+            console.error('Error exporting grades:', error);
+            alert('Error exporting grades. Please try again.');
+        }
+    };
+
     const handleBatchCreateRepos = async () => {
       if (!csvFile) {
         alert('Please upload a CSV file first');
@@ -2680,6 +2857,42 @@ const ClassView = () => {
                                 </Box>
                             </Box>
                         </Card>
+                        
+                        {/* Export Grades Section */}
+                        <Box mt={4}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column',
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                gap: 1, 
+                                px: 3, 
+                                py: 2, 
+                                bgcolor: '#4caf50', 
+                                color: 'white', 
+                                borderRadius: 4,
+                                height: 120,
+                                fontWeight: 500,
+                                minWidth: 200,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                    bgcolor: '#45a049',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+                                }
+                            }}
+                            onClick={handleExportGrades}
+                            >
+                                <DownloadIcon sx={{ fontSize: 32, mb: 1 }} />
+                                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                                    Export Grades
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9, textAlign: 'center' }}>
+                                    Download CSV for Canvas
+                                </Typography>
+                            </Box>
+                        </Box>
                     </>
                 )}
                     </Container>

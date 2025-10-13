@@ -1,189 +1,349 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Typography
+  Typography,
+  Card,
+  Chip,
+  Stack,
+  Button,
+  Select,
+  MenuItem,
+  FormControl
 } from '@mui/material';
 import {
-  Timeline as TimelineIcon
+  Assignment as AssignmentIcon,
+  ArrowForward as ArrowForwardIcon
 } from '@mui/icons-material';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import { API_BASE_URL } from '../../config/api';
+import { useAuthContext } from '../../context/AuthContext';
 
 const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
-  const canvasRef = useRef(null);
+  const { classId } = useParams();
+  const { authUser } = useAuthContext();
+  const [draftQuests, setDraftQuests] = useState({ questSequence: [] });
+  const [isDraftLoading, setIsDraftLoading] = useState(false);
+  const [localDraftQuests, setLocalDraftQuests] = useState([]); // Local state for draft quest prerequisite changes
 
-  // Extract prerequisite relationships from quest data
-  const getQuestPrerequisites = (quest) => {
-    // Look for prerequisite information in quest data
-    if (quest.prerequisites) {
-      return quest.prerequisites;
+  // Load draft quests from API
+  const loadDraftQuests = async () => {
+    if (!classId) {
+      console.log("⚠️ [QuestRoadmap] No classId provided");
+      return;
     }
-    if (quest.requirements) {
-      return quest.requirements;
+
+    try {
+      setIsDraftLoading(true);
+      console.log("🔄 [QuestRoadmap] Loading draft quests for class:", classId);
+      console.log("🔄 [QuestRoadmap] API URL:", `${API_BASE_URL}/api/group/${classId}/draft-quest-config`);
+
+      const response = await axios.get(
+        `${API_BASE_URL}/api/group/${classId}/draft-quest-config`
+      );
+
+      console.log("🔍 [QuestRoadmap] Draft quest API response:", response.data);
+
+      if (response.data.success) {
+        const draftConfig = response.data.data.draftQuestConfig || { questSequence: [] };
+        setDraftQuests(draftConfig);
+        console.log("✅ [QuestRoadmap] Loaded draft quests:", draftConfig.questSequence?.length || 0);
+        console.log("✅ [QuestRoadmap] Draft quest data:", draftConfig);
+      } else {
+        console.log("⚠️ [QuestRoadmap] API returned success: false");
+        setDraftQuests({ questSequence: [] });
+      }
+    } catch (error) {
+      console.error("❌ [QuestRoadmap] Error loading draft quests:", error);
+      console.error("❌ [QuestRoadmap] Error details:", error.response?.data || error.message);
+      setDraftQuests({ questSequence: [] });
+    } finally {
+      setIsDraftLoading(false);
     }
-    if (quest.dependsOn) {
-      return quest.dependsOn;
-    }
-    
-    // Default: sequential prerequisites (each quest depends on the previous one)
-    const questIndex = questBreakdownQuests.findIndex(q => q === quest);
-    if (questIndex > 0) {
-      return [questIndex - 1]; // Previous quest is prerequisite
-    }
-    
-    return [];
   };
 
-  // Draw the roadmap diagram
+  // Load draft quests on component mount
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || questBreakdownQuests.length === 0) return;
+    loadDraftQuests();
+  }, [classId]);
 
-    const ctx = canvas.getContext('2d');
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
+  // Update local draft quests when draftQuests changes
+  useEffect(() => {
+    if (draftQuests?.questSequence?.length > 0) {
+      setLocalDraftQuests([...draftQuests.questSequence]);
+    }
+  }, [draftQuests]);
 
-    // Clear canvas
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-
-    // Quest block dimensions - FIXED SIZE for consistent display
-    const blockHeight = 250; // Fixed height - large and consistent
-    const blockWidth = 350; // Fixed width - large and consistent
-    const blockSpacing = 80; // Fixed spacing between blocks
+  // Handle prerequisite change for draft quests
+  const handlePrerequisiteChange = (questId, newPrerequisite) => {
+    console.log("🔄 [QuestRoadmap] Changing prerequisite for quest:", questId, "to:", newPrerequisite);
     
-    // Horizontal layout - single row
-    const totalWidth = (questBreakdownQuests.length * blockWidth) + ((questBreakdownQuests.length - 1) * blockSpacing);
-    
-    // Start position - left side with significant padding to ensure first quest is fully visible
-    const startX = 100;
-    const startY = (canvasHeight - blockHeight) / 2;
-
-    // Store quest positions for arrow drawing
-    const questPositions = {};
-
-    // Draw quest blocks in horizontal line
-    questBreakdownQuests.forEach((quest, index) => {
-      const x = startX + (index * (blockWidth + blockSpacing));
-      const y = startY;
-      
-      questPositions[index] = { x, y, width: blockWidth, height: blockHeight };
-
-      // Block background - simple white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(x, y, blockWidth, blockHeight);
-
-      // Block border - simple gray border
-      ctx.strokeStyle = '#666666';
-      ctx.lineWidth = 3; // Fixed border width for consistency
-      ctx.strokeRect(x, y, blockWidth, blockHeight);
-
-      // Quest title - FIXED font sizes for consistency
-      ctx.fillStyle = '#333333';
-      const titleFontSize = 24; // Large, readable title
-      ctx.font = `bold ${titleFontSize}px Arial`;
-      ctx.textAlign = 'center';
-      const title = quest.title || `Quest ${index + 1}`;
-      const maxTitleWidth = blockWidth - 40;
-      let displayTitle = title;
-      
-      // Truncate title if too long
-      if (ctx.measureText(title).width > maxTitleWidth) {
-        while (ctx.measureText(displayTitle + '...').width > maxTitleWidth && displayTitle.length > 0) {
-          displayTitle = displayTitle.slice(0, -1);
+    setLocalDraftQuests(prev => {
+      const updated = prev.map(quest => {
+        if (quest.questId === questId || quest.id === questId) {
+          const updatedQuest = {
+            ...quest,
+            metadata: {
+              ...quest.metadata,
+              prerequisite: newPrerequisite
+            }
+          };
+          console.log("🔄 [QuestRoadmap] Updated quest:", updatedQuest);
+          return updatedQuest;
         }
-        displayTitle += '...';
-      }
-      
-      ctx.fillText(displayTitle, x + blockWidth / 2, y + 70);
-
-      // Quest number - FIXED font size
-      ctx.fillStyle = '#666666';
-      const numberFontSize = 18;
-      ctx.font = `${numberFontSize}px Arial`;
-      ctx.fillText(`Quest ${index + 1}`, x + blockWidth / 2, y + 140);
-
-      // Quest description (if available) - FIXED font size
-      if (quest.description) {
-        ctx.fillStyle = '#888888';
-        const descFontSize = 14;
-        ctx.font = `${descFontSize}px Arial`;
-        const maxDescLength = 45; // Approximately 45 characters
-        const description = quest.description.length > maxDescLength ? quest.description.substring(0, maxDescLength) + '...' : quest.description;
-        ctx.fillText(description, x + blockWidth / 2, y + 190);
-      }
-    });
-
-    // Draw arrows for prerequisites
-    questBreakdownQuests.forEach((quest, index) => {
-      const prerequisites = getQuestPrerequisites(quest);
-      
-      prerequisites.forEach(prereqIndex => {
-        if (prereqIndex >= 0 && prereqIndex < questBreakdownQuests.length && prereqIndex !== index) {
-          const fromPos = questPositions[prereqIndex];
-          const toPos = questPositions[index];
-          
-          if (fromPos && toPos) {
-            // Calculate arrow start and end points for horizontal layout
-            const fromX = fromPos.x + fromPos.width;
-            const fromY = fromPos.y + fromPos.height / 2;
-            const toX = toPos.x;
-            const toY = toPos.y + toPos.height / 2;
-
-            // Draw arrow line - FIXED line width
-            ctx.strokeStyle = '#666666';
-            ctx.lineWidth = 3; // Fixed line width
-            const dashSize = 10; // Fixed dash size
-            ctx.setLineDash([dashSize, dashSize]);
-            ctx.beginPath();
-            ctx.moveTo(fromX, fromY);
-            ctx.lineTo(toX, toY);
-            ctx.stroke();
-
-            // Draw arrowhead - FIXED size
-            const arrowLength = 15; // Fixed arrowhead size
-            const arrowAngle = Math.atan2(toY - fromY, toX - fromX);
-            
-            ctx.fillStyle = '#666666';
-            ctx.setLineDash([]);
-            ctx.beginPath();
-            ctx.moveTo(toX, toY);
-            ctx.lineTo(
-              toX - arrowLength * Math.cos(arrowAngle - Math.PI / 6),
-              toY - arrowLength * Math.sin(arrowAngle - Math.PI / 6)
-            );
-            ctx.lineTo(
-              toX - arrowLength * Math.cos(arrowAngle + Math.PI / 6),
-              toY - arrowLength * Math.sin(arrowAngle + Math.PI / 6)
-            );
-            ctx.closePath();
-            ctx.fill();
-          }
-        }
+        return quest;
       });
+      console.log("🔄 [QuestRoadmap] Updated local draft quests:", updated);
+      return updated;
     });
+  };
 
-    // Reset line dash
-    ctx.setLineDash([]);
-  }, [questBreakdownQuests]);
+  // Mock data for demonstration - replace with actual quest data
+  const mockQuests = [
+    {
+      questId: 'Q0',
+      title: 'Q0: Introduction to Open Source',
+      metadata: {
+        prerequisite: null
+      }
+    },
+    {
+      questId: 'Q1',
+      title: 'Q1: Understanding OSS Projects and GitHub Basics',
+      metadata: {
+        prerequisite: 'Q0'
+      }
+    },
+    {
+      questId: 'Q2',
+      title: 'Q2: Forking and Contributing to Repositories',
+      metadata: {
+        prerequisite: 'Q1'
+      }
+    },
+    {
+      questId: 'Q3',
+      title: 'Q3: Creating Pull Requests and Code Reviews',
+      metadata: {
+        prerequisite: 'Q2'
+      }
+    }
+  ];
+
+  // Combine regular quests with draft quests
+  const regularQuests = questBreakdownQuests.length > 0 ? questBreakdownQuests : mockQuests;
+  const allDraftQuests = localDraftQuests.length > 0 ? localDraftQuests : (draftQuests?.questSequence || []);
+  
+  console.log("🔍 [QuestRoadmap] questBreakdownQuests prop:", questBreakdownQuests);
+  console.log("🔍 [QuestRoadmap] questBreakdownQuests length:", questBreakdownQuests.length);
+  console.log("🔍 [QuestRoadmap] Regular quests:", regularQuests.length);
+  console.log("🔍 [QuestRoadmap] Regular quests data:", regularQuests);
+  console.log("🔍 [QuestRoadmap] Draft quests loaded:", allDraftQuests.length);
+  console.log("🔍 [QuestRoadmap] Draft quests data:", allDraftQuests);
+  console.log("🔍 [QuestRoadmap] Class ID:", classId);
+  console.log("🔍 [QuestRoadmap] Auth User:", authUser?._id);
+  
+  // Find the last regular quest ID to use as prerequisite for draft quests
+  const lastRegularQuestId = regularQuests.length > 0 ? 
+    (regularQuests[regularQuests.length - 1].questId || regularQuests[regularQuests.length - 1].id) : null;
+  
+  console.log("🔍 [QuestRoadmap] Last regular quest ID:", lastRegularQuestId);
+  
+  // Mark all draft quests as draft and set prerequisite (use local state if available)
+  const markedDraftQuests = allDraftQuests.map((quest, index) => {
+    // Generate Q{number} ID for draft quests
+    const draftQuestNumber = regularQuests.length + index + 1;
+    const draftQuestId = `Q${draftQuestNumber}`;
+    
+    return {
+      ...quest,
+      questId: draftQuestId, // Override with Q{number} format
+      isDraftQuest: true,
+      metadata: {
+        ...quest.metadata,
+        isDraft: true,
+        prerequisite: quest.metadata?.prerequisite || lastRegularQuestId // Use existing prerequisite or fallback
+      }
+    };
+  });
+  
+  console.log("🔍 [QuestRoadmap] Marked draft quests:", markedDraftQuests);
+  
+  // Combine all quests: regular quests first, then draft quests
+  const quests = [...regularQuests, ...markedDraftQuests];
+  
+  console.log("🔍 [QuestRoadmap] Total quests (regular + draft):", quests.length);
+  console.log("🔍 [QuestRoadmap] All quests with prerequisites:", quests.map(q => ({
+    id: q.questId || q.id,
+    prereq: q.metadata?.prerequisite || q.prerequisites?.[0] || 'none'
+  })));
+
+  // Function to detect if a quest is a draft quest
+  const isDraftQuest = (quest) => {
+    return quest.metadata?.isDraft === true || 
+           quest.isDraft === true || 
+           quest.isDraftQuest === true ||
+           (quest.questId && quest.questId.startsWith('TEMP_'));
+  };
+
+  // Function to check if a draft quest is movable (only leaf nodes - no dependents)
+  const isDraftQuestMovable = (quest) => {
+    if (!isDraftQuest(quest)) return false;
+    
+    const questId = quest.questId || quest.id;
+    
+    // Check if ANY quest (draft or regular) depends on this quest
+    const hasDependents = quests.some(otherQuest => {
+      const otherPrereq = otherQuest.metadata?.prerequisite || otherQuest.prerequisites?.[0];
+      return otherPrereq === questId && (otherQuest.questId || otherQuest.id) !== questId;
+    });
+    
+    // Only movable if no other quest depends on this one (it's a leaf node)
+    return !hasDependents;
+  };
+
+  // Function to check if a draft quest is the first in its chain (has no draft quest prerequisites)
+  const isFirstDraftQuestInChain = (quest) => {
+    if (!isDraftQuest(quest)) return false;
+    
+    const prerequisite = quest.metadata?.prerequisite || quest.prerequisites?.[0];
+    
+    // If no prerequisite, it's first
+    if (!prerequisite) return true;
+    
+    // If prerequisite is a regular quest (not draft), it's first in draft chain
+    const prerequisiteQuest = quests.find(q => (q.questId || q.id) === prerequisite);
+    return !isDraftQuest(prerequisiteQuest);
+  };
+
+  // Function to check if a draft quest is in the middle of a chain (has draft prerequisite AND dependents)
+  const isMiddleDraftQuest = (quest) => {
+    if (!isDraftQuest(quest)) return false;
+    
+    const prerequisite = quest.metadata?.prerequisite || quest.prerequisites?.[0];
+    const prerequisiteQuest = quests.find(q => (q.questId || q.id) === prerequisite);
+    
+    // Middle quest: has draft prerequisite AND has dependents
+    return isDraftQuest(prerequisiteQuest) && !isDraftQuestMovable(quest);
+  };
+
+  // Group quests by prerequisite to create columns
+  const groupQuestsByPrerequisite = () => {
+    const columns = [];
+    const processed = new Set();
+    const questToColumn = new Map(); // Track which column each quest is in
+    
+    // First column: quests with no prerequisites
+    const noPrereqQuests = quests.filter(q => !q.metadata?.prerequisite && !q.prerequisites?.length);
+    if (noPrereqQuests.length > 0) {
+      columns.push(noPrereqQuests);
+      noPrereqQuests.forEach(q => {
+        const questId = q.questId || q.id;
+        processed.add(questId);
+        questToColumn.set(questId, 0);
+      });
+    }
+    
+    // Build remaining columns based on prerequisite column position
+    let hasChanges = true;
+    while (hasChanges && processed.size < quests.length) {
+      hasChanges = false;
+      const nextColumn = [];
+      
+      // Get the last column (current parent column)
+      const currentParentColumn = columns[columns.length - 1];
+      
+      // For each parent in the current column (in order), find their children
+      currentParentColumn.forEach(parentQuest => {
+        const parentId = parentQuest.questId || parentQuest.id;
+        
+        // Find all unprocessed quests that depend on this parent
+        const children = quests.filter(quest => {
+          const questId = quest.questId || quest.id;
+          if (processed.has(questId)) return false;
+          
+          const prereq = quest.metadata?.prerequisite || quest.prerequisites?.[0];
+          return prereq === parentId;
+        });
+        
+        // Add children to next column in the same order as their parent
+        children.forEach(child => {
+          nextColumn.push(child);
+          processed.add(child.questId || child.id);
+          hasChanges = true;
+        });
+      });
+      
+      if (nextColumn.length > 0) {
+        nextColumn.forEach(q => {
+          questToColumn.set(q.questId || q.id, columns.length);
+        });
+        columns.push(nextColumn);
+      }
+    }
+    
+    return columns;
+  };
+
+  const questColumns = groupQuestsByPrerequisite();
+  
+  console.log("🔍 [QuestRoadmap] Quest columns:", questColumns.map((col, idx) => ({
+    column: idx,
+    quests: col.map(q => q.questId || q.id)
+  })));
+
+  // Find which quests depend on a given quest
+  const findDependents = (questId) => {
+    return quests.filter(q => {
+      const prereq = q.metadata?.prerequisite || q.prerequisites?.[0];
+      return prereq === questId;
+    });
+  };
+
+  // Find the position (column, row) of a quest
+  const findQuestPosition = (questId) => {
+    for (let colIndex = 0; colIndex < questColumns.length; colIndex++) {
+      const rowIndex = questColumns[colIndex].findIndex(q => (q.questId || q.id) === questId);
+      if (rowIndex !== -1) {
+        return { colIndex, rowIndex };
+      }
+    }
+    return null;
+  };
+
+  // Generate consistent arrow coordinates for quests with the same prerequisite
+  const getSharedArrowCoordinates = (prerequisite, targetPositions) => {
+    // Generate a consistent random seed based on the prerequisite
+    const seed = prerequisite.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const pseudoRandom = (seed * 9301 + 49297) % 233280 / 233280;
+    
+    // Use the pseudo-random value to generate consistent bend point between 30-70%
+    const bendPoint = 30 + pseudoRandom * 40;
+    
+    // Calculate shared start and bend coordinates
+    const startX = 10; // 10% from left
+    const bendX = bendPoint;
+    const endX = 90; // 90% from left
+    
+    return {
+      startX,
+      bendX,
+      endX,
+      targetPositions // Array of target positions for multiple dependents
+    };
+  };
 
   return (
     <Box sx={{ 
       width: '100%', 
-      height: 'calc(100vh - 64px)', // Full height minus header
+      height: 'calc(100vh - 64px)',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      p: 3
     }}>
-      <Box sx={{ p: 2, flexShrink: 0 }}>
-        <Box display="flex" alignItems="center" gap={2} mb={1}>
-          <TimelineIcon sx={{ fontSize: 28, color: 'primary.main' }} />
-          <Typography variant="h5" component="h1" fontWeight={700}>
-            Quest Roadmap
-          </Typography>
-        </Box>
-        <Typography variant="body2" color="text.secondary">
-          Visual roadmap showing quest dependencies. Arrows indicate prerequisite relationships.
-        </Typography>
-      </Box>
 
-      {questBreakdownQuests.length === 0 ? (
+      {/* Quest Blocks */}
+      {questColumns.length === 0 ? (
         <Box 
           sx={{ 
             flex: 1,
@@ -191,8 +351,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: '#fafafa',
-            m: 2,
-            borderRadius: 2
+            borderRadius: 4
           }}
         >
           <Box textAlign="center">
@@ -205,32 +364,415 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
           </Box>
         </Box>
       ) : (
+        <Box sx={{ flex: 1, overflow: 'auto' }}>
+          <Stack 
+            direction="row" 
+            spacing={0} 
+            sx={{ 
+              minWidth: 'fit-content',
+              pb: 2,
+              alignItems: 'flex-start'
+            }}
+          >
+            {questColumns.map((column, colIndex) => (
+              <React.Fragment key={`column-${colIndex}`}>
+                {/* Column of quests */}
+                <Stack direction="column" spacing={3}>
+                  {column.map((quest, questIndex) => (
+                     <Card
+                       key={quest.questId || quest.id || questIndex}
+                       sx={{
+                         minWidth: 280,
+                         maxWidth: 320,
+                         height: 200,
+                         borderRadius: 4,
+                         boxShadow: 'none',
+                         border: isDraftQuest(quest) 
+                           ? '2px solid #ffb74d' 
+                           : '1px solid #e0e0e0',
+                         backgroundColor: isDraftQuest(quest) 
+                           ? '#fff8e1' 
+                           : 'white',
+                         display: 'flex',
+                         flexDirection: 'column',
+                         position: 'relative',
+                         '&:hover': {
+                           borderColor: isDraftQuest(quest) 
+                             ? '#ff9800' 
+                             : 'primary.main',
+                           backgroundColor: isDraftQuest(quest) 
+                             ? '#fff3c4' 
+                             : '#f8f9fa',
+                           boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                         },
+                         transition: 'all 0.2s ease-in-out'
+                       }}
+                     >
+                {/* Quest Number Badge */}
         <Box 
           sx={{ 
-            flex: 1,
-            overflow: 'auto',
-            backgroundColor: '#fafafa',
-            m: 2,
+                    position: 'absolute',
+                    top: 16,
+                    right: 16,
+                    backgroundColor: isDraftQuest(quest) 
+                      ? '#ff9800' 
+                      : 'primary.main',
+                    color: 'white',
             borderRadius: 2,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            minWidth: 0 // Allow shrinking
-          }}
-        >
-          <canvas
-            ref={canvasRef}
-            width={200 + (questBreakdownQuests.length * 430)}
-            height={500}
-            style={{
-              border: '1px solid #e0e0e0',
-              borderRadius: '8px',
-              backgroundColor: 'white',
-              display: 'block',
-              minWidth: `${200 + (questBreakdownQuests.length * 430)}px`, // Force minimum width
-              flexShrink: 0 // Prevent shrinking
-            }}
-          />
+                    px: 1.5,
+                    py: 0.5,
+                    minWidth: 40,
+                    textAlign: 'center'
+                  }}
+                >
+                  <Typography variant="body2" fontWeight={600}>
+                    {quest.questId || quest.id || `Q${questIndex + 1}`}
+                  </Typography>
+                </Box>
+
+                {/* Quest Icon */}
+                <Box sx={{ p: 3, pb: 1 }}>
+                  <AssignmentIcon 
+                    sx={{ 
+                      fontSize: 32, 
+                      color: 'primary.main',
+                      opacity: 0,
+                      mb: 1
+                    }} 
+                  />
+                </Box>
+
+                {/* Quest Content */}
+                <Box sx={{ px: 3, pb: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                  {/* Quest Title */}
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontWeight: 600, 
+                      mb: 2,
+                      lineHeight: 1.3,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
+                    }}
+                  >
+                    {isDraftQuest(quest) ? quest.questId || quest.id : (quest.title || `Quest ${questIndex + 1}`)}
+                  </Typography>
+
+                  {/* Prerequisites and Deploy Button Container */}
+                  <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {isDraftQuest(quest) ? (
+                      // Draft quest prerequisite dropdown (only enabled for leaf nodes)
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                          Prerequisite:
+                          {!isDraftQuestMovable(quest) && (
+                            <Typography component="span" variant="caption" sx={{ ml: 1, color: '#ff9800', fontSize: '0.65rem', fontStyle: 'italic' }}>
+                              (Locked - has dependents)
+                            </Typography>
+                          )}
+                        </Typography>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={quest.metadata?.prerequisite || ''}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              const newPrerequisite = e.target.value;
+                              
+                              console.log("🔄 [QuestRoadmap] Dropdown change - quest:", quest.questId || quest.id, "new prerequisite:", newPrerequisite);
+                              
+                              // Update local state by finding the quest in localDraftQuests
+                              setLocalDraftQuests(prev => {
+                                const updated = prev.map((localQuest, localIndex) => {
+                                  // Match by the original quest ID or by index in the draft quests array
+                                  const questIndex = markedDraftQuests.findIndex(mq => (mq.questId || mq.id) === (quest.questId || quest.id));
+                                  
+                                  if (localIndex === questIndex) {
+                                    const updatedQuest = {
+                                      ...localQuest,
+                                      metadata: {
+                                        ...localQuest.metadata,
+                                        prerequisite: newPrerequisite
+                                      }
+                                    };
+                                    console.log("🔄 [QuestRoadmap] Updated local quest:", updatedQuest);
+                                    return updatedQuest;
+                                  }
+                                  return localQuest;
+                                });
+                                console.log("🔄 [QuestRoadmap] Updated all local draft quests:", updated);
+                                return updated;
+                              });
+                            }}
+                            displayEmpty
+                            disabled={!isDraftQuestMovable(quest)}
+                            sx={{
+                              fontSize: '0.75rem',
+                              height: 24,
+                              '& .MuiSelect-select': {
+                                py: 0.5,
+                                px: 1
+                              },
+                              '&.Mui-disabled': {
+                                opacity: 0.6,
+                                backgroundColor: '#f5f5f5',
+                                cursor: 'not-allowed'
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MenuItem value="">
+                              <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+                                Select prerequisite
+                              </Typography>
+                            </MenuItem>
+                            
+                            {/* Regular Quests */}
+                            {regularQuests.map((regularQuest) => (
+                              <MenuItem 
+                                key={regularQuest.questId || regularQuest.id} 
+                                value={regularQuest.questId || regularQuest.id}
+                              >
+                                <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
+                                  {regularQuest.questId || regularQuest.id}
+                                </Typography>
+                              </MenuItem>
+                            ))}
+                            
+                            {/* Other Draft Quests (excluding current quest) */}
+                            {markedDraftQuests
+                              .filter(draftQuest => (draftQuest.questId || draftQuest.id) !== (quest.questId || quest.id))
+                              .map((draftQuest) => (
+                                <MenuItem 
+                                  key={draftQuest.questId || draftQuest.id} 
+                                  value={draftQuest.questId || draftQuest.id}
+                                >
+                                  <Typography variant="caption" sx={{ fontSize: '0.75rem', color: '#ff9800' }}>
+                                    {draftQuest.questId || draftQuest.id} (Draft)
+                                  </Typography>
+                                </MenuItem>
+                              ))}
+                          </Select>
+                        </FormControl>
+                      </Box>
+                    ) : quest.metadata?.prerequisite || quest.prerequisites?.length > 0 ? (
+                      // Regular quest prerequisite chip
+                      <Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                          Prerequisites:
+                        </Typography>
+                        <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+                          {quest.metadata?.prerequisite ? (
+                            <Chip
+                              label={quest.metadata.prerequisite}
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                fontSize: '0.75rem',
+                                height: 20,
+                                '& .MuiChip-label': {
+                                  px: 1
+                                }
+                              }}
+                            />
+                          ) : (
+                            quest.prerequisites?.map((prereq, prereqIndex) => (
+                              <Chip
+                                key={prereqIndex}
+                                label={prereq}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  height: 20,
+                                  '& .MuiChip-label': {
+                                    px: 1
+                                  }
+                                }}
+                              />
+                            ))
+                          )}
+                        </Stack>
+                      </Box>
+                    ) : (
+                      <Typography variant="caption" color="text.secondary">
+                        No prerequisites
+                      </Typography>
+                    )}
+
+                    {/* Deploy Button for Draft Quests - Different states based on chain position */}
+                    {isDraftQuest(quest) && !isMiddleDraftQuest(quest) && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled={!isFirstDraftQuestInChain(quest)}
+                        sx={{
+                          backgroundColor: isFirstDraftQuestInChain(quest) ? '#9c27b0' : '#bdbdbd',
+                          color: 'white',
+                          fontSize: '0.7rem',
+                          px: 1.5,
+                          py: 0.3,
+                          minWidth: 'auto',
+                          height: 24,
+                          alignSelf: 'flex-start',
+                          borderRadius: '50px', // Completely rounded
+                          '&:hover': {
+                            backgroundColor: isFirstDraftQuestInChain(quest) ? '#7b1fa2' : '#bdbdbd',
+                          },
+                          '&:disabled': {
+                            backgroundColor: '#bdbdbd',
+                            color: 'white',
+                          },
+                          textTransform: 'none',
+                          fontWeight: 500
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isFirstDraftQuestInChain(quest)) {
+                            // No functionality - UI only as requested
+                            console.log('Deploy button clicked for quest:', quest.questId || quest.id);
+                          }
+                        }}
+                      >
+                        Deploy
+                      </Button>
+                    )}
+                  </Box>
+                </Box>
+              </Card>
+                  ))}
+                </Stack>
+                
+                {/* Arrows from this column's quests to their dependents */}
+                <Stack direction="column" spacing={3}>
+                  {column.map((quest, questIndex) => {
+                    const questId = quest.questId || quest.id;
+                    const dependents = findDependents(questId);
+                    
+                    return (
+                      <Box
+                        key={`arrow-container-${colIndex}-${questIndex}`}
+                        sx={{
+                          width: 280,
+                          height: 200,
+                          position: 'relative'
+                        }}
+                      >
+                        {(() => {
+                          // Group dependents by their target positions to handle branching
+                          const dependentPositions = dependents.map(dependent => {
+                            const depPos = findQuestPosition(dependent.questId || dependent.id);
+                            return depPos ? { ...depPos, dependent } : null;
+                          }).filter(Boolean);
+
+                          if (dependentPositions.length === 0) return null;
+
+                          // Get shared arrow coordinates for this prerequisite
+                          const sharedCoords = getSharedArrowCoordinates(questId, dependentPositions);
+
+                          return dependentPositions.map((depData, depIndex) => {
+                            const { rowIndex: depRowIndex, dependent } = depData;
+                            const rowDiff = depRowIndex - questIndex;
+                            const isStraight = rowDiff === 0;
+                            
+                            return (
+                              <Box
+                                key={`arrow-${colIndex}-${questIndex}-${depIndex}`}
+                                sx={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  pointerEvents: 'none'
+                                }}
+                              >
+                                {isStraight ? (
+                                  // Straight horizontal arrow with shared coordinates
+                                  <Box
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: `${sharedCoords.startX}%`,
+                                      width: `${sharedCoords.endX - sharedCoords.startX}%`,
+                                      height: 3,
+                                      backgroundColor: 'transparent',
+                                      borderTop: '3px dashed #9e9e9e',
+                                      '&::after': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: 0,
+                                        height: 0,
+                                        borderLeft: '20px solid #9e9e9e',
+                                        borderTop: '12px solid transparent',
+                                        borderBottom: '12px solid transparent'
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  // Bent arrow (L-shaped) with shared coordinates
+                                  <svg
+                                    style={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      width: '100%',
+                                      height: `${Math.abs(rowDiff) * 203 + 100}%`,
+                                      overflow: 'visible'
+                                    }}
+                                  >
+                                    {/* Horizontal line with shared start */}
+                                    <line
+                                      x1={`${sharedCoords.startX}%`}
+                                      y1="0"
+                                      x2={`${sharedCoords.bendX}%`}
+                                      y2="0"
+                                      stroke="#9e9e9e"
+                                      strokeWidth="3"
+                                      strokeDasharray="8,8"
+                                    />
+                                    {/* Vertical line with shared bend point */}
+                                    <line
+                                      x1={`${sharedCoords.bendX}%`}
+                                      y1="0"
+                                      x2={`${sharedCoords.bendX}%`}
+                                      y2={`${rowDiff * 203}px`}
+                                      stroke="#9e9e9e"
+                                      strokeWidth="3"
+                                      strokeDasharray="8,8"
+                                    />
+                                    {/* Final horizontal line with shared end */}
+                                    <line
+                                      x1={`${sharedCoords.bendX}%`}
+                                      y1={`${rowDiff * 203}px`}
+                                      x2={`${sharedCoords.endX}%`}
+                                      y2={`${rowDiff * 203}px`}
+                                      stroke="#9e9e9e"
+                                      strokeWidth="3"
+                                      strokeDasharray="8,8"
+                                    />
+                                    {/* Arrowhead */}
+                                    <polygon
+                                      points={`${280 * (sharedCoords.endX / 100)},${rowDiff * 203 - 12} ${280 * (sharedCoords.endX / 100) + 20},${rowDiff * 203} ${280 * (sharedCoords.endX / 100)},${rowDiff * 203 + 12}`}
+                                      fill="#9e9e9e"
+                                    />
+                                  </svg>
+                                )}
+                              </Box>
+                            );
+                          });
+                        })()}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </React.Fragment>
+            ))}
+          </Stack>
         </Box>
       )}
     </Box>
