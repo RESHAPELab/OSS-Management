@@ -106,6 +106,8 @@ const GenerateJson = () => {
   const [isDraftLoading, setIsDraftLoading] = useState(false);
   const [draftSaveStatus, setDraftSaveStatus] = useState("");
   const [showDraftJsonPreview, setShowDraftJsonPreview] = useState(false);
+  const [isPurpleDeploying, setIsPurpleDeploying] = useState(false);
+  const [purpleDeployProgress, setPurpleDeployProgress] = useState("");
   
   // Normalized draft (for preview): fills sequenceNumber and metadata.prerequisite chain
   const normalizedDraftForPreview = useMemo(() => {
@@ -1123,6 +1125,10 @@ const GenerateJson = () => {
     const draftQuest = draftQuests.questSequence[questIndex];
     if (!draftQuest) return;
 
+    // Start loading state
+    setIsPurpleDeploying(true);
+    setPurpleDeployProgress("Initializing deployment...");
+
     console.log(`🟣 [FRONTEND] Starting purple quest deployment:`, {
       title: draftQuest.title,
       draftIndex: questIndex,
@@ -1130,6 +1136,7 @@ const GenerateJson = () => {
     });
 
     try {
+      setPurpleDeployProgress("Calculating quest sequence...");
       // Calculate the next quest number based on highest existing quest ID
       const questNumbers = jsonContent.questSequence.map(q => {
         const match = (q.questId || '').match(/Q(\d+)/);
@@ -1150,12 +1157,15 @@ const GenerateJson = () => {
         nextQuestId: `Q${nextQuestNumber}`
       };
 
+      setPurpleDeployProgress(`Deploying Q${nextQuestNumber}...`);
       console.log(`📡 [FRONTEND] Calling purple deployment endpoint...`);
       // Call the purple deployment endpoint
       const response = await axios.post(`${API_BASE_URL}/api/gamification/purpleDeployQuest`, {
         classId: classId,
         draftQuestData: questToDeploy
       });
+
+      setPurpleDeployProgress("Processing deployment results...");
 
       const { 
         originalConfigId, 
@@ -1217,6 +1227,7 @@ const GenerateJson = () => {
       console.log(`✅ [FRONTEND] Main quest sequence updated with ${newQuestId}`);
 
       // Refresh quest data without full page reload
+      setPurpleDeployProgress("Refreshing quest data...");
       console.log(`🔄 [FRONTEND] Refreshing quest data...`);
       // Reload the quest config from backend
       try {
@@ -1235,9 +1246,17 @@ const GenerateJson = () => {
       } catch (refreshError) {
         console.error(`❌ [FRONTEND] Failed to refresh quest data:`, refreshError);
       }
+
+      // Deployment successful - clear loading state
+      setIsPurpleDeploying(false);
+      setPurpleDeployProgress("");
     } catch (error) {
       console.error(`❌ [FRONTEND] Purple deployment failed:`, error);
       alert(`❌ Failed to deploy quest: ${error.response?.data?.message || error.message}`);
+      
+      // Deployment failed - clear loading state
+      setIsPurpleDeploying(false);
+      setPurpleDeployProgress("");
     }
   };
 
@@ -9167,6 +9186,43 @@ Good luck! 🚀"
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Purple Deploy Loading Overlay */}
+      {isPurpleDeploying && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            flexDirection: 'column',
+            gap: 3
+          }}
+        >
+          <CircularProgress 
+            size={80} 
+            thickness={4}
+            sx={{ color: '#9c27b0' }}
+          />
+          <Box sx={{ textAlign: 'center', color: 'white' }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+              🟣 Deploying Quest
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              {purpleDeployProgress}
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.7, mt: 2 }}>
+              This may take a few moments...
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
     </div>
   );
