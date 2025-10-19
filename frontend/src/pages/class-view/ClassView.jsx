@@ -28,17 +28,20 @@ import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Settings as SettingsIcon,
+  Download as DownloadIcon,
   Assessment as AssessmentIcon,
   Close as CloseIcon,
   AccountCircle as AccountCircleIcon,
   EmojiEvents as EmojiEventsIcon,
   LocalFireDepartment as LocalFireDepartmentIcon,
-  AdminPanelSettings as AdminPanelSettingsIcon
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Route as RouteIcon
 } from '@mui/icons-material';
 import RepositoryStatusChecker from '../../components/RepositoryStatusChecker';
 import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
 import ManageAdmins from './ManageAdmins';
+import QuestRoadmap from './QuestRoadmap';
 
 let baseURL = API_BASE_URL;
 
@@ -145,6 +148,10 @@ const ClassView = () => {
     const [generateJsonConfig, setGenerateJsonConfig] = useState(null);
     // Add state to track total repos fetched
     const [totalReposFetched, setTotalReposFetched] = useState(null);
+    
+    // Quest grades dialog state
+    const [showQuestGradesDialog, setShowQuestGradesDialog] = useState(false);
+    const [selectedQuest, setSelectedQuest] = useState(null);
 
     useEffect(() => {
         if (authUser && classId) {
@@ -191,6 +198,17 @@ const ClassView = () => {
     
     const toggleAccordion = (index) => {
         setActiveIndex(activeIndex === index ? null : index);
+    };
+    
+    // Handle quest grades dialog
+    const handleQuestClick = (quest, questIndex) => {
+        setSelectedQuest({ ...quest, questIndex });
+        setShowQuestGradesDialog(true);
+    };
+    
+    const handleCloseQuestGradesDialog = () => {
+        setShowQuestGradesDialog(false);
+        setSelectedQuest(null);
     };
     
     useEffect(() => {
@@ -1518,6 +1536,21 @@ const ClassView = () => {
                     isQ0: false,
                     tasks: quest.tasks // Keep tasks for other functionality
                 }));
+
+                // Sort custom quests by quest number (extract number from quest title)
+                const sortCustomQuests = (a, b) => {
+                    const getQuestNumber = (questTitle) => {
+                        // Extract quest number from titles like "Q10: A-6.1 - Conceptual Modeling"
+                        const match = questTitle.match(/Q(\d+)/i);
+                        return match ? parseInt(match[1], 10) : 999; // Default to 999 for quests without numbers
+                    };
+                    
+                    const aNum = getQuestNumber(a.title);
+                    const bNum = getQuestNumber(b.title);
+                    return aNum - bNum; // Sort numerically
+                };
+
+                customQuests.sort(sortCustomQuests);
                 
                 // Start with the fixed quests
                 const newUnifiedOrder = [
@@ -1952,6 +1985,182 @@ const ClassView = () => {
       }
     };
 
+    const generateCanvasGradeCSV = () => {
+        console.log('🔍 [Export] Starting CSV generation...');
+        console.log('🔍 [Export] studentData:', studentData);
+        console.log('🔍 [Export] studentScores:', studentScores);
+        console.log('🔍 [Export] questBreakdownQuests:', questBreakdownQuests);
+        
+        // Helper function to escape CSV values
+        const escapeCSV = (value) => {
+            if (value === null || value === undefined) return '';
+            const str = String(value);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
+
+        // Get all quests and tasks to create column headers
+        const allQuests = questBreakdownQuests || [];
+        const taskColumns = [];
+        
+        // Add basic student info columns
+        const basicColumns = [
+            'Student', 'ID', 'SIS User ID', 'SIS Login ID', 'Section'
+        ];
+        
+        // Add quest and task columns
+        allQuests.forEach(quest => {
+            if (quest.tasks && Array.isArray(quest.tasks)) {
+                quest.tasks.forEach(task => {
+                    const taskTitle = `${quest.title || quest.id} (${task.id || 'N/A'})`;
+                    taskColumns.push(taskTitle);
+                });
+            } else if (quest.tasks && typeof quest.tasks === 'object') {
+                Object.entries(quest.tasks).forEach(([taskId, task]) => {
+                    const taskTitle = `${quest.title || quest.id} (${taskId})`;
+                    taskColumns.push(taskTitle);
+                });
+            }
+        });
+        
+        // Add Canvas standard columns
+        const canvasColumns = [
+            'Quizzes & Assignments Current Score',
+            'Quizzes & Assignments Unposted Current Score', 
+            'Quizzes & Assignments Final Score',
+            'Quizzes & Assignments Unposted Final Score',
+            'Team Project Current Score',
+            'Team Project Unposted Current Score',
+            'Team Project Final Score', 
+            'Team Project Unposted Final Score',
+            'Midterm Exam Current Score',
+            'Midterm Exam Unposted Current Score',
+            'Midterm Exam Final Score',
+            'Midterm Exam Unposted Final Score',
+            'Final Exam Current Score',
+            'Final Exam Unposted Current Score',
+            'Final Exam Final Score',
+            'Final Exam Unposted Final Score',
+            'Current Score',
+            'Unposted Current Score',
+            'Final Score',
+            'Unposted Final Score',
+            'Current Grade',
+            'Unposted Current Grade',
+            'Final Grade',
+            'Unposted Final Grade'
+        ];
+        
+        const allColumns = [...basicColumns, ...taskColumns, ...canvasColumns];
+        
+        // Create CSV header
+        let csvContent = allColumns.map(escapeCSV).join(',') + '\n';
+        
+        // Add points possible row
+        const pointsRow = ['Points Possible', '', '', '', ''];
+        taskColumns.forEach(() => pointsRow.push(''));
+        canvasColumns.forEach(() => pointsRow.push(''));
+        csvContent += pointsRow.map(escapeCSV).join(',') + '\n';
+        
+        // Check if we have student data
+        if (!studentData || studentData.length === 0) {
+            console.log('⚠️ [Export] No student data found, adding placeholder row');
+            // Add a placeholder row to show the structure
+            const placeholderRow = ['No Students Found', '', '', '', ''];
+            taskColumns.forEach(() => placeholderRow.push(''));
+            canvasColumns.forEach(() => placeholderRow.push(''));
+            csvContent += placeholderRow.map(escapeCSV).join(',') + '\n';
+        } else {
+            // Add student data rows
+            studentData.forEach((student, index) => {
+                console.log(`🔍 [Export] Processing student ${index + 1}:`, student);
+                
+                const row = [];
+                
+                // Basic student info
+                row.push(student.name || student.username || 'Unknown Student');
+                row.push(student.studentId || student._id || '');
+                row.push(student.sisUserId || '');
+                row.push(student.sisLoginId || '');
+                row.push(`${classInfo.groupName || 'Class'} (${classInfo._id || 'N/A'})`);
+                
+                // Task scores
+                const studentScoreData = studentScores[student._id] || {};
+                console.log(`🔍 [Export] Student ${student.name} scores:`, studentScoreData);
+                
+                taskColumns.forEach(() => {
+                    // For now, we'll need to map this properly based on your data structure
+                    // This is a simplified version - you may need to adjust based on your actual data
+                    row.push('');
+                });
+                
+                // Canvas standard scores (calculated from student data)
+                const totalScore = studentScoreData.points || 0;
+                const completionRate = studentScoreData.completion || 0;
+                
+                console.log(`🔍 [Export] Student ${student.name} - Total Score: ${totalScore}, Completion: ${completionRate}%`);
+                
+                // Add Canvas columns
+                row.push(totalScore); // Quizzes & Assignments Current Score
+                row.push(''); // Unposted
+                row.push(totalScore); // Final Score
+                row.push(''); // Unposted Final
+                row.push(''); // Team Project (if applicable)
+                row.push('');
+                row.push('');
+                row.push('');
+                row.push(''); // Midterm (if applicable)
+                row.push('');
+                row.push('');
+                row.push('');
+                row.push(''); // Final Exam (if applicable)
+                row.push('');
+                row.push('');
+                row.push('');
+                row.push(totalScore); // Current Score
+                row.push(''); // Unposted Current
+                row.push(totalScore); // Final Score
+                row.push(''); // Unposted Final
+                row.push(completionRate >= 90 ? 'A' : completionRate >= 80 ? 'B' : completionRate >= 70 ? 'C' : completionRate >= 60 ? 'D' : 'F'); // Current Grade
+                row.push(''); // Unposted Current Grade
+                row.push(completionRate >= 90 ? 'A' : completionRate >= 80 ? 'B' : completionRate >= 70 ? 'C' : completionRate >= 60 ? 'D' : 'F'); // Final Grade
+                row.push(''); // Unposted Final Grade
+                
+                csvContent += row.map(escapeCSV).join(',') + '\n';
+            });
+        }
+        
+        console.log('🔍 [Export] Generated CSV content length:', csvContent.length);
+        console.log('🔍 [Export] CSV preview (first 500 chars):', csvContent.substring(0, 500));
+        
+        return csvContent;
+    };
+
+    const handleExportGrades = async () => {
+        try {
+            // Generate CSV data in Canvas format
+            const csvData = generateCanvasGradeCSV();
+            
+            // Create and download the file
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${classInfo.groupName}_grades_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            console.log('Grades exported successfully');
+        } catch (error) {
+            console.error('Error exporting grades:', error);
+            alert('Error exporting grades. Please try again.');
+        }
+    };
+
     const handleBatchCreateRepos = async () => {
       if (!csvFile) {
         alert('Please upload a CSV file first');
@@ -1971,7 +2180,28 @@ const ClassView = () => {
     };
 
     // Add this before the quest breakdown table rendering
-    const questBreakdownQuests = generateJsonConfig && generateJsonConfig.questSequence ? generateJsonConfig.questSequence : unifiedQuestOrder;
+    let questBreakdownQuests = generateJsonConfig && generateJsonConfig.questSequence ? generateJsonConfig.questSequence : unifiedQuestOrder;
+    
+    // Sort quest breakdown quests by quest number
+    questBreakdownQuests = [...questBreakdownQuests].sort((a, b) => {
+        const getQuestNumber = (quest) => {
+            // Try to get quest number from questId first (Q1, Q2, etc.)
+            const questId = quest.questId || quest.id;
+            if (questId && typeof questId === 'string') {
+                const match = questId.match(/Q(\d+)/i);
+                if (match) return parseInt(match[1], 10);
+            }
+            
+            // Try to get from title
+            const title = quest.title || quest.questTitle || '';
+            const match = title.match(/Q(\d+)/i);
+            return match ? parseInt(match[1], 10) : 999;
+        };
+        
+        const aNum = getQuestNumber(a);
+        const bNum = getQuestNumber(b);
+        return aNum - bNum;
+    });
 
     // Calculate total possible points for the class
     const totalPossiblePoints = (questBreakdownQuests || []).reduce((sum, quest) => {
@@ -2047,6 +2277,24 @@ const ClassView = () => {
                         }}
                     >
                         {sidebarOpen && 'Manage Quests'}
+                    </Button>
+
+                    <Button
+                        fullWidth
+                        startIcon={<RouteIcon />}
+                        onClick={() => setCurrentView('quest-roadmap')}
+                        sx={{
+                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                            mb: 1,
+                            py: 1.5,
+                            px: 2,
+                            bgcolor: currentView === 'quest-roadmap' ? '#fb5233' : 'transparent',
+                            color: currentView === 'quest-roadmap' ? 'white' : 'text.primary',
+                            borderRadius: 3,
+                            '&:hover': { bgcolor: currentView === 'quest-roadmap' ? '#e64a19' : 'rgba(0,0,0,0.04)' }
+                        }}
+                    >
+                        {sidebarOpen && 'Quest Roadmap'}
                     </Button>
 
                     <Button
@@ -2563,8 +2811,10 @@ const ClassView = () => {
                                                             gap: 2,
                                                             p: 2,
                                                             borderBottom: '1px solid #e0e0e0',
-                                                            '&:last-child': { borderBottom: 'none' }
-                                                        }}>
+                                                            '&:last-child': { borderBottom: 'none' },
+                                                            cursor: 'pointer',
+                                                            '&:hover': { backgroundColor: '#f5f5f5' }
+                                                        }} onClick={() => handleQuestClick(quest, questIndex)}>
                                                             <Typography variant="body1" sx={{ fontWeight: 500 }}>
                                                                 {questTitle}
                                                             </Typography>
@@ -2607,9 +2857,51 @@ const ClassView = () => {
                                 </Box>
                             </Box>
                         </Card>
+                        
+                        {/* Export Grades Section */}
+                        <Box mt={4}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                flexDirection: 'column',
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                gap: 1, 
+                                px: 3, 
+                                py: 2, 
+                                bgcolor: '#4caf50', 
+                                color: 'white', 
+                                borderRadius: 4,
+                                height: 120,
+                                fontWeight: 500,
+                                minWidth: 200,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                    bgcolor: '#45a049',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)'
+                                }
+                            }}
+                            onClick={handleExportGrades}
+                            >
+                                <DownloadIcon sx={{ fontSize: 32, mb: 1 }} />
+                                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1rem' }}>
+                                    Export Grades
+                                </Typography>
+                                <Typography variant="body2" sx={{ opacity: 0.9, textAlign: 'center' }}>
+                                    Download CSV for Canvas
+                                </Typography>
+                            </Box>
+                        </Box>
                     </>
                 )}
                     </Container>
+                ) : currentView === 'quest-roadmap' ? (
+                    <QuestRoadmap 
+                        questBreakdownQuests={questBreakdownQuests}
+                    />
+                ) : currentView === 'manage-quests' ? (
+                    <GenerateJson />
                 ) : currentView === 'manage-admins' ? (
                     <ManageAdmins />
                 ) : currentView === 'manage-students' ? (
@@ -3233,6 +3525,299 @@ Your current progress will be displayed here as you complete quests.
                 >
                   Copy Link
                 </Button>
+              </DialogActions>
+            </Dialog>
+
+            {/* Quest Grades Dialog */}
+            <Dialog 
+              open={showQuestGradesDialog} 
+              onClose={handleCloseQuestGradesDialog} 
+              maxWidth="lg" 
+              fullWidth
+              PaperProps={{
+                sx: {
+                  height: '90vh',
+                  maxHeight: '90vh'
+                }
+              }}
+            >
+              <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AssessmentIcon />
+                Quest Grades: {selectedQuest?.title || selectedQuest?.questTitle || 'Unknown Quest'}
+              </DialogTitle>
+              <DialogContent sx={{ height: 'calc(100% - 120px)', overflow: 'hidden' }}>
+                {selectedQuest && (
+                  <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    
+                    <Box sx={{ flex: 1, overflow: 'auto' }}>
+                      <Box sx={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                        gap: 1,
+                        p: 1,
+                        bgcolor: '#f5f5f5',
+                        borderRadius: 1,
+                        mb: 1,
+                        fontWeight: 600
+                      }}>
+                        <Typography variant="body2">Student</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Completed</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Score</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Tasks</Typography>
+                        <Typography variant="body2" sx={{ textAlign: 'center' }}>Progress</Typography>
+                      </Box>
+                      
+                      {studentData.map((student) => {
+                        const scores = studentScores[student] || {};
+                        const questId = selectedQuest.id || selectedQuest._id || `Q${selectedQuest.questIndex + 1}`;
+                        const questTitle = selectedQuest.title || selectedQuest.questTitle || questId;
+                        
+                        // Debug logging for first student to understand data structure
+                        if (student === studentData[0]) {
+                          console.log('🔍 [QuestGradesDialog] Debug for student:', student);
+                          console.log('🔍 [QuestGradesDialog] Full scores object:', scores);
+                          console.log('🔍 [QuestGradesDialog] Quest ID being searched:', questId);
+                          console.log('🔍 [QuestGradesDialog] Quest title being searched:', questTitle);
+                          console.log('🔍 [QuestGradesDialog] Quest progress keys available:', scores.questProgress ? Object.keys(scores.questProgress) : 'No questProgress');
+                          console.log('🔍 [QuestGradesDialog] Completed array:', scores.completed);
+                          console.log('🔍 [QuestGradesDialog] Accepted array:', scores.accepted);
+                          console.log('🔍 [QuestGradesDialog] Overall points:', scores.points);
+                          console.log('🔍 [QuestGradesDialog] Overall XP:', scores.xp);
+                          console.log('🔍 [QuestGradesDialog] Overall completion:', scores.completion);
+                        }
+                        
+                        // Get quest-specific data
+                        const possibleQuestKeys = [
+                          questId,
+                          `${(classInfo.groupName || '').replace(/[^a-zA-Z0-9]+/g, '')}-${questId}`,
+                          questTitle,
+                          (selectedQuest.questId || selectedQuest.id || selectedQuest._id),
+                        ];
+                        
+                        let questProgress = null;
+                        if (scores.questProgress) {
+                          for (const key of possibleQuestKeys) {
+                            if (scores.questProgress[key]) {
+                              questProgress = scores.questProgress[key];
+                              if (student === studentData[0]) {
+                                console.log('🔍 [QuestGradesDialog] Found quest progress with key:', key);
+                                console.log('🔍 [QuestGradesDialog] Quest progress data:', questProgress);
+                                console.log('🔍 [QuestGradesDialog] Quest progress tasks:', questProgress.tasks);
+                                if (questProgress.tasks) {
+                                  console.log('🔍 [QuestGradesDialog] Task entries:', Object.entries(questProgress.tasks));
+                                  Object.entries(questProgress.tasks).forEach(([taskId, taskData]) => {
+                                    console.log(`🔍 [QuestGradesDialog] Task ${taskId}:`, taskData);
+                                  });
+                                }
+                              }
+                              break;
+                            }
+                          }
+                        }
+                        
+                        // Initialize values
+                        let isCompleted = questProgress?.completed || false;
+                        let score = questProgress?.score || 0;
+                        let completedTasks = 0;
+                        let totalTasks = 0;
+                        let progress = questProgress?.completion || 0;
+                        
+                        // Always try to calculate from tasks first (for both completed and incomplete)
+                        if (questProgress?.tasks) {
+                          let calculatedScore = 0;
+                          let hasTaskScoreData = false;
+                          
+                          Object.entries(questProgress.tasks).forEach(([taskId, taskData]) => {
+                            totalTasks++;
+                            if (taskData.completed) {
+                              completedTasks++;
+                              calculatedScore += taskData.score || 0;
+                              if (taskData.score > 0) {
+                                hasTaskScoreData = true;
+                              }
+                            }
+                          });
+                          
+                          // Use calculated values if we have any task data
+                          if (totalTasks > 0) {
+                            progress = Math.round((completedTasks / totalTasks) * 100);
+                            
+                            // If tasks don't have score data, estimate from quest configuration
+                            if (!hasTaskScoreData && completedTasks > 0) {
+                              const completionRatio = completedTasks / totalTasks;
+                              
+                              // Try to get quest points from the quest configuration
+                              const questConfig = questBreakdownQuests[selectedQuest.questIndex];
+                              let questPoints = 100; // Default fallback
+                              
+                              if (questConfig?.tasks) {
+                                // Calculate expected points from quest config
+                                let expectedPoints = 0;
+                                Object.entries(questConfig.tasks).forEach(([taskId, taskConfig]) => {
+                                  expectedPoints += taskConfig.points !== undefined ? taskConfig.points : 100;
+                                });
+                                
+                                // Calculate partial scores based on completed tasks
+                                calculatedScore = Math.round(expectedPoints * completionRatio);
+                              } else {
+                                // Fallback: estimate from overall scores
+                                const totalQuests = questBreakdownQuests.length;
+                                const estimatedScorePerQuest = Math.round(scores.points / totalQuests);
+                                calculatedScore = Math.round(estimatedScorePerQuest * completionRatio);
+                              }
+                            }
+                            
+                            score = calculatedScore;
+                            
+                            // Update completion status based on actual task completion
+                            isCompleted = completedTasks === totalTasks;
+                          }
+                        }
+                        
+                        // If no quest-specific data found, try to get from overall scores
+                        if (!questProgress) {
+                          // Try different data sources for completion and scores
+                          
+                          // 1. Check if quest is in completed array
+                          if (scores.completed && Array.isArray(scores.completed)) {
+                            const questInCompleted = scores.completed.find(q => 
+                              q.questId === questId || q.questTitle === questTitle || q === questId || q === questTitle
+                            );
+                            if (questInCompleted) {
+                              isCompleted = true;
+                              if (typeof questInCompleted === 'object') {
+                                score = questInCompleted.score || 0;
+                                progress = questInCompleted.progress || 100;
+                              } else {
+                                progress = 100;
+                              }
+                            }
+                          }
+                          
+                          // 2. Check if quest is in accepted quests
+                          if (scores.accepted && Array.isArray(scores.accepted)) {
+                            const questInAccepted = scores.accepted.find(q => 
+                              q.questId === questId || q.questTitle === questTitle || q === questId || q === questTitle
+                            );
+                            if (questInAccepted && !isCompleted) {
+                              isCompleted = true;
+                              if (typeof questInAccepted === 'object') {
+                                score = questInAccepted.score || 0;
+                                progress = questInAccepted.progress || 50; // Partial completion
+                              } else {
+                                progress = 50;
+                              }
+                            }
+                          }
+                          
+                          // 3. Try to get from overall completion percentage and distribute points
+                          if (isCompleted && score === 0 && scores.points && scores.completion) {
+                            // If we know it's completed but no specific score, estimate from overall progress
+                            const totalQuests = questBreakdownQuests.length;
+                            const estimatedScorePerQuest = Math.round(scores.points / totalQuests);
+                            
+                            score = estimatedScorePerQuest;
+                            progress = 100;
+                            // Estimate task completion based on overall progress
+                            if (totalTasks === 0) {
+                              completedTasks = totalTasks; // Assume all tasks completed if quest is completed
+                            }
+                          }
+                        }
+                        
+                        // Final fallback: if quest is completed but still no score, distribute overall scores
+                        if (isCompleted && score === 0 && scores.points > 0) {
+                          const totalQuests = questBreakdownQuests.length;
+                          score = Math.round(scores.points / totalQuests);
+                          progress = 100;
+                          // Estimate task completion based on overall progress
+                          if (totalTasks === 0) {
+                            completedTasks = totalTasks; // Assume all tasks completed if quest is completed
+                          }
+                        }
+                        
+                        
+                        // If still no progress data but student has overall progress, estimate based on quest position
+                        if (progress === 0 && scores.completion > 0) {
+                          const questPosition = selectedQuest.questIndex + 1;
+                          const totalQuests = questBreakdownQuests.length;
+                          
+                          // Estimate if student should have started this quest based on overall completion
+                          const questThreshold = (questPosition / totalQuests) * 100;
+                          if (scores.completion >= questThreshold * 0.5) { // Started if 50% of threshold reached
+                            progress = Math.min(Math.round((scores.completion / questThreshold) * 50), 50); // Max 50% for incomplete
+                            
+                            // Estimate partial scores
+                            if (scores.points > 0) {
+                              const estimatedScorePerQuest = Math.round(scores.points / totalQuests);
+                              score = Math.round(estimatedScorePerQuest * (progress / 100));
+                            }
+                            // Estimate task completion
+                            if (totalTasks === 0) {
+                              // If no task data, estimate based on progress
+                              completedTasks = Math.round((progress / 100) * 3); // Assume ~3 tasks per quest
+                              totalTasks = 3;
+                            }
+                          }
+                        }
+                        
+                        if (student === studentData[0]) {
+                          console.log('🔍 [QuestGradesDialog] Final values for first student:', {
+                            isCompleted,
+                            score,
+                            completedTasks,
+                            totalTasks,
+                            progress,
+                            questProgressExists: !!questProgress,
+                            questProgressTasks: questProgress?.tasks ? Object.keys(questProgress.tasks).length : 0,
+                            overallCompletion: scores.completion
+                          });
+                        }
+                        
+                        return (
+                          <Box key={student} sx={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
+                            gap: 1,
+                            p: 1,
+                            borderBottom: '1px solid #e0e0e0',
+                            '&:hover': { bgcolor: '#f8f9fa' }
+                          }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {student}
+                            </Typography>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                              {isCompleted ? (
+                                <CheckCircleIcon sx={{ color: 'success.main', fontSize: 20 }} />
+                              ) : (
+                                <Typography variant="body2" color="text.secondary"></Typography>
+                              )}
+                            </Box>
+                            <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 500 }}>
+                              {score}
+                            </Typography>
+                            <Typography variant="body2" sx={{ textAlign: 'center', fontWeight: 500 }}>
+                              {totalTasks > 0 ? `${completedTasks}/${totalTasks}` : '0/0'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={progress} 
+                                sx={{ flexGrow: 1, height: 6, borderRadius: 3 }}
+                              />
+                              <Typography variant="body2" sx={{ minWidth: 35 }}>
+                                {progress}%
+                              </Typography>
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleCloseQuestGradesDialog}>Close</Button>
               </DialogActions>
             </Dialog>
             </Box>

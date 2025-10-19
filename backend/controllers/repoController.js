@@ -46,8 +46,22 @@ function generateCustomQuestConfig(customSequence, groupId) {
   return config;
 }
 
+// Helper function to log purple deploy metrics
+function logPurpleDeployMetrics(questId, username, metrics) {
+  console.log(`📊 [PURPLE-DEPLOY-METRICS] ${questId} for ${username}:`, {
+    successfulTasks: metrics.successfulTasks,
+    failedTasks: metrics.failedTasks,
+    totalTasks: metrics.totalTasks,
+    successRate: `${Math.round((metrics.successfulTasks / metrics.totalTasks) * 100)}%`,
+    retryAttempts: metrics.retryAttempts || 0,
+    processingTime: metrics.processingTime ? `${metrics.processingTime}ms` : 'N/A'
+  });
+}
+
 // Helper function to unlock a quest for a user (used by purple deploy)
 async function unlockQuestForUser(questId, username, repoName, questConfig, groupId, className = null) {
+  const startTime = Date.now();
+  let client;
   try {
     console.log(`🌟 [UNLOCK-QUEST] Starting unlock for ${questId} - user: ${username}, repo: ${repoName}`);
     
@@ -56,7 +70,7 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
     const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
     const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
     
-    const client = new MongoClient(ossDoorwayUri);
+    client = new MongoClient(ossDoorwayUri);
     await client.connect();
     const db = client.db(ossDoorwayDbName);
     const collection = db.collection('user_data');
@@ -153,11 +167,8 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
       
       console.log(`🌟 [UNLOCK-QUEST] Database updated for ${username} - ${questId} accepted`);
     }
-    
-    console.log(`🌟 [UNLOCK-QUEST] ✅ Successfully unlocked ${questId} for ${username}`);
-    
     // Create GitHub issues for the first few tasks (based on buffer size)
-    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+    const bufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 3;
     const orderedTasks = Object.keys(questConfig[questId])
       .filter((key) => /^T\d+$/i.test(key))
       .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
@@ -165,7 +176,12 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
     const tasksToCreate = Math.min(bufferSize, orderedTasks.length);
     
     // Get fresh user data to check existing issue numbers
-    const freshUserDoc = await collection.findOne({ _id: repoName });
+    let freshUserDoc = await collection.findOne({ _id: repoName });
+    
+    // Track successful task creations and metrics
+    let successfulTasks = 0;
+    let failedTasks = [];
+    let totalRetryAttempts = 0;
     
     for (let i = 0; i < tasksToCreate; i++) {
       const taskId = orderedTasks[i];
@@ -177,35 +193,129 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
         
         if (existingIssueNum && existingIssueNum > 0) {
           console.log(`🌟 [UNLOCK-QUEST] ✅ Issue already exists for ${questId}.${taskId} (issue #${existingIssueNum})`);
+          successfulTasks++;
           continue;
         }
         
-        try {
-          const classTitle = (className || groupId || 'class')
-            .toString()
-            .replace(/[^a-zA-Z0-9]+/g, '')
-            .replace(/^-+|-+$/g, '');
-          await createQuestIssue(questId, taskId, task, username, repoName, groupId, classTitle);
-          console.log(`🌟 [UNLOCK-QUEST] ✅ Created issue for ${questId}.${taskId}`);
-          
-          // Add delay between issue creations (except for last)
-          if (i < tasksToCreate - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
+        // Retry mechanism with exponential backoff
+        const maxRetries = 3;
+        let retryCount = 0;
+        let success = false;
+        let lastError = null;
+        
+        while (retryCount < maxRetries && !success) {
+          totalRetryAttempts += retryCount > 0 ? 1 : 0;
+          try {
+            if (retryCount > 0) {
+              console.log(`🌟 [UNLOCK-QUEST] Retry attempt ${retryCount}/${maxRetries} for ${questId}.${taskId}`);
+            }
+            
+            const classTitle = (className || groupId || 'class')
+              .toString()
+              .replace(/[^a-zA-Z0-9]+/g, '')
+              .replace(/^-+|-+$/g, '');
+            
+            console.log(`🌟 [UNLOCK-QUEST] Creating issue for ${questId}.${taskId}...`);
+            const result = await createQuestIssue(questId, taskId, task, username, repoName, groupId, classTitle);
+            
+            // VERIFICATION STEP: Confirm creation before proceeding
+            if (result.success && result.issueNumber) {
+              if (result.wasExisting) {
+                console.log(`🌟 [UNLOCK-QUEST] ✅ Found and linked existing issue #${result.issueNumber} for ${questId}.${taskId}`);
+              } else {
+                console.log(`🌟 [UNLOCK-QUEST] ✅ Issue #${result.issueNumber} created and verified for ${questId}.${taskId}`);
+              }
+              console.log(`🌟 [UNLOCK-QUEST] 🔗 Issue URL: ${result.issueUrl}`);
+              
+              // Verify database was updated
+              if (result.databaseUpdated) {
+                console.log(`🌟 [UNLOCK-QUEST] ✅ Database updated successfully`);
+              } else {
+                console.warn(`🌟 [UNLOCK-QUEST] ⚠️ Database update may have failed`);
+              }
+              
+              // Refresh user data for next iteration
+              freshUserDoc = await collection.findOne({ _id: repoName });
+              
+              success = true;
+              successfulTasks++;
+              
+            } else {
+              throw new Error(`Issue creation failed or returned invalid data: ${JSON.stringify(result)}`);
+            }
+            
+          } catch (error) {
+            lastError = error;
+            retryCount++;
+            console.error(`🌟 [UNLOCK-QUEST] ❌ Attempt ${retryCount} failed for ${questId}.${taskId}:`, error.message);
+            
+            if (retryCount < maxRetries) {
+              const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 2s, 4s, 8s
+              console.log(`🌟 [UNLOCK-QUEST] ⏳ Retrying in ${delay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
           }
-        } catch (issueError) {
-          console.error(`🌟 [UNLOCK-QUEST] ❌ Failed to create issue for ${questId}.${taskId}:`, issueError.message);
+        }
+        
+        if (!success) {
+          const errorMsg = `Failed to create ${questId}.${taskId} after ${maxRetries} attempts: ${lastError?.message}`;
+          console.error(`🌟 [UNLOCK-QUEST] ❌ ${errorMsg}`);
+          failedTasks.push({ taskId, error: errorMsg });
+          
+          // Continue with next task instead of stopping entire process
+          console.log(`🌟 [UNLOCK-QUEST] ⚠️ Continuing with next task despite failure`);
+        }
+        
+        // Add delay between issue creations (except for last)
+        if (i < tasksToCreate - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 second delay
         }
       }
     }
     
+    // Log summary of task creation results with metrics
+    const endTime = Date.now();
+    const processingTime = endTime - startTime;
+    
+    console.log(`🌟 [UNLOCK-QUEST] Task creation summary for ${questId}:`);
+    console.log(`  ✅ Successful: ${successfulTasks}/${tasksToCreate}`);
+    console.log(`  ❌ Failed: ${failedTasks.length}`);
+    console.log(`  🔄 Total retries: ${totalRetryAttempts}`);
+    console.log(`  ⏱️ Processing time: ${processingTime}ms`);
+    if (failedTasks.length > 0) {
+      console.log(`  Failed tasks:`, failedTasks.map(f => f.taskId).join(', '));
+    }
+    
+    // Log metrics for monitoring
+    logPurpleDeployMetrics(questId, username, {
+      successfulTasks,
+      failedTasks: failedTasks.length,
+      totalTasks: tasksToCreate,
+      retryAttempts: totalRetryAttempts,
+      processingTime
+    });
+    
     // Close MongoDB connection
     await client.close();
-    
+
+    // Return summary for caller
+    return {
+      success: true,
+      questId,
+      username,
+      tasksCreated: successfulTasks,
+      tasksFailed: failedTasks.length,
+      totalRetries: totalRetryAttempts,
+      processingTime
+    };
+
   } catch (error) {
     console.error(`🌟 [UNLOCK-QUEST] ❌ Error unlocking ${questId} for ${username}:`, error.message);
     // Make sure to close the client even if there's an error
     try {
-      await client.close();
+      if (client) {
+        await client.close();
+      }
     } catch (closeError) {
       console.error(`🌟 [UNLOCK-QUEST] ❌ Error closing MongoDB client:`, closeError.message);
     }
@@ -213,23 +323,131 @@ async function unlockQuestForUser(questId, username, repoName, questConfig, grou
   }
 }
 
-// Helper function to create a quest issue
+// Helper function to verify if an issue exists on GitHub
+async function verifyIssueExists(issueNumber, repoName, octokit) {
+  try {
+    const issue = await octokit.rest.issues.get({
+      owner: process.env.GITHUB_ORG,
+      repo: repoName,
+      issue_number: issueNumber
+    });
+    
+    return {
+      exists: true,
+      title: issue.data.title,
+      state: issue.data.state,
+      url: issue.data.html_url
+    };
+  } catch (error) {
+    return {
+      exists: false,
+      error: error.message
+    };
+  }
+}
+
+// Helper function to check for existing issues on GitHub
+async function checkForExistingIssue(questId, taskId, repoName, octokit) {
+  try {
+    const existingIssues = await octokit.rest.issues.listForRepo({
+      owner: process.env.GITHUB_ORG,
+      repo: repoName,
+      state: 'all', // Check both open and closed
+      per_page: 100
+    });
+    
+    // Look for issues that match this quest/task pattern
+    // Support both "Q1.T4" and "...-Q1 T4: ..." formats
+    const questTaskPattern = new RegExp(`\\b${questId}\\s*(?:[\\.]|\\s+)\\s*${taskId}\\b`, 'i');
+    let duplicateIssue = existingIssues.data.find(issue => 
+      questTaskPattern.test(issue.title) || questTaskPattern.test(issue.body)
+    );
+    
+    if (!duplicateIssue) {
+      // Try parsing the standardized title format: GroupId-Qn Tm: Title
+      duplicateIssue = existingIssues.data.find(issue => {
+        const m = issue.title.match(/^(.+?)-Q(\d+)\s+T(\d+):/i);
+        if (!m) return false;
+        const [, , qNum, tNum] = m;
+        const qId = `Q${qNum}`;
+        const tId = `T${tNum}`;
+        return qId.toUpperCase() === questId.toUpperCase() && tId.toUpperCase() === taskId.toUpperCase();
+      });
+    }
+    
+    return duplicateIssue;
+  } catch (error) {
+    console.warn(`🌟 [CHECK-EXISTING] Could not search for existing issues:`, error.message);
+    return null;
+  }
+}
+
+// Helper function to create a quest issue with verification
 async function createQuestIssue(questId, taskId, task, username, repoName, groupId, className = null) {
   const { Octokit } = await import('@octokit/rest');
   const { getGithubAppInstallationAccessToken } = require('../utils/botMessage');
+  
+  console.log(`🌟 [CREATE-ISSUE] Creating ${questId}.${taskId} for ${username} in ${repoName}`);
   
   // Get GitHub App token
   const accessToken = await getGithubAppInstallationAccessToken();
   const octokit = new Octokit({ auth: accessToken });
   
+  // Check if issue already exists on GitHub
+  console.log(`🌟 [CREATE-ISSUE] Checking for existing issues on GitHub...`);
+  const existingIssue = await checkForExistingIssue(questId, taskId, repoName, octokit);
+  
+  if (existingIssue) {
+    console.log(`🌟 [CREATE-ISSUE] Found existing issue #${existingIssue.number} for ${questId}.${taskId}`);
+    
+    // Update database with existing issue number
+    const { MongoClient } = require('mongodb');
+    const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+    const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+    
+    const client = new MongoClient(ossDoorwayUri);
+    try {
+      await client.connect();
+      const db = client.db(ossDoorwayDbName);
+      const collection = db.collection('user_data'); // Fixed: use user_data collection
+      
+      const updateResult = await collection.updateOne(
+        { _id: repoName }, // Fixed: use _id instead of complex query
+        { 
+          $set: { 
+            [`user_data.accepted.${questId}.${taskId}.issueNum`]: existingIssue.number 
+          } 
+        }
+      );
+      
+      console.log(`🌟 [CREATE-ISSUE] Updated database with existing issue #${existingIssue.number} (modified: ${updateResult.modifiedCount})`);
+      
+      return {
+        success: true,
+        issueNumber: existingIssue.number,
+        issueUrl: existingIssue.html_url,
+        databaseUpdated: updateResult.modifiedCount > 0,
+        wasExisting: true
+      };
+    } finally {
+      await client.close();
+    }
+  }
+  
   // Generate issue title
   const questNumber = questId.match(/Q(\d+)/i)?.[1] || '1';
   const taskNumber = taskId.match(/T(\d+)/i)?.[1] || '1';
+  
+  // Normalize quest and task IDs for labels (convert TEMP_xxx to Q1, Q2, etc.)
+  const normalizedQuestId = `q${questNumber}`;
+  const normalizedTaskId = `t${taskNumber}`;
   
   // Use className if provided, otherwise fall back to groupId
   const classTitle = className || groupId;
   const title = task.title || task.taskTitle || task.desc;
   const issueTitle = `${classTitle}-Q${questNumber} T${taskNumber}: ${title}`;
+  
+  console.log(`🌟 [CREATE-ISSUE] Creating new issue: "${issueTitle}"`);
   
   // Create the issue
   const issueResponse = await octokit.rest.issues.create({
@@ -237,8 +455,19 @@ async function createQuestIssue(questId, taskId, task, username, repoName, group
     repo: repoName,
     title: issueTitle,
     body: task.accept || task.desc,
-    labels: [`quest-${questId.toLowerCase()}`, `task-${taskId.toLowerCase()}`]
+    labels: [`quest-${normalizedQuestId}`, `task-${normalizedTaskId}`]
   });
+  
+  const issueNumber = issueResponse.data.number;
+  console.log(`🌟 [CREATE-ISSUE] Created GitHub issue #${issueNumber}`);
+  
+  // Verify the issue was created successfully
+  const verification = await verifyIssueExists(issueNumber, repoName, octokit);
+  if (!verification.exists) {
+    throw new Error(`GitHub verification failed: ${verification.error}`);
+  }
+  
+  console.log(`🌟 [CREATE-ISSUE] GitHub verification passed: ${verification.title}`);
   
   // Update user's task with issue number
   const { MongoClient } = require('mongodb');
@@ -246,25 +475,33 @@ async function createQuestIssue(questId, taskId, task, username, repoName, group
   const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
   
   const client = new MongoClient(ossDoorwayUri);
-  await client.connect();
-  const db = client.db(ossDoorwayDbName);
-  const collection = db.collection('users');
-  
-  await collection.updateOne(
-    { 
-      'user_data.github': username,
-      'user_data.repository_url': repoName
-    },
-    { 
-      $set: { 
-        [`user_data.accepted.${questId}.${taskId}.issueNum`]: issueResponse.data.number 
-      } 
-    }
-  );
-  
-  await client.close();
-  
-  return issueResponse.data.number;
+  try {
+    await client.connect();
+    const db = client.db(ossDoorwayDbName);
+    const collection = db.collection('user_data'); // Fixed: use user_data collection
+    
+    const updateResult = await collection.updateOne(
+      { _id: repoName }, // Fixed: use _id instead of complex query
+      { 
+        $set: { 
+          [`user_data.accepted.${questId}.${taskId}.issueNum`]: issueNumber 
+        } 
+      }
+    );
+    
+    console.log(`🌟 [CREATE-ISSUE] Database updated (modified: ${updateResult.modifiedCount})`);
+    
+    // Return verification data
+    return {
+      success: true,
+      issueNumber: issueNumber,
+      issueUrl: issueResponse.data.html_url,
+      databaseUpdated: updateResult.modifiedCount > 0,
+      wasExisting: false
+    };
+  } finally {
+    await client.close();
+  }
 }
 
 const createRepo = async (req, res) => {
@@ -1689,8 +1926,10 @@ Repository for students in ${className}.`;
 
       // List all available quests and tasks; link only up to buffer size per quest
       if (Array.isArray(customSequenceData.questSequence)) {
-        const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+        const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 3;
+        let questCounter = 0; // Used to normalize TEMP_* IDs to Q1, Q2, ... ordering
         for (const quest of customSequenceData.questSequence) {
+          questCounter += 1;
           const questId = quest.questId || quest.metadata?.questId;
           const questTitle = quest.metadata?.title || quest.title || '';
           if (!questId) continue;
@@ -1699,10 +1938,12 @@ Repository for students in ${className}.`;
             const taskEntries = Object.entries(quest.tasks).filter(([key]) => key !== 'metadata');
             taskEntries.forEach(([taskKey, taskVal], index) => {
               const taskDesc = taskVal.desc || taskVal.description || taskVal.name || '';
-              const qLower = String(questId).toLowerCase();
+              // Normalize quest id for label links: TEMP_* -> q{order}, Qn -> q{n}
+              const questNumberFromId = (String(questId).match(/Q(\d+)/i) || [null, null])[1];
+              const normalizedQuestLower = questNumberFromId ? `q${questNumberFromId}` : `q${questCounter}`;
               const tLower = String(taskKey).toLowerCase();
               if (index < taskBufferSize) {
-                const issuesQueryUrl = `https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues?q=label:quest-${qLower}+label:task-${tLower}`;
+                const issuesQueryUrl = `https://github.com/${process.env.GITHUB_ORG}/REPO_NAME/issues?q=label:quest-${normalizedQuestLower}+label:task-${tLower}`;
                 progressSection += `  - ${taskKey} - ${taskDesc} [[Click here to start](${issuesQueryUrl})]\n`;
               } else {
                 progressSection += `  - ${taskKey} - ${taskDesc}\n`;
@@ -2355,7 +2596,7 @@ typings/
                 // 🌟 Enhanced Quest System: Check if enhanced quests are enabled
                 const isPurpleConfig = uniqueGroupId.includes('_purple_');
                 const enhancedQuestsEnabled = process.env.ENABLE_ENHANCED_QUESTS === 'true';
-                const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 5;
+                const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 3;
                 
                 console.log(`🌟 [ENHANCED-QUESTS] Enhanced mode: ${enhancedQuestsEnabled}, Purple config: ${isPurpleConfig}, Buffer size: ${taskBufferSize}`);
                 
@@ -2368,8 +2609,14 @@ typings/
                     const allQuestIds = Object.keys(questConfig).filter(key => key !== 'map_repo_link');
                     console.log(`🌟 [PURPLE-DEPLOY] Found ${allQuestIds.length} quests to unlock: ${allQuestIds.join(', ')}`);
                     
-                    // Create batch processing function for quest unlocking
+                    // Create batch processing function for quest unlocking with enhanced metrics
                     const unlockQuestsBatch = async (questIds, batchSize = 2) => {
+                      let totalSuccessfulQuests = 0;
+                      let totalFailedQuests = 0;
+                      let totalTasksCreated = 0;
+                      let totalRetries = 0;
+                      const batchStartTime = Date.now();
+                      
                       for (let i = 0; i < questIds.length; i += batchSize) {
                         const batch = questIds.slice(i, i + batchSize);
                         console.log(`🌟 [PURPLE-DEPLOY] Processing batch ${Math.floor(i/batchSize) + 1}: ${batch.join(', ')}`);
@@ -2378,15 +2625,26 @@ typings/
                         for (let j = 0; j < batch.length; j++) {
                           const questId = batch[j];
                           try {
-                            await unlockQuestForUser(questId, user, repoName, questConfig, uniqueGroupId, className);
-                            console.log(`🌟 [PURPLE-DEPLOY] ✅ Unlocked ${questId} for ${user}`);
+                            const result = await unlockQuestForUser(questId, user, repoName, questConfig, uniqueGroupId, className);
+                            
+                            if (result && result.success) {
+                              totalSuccessfulQuests++;
+                              totalTasksCreated += result.tasksCreated || 0;
+                              totalRetries += result.totalRetries || 0;
+                              
+                              console.log(`🌟 [PURPLE-DEPLOY] ✅ Unlocked ${questId} for ${user} (${result.tasksCreated}/${result.tasksCreated + result.tasksFailed} tasks, ${result.totalRetries} retries)`);
+                            } else {
+                              totalFailedQuests++;
+                              console.log(`🌟 [PURPLE-DEPLOY] ❌ Failed to unlock ${questId} for ${user} - no result returned`);
+                            }
                             
                             // Add delay between quests in batch (except last)
                             if (j < batch.length - 1) {
                               await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
                             }
                           } catch (error) {
-                            console.error(`🌟 [PURPLE-DEPLOY] ❌ Failed to unlock ${questId}:`, error.message);
+                            totalFailedQuests++;
+                            console.error(`🌟 [PURPLE-DEPLOY] ❌ Failed to unlock ${questId} for ${user}:`, error.message);
                           }
                         }
                         
@@ -2395,13 +2653,25 @@ typings/
                           await new Promise(resolve => setTimeout(resolve, 5000)); // 5 second delay between batches
                         }
                       }
+                      
+                      // Log final batch summary
+                      const batchEndTime = Date.now();
+                      const batchProcessingTime = batchEndTime - batchStartTime;
+                      
+                      console.log(`📊 [PURPLE-DEPLOY-BATCH] Final summary for ${user}:`);
+                      console.log(`  ✅ Successful quests: ${totalSuccessfulQuests}/${questIds.length}`);
+                      console.log(`  ❌ Failed quests: ${totalFailedQuests}`);
+                      console.log(`  🎯 Total tasks created: ${totalTasksCreated}`);
+                      console.log(`  🔄 Total retries: ${totalRetries}`);
+                      console.log(`  ⏱️ Total processing time: ${batchProcessingTime}ms`);
+                      console.log(`  📈 Success rate: ${Math.round((totalSuccessfulQuests / questIds.length) * 100)}%`);
                     };
                     
                     // Execute batch unlocking (but don't await to avoid blocking repo creation)
                     unlockQuestsBatch(allQuestIds).then(() => {
-                      console.log(`🌟 [PURPLE-DEPLOY] ✅ All quests unlocked for ${repoName}`);
+                      console.log(`🌟 [PURPLE-DEPLOY] ✅ All quests processing completed for ${repoName}`);
                     }).catch(error => {
-                      console.error(`🌟 [PURPLE-DEPLOY] ❌ Error during batch quest unlocking:`, error.message);
+                      console.error(`🌟 [PURPLE-DEPLOY] ❌ Error during batch quest unlocking for ${repoName}:`, error.message);
                     });
                   } else {
                     // Regular repo: Create enhanced task buffer for first quest
@@ -2558,7 +2828,7 @@ typings/
                     repo: repoName,
                     title: issueTitle,
                     body: task.accept,
-                    labels: ['quest', 'task']
+                    labels: [`quest-q${questNumber}`, 'task-t1']
                   });
                   console.log(`✅ [LEGACY-MODE] T1 issue created successfully`);
                 } else if (enhancedQuestsEnabled) {
@@ -2577,12 +2847,17 @@ typings/
                   const task = questConfig[firstQuest.questId][taskId];
                   console.log(`[DEBUG] Creating issue for questId=${firstQuest.questId}, taskId=${taskId}`);
                   console.log(`[DEBUG] Task content:`, task);
+                  
+                  // Extract quest and task numbers for consistent labeling
+                  const questNumber = firstQuest.questId.match(/Q(\d+)/i)?.[1] || '1';
+                  const taskNumber = taskId.match(/T(\d+)/i)?.[1] || '1';
+                  
                   await orgOctokit.issues.create({
                     owner: process.env.GITHUB_ORG,
                     repo: repoName,
                     title: `${taskId}: ${task.desc}`,
                     body: task.accept,
-                    labels: ['quest', 'task']
+                    labels: [`quest-q${questNumber}`, `task-t${taskNumber}`]
                   });
                 } else {
                   console.warn(`[WARN] Could not find real task for questId=${firstQuest.questId}, taskId=${taskId} in default config. Falling back to default.`);

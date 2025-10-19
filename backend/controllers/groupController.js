@@ -1885,13 +1885,20 @@ const deleteDraftQuest = async (req, res) => {
 
         const group = await Group.findById(classId);
         if (!group) {
+            console.log(`❌ [deleteDraftQuest] Class not found: ${classId}`);
             return res.status(404).json({
                 success: false,
                 message: 'Class not found'
             });
         }
 
+        console.log(`🔍 [deleteDraftQuest] Found group: ${group.groupName}`);
+        console.log(`🔍 [deleteDraftQuest] Draft config exists: ${!!group.draftQuestConfig}`);
+        console.log(`🔍 [deleteDraftQuest] Quest sequence exists: ${!!group.draftQuestConfig?.questSequence}`);
+        console.log(`🔍 [deleteDraftQuest] Quest sequence length: ${group.draftQuestConfig?.questSequence?.length || 0}`);
+
         if (!group.draftQuestConfig || !group.draftQuestConfig.questSequence) {
+            console.log(`❌ [deleteDraftQuest] No draft quests found for class: ${classId}`);
             return res.status(404).json({
                 success: false,
                 message: 'No draft quests found'
@@ -1899,30 +1906,61 @@ const deleteDraftQuest = async (req, res) => {
         }
 
         const questIndexNum = parseInt(questIndex, 10);
+        console.log(`🔍 [deleteDraftQuest] Parsed quest index: ${questIndexNum}`);
+        
         if (questIndexNum < 0 || questIndexNum >= group.draftQuestConfig.questSequence.length) {
+            console.log(`❌ [deleteDraftQuest] Invalid quest index ${questIndexNum}, valid range: 0-${group.draftQuestConfig.questSequence.length - 1}`);
             return res.status(400).json({
                 success: false,
-                message: 'Invalid quest index'
+                message: `Invalid quest index ${questIndexNum}, valid range: 0-${group.draftQuestConfig.questSequence.length - 1}`
             });
         }
 
-        // Remove the quest at the specified index
-        group.draftQuestConfig.questSequence.splice(questIndexNum, 1);
-        group.draftQuestLastUpdated = new Date();
-        await group.save();
+        // Log the quest being deleted
+        const questToDelete = group.draftQuestConfig.questSequence[questIndexNum];
+        console.log(`🗑️ [deleteDraftQuest] Deleting quest: "${questToDelete?.title || 'Unknown'}" at index ${questIndexNum}`);
 
-        console.log(`✅ [deleteDraftQuest] Successfully deleted draft quest for class: ${group.groupName}`);
+        // Create a new array without the quest to delete (more reliable than splice)
+        const updatedQuestSequence = group.draftQuestConfig.questSequence.filter((_, index) => index !== questIndexNum);
+        
+        console.log(`🔍 [deleteDraftQuest] Original length: ${group.draftQuestConfig.questSequence.length}`);
+        console.log(`🔍 [deleteDraftQuest] New length: ${updatedQuestSequence.length}`);
+
+        // Update the draft config with the new array
+        group.draftQuestConfig = {
+            ...group.draftQuestConfig,
+            questSequence: updatedQuestSequence
+        };
+        
+        group.draftQuestLastUpdated = new Date();
+        
+        console.log(`💾 [deleteDraftQuest] Saving changes to database...`);
+        const savedGroup = await group.save();
+        
+        console.log(`✅ [deleteDraftQuest] Database save completed`);
+        console.log(`🔍 [deleteDraftQuest] Final quest count: ${savedGroup.draftQuestConfig.questSequence.length}`);
+        
+        // Verify the deletion by re-fetching from database
+        const verificationGroup = await Group.findById(classId);
+        if (verificationGroup && verificationGroup.draftQuestConfig && verificationGroup.draftQuestConfig.questSequence) {
+            console.log(`🔍 [deleteDraftQuest] Verification - quest count after re-fetch: ${verificationGroup.draftQuestConfig.questSequence.length}`);
+            console.log(`🔍 [deleteDraftQuest] Verification - quest titles: ${verificationGroup.draftQuestConfig.questSequence.map(q => q.title).join(', ')}`);
+        } else {
+            console.log(`⚠️ [deleteDraftQuest] Verification - no draft config found after save`);
+        }
 
         res.status(200).json({
             success: true,
             message: 'Draft quest deleted successfully',
             data: {
-                questCount: group.draftQuestConfig.questSequence.length
+                questCount: savedGroup.draftQuestConfig.questSequence.length,
+                deletedQuestTitle: questToDelete?.title || 'Unknown'
             }
         });
 
     } catch (error) {
-        console.error('Error deleting draft quest:', error);
+        console.error('❌ [deleteDraftQuest] Error deleting draft quest:', error);
+        console.error('❌ [deleteDraftQuest] Stack trace:', error.stack);
         res.status(500).json({
             success: false,
             message: 'Error deleting draft quest',
@@ -2411,18 +2449,27 @@ const createTestRepo = async (req, res) => {
 
       const QuestConfig = (connection.models.QuestConfig || connection.model('QuestConfig', questConfigSchema));
 
-      // Convert questSequence format to bot format (Q1, Q2, etc. as top-level keys)
+      // Convert questSequence format to full bot format (Q1, Q2...) with metadata and tasks
       const botCompatibleConfig = {
-        map_repo_link: "https://github.com/OSS-Doorway-Dev/{{repoName}}"
+        map_repo_link: effectiveQuestConfig.map_repo_link || "https://github.com/OSS-Doorway-Dev/{{repoName}}"
       };
 
       if (effectiveQuestConfig.questSequence && effectiveQuestConfig.questSequence.length > 0) {
         effectiveQuestConfig.questSequence.forEach((quest, index) => {
           const questKey = quest.questId || `Q${index + 1}`;
+          // Flatten tasks if nested and preserve all task fields (T1, T2, ...)
+          let tasks = quest.tasks;
+          if (tasks && tasks.tasks && typeof tasks.tasks === 'object') {
+            tasks = tasks.tasks;
+          }
+          tasks = tasks || {};
+          // Build quest entry with metadata and tasks spread at top level
           botCompatibleConfig[questKey] = {
-            title: quest.title || questKey,
-            description: quest.description || '',
-            tasks: quest.tasks || {}
+            metadata: {
+              ...(quest.metadata || {}),
+              prerequisite: index === 0 ? null : `Q${index}`
+            },
+            ...tasks
           };
         });
       }
@@ -2444,7 +2491,52 @@ const createTestRepo = async (req, res) => {
         },
         { upsert: true, new: true }
       );
-      console.log(`💾 [CREATE-TEST-REPO] Saved bot-compatible test quest config to questconfigs for ${testClassId}`);
+      console.log(`💾 [CREATE-TEST-REPO] Saved test quest config to Management DB for ${testClassId}`);
+
+      // ALSO save to the OSS-Doorway database so the bot can load this config immediately
+      try {
+        const mongoose = require('mongoose');
+        const doorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://cna93:gamification@gamification.nwes9ze.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+        const doorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+
+        const doorwayConn = await mongoose.createConnection(doorwayUri, { dbName: doorwayDbName });
+        await new Promise((resolve, reject) => {
+          doorwayConn.once('connected', resolve);
+          doorwayConn.once('error', reject);
+          setTimeout(() => reject(new Error('Doorway DB connection timeout')), 10000);
+        });
+
+        const doorwayQuestConfigSchema = new mongoose.Schema({
+          configId: String,
+          classId: String,
+          config: Object,
+          createdAt: Date,
+          updatedAt: Date,
+          createdBy: String,
+          originalFilePath: String,
+          version: Number
+        }, { collection: 'questconfigs' });
+
+        const DoorwayQuestConfig = doorwayConn.model('QuestConfig', doorwayQuestConfigSchema);
+        const saved = await DoorwayQuestConfig.findOneAndUpdate(
+          { configId: testClassId },
+          {
+            configId: testClassId,
+            classId: testClassId,
+            config: botCompatibleConfig,
+            createdAt: now,
+            updatedAt: now,
+            createdBy: 'oss-management:createTestRepo',
+            originalFilePath: `quest_config_${testClassId}.json`,
+            version: 1
+          },
+          { upsert: true, new: true }
+        );
+        await doorwayConn.close();
+        console.log(`💾 [CREATE-TEST-REPO] Saved test quest config to Doorway DB: ${saved?.configId}`);
+      } catch (doorwaySaveErr) {
+        console.warn(`⚠️ [CREATE-TEST-REPO] Could not save test quest config to Doorway DB: ${doorwaySaveErr.message}`);
+      }
     } catch (saveErr) {
       console.warn(`⚠️ [CREATE-TEST-REPO] Could not save test quest config: ${saveErr.message}`);
       console.error(saveErr);
@@ -2453,10 +2545,22 @@ const createTestRepo = async (req, res) => {
     // 2) Attempt cache invalidation on OSS-Doorway (best-effort)
     try {
       const axios = require('axios');
-      const cacheBase = process.env.OSS_DOORWAY_CACHE_BASE || 'http://localhost:3000';
-      await axios.delete(`${cacheBase}/api/cache/delete/${encodeURIComponent(testClassId)}`).catch(()=>{});
-      await axios.post(`${cacheBase}/api/cache/clear`).catch(()=>{});
-      console.log(`🗑️ [CREATE-TEST-REPO] Attempted cache invalidation for ${testClassId}`);
+      // Prefer full Doorway base; fall back to legacy cache base and localhost variants
+      const candidates = [
+        process.env.OSS_DOORWAY_URL,
+        process.env.OSS_DOORWAY_CACHE_BASE,
+        'http://localhost:4000',
+        'http://localhost:3000'
+      ].filter(Boolean);
+      for (const base of candidates) {
+        try {
+          await axios.delete(`${base}/api/cache/delete/${encodeURIComponent(testClassId)}`).catch(()=>{});
+          await axios.post(`${base}/api/cache/clear`).catch(()=>{});
+          console.log(`🗑️ [CREATE-TEST-REPO] Cache invalidation attempted at ${base} for ${testClassId}`);
+        } catch (_) {
+          // continue to next candidate
+        }
+      }
     } catch (cacheErr) {
       console.warn(`⚠️ [CREATE-TEST-REPO] Cache invalidation skipped/failed: ${cacheErr.message}`);
     }
@@ -2497,8 +2601,11 @@ const createTestRepo = async (req, res) => {
       
       if (successful && successful.length > 0) {
         const successResult = successful[0];
-        // Format the repository URL
-        const formattedClassName = actualClassName.toLowerCase().replace(/\s+/g, '-');
+        // Format the repository URL (collapse non-alphanumerics to single hyphen and trim)
+        const formattedClassName = actualClassName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
         const repoUrl = `https://github.com/OSS-Doorway-Dev/${username}-${formattedClassName}-test`;
         
         console.log(`✅ [CREATE-TEST-REPO] Test repository created successfully: ${repoUrl}`);
