@@ -1,0 +1,607 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1761144495467",
+      "title": "a8.3 - Design Decisions",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 13,
+      "metadata": {
+        "title": "a8.3 - Design Decisions",
+        "description": "",
+        "prerequisite": "Q13",
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "type": "collect-info",
+          "title": "Student names",
+          "taskTitle": "Student names",
+          "desc": "Student names",
+          "points": 0,
+          "xp": 0,
+          "accept": "Enter the names of the students you worked with. Enter \"none\" if you are working alone.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** 0\n\nGreat contribution! 📋",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": true,
+          "savedDataName": "llm_validated_response",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T2": {
+          "type": "imageValidation",
+          "title": "UML Diagram 1",
+          "taskTitle": "UML Diagram 1",
+          "desc": "UML Diagram 1",
+          "points": 1,
+          "xp": 1,
+          "accept": "Draw all the diagrams for the different ways of modeling the information “Person has marital status (Single, Married, Divorced, and Widowed)” as illustrated in the class slides. Hand-drawn diagrams are acceptable.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer should be at least 1 image of uml diagram of single marital status, married divorced and widowed."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T3": {
+          "type": "llm-text-validation",
+          "title": "UML Diagram for Marital Status part 2 of 2",
+          "taskTitle": "UML Diagram for Marital Status part 2 of 2",
+          "desc": "UML Diagram for Marital Status part 2 of 2",
+          "points": 1,
+          "xp": 1,
+          "accept": "Identify which modeling approach you selected to represent the information as seen in the previous task and provide a justification for your choice.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should explain or justify what uml diagram they used to explain marital status, it could be either single, married, divorced, and widowed. be lenient"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T4": {
+          "type": "llm-text-validation",
+          "title": "Strategies Part 1 of 6",
+          "taskTitle": "Strategies Part 1 of 6",
+          "desc": "Strategies Part 1 of 6",
+          "points": 1,
+          "xp": 1,
+          "accept": "Enter from the numbers below to indicate whether each strategy presented in the slides is appropriate for the given scenario:\n\"End users can create new categories without recompiling the source code\"\n\n1) Open-Ended Attribute\n2) Closed-Ended Attribute (Hardcoded values)\n3) Association\n4) Enumeration\n5) Inheritance\n6) Association and Inheritance\n7) Delegating Strategy",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer for this question should be: 1, 3, 6, 7"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T5": {
+          "type": "llm-text-validation",
+          "title": "Strategies part 2 of 6",
+          "taskTitle": "Strategies part 2 of 6",
+          "desc": "Strategies part 2 of 6",
+          "points": 1,
+          "xp": 1,
+          "accept": "Enter from the numbers below to indicate whether each strategy presented in the slides is appropriate for the given scenario:\n\"User input is prone to typographical errors when defining product categories (e.g., 'appliance' vs. 'appliance')\"\n\n1) Open-Ended Attribute\n2) Closed-Ended Attribute (Hardcoded values)\n3) Association\n4) Enumeration\n5) Inheritance\n6) Association and Inheritance\n7) Delegating Strategy",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be 1, 5, 6, 7"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T6": {
+          "type": "llm-text-validation",
+          "title": "Strategies part 3 of 6",
+          "taskTitle": "Strategies part 3 of 6",
+          "desc": "Strategies part 3 of 6",
+          "points": 1,
+          "xp": 1,
+          "accept": "Enter from the numbers below to indicate whether each strategy presented in the slides is appropriate for the given scenario:\n\"Programmers can directly define category-specific operations and attributes\"\n\n1) Open-Ended Attribute\n2) Closed-Ended Attribute (Hardcoded values)\n3) Association\n4) Enumeration\n5) Inheritance\n6) Association and Inheritance\n7) Delegating Strategy",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be 4, 5, 6, 7"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T7": {
+          "type": "llm-text-validation",
+          "title": "Strategies part 4 of 6",
+          "taskTitle": "Strategies part 4 of 6",
+          "desc": "Strategies part 4 of 6",
+          "points": 1,
+          "xp": 1,
+          "accept": "Enter from the numbers below to indicate whether each strategy presented in the slides is appropriate for the given scenario:\n\"Product categories can be directly changed\"\n\n1) Open-Ended Attribute\n2) Closed-Ended Attribute (Hardcoded values)\n3) Association\n4) Enumeration\n5) Inheritance\n6) Association and Inheritance\n7) Delegating Strategy",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be 1, 2, 3, 4, 6, 7"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T8": {
+          "type": "llm-text-validation",
+          "title": "Strategies part 5 of 6",
+          "taskTitle": "Strategies part 5 of 6",
+          "desc": "Strategies part 5 of 6",
+          "points": 1,
+          "xp": 1,
+          "accept": "Select the most appropriate option to represent each piece of information listed below. For each item, indicate your chosen option number and provide a justification for your selection.\noptions:\n1) Open-Ended Attribute\n2) Closed-Ended Attribute (Hardcoded values)\n3) Association\n4) Enumeration\n5) Inheritance\n6) Association and Inheritance\n7) Delegating Strategy\n\ninformation:\na.) Address has a country\n\nb.) Order has the day of the week\n\nc.) Car supports Fuel Type (Gasoline, Diesel, Natural Gas)\n\nd.) A person has a family name",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer for a.) should be 3",
+              "answer for b.) should be 4",
+              "answer for c.) should be either 4 or 7 and 5.",
+              "answer for d.) should be 1"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T9": {
+          "type": "llm-text-validation",
+          "title": "Strategies part 6 of 6",
+          "taskTitle": "Strategies part 6 of 6",
+          "desc": "Strategies part 6 of 6",
+          "points": 1,
+          "xp": 1,
+          "accept": "For each situation listed below, select the most appropriate option from the 7 previously discussed approaches. Provide the corresponding option number and justify your selection.\n1) Open-Ended Attribute\n2) Closed-Ended Attribute (Hardcoded values)\n3) Association\n4) Enumeration\n5) Inheritance\n6) Association and Inheritance\n7) Delegating Strategy\n\na.) Operators can change product categories, but only managers can create new categories. All actions are performed through the system's user interface.\n\nb.) The system contains a fixed set of categories that will remain unchanged once deployed. Each category has specific operations and attributes.\n\nc.) The system displays product categories alongside product data for informational purposes only. No processing or business logic depends on the product's category.\n\nd.) The system manages 100 fixed categories, each with user-defined shipping modes (UPS, USPS, or FedEx). The system integrates with each company's web services using distinct protocols to calculate shipping fees. The client anticipates adding additional shipping modes in the future. ",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer for a should be 3",
+              "answer for b should be 5",
+              "answer for c should be 2",
+              "answer for d should be 7"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T10": {
+          "type": "imageValidation",
+          "title": "UML Diagram 2",
+          "taskTitle": "UML Diagram 2",
+          "desc": "UML Diagram 2",
+          "points": 1,
+          "xp": 1,
+          "accept": "Design a model for a dynamic system that allows users to create and manage a large number of categories through the user interface. Users define custom attributes for products within each category. For example: Attributes for Tires: dimensions, weight, rim size, section width, and aspect ratio. Attributes for Smartphones: dimensions, weight, battery type, and operating system. Attributes for Light Bulbs: color temperature, shape, light source type, and wattage.\n\nDraw a UML diagram with your design.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [
+              "Image should be of a uml diagram."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T11": {
+          "type": "collect-info",
+          "title": "Reflection & Feedback",
+          "taskTitle": "Reflection & Feedback",
+          "desc": "Reflection & Feedback",
+          "points": 0,
+          "xp": 0,
+          "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A8.3\n\nType \"ok\" when done.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\nGreat contribution! 📋",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      }
+    }
+  ],
+  "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map"
+}

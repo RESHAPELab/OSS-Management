@@ -1793,10 +1793,34 @@ const saveDraftQuestConfig = async (req, res) => {
             });
         }
 
-        // Update draft quest configuration
+        // Update draft quest configuration in database
         group.draftQuestConfig = draftQuestConfig;
         group.draftQuestLastUpdated = new Date();
         await group.save();
+
+        // Also write draft config to JSON file for the bot to use
+        try {
+            const outputDir = path.join(__dirname, '../../shared-quest-configs');
+            const outputPath = path.join(outputDir, `quest_config_${classId}.json`);
+            
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            // Write the draft config directly (questSequence format)
+            fs.writeFileSync(outputPath, JSON.stringify(draftQuestConfig, null, 2));
+            
+            // Also save a timestamped backup
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const backupPath = `${outputPath}.${timestamp}`;
+            fs.writeFileSync(backupPath, JSON.stringify(draftQuestConfig, null, 2));
+            
+            console.log(`✅ [saveDraftQuestConfig] Wrote draft config to ${outputPath}`);
+            console.log(`✅ [saveDraftQuestConfig] Backup saved to ${backupPath}`);
+        } catch (fileErr) {
+            console.error('⚠️ Failed to write draft config file:', fileErr.message);
+            // Do not fail the API response for file write issues
+        }
 
         console.log(`✅ [saveDraftQuestConfig] Successfully saved draft quest JSON for class: ${group.groupName}`);
 

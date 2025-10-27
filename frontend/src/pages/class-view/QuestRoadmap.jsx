@@ -8,11 +8,11 @@ import {
   Button,
   Select,
   MenuItem,
-  FormControl
+  FormControl,
+  CircularProgress
 } from '@mui/material';
 import {
-  Assignment as AssignmentIcon,
-  ArrowForward as ArrowForwardIcon
+  Assignment as AssignmentIcon
 } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -25,6 +25,9 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
   const [draftQuests, setDraftQuests] = useState({ questSequence: [] });
   const [isDraftLoading, setIsDraftLoading] = useState(false);
   const [localDraftQuests, setLocalDraftQuests] = useState([]); // Local state for draft quest prerequisite changes
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('');
+  const [saveTimeout, setSaveTimeout] = useState(null);
 
   // Load draft quests from API
   const loadDraftQuests = async () => {
@@ -74,26 +77,98 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     }
   }, [draftQuests]);
 
-  // Handle prerequisite change for draft quests
-  const handlePrerequisiteChange = (questId, newPrerequisite) => {
-    console.log("🔄 [QuestRoadmap] Changing prerequisite for quest:", questId, "to:", newPrerequisite);
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+    };
+  }, [saveTimeout]);
+
+  // Save draft quests to backend
+  const saveDraftQuests = async (updatedQuests) => {
+    if (!classId) {
+      console.log("❌ [QuestRoadmap] No classId available");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      setSaveStatus('Saving...');
+      console.log("💾 [QuestRoadmap] Saving draft quests for class:", classId);
+      console.log("📊 [QuestRoadmap] Quest count:", updatedQuests?.length || 0);
+
+      const draftConfigToSave = {
+        questSequence: updatedQuests,
+        map_repo_link: draftQuests.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map"
+      };
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/group/${classId}/draft-quest-config`,
+        { draftQuestConfig: draftConfigToSave }
+      );
+
+      if (response.data.success) {
+        console.log("✅ [QuestRoadmap] Draft quests saved successfully");
+        setSaveStatus('✅ Saved');
+        setTimeout(() => setSaveStatus(''), 2000);
+      } else {
+        console.log("❌ [QuestRoadmap] Backend reported save failure:", response.data);
+        setSaveStatus('❌ Save failed');
+        setTimeout(() => setSaveStatus(''), 3000);
+      }
+    } catch (error) {
+      console.error("❌ [QuestRoadmap] Error saving draft quests:", error);
+      setSaveStatus('❌ Error saving');
+      setTimeout(() => setSaveStatus(''), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle prerequisite change for draft quests with auto-save (by index)
+  const handlePrerequisiteChange = (questIndex, newPrerequisite) => {
+    console.log("🔄 [QuestRoadmap] Changing prerequisite for quest at index:", questIndex);
+    console.log("🔄 [QuestRoadmap] New prerequisite value:", newPrerequisite, "Type:", typeof newPrerequisite);
+    console.log("🔄 [QuestRoadmap] Is empty string?", newPrerequisite === '');
     
     setLocalDraftQuests(prev => {
-      const updated = prev.map(quest => {
-        if (quest.questId === questId || quest.id === questId) {
+      const updated = prev.map((quest, idx) => {
+        if (idx === questIndex) {
           const updatedQuest = {
             ...quest,
             metadata: {
               ...quest.metadata,
-              prerequisite: newPrerequisite
+              prerequisite: newPrerequisite // Explicitly set to newPrerequisite (can be empty string)
             }
           };
-          console.log("🔄 [QuestRoadmap] Updated quest:", updatedQuest);
+          console.log("🔄 [QuestRoadmap] Updated quest at index", idx);
+          console.log("🔄 [QuestRoadmap] Old prerequisite:", quest.metadata?.prerequisite);
+          console.log("🔄 [QuestRoadmap] New prerequisite:", updatedQuest.metadata.prerequisite);
           return updatedQuest;
         }
         return quest;
       });
-      console.log("🔄 [QuestRoadmap] Updated local draft quests:", updated);
+      console.log("🔄 [QuestRoadmap] Total draft quests after update:", updated.length);
+      
+      // Debounced auto-save: clear existing timeout and set a new one
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      
+      const newTimeout = setTimeout(() => {
+        console.log("⏱️ [QuestRoadmap] Auto-saving after prerequisite change...");
+        console.log("⏱️ [QuestRoadmap] Saving quests:", updated.map(q => ({
+          id: q.questId || q.id,
+          title: q.title,
+          prereq: q.metadata?.prerequisite
+        })));
+        saveDraftQuests(updated);
+      }, 1000); // Save 1 second after last change
+      
+      setSaveTimeout(newTimeout);
+      
       return updated;
     });
   };
@@ -138,8 +213,13 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
   console.log("🔍 [QuestRoadmap] questBreakdownQuests length:", questBreakdownQuests.length);
   console.log("🔍 [QuestRoadmap] Regular quests:", regularQuests.length);
   console.log("🔍 [QuestRoadmap] Regular quests data:", regularQuests);
+  console.log("🔍 [QuestRoadmap] localDraftQuests length:", localDraftQuests.length);
   console.log("🔍 [QuestRoadmap] Draft quests loaded:", allDraftQuests.length);
-  console.log("🔍 [QuestRoadmap] Draft quests data:", allDraftQuests);
+  console.log("🔍 [QuestRoadmap] Draft quests with prerequisites:", allDraftQuests.map(q => ({
+    id: q.questId || q.id,
+    title: q.title,
+    prereq: q.metadata?.prerequisite
+  })));
   console.log("🔍 [QuestRoadmap] Class ID:", classId);
   console.log("🔍 [QuestRoadmap] Auth User:", authUser?._id);
   
@@ -155,6 +235,10 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     const draftQuestNumber = regularQuests.length + index + 1;
     const draftQuestId = `Q${draftQuestNumber}`;
     
+    // Use existing prerequisite, or default to lastRegularQuestId only if prerequisite is undefined (not empty string)
+    const existingPrereq = quest.metadata?.prerequisite;
+    const finalPrereq = existingPrereq !== undefined ? existingPrereq : lastRegularQuestId;
+    
     return {
       ...quest,
       questId: draftQuestId, // Override with Q{number} format
@@ -162,7 +246,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
       metadata: {
         ...quest.metadata,
         isDraft: true,
-        prerequisite: quest.metadata?.prerequisite || lastRegularQuestId // Use existing prerequisite or fallback
+        prerequisite: finalPrereq // Allows empty string for "no prerequisite"
       }
     };
   });
@@ -180,6 +264,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
 
   // Function to detect if a quest is a draft quest
   const isDraftQuest = (quest) => {
+    if (!quest) return false; // Safety check for undefined quest
     return quest.metadata?.isDraft === true || 
            quest.isDraft === true || 
            quest.isDraftQuest === true ||
@@ -208,12 +293,13 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     
     const prerequisite = quest.metadata?.prerequisite || quest.prerequisites?.[0];
     
-    // If no prerequisite, it's first
-    if (!prerequisite) return true;
+    // If no prerequisite or empty string, it's first (connects to START)
+    if (!prerequisite || prerequisite === '') return true;
     
     // If prerequisite is a regular quest (not draft), it's first in draft chain
     const prerequisiteQuest = quests.find(q => (q.questId || q.id) === prerequisite);
-    return !isDraftQuest(prerequisiteQuest);
+    // If prerequisite not found or not a draft quest, this is first in draft chain
+    return !prerequisiteQuest || !isDraftQuest(prerequisiteQuest);
   };
 
   // Function to check if a draft quest is in the middle of a chain (has draft prerequisite AND dependents)
@@ -221,10 +307,15 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     if (!isDraftQuest(quest)) return false;
     
     const prerequisite = quest.metadata?.prerequisite || quest.prerequisites?.[0];
+    
+    // If no prerequisite or empty string, it's not in the middle
+    if (!prerequisite || prerequisite === '') return false;
+    
     const prerequisiteQuest = quests.find(q => (q.questId || q.id) === prerequisite);
     
     // Middle quest: has draft prerequisite AND has dependents
-    return isDraftQuest(prerequisiteQuest) && !isDraftQuestMovable(quest);
+    // If prerequisite not found, it's not in the middle
+    return prerequisiteQuest && isDraftQuest(prerequisiteQuest) && !isDraftQuestMovable(quest);
   };
 
   // Group quests by prerequisite to create columns
@@ -233,14 +324,21 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     const processed = new Set();
     const questToColumn = new Map(); // Track which column each quest is in
     
-    // First column: quests with no prerequisites
-    const noPrereqQuests = quests.filter(q => !q.metadata?.prerequisite && !q.prerequisites?.length);
+    // First column: START NODE (placeholder)
+    columns.push([{ isStartNode: true, questId: 'START' }]);
+    
+    // Second column: quests with no prerequisites (including empty string)
+    const noPrereqQuests = quests.filter(q => {
+      const prereq = q.metadata?.prerequisite;
+      const prereqs = q.prerequisites;
+      return (!prereq || prereq === '') && (!prereqs || prereqs.length === 0);
+    });
     if (noPrereqQuests.length > 0) {
       columns.push(noPrereqQuests);
       noPrereqQuests.forEach(q => {
         const questId = q.questId || q.id;
         processed.add(questId);
-        questToColumn.set(questId, 0);
+        questToColumn.set(questId, 1);
       });
     }
     
@@ -341,6 +439,38 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
       flexDirection: 'column',
       p: 3
     }}>
+      {/* Save Status Indicator */}
+      {(saveStatus || isSaving) && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 80, 
+          right: 24, 
+          zIndex: 1000,
+          backgroundColor: saveStatus?.includes('✅') ? '#e8f5e9' : saveStatus?.includes('❌') ? '#ffebee' : '#fff3e0',
+          color: saveStatus?.includes('✅') ? '#2e7d32' : saveStatus?.includes('❌') ? '#c62828' : '#e65100',
+          px: 2,
+          py: 1,
+          borderRadius: 2,
+          boxShadow: 2,
+          fontSize: '0.875rem',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          {isSaving && (
+            <CircularProgress 
+              size={16} 
+              sx={{ 
+                color: '#e65100' 
+              }} 
+            />
+          )}
+          <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>
+            {saveStatus || 'Saving...'}
+          </Typography>
+        </Box>
+      )}
 
       {/* Quest Blocks */}
       {questColumns.length === 0 ? (
@@ -378,7 +508,45 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
               <React.Fragment key={`column-${colIndex}`}>
                 {/* Column of quests */}
                 <Stack direction="column" spacing={3}>
-                  {column.map((quest, questIndex) => (
+                  {column.map((quest, questIndex) => {
+                    // Special rendering for START NODE
+                    if (quest.isStartNode) {
+                      return (
+                        <Card
+                          key="start-node"
+                          sx={{
+                            minWidth: 280,
+                            maxWidth: 320,
+                            height: 200,
+                            borderRadius: 4,
+                            boxShadow: 'none',
+                            border: '3px solid #ff9800',
+                            backgroundColor: '#fff3e0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative',
+                            transition: 'all 0.2s ease-in-out'
+                          }}
+                        >
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography 
+                              variant="h4" 
+                              sx={{ 
+                                fontWeight: 700,
+                                color: '#e65100'
+                              }}
+                            >
+                              START
+                            </Typography>
+                          </Box>
+                        </Card>
+                      );
+                    }
+                    
+                    // Regular quest card
+                    return (
                      <Card
                        key={quest.questId || quest.id || questIndex}
                        sx={{
@@ -466,7 +634,11 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                       // Draft quest prerequisite dropdown (only enabled for leaf nodes)
                       <Box>
                         <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
-                          Prerequisite:
+                          Prerequisite: {(!quest.metadata?.prerequisite || quest.metadata?.prerequisite === '') && (
+                            <Typography component="span" variant="caption" sx={{ ml: 1, color: '#ff9800', fontSize: '0.65rem', fontStyle: 'italic' }}>
+                              (from Start)
+                            </Typography>
+                          )}
                           {!isDraftQuestMovable(quest) && (
                             <Typography component="span" variant="caption" sx={{ ml: 1, color: '#ff9800', fontSize: '0.65rem', fontStyle: 'italic' }}>
                               (Locked - has dependents)
@@ -475,38 +647,35 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                         </Typography>
                         <FormControl size="small" sx={{ minWidth: 120 }}>
                           <Select
-                            value={quest.metadata?.prerequisite || ''}
+                            value={quest.metadata?.prerequisite === '' ? '' : (quest.metadata?.prerequisite || '')}
                             onChange={(e) => {
                               e.stopPropagation();
                               const newPrerequisite = e.target.value;
+                              const questId = quest.questId || quest.id;
                               
-                              console.log("🔄 [QuestRoadmap] Dropdown change - quest:", quest.questId || quest.id, "new prerequisite:", newPrerequisite);
+                              console.log("🔄 [QuestRoadmap] ========== DROPDOWN CHANGE ==========");
+                              console.log("🔄 [QuestRoadmap] Quest ID:", questId);
+                              console.log("🔄 [QuestRoadmap] New prerequisite:", newPrerequisite);
+                              console.log("🔄 [QuestRoadmap] Is empty string?", newPrerequisite === '');
+                              console.log("🔄 [QuestRoadmap] markedDraftQuests length:", markedDraftQuests.length);
+                              console.log("🔄 [QuestRoadmap] localDraftQuests length:", localDraftQuests.length);
                               
-                              // Update local state by finding the quest in localDraftQuests
-                              setLocalDraftQuests(prev => {
-                                const updated = prev.map((localQuest, localIndex) => {
-                                  // Match by the original quest ID or by index in the draft quests array
-                                  const questIndex = markedDraftQuests.findIndex(mq => (mq.questId || mq.id) === (quest.questId || quest.id));
-                                  
-                                  if (localIndex === questIndex) {
-                                    const updatedQuest = {
-                                      ...localQuest,
-                                      metadata: {
-                                        ...localQuest.metadata,
-                                        prerequisite: newPrerequisite
-                                      }
-                                    };
-                                    console.log("🔄 [QuestRoadmap] Updated local quest:", updatedQuest);
-                                    return updatedQuest;
-                                  }
-                                  return localQuest;
-                                });
-                                console.log("🔄 [QuestRoadmap] Updated all local draft quests:", updated);
-                                return updated;
-                              });
+                              // Find the index of this quest in markedDraftQuests (which maps 1:1 with localDraftQuests)
+                              const draftQuestIndex = markedDraftQuests.findIndex(mq => (mq.questId || mq.id) === questId);
+                              
+                              console.log("🔄 [QuestRoadmap] Found draft quest at index:", draftQuestIndex);
+                              console.log("🔄 [QuestRoadmap] Current quest in localDraftQuests:", localDraftQuests[draftQuestIndex]);
+                              console.log("🔄 [QuestRoadmap] =====================================");
+                              
+                              if (draftQuestIndex !== -1) {
+                                // Use the handler function which includes auto-save
+                                handlePrerequisiteChange(draftQuestIndex, newPrerequisite);
+                              } else {
+                                console.error("❌ [QuestRoadmap] Could not find quest index!");
+                              }
                             }}
                             displayEmpty
-                            disabled={!isDraftQuestMovable(quest)}
+                            disabled={!isDraftQuestMovable(quest) || isSaving}
                             sx={{
                               fontSize: '0.75rem',
                               height: 24,
@@ -523,8 +692,8 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                             onClick={(e) => e.stopPropagation()}
                           >
                             <MenuItem value="">
-                              <Typography variant="caption" sx={{ fontSize: '0.75rem' }}>
-                                Select prerequisite
+                              <Typography variant="caption" sx={{ fontSize: '0.75rem', fontWeight: 600, color: '#ff9800' }}>
+                                None (connects to Start)
                               </Typography>
                             </MenuItem>
                             
@@ -641,13 +810,119 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                   </Box>
                 </Box>
               </Card>
-                  ))}
+                    );
+                  })}
                 </Stack>
                 
                 {/* Arrows from this column's quests to their dependents */}
                 <Stack direction="column" spacing={3}>
                   {column.map((quest, questIndex) => {
                     const questId = quest.questId || quest.id;
+                    
+                    // Special handling for START node - draw arrows to all quests in next column
+                    if (quest.isStartNode && colIndex === 0 && questColumns[1]) {
+                      return (
+                        <Box
+                          key={`arrow-container-start`}
+                          sx={{
+                            width: 280,
+                            height: 200,
+                            position: 'relative'
+                          }}
+                        >
+                          {questColumns[1].map((targetQuest, targetIndex) => {
+                            const rowDiff = targetIndex - questIndex;
+                            const isStraight = rowDiff === 0;
+                            const startX = 10;
+                            const bendX = 50;
+                            const endX = 90;
+                            
+                            return (
+                              <Box
+                                key={`start-arrow-${targetIndex}`}
+                                sx={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  pointerEvents: 'none'
+                                }}
+                              >
+                                {isStraight ? (
+                                  // Straight horizontal arrow
+                                  <Box
+                                    sx={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: `${startX}%`,
+                                      width: `${endX - startX}%`,
+                                      height: 3,
+                                      backgroundColor: 'transparent',
+                                      borderTop: '3px solid #ff9800',
+                                      '&::after': {
+                                        content: '""',
+                                        position: 'absolute',
+                                        right: 0,
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        width: 0,
+                                        height: 0,
+                                        borderLeft: '20px solid #ff9800',
+                                        borderTop: '12px solid transparent',
+                                        borderBottom: '12px solid transparent'
+                                      }
+                                    }}
+                                  />
+                                ) : (
+                                  // Bent arrow (L-shaped)
+                                  <svg
+                                    style={{
+                                      position: 'absolute',
+                                      top: 0,
+                                      left: 0,
+                                      width: '100%',
+                                      height: `${Math.abs(rowDiff) * 203 + 100}%`,
+                                      overflow: 'visible'
+                                    }}
+                                  >
+                                    <line
+                                      x1={`${startX}%`}
+                                      y1="0"
+                                      x2={`${bendX}%`}
+                                      y2="0"
+                                      stroke="#ff9800"
+                                      strokeWidth="3"
+                                    />
+                                    <line
+                                      x1={`${bendX}%`}
+                                      y1="0"
+                                      x2={`${bendX}%`}
+                                      y2={`${rowDiff * 203}px`}
+                                      stroke="#ff9800"
+                                      strokeWidth="3"
+                                    />
+                                    <line
+                                      x1={`${bendX}%`}
+                                      y1={`${rowDiff * 203}px`}
+                                      x2={`${endX}%`}
+                                      y2={`${rowDiff * 203}px`}
+                                      stroke="#ff9800"
+                                      strokeWidth="3"
+                                    />
+                                    <polygon
+                                      points={`${280 * (endX / 100)},${rowDiff * 203 - 12} ${280 * (endX / 100) + 20},${rowDiff * 203} ${280 * (endX / 100)},${rowDiff * 203 + 12}`}
+                                      fill="#ff9800"
+                                    />
+                                  </svg>
+                                )}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      );
+                    }
+                    
                     const dependents = findDependents(questId);
                     
                     return (

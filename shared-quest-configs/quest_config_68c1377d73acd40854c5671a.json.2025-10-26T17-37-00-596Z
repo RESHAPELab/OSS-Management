@@ -1,0 +1,81 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1760200828010",
+      "title": "scsd",
+      "description": "csdcsdcsd",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 10,
+      "metadata": {
+        "title": "scsd",
+        "description": "csdcsdcsd",
+        "prerequisite": "",
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "csdcsdc",
+          "taskTitle": "csdcsdc",
+          "desc": "csdcsdc",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "csdcds"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "accept": "csdcsdc",
+          "success": "csdcsd",
+          "error": "csdcsdc",
+          "answer": ""
+        }
+      }
+    },
+    {
+      "questId": "TEMP_1760280725683",
+      "title": "sc sc",
+      "description": " sc sf sf sf ",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 10,
+      "metadata": {
+        "title": "sc sc",
+        "description": " sc sf sf sf ",
+        "prerequisite": "Q7",
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "s d sd sd",
+          "taskTitle": "s d sd sd",
+          "desc": "s d sd sd",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "accept": "s s sd sd ",
+          "success": "fscdc",
+          "error": "csdcdsa",
+          "answer": ""
+        }
+      }
+    }
+  ],
+  "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map"
+}
