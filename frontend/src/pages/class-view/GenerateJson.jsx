@@ -60,6 +60,174 @@ import {
 } from "@mui/icons-material";
 import { useAuthContext } from "../../context/AuthContext";
 
+// ============================================
+// CENTRALIZED STYLES - Edit all styling here
+// ============================================
+const STYLES = {
+  // Toggle/Switch Styles
+  toggle: {
+    orangeSwitch: {
+      '& .MuiSwitch-switchBase.Mui-checked': {
+        color: '#ff5722',
+      },
+      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+        backgroundColor: '#ff5722',
+      },
+    },
+  },
+
+  // Form Label Styles
+  formLabel: {
+    standard: {
+      ml: -0.75,
+      mb: 2,
+      display: 'inline-flex',
+      alignItems: 'center',
+      '& .MuiFormControlLabel-label': {
+        ml: 3,
+        fontSize: '0.95rem',
+      },
+    },
+    withDescription: {
+      ml: 0,
+      display: 'flex',
+      alignItems: 'center',
+      '& .MuiFormControlLabel-label': {
+        ml: 3,
+        fontSize: '0.95rem',
+        fontWeight: 500,
+        color: '#374151',
+      },
+    },
+  },
+
+  // Checkbox Styles
+  checkbox: {
+    standard: {
+      ml: 0,
+      gap: 1,
+      '& .MuiFormControlLabel-label': {
+        ml: 0.5,
+        whiteSpace: 'nowrap',
+        fontSize: '0.95rem',
+      },
+    },
+  },
+
+  // Button Styles
+  button: {
+    primary: {
+      borderRadius: 4,
+      textTransform: 'none',
+      fontWeight: 600,
+    },
+    outlined: {
+      borderRadius: 4,
+      textTransform: 'none',
+    },
+    readmeButton: {
+      backgroundColor: '#2196f3',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#1976d2',
+      },
+    },
+    questButton: {
+      backgroundColor: '#4caf50',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#388e3c',
+      },
+    },
+    questBankButton: {
+      backgroundColor: '#ff9800',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#f57c00',
+      },
+    },
+    addParameterButton: {
+      backgroundColor: '#9c27b0',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#7b1fa2',
+      },
+    },
+    addHintButton: {
+      backgroundColor: '#2196f3',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#1976d2',
+      },
+    },
+    generateHintButton: {
+      backgroundColor: '#ff5722',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      boxShadow: 'none',
+      '&:hover': {
+        backgroundColor: '#e64a19',
+        boxShadow: 'none',
+      },
+    },
+  },
+
+  // Typography/Text Styles
+  text: {
+    sectionHeading: {
+      fontWeight: 700,
+      mb: 2,
+      color: 'primary.main',
+    },
+    subHeading: {
+      fontWeight: 600,
+      mb: 2,
+      color: 'secondary.main',
+    },
+    bodyText: {
+      fontSize: '0.95rem',
+      color: '#374151',
+    },
+  },
+
+  // Container/Box Styles
+  container: {
+    overflowVisible: {
+      mb: 2,
+      overflow: 'visible',
+    },
+  },
+};
+
 // Add default JSON configuration used for new classes
 const defaultJsonContent = {
   map_repo_link:
@@ -3415,9 +3583,9 @@ Student can now start their quest journey!`);
           <Box p={3}>
             {/* README and Quest Management Buttons */}
             <Box mb={3}>
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap alignItems="center">
                 {/* README Upload */}
-                <Box>
+                <Box sx={{ width: 'fit-content' }}>
                   {!jsonContent.readme ? (
                     <>
                       <input
@@ -3429,18 +3597,10 @@ Student can now start their quest journey!`);
                       />
                       <label htmlFor="readme-upload">
                         <Button
-                          variant="outlined"
+                          variant="contained"
                           component="span"
                           startIcon={<DescriptionIcon />}
-                          sx={{
-                            borderColor: "#2196f3",
-                            color: "#2196f3",
-                            borderRadius: 4,
-                            "&:hover": {
-                              borderColor: "#1976d2",
-                              backgroundColor: "#e3f2fd",
-                            },
-                          }}
+                          sx={STYLES.button.readmeButton}
                         >
                           Add README (.md)
                         </Button>
@@ -3448,7 +3608,7 @@ Student can now start their quest journey!`);
                     </>
                   ) : (
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       startIcon={<DescriptionIcon />}
                       onClick={() => {
                         console.log(`🚀 [README Modal] Opening README modal for class: ${classId}`);
@@ -3458,15 +3618,7 @@ Student can now start their quest journey!`);
                         console.log(`📞 [README Modal] Calling fetchStudentCount...`);
                         fetchStudentCount();
                       }}
-                      sx={{
-                        borderColor: "#2196f3",
-                        color: "#2196f3",
-                        borderRadius: 4,
-                        "&:hover": {
-                          borderColor: "#1976d2",
-                          backgroundColor: "#e3f2fd",
-                        },
-                      }}
+                      sx={STYLES.button.readmeButton}
                     >
                       README Added
                     </Button>
@@ -3475,36 +3627,20 @@ Student can now start their quest journey!`);
 
                 {/* Add Quest Button */}
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => setShowAddQuestModal(true)}
-                  sx={{
-                    borderColor: "#4caf50",
-                    color: "#4caf50",
-                    borderRadius: 4,
-                    "&:hover": {
-                      borderColor: "#388e3c",
-                      backgroundColor: "#f1f8e9",
-                    },
-                  }}
+                  sx={STYLES.button.questButton}
                 >
                   Add New Quest
                 </Button>
 
                 {/* Quest Bank Button */}
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<LibraryBooksIcon />}
                   onClick={handleOpenLibrary}
-                  sx={{
-                    borderColor: "#ff9800",
-                    color: "#ff9800",
-                    borderRadius: 4,
-                    "&:hover": {
-                      borderColor: "#f57c00",
-                      backgroundColor: "#fff3e0",
-                    },
-                  }}
+                  sx={STYLES.button.questBankButton}
                 >
                   Quest Bank
                 </Button>
@@ -4650,27 +4786,11 @@ Student can now start their quest journey!`);
                                         e.target.checked
                                       )
                                     }
-                                    sx={{
-                                      "& .MuiSwitch-switchBase.Mui-checked": {
-                                        color: "#1976d2",
-                                        "&:hover": {
-                                          backgroundColor:
-                                            "rgba(25, 118, 210, 0.08)",
-                                        },
-                                      },
-                                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                        { backgroundColor: "#1976d2" },
-                                    }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                   />
                                 }
                                 label="Save validated data per user"
-                                sx={{
-                                  "& .MuiFormControlLabel-label": {
-                                    fontSize: "0.95rem",
-                                    fontWeight: 500,
-                                    color: "#374151",
-                                  },
-                                }}
+                                sx={STYLES.formLabel.withDescription}
                               />
                               {task.saveValidatedData && (
                                 <>
@@ -4759,17 +4879,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#1976d2",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(25, 118, 210, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#1976d2" },
-                                  }}
+                                  sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Use stored data for Issue Number"
@@ -4928,17 +5038,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#1976d2",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(25, 118, 210, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#1976d2" },
-                                  }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save validated data per user"
@@ -5149,17 +5249,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#1976d2",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(25, 118, 210, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#1976d2" },
-                                  }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save validated data per user"
@@ -5410,7 +5500,7 @@ Student can now start their quest journey!`);
 
                             {/* Add Parameter Button */}
                             <Button
-                              variant="outlined"
+                              variant="contained"
                               onClick={() => {
                                 const newParams = [
                                   ...(task.llmTextValidation
@@ -5423,7 +5513,7 @@ Student can now start their quest journey!`);
                                 });
                               }}
                               startIcon={<AddIcon />}
-                              sx={{ mt: 1, borderRadius: 2 }}
+                              sx={{ ...STYLES.button.addParameterButton, mt: 1 }}
                             >
                               Add Parameter
                             </Button>
@@ -5477,7 +5567,7 @@ Student can now start their quest journey!`);
                             </Alert>
 
                             {/* Detailed Feedback Toggle */}
-                            <Box sx={{ mt: 2 }}>
+                            <Box sx={{ mt: 1 }}>
                               <FormControlLabel
                                 control={
                                   <Switch
@@ -5496,38 +5586,17 @@ Student can now start their quest journey!`);
                                         }
                                       )
                                     }
-                                    sx={{
-                                      "& .MuiSwitch-switchBase.Mui-checked": {
-                                        color: "#1976d2",
-                                        "&:hover": {
-                                          backgroundColor:
-                                            "rgba(25, 118, 210, 0.08)",
-                                        },
-                                      },
-                                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                        {
-                                          backgroundColor: "#1976d2",
-                                        },
-                                    }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                   />
                                 }
                                 label="Enable detailed feedback"
-                                sx={{
-                                  "& .MuiFormControlLabel-label": {
-                                    fontSize: "0.95rem",
-                                    fontWeight: 500,
-                                    color: "#374151",
-                                  },
-                                }}
+                                sx={{ mb: 1 }}
                               />
                               <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: "block", mt: 0.5, ml: 4 }}
+                                variant="body2"
+                                sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
                               >
-                                When enabled, students receive specific feedback
-                                about what they got wrong instead of generic
-                                error messages.
+                                When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
                               </Typography>
                             </Box>
                           </Box>
@@ -5581,17 +5650,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#4caf50",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(76, 175, 80, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#4caf50" },
-                                  }}
+                                  sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save collected information for later tasks"
@@ -5638,58 +5697,10 @@ Student can now start their quest journey!`);
                         </Box>
                       )}
 
-                      <Divider />
-
-                      {/* Success and Error Text Fields */}
-                      <Box>
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
-                        >
-                          Response Text
-                        </Typography>
-
-                        <TextField
-                          label="Success Text (Correct Answer Response)"
-                          value={task.successText}
-                          onChange={(e) =>
-                            handleTaskChange(
-                              taskIdx,
-                              "successText",
-                              e.target.value
-                            )
-                          }
-                          placeholder="This text appears when students answer correctly"
-                          fullWidth
-                          multiline
-                          rows={3}
-                          helperText="Use {points} as a placeholder for the points value"
-                          sx={{ mb: 2, borderRadius: 2 }}
-                        />
-
-                        <TextField
-                          label="Error Text (Incorrect Answer Response)"
-                          value={task.errorText}
-                          onChange={(e) =>
-                            handleTaskChange(
-                              taskIdx,
-                              "errorText",
-                              e.target.value
-                            )
-                          }
-                          placeholder="This text appears when students answer incorrectly"
-                          fullWidth
-                          multiline
-                          rows={3}
-                          helperText="Should provide helpful hints and guidance"
-                          sx={{ borderRadius: 2 }}
-                        />
-                      </Box>
-
-                      <Divider />
+                      <Divider sx={{ my: 2 }} />
 
                       {/* Hints Section */}
-                      <Box>
+                      <Box sx={{ mb: 4 }}>
                         <Typography
                           variant="h6"
                           sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
@@ -5699,7 +5710,7 @@ Student can now start their quest journey!`);
                         <Typography
                           variant="body2"
                           color="text.secondary"
-                          sx={{ mb: 2 }}
+                          sx={{ mb: 1 }}
                         >
                           Add progressive hints that students can access by
                           typing "help" in issue comments. Each hint costs
@@ -5813,16 +5824,15 @@ Student can now start their quest journey!`);
                         ))}
 
                         <Button
-                          variant="outlined"
+                          variant="contained"
                           startIcon={<AddCircleOutlineIcon />}
                           onClick={() =>
                             handleAddHint(editingQuestIndex || 0, taskIdx)
                           }
                           sx={{
-                            mt: 1,
+                            ...STYLES.button.addHintButton,
+                            mt: 0.5,
                             mr: 1,
-                            borderRadius: 4,
-                            borderColor: "primary.main",
                           }}
                         >
                           Add Hint
@@ -5874,20 +5884,60 @@ Student can now start their quest journey!`);
                             }
                           }}
                           sx={{
-                            mt: 1,
-                            borderRadius: 4,
-                            backgroundColor: "white",
-                            color: "#ff5722",
-                            border: "1px solid #ff5722",
-                            "&:hover": {
-                              backgroundColor: "#fff3e0",
-                              borderColor: "#e64a19",
-                            },
-                            boxShadow: "none",
+                            ...STYLES.button.generateHintButton,
+                            mt: 0.5,
                           }}
                         >
                           Generate hint with AI
                         </Button>
+                      </Box>
+
+                      <Divider />
+
+                      {/* Success and Error Text Fields */}
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
+                        >
+                          Response Text
+                        </Typography>
+
+                        <TextField
+                          label="Success Text (Correct Answer Response)"
+                          value={task.successText}
+                          onChange={(e) =>
+                            handleTaskChange(
+                              taskIdx,
+                              "successText",
+                              e.target.value
+                            )
+                          }
+                          placeholder="This text appears when students answer correctly"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          helperText="Use {points} as a placeholder for the points value"
+                          sx={{ mb: 2, borderRadius: 2 }}
+                        />
+
+                        <TextField
+                          label="Error Text (Incorrect Answer Response)"
+                          value={task.errorText}
+                          onChange={(e) =>
+                            handleTaskChange(
+                              taskIdx,
+                              "errorText",
+                              e.target.value
+                            )
+                          }
+                          placeholder="This text appears when students answer incorrectly"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          helperText="Should provide helpful hints and guidance"
+                          sx={{ borderRadius: 2 }}
+                        />
                       </Box>
                     </Stack>
                   </Card>
@@ -6389,16 +6439,7 @@ Student can now start their quest journey!`);
                                     saveValidatedData: e.target.checked,
                                   })
                                 }
-                                sx={{
-                                  "& .MuiSwitch-switchBase.Mui-checked": {
-                                    color: "#4caf50",
-                                    "&:hover": {
-                                      backgroundColor: "rgba(76, 175, 80, 0.08)",
-                                    },
-                                  },
-                                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                    { backgroundColor: "#4caf50" },
-                                }}
+                                sx={STYLES.toggle.orangeSwitch}
                               />
                             }
                             label="Save validated data for later tasks"
@@ -6548,6 +6589,7 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
+                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Save validated data for later tasks"
@@ -6651,6 +6693,7 @@ Student can now start their quest journey!`);
                         </Box>
                       ))}
                       <Button
+                        variant="contained"
                         onClick={() => {
                           const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || []), ""];
                           setEditingTaskData({
@@ -6661,8 +6704,8 @@ Student can now start their quest journey!`);
                             },
                           });
                         }}
-                        startIcon={<span>+</span>}
-                        sx={{ mb: 2 }}
+                        startIcon={<AddIcon />}
+                        sx={{ ...STYLES.button.addParameterButton, mb: 2 }}
                       >
                         Add Parameter
                       </Button>
@@ -6700,12 +6743,13 @@ Student can now start their quest journey!`);
                           />
                         }
                         label="Enable Detailed Feedback"
+                        sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                       />
                     </Box>
                   )}
 
                   {/* Hints Section */}
-                  <Box>
+                  <Box sx={{ mb: 4 }}>
                     <Typography
                       variant="h6"
                       sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
@@ -6715,7 +6759,7 @@ Student can now start their quest journey!`);
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      sx={{ mb: 2 }}
+                      sx={{ mb: 1 }}
                     >
                       Add progressive hints that students can access by
                       typing "help" in issue comments. Each hint costs
@@ -6833,7 +6877,7 @@ Student can now start their quest journey!`);
                     ))}
 
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       startIcon={<AddCircleOutlineIcon />}
                       onClick={() => {
                         const newHints = [...(editingTaskData.detailedHints || []), {
@@ -6847,10 +6891,9 @@ Student can now start their quest journey!`);
                         });
                       }}
                       sx={{
-                        mt: 1,
+                        ...STYLES.button.addHintButton,
+                        mt: 0.5,
                         mr: 1,
-                        borderRadius: 4,
-                        borderColor: "primary.main",
                       }}
                     >
                       Add Hint
@@ -6904,16 +6947,8 @@ Student can now start their quest journey!`);
                         }
                       }}
                       sx={{
-                        mt: 1,
-                        borderRadius: 4,
-                        backgroundColor: "white",
-                        color: "#ff5722",
-                        border: "1px solid #ff5722",
-                        "&:hover": {
-                          backgroundColor: "#fff3e0",
-                          borderColor: "#e64a19",
-                        },
-                        boxShadow: "none",
+                        ...STYLES.button.generateHintButton,
+                        mt: 0.5,
                       }}
                     >
                       Generate hint with AI
@@ -7229,17 +7264,7 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
-                              sx={{
-                                "& .MuiSwitch-switchBase.Mui-checked": {
-                                  color: "#1976d2",
-                                  "&:hover": {
-                                    backgroundColor:
-                                      "rgba(25, 118, 210, 0.08)",
-                                  },
-                                },
-                                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                  { backgroundColor: "#1976d2" },
-                              }}
+                                    sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Save validated data per user"
@@ -7355,7 +7380,7 @@ Student can now start their quest journey!`);
                         sx={{ mb: 2, width: 200 }}
                       />
 
-                      <Box sx={{ mt: 2 }}>
+                      <Box sx={{ mt: 0 }}>
                         <FormControlLabel
                           control={
                             <Switch
@@ -7369,10 +7394,18 @@ Student can now start their quest journey!`);
                                   },
                                 })
                               }
+                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Enable detailed feedback from AI validation"
+                          sx={{ mb: 1 }}
                         />
+                        <Typography
+                          variant="body2"
+                          sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
+                        >
+                          When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
+                        </Typography>
                       </Box>
                     </Box>
                   )}
@@ -7444,7 +7477,7 @@ Student can now start their quest journey!`);
                         sx={{ mb: 2, width: 200 }}
                       />
 
-                      <Box sx={{ mt: 2 }}>
+                      <Box sx={{ mt: 0 }}>
                         <FormControlLabel
                           control={
                             <Switch
@@ -7458,10 +7491,18 @@ Student can now start their quest journey!`);
                                   },
                                 })
                               }
+                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Enable detailed feedback from AI validation"
+                          sx={{ mb: 1 }}
                         />
+                        <Typography
+                          variant="body2"
+                          sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
+                        >
+                          When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
+                        </Typography>
                       </Box>
                     </Box>
                   )}
@@ -7655,6 +7696,7 @@ Student can now start their quest journey!`);
                 "&:hover": { bgcolor: "#388e3c", boxShadow: "none" },
               }}
             >
+              Save Changes
             </Button>
           </DialogActions>
         </Dialog>
