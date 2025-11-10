@@ -60,6 +60,174 @@ import {
 } from "@mui/icons-material";
 import { useAuthContext } from "../../context/AuthContext";
 
+// ============================================
+// CENTRALIZED STYLES - Edit all styling here
+// ============================================
+const STYLES = {
+  // Toggle/Switch Styles
+  toggle: {
+    orangeSwitch: {
+      '& .MuiSwitch-switchBase.Mui-checked': {
+        color: '#ff5722',
+      },
+      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+        backgroundColor: '#ff5722',
+      },
+    },
+  },
+
+  // Form Label Styles
+  formLabel: {
+    standard: {
+      ml: -0.75,
+      mb: 2,
+      display: 'inline-flex',
+      alignItems: 'center',
+      '& .MuiFormControlLabel-label': {
+        ml: 3,
+        fontSize: '0.95rem',
+      },
+    },
+    withDescription: {
+      ml: 0,
+      display: 'flex',
+      alignItems: 'center',
+      '& .MuiFormControlLabel-label': {
+        ml: 3,
+        fontSize: '0.95rem',
+        fontWeight: 500,
+        color: '#374151',
+      },
+    },
+  },
+
+  // Checkbox Styles
+  checkbox: {
+    standard: {
+      ml: 0,
+      gap: 1,
+      '& .MuiFormControlLabel-label': {
+        ml: 0.5,
+        whiteSpace: 'nowrap',
+        fontSize: '0.95rem',
+      },
+    },
+  },
+
+  // Button Styles
+  button: {
+    primary: {
+      borderRadius: 4,
+      textTransform: 'none',
+      fontWeight: 600,
+    },
+    outlined: {
+      borderRadius: 4,
+      textTransform: 'none',
+    },
+    readmeButton: {
+      backgroundColor: '#2196f3',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#1976d2',
+      },
+    },
+    questButton: {
+      backgroundColor: '#4caf50',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#388e3c',
+      },
+    },
+    questBankButton: {
+      backgroundColor: '#ff9800',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#f57c00',
+      },
+    },
+    addParameterButton: {
+      backgroundColor: '#9c27b0',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#7b1fa2',
+      },
+    },
+    addHintButton: {
+      backgroundColor: '#2196f3',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      '&:hover': {
+        backgroundColor: '#1976d2',
+      },
+    },
+    generateHintButton: {
+      backgroundColor: '#ff5722',
+      color: '#ffffff',
+      borderRadius: 4,
+      width: 'fit-content',
+      minWidth: 'auto',
+      whiteSpace: 'nowrap',
+      border: 'none',
+      boxShadow: 'none',
+      '&:hover': {
+        backgroundColor: '#e64a19',
+        boxShadow: 'none',
+      },
+    },
+  },
+
+  // Typography/Text Styles
+  text: {
+    sectionHeading: {
+      fontWeight: 700,
+      mb: 2,
+      color: 'primary.main',
+    },
+    subHeading: {
+      fontWeight: 600,
+      mb: 2,
+      color: 'secondary.main',
+    },
+    bodyText: {
+      fontSize: '0.95rem',
+      color: '#374151',
+    },
+  },
+
+  // Container/Box Styles
+  container: {
+    overflowVisible: {
+      mb: 2,
+      overflow: 'visible',
+    },
+  },
+};
+
 // Add default JSON configuration used for new classes
 const defaultJsonContent = {
   map_repo_link:
@@ -106,8 +274,6 @@ const GenerateJson = () => {
   const [isDraftLoading, setIsDraftLoading] = useState(false);
   const [draftSaveStatus, setDraftSaveStatus] = useState("");
   const [showDraftJsonPreview, setShowDraftJsonPreview] = useState(false);
-  const [isPurpleDeploying, setIsPurpleDeploying] = useState(false);
-  const [purpleDeployProgress, setPurpleDeployProgress] = useState("");
   
   // Normalized draft (for preview): fills sequenceNumber and metadata.prerequisite chain
   const normalizedDraftForPreview = useMemo(() => {
@@ -144,9 +310,6 @@ const GenerateJson = () => {
   const [testUsernames, setTestUsernames] = useState("");
   const [testRepos, setTestRepos] = useState([]);
   const [isCreatingTestRepos, setIsCreatingTestRepos] = useState(false);
-  const [showReplaceTestRepoDialog, setShowReplaceTestRepoDialog] = useState(false);
-  const [existingTestRepos, setExistingTestRepos] = useState([]);
-  const [isDeletingTestRepos, setIsDeletingTestRepos] = useState(false);
   // 1. Add new state for multiple tasks in questFormData
   const [questFormData, setQuestFormData] = useState({
     title: "",
@@ -464,6 +627,76 @@ const GenerateJson = () => {
     readme: "",
   });
 
+  // Duplicate detection: compute title sets after jsonContent and draftQuests are defined
+  const liveQuestSequence = jsonContent?.questSequence || [];
+  const draftQuestSequence = draftQuests?.questSequence || [];
+
+  const liveQuestTitles = useMemo(() => {
+    const titles = new Set();
+    liveQuestSequence.forEach((quest) => {
+      const normalized = (quest?.title || quest?.metadata?.title || "")
+        .trim()
+        .toLowerCase();
+      if (normalized) {
+        titles.add(normalized);
+      }
+    });
+    return titles;
+  }, [liveQuestSequence]);
+
+  const liveTaskTitles = useMemo(() => {
+    const titles = new Set();
+    liveQuestSequence.forEach((quest) => {
+      const tasks = quest?.tasks || {};
+      Object.values(tasks).forEach((task) => {
+        const normalized = (
+          task?.title ||
+          task?.taskTitle ||
+          task?.desc ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+        if (normalized) {
+          titles.add(normalized);
+        }
+      });
+    });
+    return titles;
+  }, [liveQuestSequence]);
+
+  const draftQuestTitleCounts = useMemo(() => {
+    const counts = {};
+    draftQuestSequence.forEach((quest) => {
+      const normalized = (quest?.title || "")
+        .trim()
+        .toLowerCase();
+      if (!normalized) return;
+      counts[normalized] = (counts[normalized] || 0) + 1;
+    });
+    return counts;
+  }, [draftQuestSequence]);
+
+  const draftTaskTitleCounts = useMemo(() => {
+    const counts = {};
+    draftQuestSequence.forEach((quest) => {
+      const tasks = quest?.tasks || {};
+      Object.values(tasks).forEach((task) => {
+        const normalized = (
+          task?.title ||
+          task?.taskTitle ||
+          task?.desc ||
+          ""
+        )
+          .trim()
+          .toLowerCase();
+        if (!normalized) return;
+        counts[normalized] = (counts[normalized] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [draftQuestSequence]);
+
   // Add a quest ID counter to ensure consistent timestamps
   const [questIdCounter, setQuestIdCounter] = useState(0);
   const [sessionTimestamp] = useState(Date.now()); // Use same timestamp for all quests in this session
@@ -485,48 +718,17 @@ const GenerateJson = () => {
     return `Saved successfully ${diffDay} days ago`;
   }, [lastSavedAt]);
 
-  // Helper function to sort quests by quest number
-  const sortQuestsByNumber = (questSequence) => {
-    return [...questSequence].sort((a, b) => {
-      const getQuestNumber = (quest) => {
-        // Try to get quest number from questId first (Q1, Q2, etc.)
-        const questId = quest.questId || quest.id;
-        if (questId && typeof questId === 'string') {
-          const match = questId.match(/Q(\d+)/i);
-          if (match) return parseInt(match[1], 10);
-        }
-        
-        // Try to get from title
-        const title = quest.title || quest.questTitle || '';
-        const match = title.match(/Q(\d+)/i);
-        return match ? parseInt(match[1], 10) : 999;
-      };
-      
-      const aNum = getQuestNumber(a);
-      const bNum = getQuestNumber(b);
-      return aNum - bNum;
-    });
-  };
-
   // Function to assign sequential quest IDs based on position
-  // For purple deploy, preserve original quest IDs to maintain append-only behavior
   const assignSequentialQuestIds = (questSequence) => {
     return questSequence.map((quest, index) => {
-      // Preserve original quest ID if it exists and is valid (Q1, Q2, etc.)
-      // Only assign new sequential ID if the original ID is not in the expected format
-      const originalId = quest.questId;
-      const isValidQuestId = originalId && /^Q\d+$/.test(originalId);
-      
       const updatedQuest = {
         ...quest,
-        questId: isValidQuestId ? originalId : `Q${index + 1}`,
+        questId: `Q${index + 1}`,
         sequenceNumber: index,
       };
       
       // Debug logging to check if tasks are preserved
       console.log(`🔍 [assignSequentialQuestIds] Quest ${index + 1}:`, {
-        originalId,
-        preservedId: updatedQuest.questId,
         originalTasks: quest.tasks,
         updatedTasks: updatedQuest.tasks,
         tasksPreserved: !!updatedQuest.tasks
@@ -543,9 +745,7 @@ const GenerateJson = () => {
       questSequence.map((q) => ({ id: q.questId, title: q.title }))
     );
 
-    // Sort quests by quest number first
-    const sortedSequence = sortQuestsByNumber(questSequence);
-    const updatedSequence = assignSequentialQuestIds(sortedSequence);
+    const updatedSequence = assignSequentialQuestIds(questSequence);
 
     // Update prerequisites based on new IDs
     updatedSequence.forEach((quest, index) => {
@@ -932,7 +1132,6 @@ const GenerateJson = () => {
         const draftConfig = response.data.data.draftQuestConfig || { questSequence: [] };
         setDraftQuests(draftConfig);
         console.log("✅ Loaded draft quests:", draftConfig.questSequence?.length || 0);
-        console.log("🔍 [LOAD-DRAFT-QUESTS] Quest titles:", draftConfig.questSequence?.map(q => q.title).join(', ') || 'none');
       }
     } catch (error) {
       console.error("Error loading draft quests:", error);
@@ -983,14 +1182,7 @@ const GenerateJson = () => {
 
   // Delete a draft quest
   const deleteDraftQuest = async (questIndex) => {
-    console.log(`🗑️ [DELETE-DRAFT-QUEST] Starting deletion for quest index: ${questIndex}`);
-    console.log(`🗑️ [DELETE-DRAFT-QUEST] ClassId: ${classId}`);
-    console.log(`🗑️ [DELETE-DRAFT-QUEST] Current draft quests count: ${draftQuests.questSequence?.length || 0}`);
-    
-    if (!classId) {
-      console.error("❌ [DELETE-DRAFT-QUEST] No classId available");
-      return;
-    }
+    if (!classId) return;
 
     try {
       // Optimistically update the UI first
@@ -1000,35 +1192,22 @@ const GenerateJson = () => {
       };
       setDraftQuests(updatedDraftQuests);
       setDraftSaveStatus("🔄 Deleting draft quest...");
-      console.log(`🗑️ [DELETE-DRAFT-QUEST] UI updated optimistically, new count: ${updatedDraftQuests.questSequence.length}`);
 
       const response = await axios.delete(
         `${API_BASE_URL}/api/group/${classId}/draft-quest-config/${questIndex}`
       );
 
-      console.log(`🗑️ [DELETE-DRAFT-QUEST] Backend response:`, response.data);
-
       if (response.data.success) {
         setDraftSaveStatus("✅ Draft quest deleted successfully!");
         setTimeout(() => setDraftSaveStatus(""), 3000);
-        console.log(`✅ [DELETE-DRAFT-QUEST] Successfully deleted quest at index ${questIndex}`);
-        
-        // Verify the deletion by reloading data from backend
-        console.log(`🔄 [DELETE-DRAFT-QUEST] Reloading data to verify deletion...`);
-        await loadDraftQuests();
       } else {
         // If backend failed, reload to get correct state
-        console.log(`❌ [DELETE-DRAFT-QUEST] Backend reported failure, reloading...`);
         await loadDraftQuests();
         setDraftSaveStatus("❌ Failed to delete draft quest");
         setTimeout(() => setDraftSaveStatus(""), 3000);
       }
     } catch (error) {
-      console.error("❌ [DELETE-DRAFT-QUEST] Error deleting draft quest:", error);
-      if (error.response) {
-        console.error("❌ [DELETE-DRAFT-QUEST] Response status:", error.response.status);
-        console.error("❌ [DELETE-DRAFT-QUEST] Response data:", error.response.data);
-      }
+      console.error("Error deleting draft quest:", error);
       // Reload to get correct state
       await loadDraftQuests();
       setDraftSaveStatus("❌ Error deleting draft quest");
@@ -1038,21 +1217,15 @@ const GenerateJson = () => {
 
   // Handle quest deletion confirmation
   const handleQuestDeleteClick = (questIndex, questTitle) => {
-    console.log(`🗑️ [HANDLE-QUEST-DELETE-CLICK] Called with questIndex: ${questIndex}, questTitle: ${questTitle}`);
     setQuestToDelete({ index: questIndex, title: questTitle });
     setShowQuestDeleteConfirmationDialog(true);
-    console.log(`🗑️ [HANDLE-QUEST-DELETE-CLICK] Dialog should now be visible`);
   };
 
   const confirmQuestDelete = () => {
-    console.log(`🗑️ [CONFIRM-QUEST-DELETE] Called with questToDelete:`, questToDelete);
     if (questToDelete) {
-      console.log(`🗑️ [CONFIRM-QUEST-DELETE] Proceeding to delete quest at index: ${questToDelete.index}`);
       deleteDraftQuest(questToDelete.index);
       setShowQuestDeleteConfirmationDialog(false);
       setQuestToDelete(null);
-    } else {
-      console.error(`❌ [CONFIRM-QUEST-DELETE] No questToDelete found!`);
     }
   };
 
@@ -1064,40 +1237,8 @@ const GenerateJson = () => {
 
   const confirmTaskDelete = () => {
     if (taskToDelete) {
-      // Handle draft quest task deletion directly
-      const questIndex = taskToDelete.questIndex;
-      const taskId = taskToDelete.taskId;
-      
-      // Check if deleting from a draft quest (index >= 10000)
-      if (questIndex >= 10000) {
-        // Delete from draft quest
-        const draftIndex = questIndex - 10000;
-        const updatedDraftQuests = {
-          ...draftQuests,
-          questSequence: draftQuests.questSequence.map((quest, index) => {
-            if (index === draftIndex) {
-              const updatedQuest = { ...quest };
-              delete updatedQuest.tasks[taskId];
-
-              // Renumber remaining tasks
-              const taskEntries = Object.entries(updatedQuest.tasks);
-              updatedQuest.tasks = {};
-              taskEntries.forEach(([_, taskData], taskIndex) => {
-                updatedQuest.tasks[`T${taskIndex + 1}`] = taskData;
-              });
-
-              return updatedQuest;
-            }
-            return quest;
-          })
-        };
-        setDraftQuests(updatedDraftQuests);
-        saveDraftQuests(updatedDraftQuests);
-      } else {
-        // For main quests, use the existing deleteTask function
-        deleteTask(questIndex, taskId);
-      }
-      
+      // Call the existing deleteTask function
+      deleteTask(taskToDelete.questIndex, taskToDelete.taskId);
       setShowTaskDeleteConfirmationDialog(false);
       setTaskToDelete(null);
     }
@@ -1107,7 +1248,34 @@ const GenerateJson = () => {
   const handlePurpleDeployClick = (questIndex) => {
     const draftQuest = draftQuests.questSequence[questIndex];
     if (draftQuest) {
-      setQuestToDeploy({ index: questIndex, title: draftQuest.title });
+      // Check for duplicates
+      const normalizedQuestTitle = (draftQuest?.title || "").trim().toLowerCase();
+      const duplicateQuestWithLive = normalizedQuestTitle && liveQuestTitles.has(normalizedQuestTitle);
+      const duplicateQuestWithDraft = normalizedQuestTitle && draftQuestTitleCounts[normalizedQuestTitle] > 1;
+      
+      const duplicateTaskWarnings = [];
+      Object.entries(draftQuest?.tasks || {}).forEach(([taskKey, task]) => {
+        const normalizedTaskTitle = (task?.title || task?.taskTitle || task?.desc || "").trim().toLowerCase();
+        const duplicateTaskWithLive = normalizedTaskTitle && liveTaskTitles.has(normalizedTaskTitle);
+        const duplicateTaskWithDraft = normalizedTaskTitle && draftTaskTitleCounts[normalizedTaskTitle] > 1;
+        if (duplicateTaskWithLive || duplicateTaskWithDraft) {
+          duplicateTaskWarnings.push({
+            taskKey,
+            taskTitle: task?.title || task?.taskTitle || task?.desc || taskKey,
+            duplicateWithLive: duplicateTaskWithLive,
+            duplicateWithDraft: duplicateTaskWithDraft
+          });
+        }
+      });
+      
+      setQuestToDeploy({ 
+        index: questIndex, 
+        title: draftQuest.title,
+        hasDuplicates: duplicateQuestWithLive || duplicateQuestWithDraft || duplicateTaskWarnings.length > 0,
+        duplicateQuestWithLive,
+        duplicateQuestWithDraft,
+        duplicateTaskWarnings
+      });
       setShowPurpleDeployConfirmationDialog(true);
     }
   };
@@ -1125,10 +1293,6 @@ const GenerateJson = () => {
     const draftQuest = draftQuests.questSequence[questIndex];
     if (!draftQuest) return;
 
-    // Start loading state
-    setIsPurpleDeploying(true);
-    setPurpleDeployProgress("Initializing deployment...");
-
     console.log(`🟣 [FRONTEND] Starting purple quest deployment:`, {
       title: draftQuest.title,
       draftIndex: questIndex,
@@ -1136,20 +1300,8 @@ const GenerateJson = () => {
     });
 
     try {
-      setPurpleDeployProgress("Calculating quest sequence...");
-      // Calculate the next quest number based on highest existing quest ID
-      const questNumbers = jsonContent.questSequence.map(q => {
-        const match = (q.questId || '').match(/Q(\d+)/);
-        return match ? parseInt(match[1]) : 0;
-      }).filter(n => n > 0);
-      
-      const nextQuestNumber = questNumbers.length > 0 ? Math.max(...questNumbers) + 1 : 1;
-      
-      console.log(`🔍 [FRONTEND] Quest numbering analysis:`, {
-        existingQuestIds: jsonContent.questSequence.map(q => q.questId),
-        extractedNumbers: questNumbers,
-        nextQuestNumber
-      });
+      // Calculate the next quest number
+      const nextQuestNumber = jsonContent.questSequence.length + 1;
       
       const questToDeploy = {
         ...draftQuest,
@@ -1157,15 +1309,12 @@ const GenerateJson = () => {
         nextQuestId: `Q${nextQuestNumber}`
       };
 
-      setPurpleDeployProgress(`Deploying Q${nextQuestNumber}...`);
       console.log(`📡 [FRONTEND] Calling purple deployment endpoint...`);
       // Call the purple deployment endpoint
       const response = await axios.post(`${API_BASE_URL}/api/gamification/purpleDeployQuest`, {
         classId: classId,
         draftQuestData: questToDeploy
       });
-
-      setPurpleDeployProgress("Processing deployment results...");
 
       const { 
         originalConfigId, 
@@ -1227,18 +1376,15 @@ const GenerateJson = () => {
       console.log(`✅ [FRONTEND] Main quest sequence updated with ${newQuestId}`);
 
       // Refresh quest data without full page reload
-      setPurpleDeployProgress("Refreshing quest data...");
       console.log(`🔄 [FRONTEND] Refreshing quest data...`);
       // Reload the quest config from backend
       try {
         const response = await axios.get(`${API_BASE_URL}/api/group/${classId}/quest-json-config`);
         if (response.data.success && response.data.data.hasConfig && response.data.data.questJsonConfig) {
           const validatedConfig = validateAndFixQuestConfig(response.data.data.questJsonConfig);
-          // Sort the quest sequence before updating IDs
-          const sortedSequence = sortQuestsByNumber(validatedConfig.questSequence);
           const configWithSequentialIds = {
             ...validatedConfig,
-            questSequence: updateQuestIds(sortedSequence),
+            questSequence: updateQuestIds(validatedConfig.questSequence),
           };
           setJsonContent(configWithSequentialIds);
           console.log(`✅ [FRONTEND] Quest data refreshed successfully`);
@@ -1246,87 +1392,14 @@ const GenerateJson = () => {
       } catch (refreshError) {
         console.error(`❌ [FRONTEND] Failed to refresh quest data:`, refreshError);
       }
-
-      // Deployment successful - clear loading state
-      setIsPurpleDeploying(false);
-      setPurpleDeployProgress("");
     } catch (error) {
       console.error(`❌ [FRONTEND] Purple deployment failed:`, error);
       alert(`❌ Failed to deploy quest: ${error.response?.data?.message || error.message}`);
-      
-      // Deployment failed - clear loading state
-      setIsPurpleDeploying(false);
-      setPurpleDeployProgress("");
-    }
-  };
-
-  // Function to check for existing test repositories
-  const checkForExistingTestRepos = async (usernames) => {
-    try {
-      // Get organization and class info
-      const orgResponse = await axios.get(`${API_BASE_URL}/api/repo/prodStatus`);
-      const organizationGh = orgResponse.data.organizationGh;
-      
-      const classResponse = await axios.get(`${API_BASE_URL}/api/group/class/${classId}`);
-      const classInfo = classResponse.data;
-      
-      // Format class name to match repository naming convention
-      const formattedClassName = classInfo.groupName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-
-      // Get all repos in the organization
-      const reposResponse = await axios.get(`${API_BASE_URL}/api/repo/listRepos`, {
-        params: { organizationGh }
-      });
-      
-      const existingRepos = [];
-      const testSuffix = `-${formattedClassName}-test`;
-      
-      // Check which test repos already exist
-      for (const username of usernames) {
-        const testRepoName = `${username}${testSuffix}`;
-        const repoExists = reposResponse.data.repos.some(repo => repo.name === testRepoName);
-        if (repoExists) {
-          existingRepos.push({ username, repoName: testRepoName });
-        }
-      }
-      
-      return existingRepos;
-    } catch (error) {
-      console.error('Error checking for existing test repos:', error);
-      return [];
-    }
-  };
-
-  // Function to delete existing test repositories
-  const deleteExistingTestRepos = async (existingRepos) => {
-    setIsDeletingTestRepos(true);
-    try {
-      const orgResponse = await axios.get(`${API_BASE_URL}/api/repo/prodStatus`);
-      const organizationGh = orgResponse.data.organizationGh;
-      
-      for (const repo of existingRepos) {
-        try {
-          await axios.post(`${API_BASE_URL}/api/repo/deleteRepo`, {
-            organizationGh,
-            repoName: repo.repoName
-          });
-          console.log(`✅ Deleted existing test repo: ${repo.repoName}`);
-        } catch (error) {
-          console.error(`❌ Failed to delete test repo ${repo.repoName}:`, error);
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting existing test repos:', error);
-    } finally {
-      setIsDeletingTestRepos(false);
     }
   };
 
   // Function to create test repositories using draft quest configuration
-  const createTestRepositories = async (skipExistingCheck = false) => {
+  const createTestRepositories = async () => {
     if (!testUsernames.trim()) return;
 
     const usernames = testUsernames
@@ -1335,16 +1408,6 @@ const GenerateJson = () => {
       .filter(name => name.length > 0);
 
     if (usernames.length === 0) return;
-
-    // Check for existing test repos if not skipping
-    if (!skipExistingCheck) {
-      const existingRepos = await checkForExistingTestRepos(usernames);
-      if (existingRepos.length > 0) {
-        setExistingTestRepos(existingRepos);
-        setShowReplaceTestRepoDialog(true);
-        return;
-      }
-    }
 
     setIsCreatingTestRepos(true);
     setTestRepos([]);
@@ -1404,54 +1467,17 @@ const GenerateJson = () => {
         }
       } catch (error) {
         console.error(`Error creating test repo for ${username}:`, error);
-        const msg = error?.response?.data?.message || error.message || "Unknown error";
-        // If the repo already exists, prompt replacement flow instead of recording failure
-        if (msg && msg.toLowerCase().includes('already exists')) {
-          try {
-            // Build the specific test repo name for this class and user
-            const classResponse = await axios.get(`${API_BASE_URL}/api/group/class/${classId}`);
-            const classInfoLocal = classResponse.data;
-            const formattedClassName = (classInfoLocal.groupName || '')
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-+|-+$/g, '');
-            const testRepoName = `${username}-${formattedClassName}-test`;
-            setExistingTestRepos([{ username, repoName: testRepoName }]);
-            setShowReplaceTestRepoDialog(true);
-            setIsCreatingTestRepos(false);
-            return; // Wait for user decision
-          } catch (namingErr) {
-            console.warn('Failed to prepare replacement dialog data:', namingErr.message);
-          }
-        }
         results.push({
           username,
           success: false,
           url: null,
-          error: msg
+          error: error.response?.data?.message || error.message || "Unknown error"
         });
       }
     }
 
     setTestRepos(results);
     setIsCreatingTestRepos(false);
-  };
-
-  // Handler for replacing existing test repos
-  const handleReplaceTestRepos = async () => {
-    setShowReplaceTestRepoDialog(false);
-    
-    // Delete existing test repos first
-    await deleteExistingTestRepos(existingTestRepos);
-    
-    // Then create new ones
-    await createTestRepositories(true); // Skip existing check since we just deleted them
-  };
-
-  // Handler for canceling replacement
-  const handleCancelReplacement = () => {
-    setShowReplaceTestRepoDialog(false);
-    setExistingTestRepos([]);
   };
 
   // Load saved configuration on component mount
@@ -1506,11 +1532,9 @@ const GenerateJson = () => {
           const validatedConfig = validateAndFixQuestConfig(
             response.data.data.questJsonConfig
           );
-          // Sort the quest sequence before updating IDs
-          const sortedSequence = sortQuestsByNumber(validatedConfig.questSequence);
           const configWithSequentialIds = {
             ...validatedConfig,
-            questSequence: updateQuestIds(sortedSequence),
+            questSequence: updateQuestIds(validatedConfig.questSequence),
           };
           setJsonContent(configWithSequentialIds);
           setSaveStatusType("success");
@@ -1906,13 +1930,6 @@ Student can now start their quest journey!`);
           savedDataName: task.savedDataName || "",
         };
       } else if (task.taskType === "llm-text-validation") {
-        const hasHints = Array.isArray(task.detailedHints) && task.detailedHints.length > 0;
-        const stripHelpLine = (text) =>
-          (text || "").replace(/\n?\s*You can type\s*\"help\"[^\n]*\n?/i, "");
-        const acceptText = task.acceptText;
-        const successText = (task.successText || "").replace("{points}", task.points);
-        const errorTextRaw = task.errorText;
-        const errorText = hasHints ? errorTextRaw : stripHelpLine(errorTextRaw);
         taskData = {
           ...taskData,
           type: "llm-text-validation",
@@ -1924,33 +1941,9 @@ Student can now start their quest journey!`);
             enableDetailedFeedback:
               task.llmTextValidation?.enableDetailedFeedback || false,
           },
-          accept: acceptText,
-          success: successText,
-          error: errorText,
-          answer: "",
-        };
-      } else if (task.taskType === "imageValidation") {
-        const hasHints = Array.isArray(task.detailedHints) && task.detailedHints.length > 0;
-        const stripHelpLine = (text) =>
-          (text || "").replace(/\n?\s*You can type\s*\"help\"[^\n]*\n?/i, "");
-        const acceptText = task.acceptText;
-        const successText = (task.successText || "").replace("{points}", task.points);
-        const errorTextRaw = task.errorText;
-        const errorText = hasHints ? errorTextRaw : stripHelpLine(errorTextRaw);
-        taskData = {
-          ...taskData,
-          type: "imageValidation",
-          imageValidation: {
-            question: task.imageValidation?.question || "",
-            validationParameters:
-              task.imageValidation?.validationParameters || [],
-            temperature: task.imageValidation?.temperature || 0.1,
-            enableDetailedFeedback:
-              task.imageValidation?.enableDetailedFeedback || false,
-          },
-          accept: acceptText,
-          success: successText,
-          error: errorText,
+          accept: task.acceptText,
+          success: task.successText.replace("{points}", task.points),
+          error: task.errorText,
           answer: "",
         };
       } else if (task.taskType === "collect-info") {
@@ -2042,19 +2035,16 @@ Student can now start their quest journey!`);
             typeof task.xp === "number"
               ? task.xp
               : parseInt(task.xp, 10) || parseInt(task.points, 10) || 20,
-          responses: (() => {
-            const hasHints = Array.isArray(task.detailedHints) && task.detailedHints.length > 0;
-            const stripHelpLine = (text) =>
-              (text || "").replace(/\n?\s*You can type\s*\"help\"[^\n]*\n?/i, "");
-            const baseAccept = task.accept || task.responses?.accept || defaultTexts.acceptText;
-            const baseError = task.error || task.responses?.error || defaultTexts.errorText;
-            const baseSuccess = task.success || task.responses?.success || defaultTexts.successText;
-            return {
-              accept: baseAccept,
-              error: hasHints ? baseError : stripHelpLine(baseError),
-              success: baseSuccess,
-            };
-          })(),
+          responses: {
+            accept:
+              task.accept || task.responses?.accept || defaultTexts.acceptText,
+            error:
+              task.error || task.responses?.error || defaultTexts.errorText,
+            success:
+              task.success ||
+              task.responses?.success ||
+              defaultTexts.successText,
+          },
           answerType:
             task.answerType ||
             (task.taskType === "custom-api-call"
@@ -2066,26 +2056,11 @@ Student can now start their quest journey!`);
               : task.taskType === "llm-text-validation"
               ? "llm-validation"
               : "metric"),
-          // Ensure a default answer for MCQ if UI shows a default but value is unset
-          answer: (() => {
-            if ((task.taskType === "multiple-choice" || task.type === "multiple-choice") && (!task.answer || task.answer.trim() === "")) {
-              const firstLabel = Array.isArray(task.options) && task.options.length > 0 ? (task.options[0].label || "A") : "A";
-              return firstLabel;
-            }
-            return task.answer || "";
-          })(),
+          answer: task.answer || "",
           type: task.taskType || task.type,
           // Multiple choice specific fields
           question: task.question || "",
-          correctAnswer: (() => {
-            const existing = task.correctAnswer || task.answer;
-            if (existing && existing.trim() !== "") return existing;
-            if (task.taskType === "multiple-choice" || task.type === "multiple-choice") {
-              const firstLabel = Array.isArray(task.options) && task.options.length > 0 ? (task.options[0].label || "A") : "A";
-              return firstLabel;
-            }
-            return "";
-          })(),
+          correctAnswer: task.correctAnswer || task.answer || "",
           options: task.options || [],
           // Custom API call fields
           apiEndpoint: task.apiEndpoint || "",
@@ -2441,7 +2416,21 @@ Student can now start their quest journey!`);
     }
   };
 
-  // Scroll functions removed - no longer needed since dialogs keep content visible
+  const scrollToQuestIndex = (questIndex) => {
+    // Use the same approach as moveQuest: rely on rendered order
+    const questElements = document.querySelectorAll('[data-quest-id]');
+    if (questElements && questElements[questIndex]) {
+      scrollIntoCenter(questElements[questIndex]);
+    }
+  };
+
+  const scrollToTask = (questIndex, taskId) => {
+    // Matches the selector used after moving tasks
+    const taskElement = document.querySelector(`[data-task-id="${taskId}"][data-quest-index="${questIndex}"]`);
+    if (taskElement) {
+      scrollIntoCenter(taskElement);
+    }
+  };
 
   // Function to fetch saved quests from database
   const fetchSavedQuests = async () => {
@@ -2570,7 +2559,8 @@ Student can now start their quest journey!`);
         
         setQuestEditMessage("Draft quest updated successfully!");
         setShowQuestEditSuccessDialog(true);
-        // No need to scroll - the quest is already visible behind the dialog
+        // Return user to the edited draft quest block
+        setTimeout(() => scrollToQuestIndex(editingQuestIndex - 10000 + 10000), 50);
       } else {
         // This is a main sequence quest - update live config
         console.log(`🔄 [QUEST-EDIT-CONFIRM] Updating live quest config for quest ${editingQuestIndex}`);
@@ -2593,7 +2583,8 @@ Student can now start their quest journey!`);
         
         setQuestEditMessage("Quest updated successfully! All students have been migrated to the new configuration.");
         setShowQuestEditSuccessDialog(true);
-        // No need to scroll - the quest is already visible behind the dialog
+        // Return user to the edited quest block in main sequence
+        setTimeout(() => scrollToQuestIndex(editingQuestIndex), 50);
       }
       
       // Close the edit modal
@@ -2851,7 +2842,8 @@ Student can now start their quest journey!`);
         // Show success message for draft update
         setTaskEditMessage(`Draft task updated successfully! Changes have been saved to the draft configuration and will be used when creating new test repositories.`);
         setShowTaskEditSuccessDialog(true);
-        // No need to scroll - the task is already visible behind the dialog
+        // Scroll back to the edited task in the draft quest
+        setTimeout(() => scrollToTask(editingTaskQuestIndex, editingTaskId), 50);
       } else {
         console.log(`🔵 [TASK-EDIT-CONFIRM] Updating main sequence quest...`);
         setJsonContent((prev) => {
@@ -2868,7 +2860,8 @@ Student can now start their quest journey!`);
         const configName = configUpdateResult.data?.configName || 'Unknown';
         setTaskEditMessage(`Task updated successfully! Created new quest configuration "${configName}" and migrated ${migratedUsers} students to use the updated task.`);
         setShowTaskEditSuccessDialog(true);
-        // No need to scroll - the task is already visible behind the dialog
+        // Scroll back to the edited task in the main sequence
+        setTimeout(() => scrollToTask(editingTaskQuestIndex, editingTaskId), 50);
       }
       
       console.log(`🎉 [TASK-EDIT-CONFIRM] Task save completed!`);
@@ -3687,9 +3680,9 @@ Student can now start their quest journey!`);
           <Box p={3}>
             {/* README and Quest Management Buttons */}
             <Box mb={3}>
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap alignItems="center">
                 {/* README Upload */}
-                <Box>
+                <Box sx={{ width: 'fit-content' }}>
                   {!jsonContent.readme ? (
                     <>
                       <input
@@ -3701,18 +3694,10 @@ Student can now start their quest journey!`);
                       />
                       <label htmlFor="readme-upload">
                         <Button
-                          variant="outlined"
+                          variant="contained"
                           component="span"
                           startIcon={<DescriptionIcon />}
-                          sx={{
-                            borderColor: "#2196f3",
-                            color: "#2196f3",
-                            borderRadius: 4,
-                            "&:hover": {
-                              borderColor: "#1976d2",
-                              backgroundColor: "#e3f2fd",
-                            },
-                          }}
+                          sx={STYLES.button.readmeButton}
                         >
                           Add README (.md)
                         </Button>
@@ -3720,7 +3705,7 @@ Student can now start their quest journey!`);
                     </>
                   ) : (
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       startIcon={<DescriptionIcon />}
                       onClick={() => {
                         console.log(`🚀 [README Modal] Opening README modal for class: ${classId}`);
@@ -3730,15 +3715,7 @@ Student can now start their quest journey!`);
                         console.log(`📞 [README Modal] Calling fetchStudentCount...`);
                         fetchStudentCount();
                       }}
-                      sx={{
-                        borderColor: "#2196f3",
-                        color: "#2196f3",
-                        borderRadius: 4,
-                        "&:hover": {
-                          borderColor: "#1976d2",
-                          backgroundColor: "#e3f2fd",
-                        },
-                      }}
+                      sx={STYLES.button.readmeButton}
                     >
                       README Added
                     </Button>
@@ -3747,36 +3724,20 @@ Student can now start their quest journey!`);
 
                 {/* Add Quest Button */}
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<AddIcon />}
                   onClick={() => setShowAddQuestModal(true)}
-                  sx={{
-                    borderColor: "#4caf50",
-                    color: "#4caf50",
-                    borderRadius: 4,
-                    "&:hover": {
-                      borderColor: "#388e3c",
-                      backgroundColor: "#f1f8e9",
-                    },
-                  }}
+                  sx={STYLES.button.questButton}
                 >
                   Add New Quest
                 </Button>
 
                 {/* Quest Bank Button */}
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<LibraryBooksIcon />}
                   onClick={handleOpenLibrary}
-                  sx={{
-                    borderColor: "#ff9800",
-                    color: "#ff9800",
-                    borderRadius: 4,
-                    "&:hover": {
-                      borderColor: "#f57c00",
-                      backgroundColor: "#fff3e0",
-                    },
-                  }}
+                  sx={STYLES.button.questBankButton}
                 >
                   Quest Bank
                 </Button>
@@ -3857,21 +3818,18 @@ Student can now start their quest journey!`);
         </Card>
 
         {/* Draft Quests Section */}
-        <Card 
-          data-draft-quests-section
-          sx={{ 
-            mb: 4, 
-            borderRadius: 4, 
-            boxShadow: "none", 
-            border: "2px dashed #ffa726",
-            backgroundColor: "#fff8e1" // Light yellow background
-          }}
-        >
+        <Card sx={{ 
+          mb: 4, 
+          borderRadius: 4, 
+          boxShadow: "none", 
+          border: "2px dashed #ffa726",
+          backgroundColor: "#fff8e1" // Light yellow background
+        }}>
           <Box p={3}>
             <Stack direction="row" alignItems="center" spacing={2} mb={2}>
               <EditIcon sx={{ color: "#ffa726" }} />
               <Typography variant="h6" sx={{ color: "#ffa726", fontWeight: 600 }}>
-                Draft Quest Sequence Builder ({draftQuests.questSequence?.length || 0})
+                Draft Quests ({draftQuests.questSequence?.length || 0})
               </Typography>
               {draftSaveStatus && (
                 <Typography variant="body2" sx={{ color: "#666", fontStyle: "italic" }}>
@@ -3884,40 +3842,60 @@ Student can now start their quest journey!`);
               New quests are created as drafts. Review, edit, and move them to the main sequence when ready.
             </Typography>
 
-            {draftQuests.questSequence?.length > 0 ? (
-              <Box sx={{ position: 'relative' }}>
-                {/* Loading overlay - shows on top of quests without changing height */}
-                {isDraftLoading && (
-                  <Box sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    zIndex: 10,
-                    borderRadius: 2
-                  }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                      <CircularProgress size={30} />
-                      <Typography variant="body2" sx={{ color: '#666' }}>
-                        Saving draft quests...
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-                
-                <Stack spacing={2}>
-                {draftQuests.questSequence.map((quest, index) => (
+            {isDraftLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : draftQuests.questSequence?.length > 0 ? (
+              <Stack spacing={2}>
+                {draftQuests.questSequence.map((quest, index) => {
+                  const normalizedQuestTitle = (quest?.title || "")
+                    .trim()
+                    .toLowerCase();
+                  const duplicateQuestWithLive =
+                    normalizedQuestTitle &&
+                    liveQuestTitles.has(normalizedQuestTitle);
+                  const duplicateQuestWithDraft =
+                    normalizedQuestTitle &&
+                    draftQuestTitleCounts[normalizedQuestTitle] > 1;
+                  const duplicateQuestInfo = {
+                    duplicateWithLive: Boolean(duplicateQuestWithLive),
+                    duplicateWithDraft: Boolean(duplicateQuestWithDraft),
+                  };
+
+                  const duplicateTaskWarnings = {};
+                  Object.entries(quest?.tasks || {}).forEach(
+                    ([taskKey, task]) => {
+                      const normalizedTaskTitle = (
+                        task?.title ||
+                        task?.taskTitle ||
+                        task?.desc ||
+                        ""
+                      )
+                        .trim()
+                        .toLowerCase();
+                      const duplicateTaskWithLive =
+                        normalizedTaskTitle &&
+                        liveTaskTitles.has(normalizedTaskTitle);
+                      const duplicateTaskWithDraft =
+                        normalizedTaskTitle &&
+                        draftTaskTitleCounts[normalizedTaskTitle] > 1;
+                      duplicateTaskWarnings[taskKey] = {
+                        duplicateWithLive: Boolean(duplicateTaskWithLive),
+                        duplicateWithDraft: Boolean(duplicateTaskWithDraft),
+                      };
+                    }
+                  );
+
+                  return (
                   <QuestBlock
                     key={`draft-${quest.questId}-${index}`}
                     quest={quest}
                     questIndex={10000 + index} // Use high numbers to distinguish drafts
                     totalQuests={draftQuests.questSequence.length}
                     isDraftQuest={true} // Mark as draft quest for yellow tint
+                      duplicateQuestInfo={duplicateQuestInfo}
+                      duplicateTaskWarnings={duplicateTaskWarnings}
                     onMoveQuest={(questIndex, direction) => {
                       // Handle moving draft quests up/down
                       const actualIndex = questIndex - 10000; // Convert back to draft index
@@ -3959,10 +3937,7 @@ Student can now start their quest journey!`);
                       setShowAddQuestModal(true);
                     }}
                     onDeleteQuest={(questIndex) => {
-                      console.log(`🗑️ [DELETE-BUTTON-CLICK] Delete button clicked for questIndex: ${questIndex}`);
-                      console.log(`🗑️ [DELETE-BUTTON-CLICK] Quest data:`, quest);
                       const actualIndex = questIndex - 10000; // Convert back to draft index
-                      console.log(`🗑️ [DELETE-BUTTON-CLICK] Calculated actualIndex: ${actualIndex}`);
                       handleQuestDeleteClick(actualIndex, quest.title);
                     }}
                     onDeleteQuestClick={handleQuestDeleteClick}
@@ -4076,9 +4051,9 @@ Student can now start their quest journey!`);
                       handlePurpleDeployClick(actualIndex);
                     }}
                   />
-                ))}
+                );
+              })}
               </Stack>
-              </Box>
             ) : (
               <Paper sx={{ p: 3, textAlign: "center", backgroundColor: "#f9f9f9" }}>
                 <Typography variant="body2" sx={{ color: "#666" }}>
@@ -4171,11 +4146,11 @@ Student can now start their quest journey!`);
                   )}
                 </Box>
 
-                {(isCreatingTestRepos || isDeletingTestRepos) && (
+                {isCreatingTestRepos && (
                   <Box sx={{ mb: 2 }}>
                     <LinearProgress />
                     <Typography variant="body2" sx={{ mt: 1, color: "#666" }}>
-                      {isDeletingTestRepos ? "Deleting existing test repositories..." : "Creating test repositories..."}
+                      Creating test repositories...
                     </Typography>
                   </Box>
                 )}
@@ -4950,27 +4925,11 @@ Student can now start their quest journey!`);
                                         e.target.checked
                                       )
                                     }
-                                    sx={{
-                                      "& .MuiSwitch-switchBase.Mui-checked": {
-                                        color: "#1976d2",
-                                        "&:hover": {
-                                          backgroundColor:
-                                            "rgba(25, 118, 210, 0.08)",
-                                        },
-                                      },
-                                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                        { backgroundColor: "#1976d2" },
-                                    }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                   />
                                 }
                                 label="Save validated data per user"
-                                sx={{
-                                  "& .MuiFormControlLabel-label": {
-                                    fontSize: "0.95rem",
-                                    fontWeight: 500,
-                                    color: "#374151",
-                                  },
-                                }}
+                                sx={STYLES.formLabel.withDescription}
                               />
                               {task.saveValidatedData && (
                                 <>
@@ -5059,17 +5018,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#1976d2",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(25, 118, 210, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#1976d2" },
-                                  }}
+                                  sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Use stored data for Issue Number"
@@ -5228,17 +5177,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#1976d2",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(25, 118, 210, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#1976d2" },
-                                  }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save validated data per user"
@@ -5449,17 +5388,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#1976d2",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(25, 118, 210, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#1976d2" },
-                                  }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save validated data per user"
@@ -5710,7 +5639,7 @@ Student can now start their quest journey!`);
 
                             {/* Add Parameter Button */}
                             <Button
-                              variant="outlined"
+                              variant="contained"
                               onClick={() => {
                                 const newParams = [
                                   ...(task.llmTextValidation
@@ -5723,7 +5652,7 @@ Student can now start their quest journey!`);
                                 });
                               }}
                               startIcon={<AddIcon />}
-                              sx={{ mt: 1, borderRadius: 2 }}
+                              sx={{ ...STYLES.button.addParameterButton, mt: 1 }}
                             >
                               Add Parameter
                             </Button>
@@ -5777,7 +5706,7 @@ Student can now start their quest journey!`);
                             </Alert>
 
                             {/* Detailed Feedback Toggle */}
-                            <Box sx={{ mt: 2 }}>
+                            <Box sx={{ mt: 1 }}>
                               <FormControlLabel
                                 control={
                                   <Switch
@@ -5796,38 +5725,17 @@ Student can now start their quest journey!`);
                                         }
                                       )
                                     }
-                                    sx={{
-                                      "& .MuiSwitch-switchBase.Mui-checked": {
-                                        color: "#1976d2",
-                                        "&:hover": {
-                                          backgroundColor:
-                                            "rgba(25, 118, 210, 0.08)",
-                                        },
-                                      },
-                                      "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                        {
-                                          backgroundColor: "#1976d2",
-                                        },
-                                    }}
+                                    sx={STYLES.toggle.orangeSwitch}
                                   />
                                 }
                                 label="Enable detailed feedback"
-                                sx={{
-                                  "& .MuiFormControlLabel-label": {
-                                    fontSize: "0.95rem",
-                                    fontWeight: 500,
-                                    color: "#374151",
-                                  },
-                                }}
+                                sx={{ mb: 1 }}
                               />
                               <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: "block", mt: 0.5, ml: 4 }}
+                                variant="body2"
+                                sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
                               >
-                                When enabled, students receive specific feedback
-                                about what they got wrong instead of generic
-                                error messages.
+                                When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
                               </Typography>
                             </Box>
                           </Box>
@@ -5881,17 +5789,7 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={{
-                                    "& .MuiSwitch-switchBase.Mui-checked": {
-                                      color: "#4caf50",
-                                      "&:hover": {
-                                        backgroundColor:
-                                          "rgba(76, 175, 80, 0.08)",
-                                      },
-                                    },
-                                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                      { backgroundColor: "#4caf50" },
-                                  }}
+                                  sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save collected information for later tasks"
@@ -5938,58 +5836,10 @@ Student can now start their quest journey!`);
                         </Box>
                       )}
 
-                      <Divider />
-
-                      {/* Success and Error Text Fields */}
-                      <Box>
-                        <Typography
-                          variant="h6"
-                          sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
-                        >
-                          Response Text
-                        </Typography>
-
-                        <TextField
-                          label="Success Text (Correct Answer Response)"
-                          value={task.successText}
-                          onChange={(e) =>
-                            handleTaskChange(
-                              taskIdx,
-                              "successText",
-                              e.target.value
-                            )
-                          }
-                          placeholder="This text appears when students answer correctly"
-                          fullWidth
-                          multiline
-                          rows={3}
-                          helperText="Use {points} as a placeholder for the points value"
-                          sx={{ mb: 2, borderRadius: 2 }}
-                        />
-
-                        <TextField
-                          label="Error Text (Incorrect Answer Response)"
-                          value={task.errorText}
-                          onChange={(e) =>
-                            handleTaskChange(
-                              taskIdx,
-                              "errorText",
-                              e.target.value
-                            )
-                          }
-                          placeholder="This text appears when students answer incorrectly"
-                          fullWidth
-                          multiline
-                          rows={3}
-                          helperText="Should provide helpful hints and guidance"
-                          sx={{ borderRadius: 2 }}
-                        />
-                      </Box>
-
-                      <Divider />
+                      <Divider sx={{ my: 2 }} />
 
                       {/* Hints Section */}
-                      <Box>
+                      <Box sx={{ mb: 4 }}>
                         <Typography
                           variant="h6"
                           sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
@@ -5999,7 +5849,7 @@ Student can now start their quest journey!`);
                         <Typography
                           variant="body2"
                           color="text.secondary"
-                          sx={{ mb: 2 }}
+                          sx={{ mb: 1 }}
                         >
                           Add progressive hints that students can access by
                           typing "help" in issue comments. Each hint costs
@@ -6113,16 +5963,15 @@ Student can now start their quest journey!`);
                         ))}
 
                         <Button
-                          variant="outlined"
+                          variant="contained"
                           startIcon={<AddCircleOutlineIcon />}
                           onClick={() =>
                             handleAddHint(editingQuestIndex || 0, taskIdx)
                           }
                           sx={{
-                            mt: 1,
+                            ...STYLES.button.addHintButton,
+                            mt: 0.5,
                             mr: 1,
-                            borderRadius: 4,
-                            borderColor: "primary.main",
                           }}
                         >
                           Add Hint
@@ -6174,20 +6023,60 @@ Student can now start their quest journey!`);
                             }
                           }}
                           sx={{
-                            mt: 1,
-                            borderRadius: 4,
-                            backgroundColor: "white",
-                            color: "#ff5722",
-                            border: "1px solid #ff5722",
-                            "&:hover": {
-                              backgroundColor: "#fff3e0",
-                              borderColor: "#e64a19",
-                            },
-                            boxShadow: "none",
+                            ...STYLES.button.generateHintButton,
+                            mt: 0.5,
                           }}
                         >
                           Generate hint with AI
                         </Button>
+                      </Box>
+
+                      <Divider />
+
+                      {/* Success and Error Text Fields */}
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontWeight: 700, mb: 2, color: "primary.main" }}
+                        >
+                          Response Text
+                        </Typography>
+
+                        <TextField
+                          label="Success Text (Correct Answer Response)"
+                          value={task.successText}
+                          onChange={(e) =>
+                            handleTaskChange(
+                              taskIdx,
+                              "successText",
+                              e.target.value
+                            )
+                          }
+                          placeholder="This text appears when students answer correctly"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          helperText="Use {points} as a placeholder for the points value"
+                          sx={{ mb: 2, borderRadius: 2 }}
+                        />
+
+                        <TextField
+                          label="Error Text (Incorrect Answer Response)"
+                          value={task.errorText}
+                          onChange={(e) =>
+                            handleTaskChange(
+                              taskIdx,
+                              "errorText",
+                              e.target.value
+                            )
+                          }
+                          placeholder="This text appears when students answer incorrectly"
+                          fullWidth
+                          multiline
+                          rows={3}
+                          helperText="Should provide helpful hints and guidance"
+                          sx={{ borderRadius: 2 }}
+                        />
                       </Box>
                     </Stack>
                   </Card>
@@ -6689,16 +6578,7 @@ Student can now start their quest journey!`);
                                     saveValidatedData: e.target.checked,
                                   })
                                 }
-                                sx={{
-                                  "& .MuiSwitch-switchBase.Mui-checked": {
-                                    color: "#4caf50",
-                                    "&:hover": {
-                                      backgroundColor: "rgba(76, 175, 80, 0.08)",
-                                    },
-                                  },
-                                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                    { backgroundColor: "#4caf50" },
-                                }}
+                                sx={STYLES.toggle.orangeSwitch}
                               />
                             }
                             label="Save validated data for later tasks"
@@ -6848,6 +6728,7 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
+                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Save validated data for later tasks"
@@ -6951,6 +6832,7 @@ Student can now start their quest journey!`);
                         </Box>
                       ))}
                       <Button
+                        variant="contained"
                         onClick={() => {
                           const newParams = [...(editingTaskData.llmTextValidation?.validationParameters || []), ""];
                           setEditingTaskData({
@@ -6961,8 +6843,8 @@ Student can now start their quest journey!`);
                             },
                           });
                         }}
-                        startIcon={<span>+</span>}
-                        sx={{ mb: 2 }}
+                        startIcon={<AddIcon />}
+                        sx={{ ...STYLES.button.addParameterButton, mb: 2 }}
                       >
                         Add Parameter
                       </Button>
@@ -7000,12 +6882,13 @@ Student can now start their quest journey!`);
                           />
                         }
                         label="Enable Detailed Feedback"
+                        sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                       />
                     </Box>
                   )}
 
                   {/* Hints Section */}
-                  <Box>
+                  <Box sx={{ mb: 4 }}>
                     <Typography
                       variant="h6"
                       sx={{ fontWeight: 700, color: "primary.main", mb: 1 }}
@@ -7015,7 +6898,7 @@ Student can now start their quest journey!`);
                     <Typography
                       variant="body2"
                       color="text.secondary"
-                      sx={{ mb: 2 }}
+                      sx={{ mb: 1 }}
                     >
                       Add progressive hints that students can access by
                       typing "help" in issue comments. Each hint costs
@@ -7133,7 +7016,7 @@ Student can now start their quest journey!`);
                     ))}
 
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       startIcon={<AddCircleOutlineIcon />}
                       onClick={() => {
                         const newHints = [...(editingTaskData.detailedHints || []), {
@@ -7147,10 +7030,9 @@ Student can now start their quest journey!`);
                         });
                       }}
                       sx={{
-                        mt: 1,
+                        ...STYLES.button.addHintButton,
+                        mt: 0.5,
                         mr: 1,
-                        borderRadius: 4,
-                        borderColor: "primary.main",
                       }}
                     >
                       Add Hint
@@ -7204,16 +7086,8 @@ Student can now start their quest journey!`);
                         }
                       }}
                       sx={{
-                        mt: 1,
-                        borderRadius: 4,
-                        backgroundColor: "white",
-                        color: "#ff5722",
-                        border: "1px solid #ff5722",
-                        "&:hover": {
-                          backgroundColor: "#fff3e0",
-                          borderColor: "#e64a19",
-                        },
-                        boxShadow: "none",
+                        ...STYLES.button.generateHintButton,
+                        mt: 0.5,
                       }}
                     >
                       Generate hint with AI
@@ -7529,17 +7403,7 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
-                              sx={{
-                                "& .MuiSwitch-switchBase.Mui-checked": {
-                                  color: "#1976d2",
-                                  "&:hover": {
-                                    backgroundColor:
-                                      "rgba(25, 118, 210, 0.08)",
-                                  },
-                                },
-                                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                  { backgroundColor: "#1976d2" },
-                              }}
+                                    sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Save validated data per user"
@@ -7655,7 +7519,7 @@ Student can now start their quest journey!`);
                         sx={{ mb: 2, width: 200 }}
                       />
 
-                      <Box sx={{ mt: 2 }}>
+                      <Box sx={{ mt: 0 }}>
                         <FormControlLabel
                           control={
                             <Switch
@@ -7669,10 +7533,18 @@ Student can now start their quest journey!`);
                                   },
                                 })
                               }
+                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Enable detailed feedback from AI validation"
+                          sx={{ mb: 1 }}
                         />
+                        <Typography
+                          variant="body2"
+                          sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
+                        >
+                          When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
+                        </Typography>
                       </Box>
                     </Box>
                   )}
@@ -7744,7 +7616,7 @@ Student can now start their quest journey!`);
                         sx={{ mb: 2, width: 200 }}
                       />
 
-                      <Box sx={{ mt: 2 }}>
+                      <Box sx={{ mt: 0 }}>
                         <FormControlLabel
                           control={
                             <Switch
@@ -7758,10 +7630,18 @@ Student can now start their quest journey!`);
                                   },
                                 })
                               }
+                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Enable detailed feedback from AI validation"
+                          sx={{ mb: 1 }}
                         />
+                        <Typography
+                          variant="body2"
+                          sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
+                        >
+                          When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
+                        </Typography>
                       </Box>
                     </Box>
                   )}
@@ -7955,6 +7835,7 @@ Student can now start their quest journey!`);
                 "&:hover": { bgcolor: "#388e3c", boxShadow: "none" },
               }}
             >
+              Save Changes
             </Button>
           </DialogActions>
         </Dialog>
@@ -8344,6 +8225,53 @@ Student can now start their quest journey!`);
              <Typography variant="body1" sx={{ mb: 2 }}>
                Are you sure you want to deploy the quest "{questToDeploy?.title}"?
              </Typography>
+             
+             {/* Duplicate Warning */}
+             {questToDeploy?.hasDuplicates && (
+               <Alert 
+                 severity="error" 
+                 sx={{ 
+                   mb: 2, 
+                   borderRadius: 2,
+                   border: "2px solid #d32f2f",
+                   bgcolor: "#ffebee"
+                 }}
+               >
+                 <AlertTitle sx={{ fontWeight: 700, fontSize: "1.1rem" }}>
+                   ⚠️ Duplicate Titles Detected!
+                 </AlertTitle>
+                 
+                 {questToDeploy.duplicateQuestWithLive && (
+                   <Typography variant="body2" sx={{ mb: 1 }}>
+                     • <strong>Quest title</strong> duplicates an existing live quest
+                   </Typography>
+                 )}
+                 
+                 {questToDeploy.duplicateQuestWithDraft && (
+                   <Typography variant="body2" sx={{ mb: 1 }}>
+                     • <strong>Quest title</strong> duplicates another draft quest
+                   </Typography>
+                 )}
+                 
+                 {questToDeploy.duplicateTaskWarnings?.length > 0 && (
+                   <Box sx={{ mt: 1 }}>
+                     <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                       Task title duplicates:
+                     </Typography>
+                     {questToDeploy.duplicateTaskWarnings.map((warning, idx) => (
+                       <Typography key={idx} variant="body2" sx={{ ml: 2, mb: 0.5 }}>
+                         • <strong>{warning.taskTitle}</strong> duplicates {warning.duplicateWithLive ? "a live task" : ""}{warning.duplicateWithLive && warning.duplicateWithDraft ? " and " : ""}{warning.duplicateWithDraft ? "another draft task" : ""}
+                       </Typography>
+                     ))}
+                   </Box>
+                 )}
+                 
+                 <Typography variant="body2" sx={{ mt: 2, fontWeight: 600, color: "#b71c1c" }}>
+                   Deploying with duplicate titles may confuse students. Consider editing the quest or task titles before deploying.
+                 </Typography>
+               </Alert>
+             )}
+             
              <Alert severity="info" sx={{ borderRadius: 2 }}>
                This will create a new quest configuration and migrate all students to the updated version. The quest will be removed from drafts after deployment.
              </Alert>
@@ -9123,107 +9051,6 @@ Good luck! 🚀"
         message={taskEditMessage}
       />
 
-      {/* Replace Test Repositories Dialog */}
-      <Dialog
-        open={showReplaceTestRepoDialog}
-        onClose={handleCancelReplacement}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 4,
-            boxShadow: "none",
-            border: "1px solid #e0e0e0",
-          },
-        }}
-      >
-        <DialogTitle sx={{ pb: 2 }}>
-          <Typography variant="h6" sx={{ fontWeight: 600, color: "#ff9800" }}>
-            ⚠️ Replace Existing Test Repositories
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography sx={{ mb: 2 }}>
-            The following test repositories already exist and will be replaced with new ones containing your current draft quest sequence:
-          </Typography>
-          <Box sx={{ mb: 2 }}>
-            {existingTestRepos.map((repo, index) => (
-              <Chip
-                key={index}
-                label={repo.repoName}
-                sx={{ 
-                  mr: 1, 
-                  mb: 1,
-                  backgroundColor: "#fff3e0",
-                  color: "#ff9800",
-                  border: "1px solid #ffb74d"
-                }}
-              />
-            ))}
-          </Box>
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            <Typography variant="body2">
-              <strong>Warning:</strong> This will permanently delete the existing test repositories and create new ones. 
-              Any progress or data in the existing repositories will be lost.
-            </Typography>
-          </Alert>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button 
-            onClick={handleCancelReplacement} 
-            disabled={isDeletingTestRepos || isCreatingTestRepos}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleReplaceTestRepos}
-            variant="contained"
-            color="warning"
-            disabled={isDeletingTestRepos || isCreatingTestRepos}
-            startIcon={isDeletingTestRepos || isCreatingTestRepos ? <CircularProgress size={16} /> : null}
-          >
-            {isDeletingTestRepos ? "Deleting..." : isCreatingTestRepos ? "Creating..." : "Replace Repositories"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Purple Deploy Loading Overlay */}
-      {isPurpleDeploying && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            flexDirection: 'column',
-            gap: 3
-          }}
-        >
-          <CircularProgress 
-            size={80} 
-            thickness={4}
-            sx={{ color: '#9c27b0' }}
-          />
-          <Box sx={{ textAlign: 'center', color: 'white' }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-              🟣 Deploying Quest
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {purpleDeployProgress}
-            </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.7, mt: 2 }}>
-              This may take a few moments...
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
     </div>
   );
 };
@@ -9255,8 +9082,6 @@ const getTaskTypeColor = (taskType) => {
       return "#00bcd4";
     case "llm-text-validation":
       return "#ff9800";
-    case "imageValidation":
-      return "#673ab7";
     case "collect-info":
       return "#4caf50";
     default:
@@ -9290,8 +9115,6 @@ const getTaskTypeLabel = (taskType) => {
       return "Comment";
     case "llm-text-validation":
       return "LLM Text";
-    case "imageValidation":
-      return "LLM Image Validation";
     case "collect-info":
       return "Collect Info";
     default:
@@ -9315,16 +9138,41 @@ const QuestBlock = ({
   onAddTask,
   onPurpleDeployQuest, // New prop for purple deployment
   isDraftQuest = false, // New prop to indicate if this is a draft quest
+  duplicateQuestInfo = null,
+  duplicateTaskWarnings = {},
 }) => {
   const [expanded, setExpanded] = useState(isDraftQuest); // Draft quests expanded by default
   
+  // Check if any tasks have duplicates
+  const hasTaskDuplicates = isDraftQuest && duplicateTaskWarnings && Object.values(duplicateTaskWarnings).some(
+    (warning) => warning?.duplicateWithLive || warning?.duplicateWithDraft
+  );
+  
+  const hasQuestDuplicate =
+    isDraftQuest &&
+    duplicateQuestInfo &&
+    (duplicateQuestInfo.duplicateWithLive ||
+      duplicateQuestInfo.duplicateWithDraft ||
+      hasTaskDuplicates);
+  
+  const questDuplicateMessages = [];
+  if (duplicateQuestInfo?.duplicateWithLive) {
+    questDuplicateMessages.push("Quest title duplicates a live quest");
+  }
+  if (duplicateQuestInfo?.duplicateWithDraft) {
+    questDuplicateMessages.push("Quest title duplicates another draft quest");
+  }
+  if (hasTaskDuplicates) {
+    questDuplicateMessages.push("Contains task(s) with duplicate titles");
+  }
+  
   // Debug logging to understand quest structure
   console.log(`🔍 [QuestBlock] Quest ${questIndex + 1} data:`, {
-    questIndex,
-    isDraftQuest,
-    questTitle: quest.title,
-    hasOnDeleteQuest: !!onDeleteQuest,
-    hasOnDeleteQuestClick: !!onDeleteQuestClick,
+    questId: quest.questId,
+    title: quest.title,
+    tasks: quest.tasks,
+    tasksType: typeof quest.tasks,
+    tasksKeys: quest.tasks ? Object.keys(quest.tasks) : 'N/A',
     tasksLength: quest.tasks ? Object.keys(quest.tasks).length : 0
   });
   
@@ -9350,7 +9198,7 @@ const QuestBlock = ({
       <AccordionSummary>
         <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
               <Typography
                 component="span"
                 sx={{
@@ -9367,10 +9215,31 @@ const QuestBlock = ({
                 Q{questIndex + 1}
               </Typography>
               {quest.title}
+              {hasQuestDuplicate && (
+                <Chip
+                  label="Duplicate title"
+                  size="small"
+                  sx={{
+                    fontWeight: 600,
+                    bgcolor: "#f44336",
+                    color: "#ffffff",
+                    border: "1px solid #d32f2f",
+                  }}
+                />
+              )}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {taskEntries.length} tasks
             </Typography>
+            {hasQuestDuplicate && questDuplicateMessages.length > 0 && (
+              <Typography
+                variant="caption"
+                color="error"
+                sx={{ display: "block" }}
+              >
+                {questDuplicateMessages.join(" • ")}
+              </Typography>
+            )}
             <Stack direction="row" spacing={1} mt={1}></Stack>
           </Box>
           {/* Quest Action Buttons */}
@@ -9534,6 +9403,7 @@ const QuestBlock = ({
                 getTaskTypeColor={getTaskTypeColor}
                 getTaskTypeLabel={getTaskTypeLabel}
                 isDraftQuest={isDraftQuest}
+                duplicateInfo={duplicateTaskWarnings[taskKey]}
               />
             ))}
           </Box>
@@ -9576,7 +9446,19 @@ const TaskBlock = ({
   getTaskTypeColor,
   getTaskTypeLabel,
   isDraftQuest = false,
+  duplicateInfo = null,
 }) => {
+  const hasTaskDuplicate =
+    isDraftQuest &&
+    duplicateInfo &&
+    (duplicateInfo.duplicateWithLive || duplicateInfo.duplicateWithDraft);
+  const taskDuplicateMessages = [];
+  if (duplicateInfo?.duplicateWithLive) {
+    taskDuplicateMessages.push("Title duplicates a live task");
+  }
+  if (duplicateInfo?.duplicateWithDraft) {
+    taskDuplicateMessages.push("Title duplicates another draft task");
+  }
   return (
     <Card
       data-task-id={taskId}
@@ -9604,12 +9486,39 @@ const TaskBlock = ({
           }}
         >
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                mb: 0.5,
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 1,
+              }}
+            >
               {task.desc || taskId}
+              {hasTaskDuplicate && (
+                <Chip
+                  label="Duplicate title"
+                  color="warning"
+                  size="small"
+                  sx={{ fontWeight: 600 }}
+                />
+              )}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
               Task {taskIndex + 1} of {totalTasks}
             </Typography>
+            {hasTaskDuplicate && taskDuplicateMessages.length > 0 && (
+              <Typography
+                variant="caption"
+                color="error"
+                sx={{ display: "block" }}
+              >
+                {taskDuplicateMessages.join(" • ")}
+              </Typography>
+            )}
           </Box>
         </Box>
 
@@ -9627,15 +9536,9 @@ const TaskBlock = ({
         >
           <Chip
             label={getTaskTypeLabel(task.type)}
+            color="info"
             size="small"
-            sx={{ 
-              borderRadius: 2, 
-              width: "auto", 
-              flexShrink: 0,
-              backgroundColor: getTaskTypeColor(task.type),
-              color: "white",
-              fontWeight: 600
-            }}
+            sx={{ borderRadius: 2, width: "auto", flexShrink: 0 }}
           />
           <Chip
             label={`XP: ${task.xp ?? 0}`}

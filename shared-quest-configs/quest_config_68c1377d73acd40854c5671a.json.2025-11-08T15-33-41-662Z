@@ -123,55 +123,24 @@
       "badgeDescription": "Custom Quest 🎯",
       "tasks": {
         "T1": {
-          "type": "llm-text-validation",
-          "title": "csdcs",
-          "taskTitle": "csdcs",
-          "desc": "csdcs",
+          "title": " s s",
+          "taskTitle": " s s",
+          "desc": " s s",
           "points": 20,
           "xp": 20,
-          "accept": "s. s",
-          "success": " s s",
-          "error": "s. s",
-          "answer": "",
-          "correctAnswer": "",
-          "question": "",
-          "options": [
-            {
-              "label": "A",
-              "value": ""
-            },
-            {
-              "label": "B",
-              "value": ""
-            }
-          ],
-          "repository": "",
-          "ossRepository": "",
-          "issueNumber": "",
-          "apiEndpoint": "",
-          "responsePath": "",
-          "expectedAnswerType": "Number",
-          "enableTolerance": false,
-          "toleranceRange": 10,
-          "saveValidatedData": false,
-          "savedDataName": "",
-          "questions": [],
           "hints": [],
           "detailedHints": [],
+          "type": "llm-text-validation",
           "llmTextValidation": {
             "question": "",
             "validationParameters": [],
             "temperature": 0.1,
             "enableDetailedFeedback": true
           },
-          "imageValidation": {
-            "question": "",
-            "validationParameters": [],
-            "temperature": 0.1,
-            "enableDetailedFeedback": false
-          },
-          "questNotes": "",
-          "answerType": ""
+          "accept": "s. s",
+          "success": " s s",
+          "error": "s. s",
+          "answer": ""
         }
       }
     },

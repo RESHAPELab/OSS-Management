@@ -28,6 +28,13 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
   const [saveTimeout, setSaveTimeout] = useState(null);
+  
+  // Minimap state
+  const scrollContainerRef = React.useRef(null);
+  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [contentSize, setContentSize] = useState({ width: 0, height: 0 });
+  const [isDraggingMinimap, setIsDraggingMinimap] = useState(false);
 
   // Load draft quests from API
   const loadDraftQuests = async () => {
@@ -85,6 +92,42 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
       }
     };
   }, [saveTimeout]);
+
+  // Track scroll position and viewport size for minimap
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (!scrollContainer) return;
+
+    const updateMinimapData = () => {
+      setScrollPosition({
+        x: scrollContainer.scrollLeft,
+        y: scrollContainer.scrollTop
+      });
+      setViewportSize({
+        width: scrollContainer.clientWidth,
+        height: scrollContainer.clientHeight
+      });
+      setContentSize({
+        width: scrollContainer.scrollWidth,
+        height: scrollContainer.scrollHeight
+      });
+    };
+
+    // Initial update
+    updateMinimapData();
+
+    // Update on scroll
+    scrollContainer.addEventListener('scroll', updateMinimapData);
+    
+    // Update on resize
+    const resizeObserver = new ResizeObserver(updateMinimapData);
+    resizeObserver.observe(scrollContainer);
+
+    return () => {
+      scrollContainer.removeEventListener('scroll', updateMinimapData);
+      resizeObserver.disconnect();
+    };
+  }, [questBreakdownQuests.length, localDraftQuests.length]); // Re-run when quests change
 
   // Save draft quests to backend
   const saveDraftQuests = async (updatedQuests) => {
@@ -172,6 +215,66 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
       return updated;
     });
   };
+
+  // Minimap click handler
+  const handleMinimapClick = (e) => {
+    const minimapRect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - minimapRect.left;
+    const clickY = e.clientY - minimapRect.top;
+    
+    // Calculate the scale factor (inverse of what we use to draw)
+    const contentAspectRatio = contentSize.width / contentSize.height;
+    const MINIMAP_WIDTH = 250;
+    const MINIMAP_MAX_HEIGHT = 180;
+    const minimapAspectRatio = MINIMAP_WIDTH / MINIMAP_MAX_HEIGHT;
+    
+    let scale;
+    if (contentAspectRatio > minimapAspectRatio) {
+      scale = MINIMAP_WIDTH / contentSize.width;
+    } else {
+      scale = MINIMAP_MAX_HEIGHT / contentSize.height;
+    }
+    
+    // Convert click position back to content coordinates
+    const contentX = clickX / scale;
+    const contentY = clickY / scale;
+    
+    // Calculate new scroll position (center viewport on click)
+    const newScrollX = contentX - (viewportSize.width / 2);
+    const newScrollY = contentY - (viewportSize.height / 2);
+    
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        left: Math.max(0, Math.min(newScrollX, contentSize.width - viewportSize.width)),
+        top: Math.max(0, Math.min(newScrollY, contentSize.height - viewportSize.height)),
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Minimap drag handler
+  const handleMinimapMouseDown = (e) => {
+    e.preventDefault();
+    setIsDraggingMinimap(true);
+    handleMinimapClick(e);
+  };
+
+  const handleMinimapMouseMove = (e) => {
+    if (!isDraggingMinimap) return;
+    handleMinimapClick(e);
+  };
+
+  const handleMinimapMouseUp = () => {
+    setIsDraggingMinimap(false);
+  };
+
+  // Global mouse up listener for minimap dragging
+  useEffect(() => {
+    if (isDraggingMinimap) {
+      window.addEventListener('mouseup', handleMinimapMouseUp);
+      return () => window.removeEventListener('mouseup', handleMinimapMouseUp);
+    }
+  }, [isDraggingMinimap]);
 
   // Mock data for demonstration - replace with actual quest data
   const mockQuests = [
@@ -409,14 +512,40 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     return null;
   };
 
-  // Generate consistent arrow coordinates for quests with the same prerequisite
-  const getSharedArrowCoordinates = (prerequisite, targetPositions) => {
-    // Generate a consistent random seed based on the prerequisite
-    const seed = prerequisite.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const pseudoRandom = (seed * 9301 + 49297) % 233280 / 233280;
+  // Calculate bend point based on position in column
+  const getBendPoint = (questIndex, totalQuestsInColumn) => {
+    if (totalQuestsInColumn === 1) {
+      return 50; // Single quest uses middle
+    } else if (totalQuestsInColumn === 2) {
+      return [70, 30][questIndex];
+    } else if (totalQuestsInColumn === 3) {
+      return [70, 30, 60][questIndex];
+    } else {
+      // For 4+, cycle through [70, 30, 60, 40]
+      const pattern = [70, 30, 60, 40];
+      return pattern[questIndex % 4];
+    }
+  };
+
+  // Get arrow styling (color and dash pattern) based on quest index
+  const getArrowStyle = (questIndex) => {
+    const colors = ['#9e9e9e', '#5c6bc0', '#26a69a', '#ab47bc', '#ef5350', '#ffa726'];
+    const dashPatterns = ['8,8', '12,4', '4,4', '16,4,4,4', '8,4,2,4', '6,6'];
     
-    // Use the pseudo-random value to generate consistent bend point between 30-70%
-    const bendPoint = 30 + pseudoRandom * 40;
+    const colorIndex = questIndex % colors.length;
+    const dashIndex = questIndex % dashPatterns.length;
+    
+    return {
+      color: colors[colorIndex],
+      dashPattern: dashPatterns[dashIndex],
+      strokeWidth: 5
+    };
+  };
+
+  // Generate consistent arrow coordinates for quests with the same prerequisite
+  const getSharedArrowCoordinates = (questIndex, totalQuestsInColumn, targetPositions) => {
+    // Calculate bend point based on position in column
+    const bendPoint = getBendPoint(questIndex, totalQuestsInColumn);
     
     // Calculate shared start and bend coordinates
     const startX = 10; // 10% from left
@@ -494,7 +623,10 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
           </Box>
         </Box>
       ) : (
-        <Box sx={{ flex: 1, overflow: 'auto' }}>
+        <Box 
+          ref={scrollContainerRef}
+          sx={{ flex: 1, overflow: 'auto', position: 'relative' }}
+        >
           <Stack 
             direction="row" 
             spacing={0} 
@@ -833,8 +965,9 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                           {questColumns[1].map((targetQuest, targetIndex) => {
                             const rowDiff = targetIndex - questIndex;
                             const isStraight = rowDiff === 0;
+                            // START node is at index 0, column has 1 quest, so it always uses 50%
                             const startX = 10;
-                            const bendX = 50;
+                            const bendX = 50; // START node always uses center
                             const endX = 90;
                             
                             return (
@@ -857,9 +990,9 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       top: 0,
                                       left: `${startX}%`,
                                       width: `${endX - startX}%`,
-                                      height: 3,
+                                      height: 5,
                                       backgroundColor: 'transparent',
-                                      borderTop: '3px solid #ff9800',
+                                      borderTop: '5px solid #ff9800',
                                       '&::after': {
                                         content: '""',
                                         position: 'absolute',
@@ -882,7 +1015,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       top: 0,
                                       left: 0,
                                       width: '100%',
-                                      height: `${Math.abs(rowDiff) * 203 + 100}%`,
+                                      height: `${Math.abs(rowDiff) * 224 + 100}%`,
                                       overflow: 'visible'
                                     }}
                                   >
@@ -892,26 +1025,26 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       x2={`${bendX}%`}
                                       y2="0"
                                       stroke="#ff9800"
-                                      strokeWidth="3"
+                                      strokeWidth="5"
                                     />
                                     <line
                                       x1={`${bendX}%`}
                                       y1="0"
                                       x2={`${bendX}%`}
-                                      y2={`${rowDiff * 203}px`}
+                                      y2={`${rowDiff * 224}px`}
                                       stroke="#ff9800"
-                                      strokeWidth="3"
+                                      strokeWidth="5"
                                     />
                                     <line
                                       x1={`${bendX}%`}
-                                      y1={`${rowDiff * 203}px`}
+                                      y1={`${rowDiff * 224}px`}
                                       x2={`${endX}%`}
-                                      y2={`${rowDiff * 203}px`}
+                                      y2={`${rowDiff * 224}px`}
                                       stroke="#ff9800"
-                                      strokeWidth="3"
+                                      strokeWidth="5"
                                     />
                                     <polygon
-                                      points={`${280 * (endX / 100)},${rowDiff * 203 - 12} ${280 * (endX / 100) + 20},${rowDiff * 203} ${280 * (endX / 100)},${rowDiff * 203 + 12}`}
+                                      points={`${280 * (endX / 100)},${rowDiff * 224 - 12} ${280 * (endX / 100) + 20},${rowDiff * 224} ${280 * (endX / 100)},${rowDiff * 224 + 12}`}
                                       fill="#ff9800"
                                     />
                                   </svg>
@@ -944,7 +1077,11 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                           if (dependentPositions.length === 0) return null;
 
                           // Get shared arrow coordinates for this prerequisite
-                          const sharedCoords = getSharedArrowCoordinates(questId, dependentPositions);
+                          // Use questIndex and total quests in this column to calculate bend point
+                          const sharedCoords = getSharedArrowCoordinates(questIndex, column.length, dependentPositions);
+                          
+                          // Get arrow styling for this quest
+                          const arrowStyle = getArrowStyle(questIndex);
 
                           return dependentPositions.map((depData, depIndex) => {
                             const { rowIndex: depRowIndex, dependent } = depData;
@@ -971,9 +1108,10 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       top: 0,
                                       left: `${sharedCoords.startX}%`,
                                       width: `${sharedCoords.endX - sharedCoords.startX}%`,
-                                      height: 3,
+                                      height: arrowStyle.strokeWidth,
                                       backgroundColor: 'transparent',
-                                      borderTop: '3px dashed #9e9e9e',
+                                      borderTop: `${arrowStyle.strokeWidth}px dashed ${arrowStyle.color}`,
+                                      borderImageSlice: 1,
                                       '&::after': {
                                         content: '""',
                                         position: 'absolute',
@@ -982,7 +1120,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                         transform: 'translateY(-50%)',
                                         width: 0,
                                         height: 0,
-                                        borderLeft: '20px solid #9e9e9e',
+                                        borderLeft: `20px solid ${arrowStyle.color}`,
                                         borderTop: '12px solid transparent',
                                         borderBottom: '12px solid transparent'
                                       }
@@ -996,7 +1134,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       top: 0,
                                       left: 0,
                                       width: '100%',
-                                      height: `${Math.abs(rowDiff) * 203 + 100}%`,
+                                      height: `${Math.abs(rowDiff) * 224 + 100}%`,
                                       overflow: 'visible'
                                     }}
                                   >
@@ -1006,34 +1144,34 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       y1="0"
                                       x2={`${sharedCoords.bendX}%`}
                                       y2="0"
-                                      stroke="#9e9e9e"
-                                      strokeWidth="3"
-                                      strokeDasharray="8,8"
+                                      stroke={arrowStyle.color}
+                                      strokeWidth={arrowStyle.strokeWidth}
+                                      strokeDasharray={arrowStyle.dashPattern}
                                     />
                                     {/* Vertical line with shared bend point */}
                                     <line
                                       x1={`${sharedCoords.bendX}%`}
                                       y1="0"
                                       x2={`${sharedCoords.bendX}%`}
-                                      y2={`${rowDiff * 203}px`}
-                                      stroke="#9e9e9e"
-                                      strokeWidth="3"
-                                      strokeDasharray="8,8"
+                                      y2={`${rowDiff * 224}px`}
+                                      stroke={arrowStyle.color}
+                                      strokeWidth={arrowStyle.strokeWidth}
+                                      strokeDasharray={arrowStyle.dashPattern}
                                     />
                                     {/* Final horizontal line with shared end */}
                                     <line
                                       x1={`${sharedCoords.bendX}%`}
-                                      y1={`${rowDiff * 203}px`}
+                                      y1={`${rowDiff * 224}px`}
                                       x2={`${sharedCoords.endX}%`}
-                                      y2={`${rowDiff * 203}px`}
-                                      stroke="#9e9e9e"
-                                      strokeWidth="3"
-                                      strokeDasharray="8,8"
+                                      y2={`${rowDiff * 224}px`}
+                                      stroke={arrowStyle.color}
+                                      strokeWidth={arrowStyle.strokeWidth}
+                                      strokeDasharray={arrowStyle.dashPattern}
                                     />
                                     {/* Arrowhead */}
                                     <polygon
-                                      points={`${280 * (sharedCoords.endX / 100)},${rowDiff * 203 - 12} ${280 * (sharedCoords.endX / 100) + 20},${rowDiff * 203} ${280 * (sharedCoords.endX / 100)},${rowDiff * 203 + 12}`}
-                                      fill="#9e9e9e"
+                                      points={`${280 * (sharedCoords.endX / 100)},${rowDiff * 224 - 12} ${280 * (sharedCoords.endX / 100) + 20},${rowDiff * 224} ${280 * (sharedCoords.endX / 100)},${rowDiff * 224 + 12}`}
+                                      fill={arrowStyle.color}
                                     />
                                   </svg>
                                 )}
@@ -1048,6 +1186,145 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
               </React.Fragment>
             ))}
           </Stack>
+
+          {/* Minimap - Bottom Right Corner */}
+          {contentSize.width > 0 && contentSize.height > 0 && (() => {
+            // Fixed minimap dimensions
+            const MINIMAP_WIDTH = 250;
+            const MINIMAP_MAX_HEIGHT = 180;
+            
+            // Calculate aspect ratio and scale to fit
+            const contentAspectRatio = contentSize.width / contentSize.height;
+            const minimapAspectRatio = MINIMAP_WIDTH / MINIMAP_MAX_HEIGHT;
+            
+            let minimapCanvasWidth, minimapCanvasHeight, scale;
+            
+            if (contentAspectRatio > minimapAspectRatio) {
+              // Content is wider - fit to width
+              minimapCanvasWidth = MINIMAP_WIDTH;
+              scale = MINIMAP_WIDTH / contentSize.width;
+              minimapCanvasHeight = contentSize.height * scale;
+            } else {
+              // Content is taller - fit to height
+              minimapCanvasHeight = MINIMAP_MAX_HEIGHT;
+              scale = MINIMAP_MAX_HEIGHT / contentSize.height;
+              minimapCanvasWidth = contentSize.width * scale;
+            }
+            
+            return (
+              <Box
+                sx={{
+                  position: 'fixed',
+                  bottom: 24,
+                  right: 24,
+                  width: MINIMAP_WIDTH,
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: 2,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  overflow: 'hidden',
+                  zIndex: 100,
+                  cursor: isDraggingMinimap ? 'grabbing' : 'pointer'
+                }}
+              >
+                {/* Minimap Header */}
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.75,
+                    backgroundColor: '#f5f5f5',
+                    borderBottom: '1px solid #e0e0e0'
+                  }}
+                >
+                  <Typography variant="caption" sx={{ fontSize: '0.7rem', fontWeight: 600, color: '#666' }}>
+                    Quest Map
+                  </Typography>
+                </Box>
+
+                {/* Minimap Canvas */}
+                <Box
+                  sx={{
+                    position: 'relative',
+                    width: minimapCanvasWidth,
+                    height: minimapCanvasHeight,
+                    backgroundColor: '#fafafa',
+                    margin: '0 auto'
+                  }}
+                  onMouseDown={handleMinimapMouseDown}
+                  onMouseMove={handleMinimapMouseMove}
+                >
+                  {/* Quest blocks in minimap */}
+                  {questColumns.map((column, colIndex) => (
+                    <React.Fragment key={`minimap-col-${colIndex}`}>
+                      {column.map((quest, questIndex) => {
+                        // Exact card dimensions from the main view
+                        const questCardWidth = 280;
+                        const questCardHeight = 200;
+                        const arrowContainerWidth = 280;
+                        const columnSpacing = questCardWidth + arrowContainerWidth; // 280px quest + 280px arrow container = 560px per column
+                        const rowSpacing = 224; // 200px height + 24px spacing (MUI spacing={3} = 3*8px)
+                        
+                        // Calculate actual position in the scroll content
+                        const questX = colIndex * columnSpacing;
+                        const questY = questIndex * rowSpacing;
+                        
+                        // Scale down to minimap coordinates
+                        const minimapQuestX = questX * scale;
+                        const minimapQuestY = questY * scale;
+                        const minimapQuestWidth = questCardWidth * scale;
+                        const minimapQuestHeight = questCardHeight * scale;
+                        
+                        // Determine color based on quest type
+                        let backgroundColor = '#e3f2fd'; // Regular quest
+                        let borderColor = '#2196f3';
+                        
+                        if (quest.isStartNode) {
+                          backgroundColor = '#fff3e0';
+                          borderColor = '#ff9800';
+                        } else if (isDraftQuest(quest)) {
+                          backgroundColor = '#fff8e1';
+                          borderColor = '#ffb74d';
+                        }
+                        
+                        return (
+                          <Box
+                            key={`minimap-quest-${colIndex}-${questIndex}`}
+                            sx={{
+                              position: 'absolute',
+                              left: minimapQuestX,
+                              top: minimapQuestY,
+                              width: minimapQuestWidth,
+                              height: minimapQuestHeight,
+                              backgroundColor,
+                              border: `1px solid ${borderColor}`,
+                              borderRadius: 0.5,
+                              pointerEvents: 'none'
+                            }}
+                          />
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
+
+                  {/* Viewport indicator */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: scrollPosition.x * scale,
+                      top: scrollPosition.y * scale,
+                      width: viewportSize.width * scale,
+                      height: viewportSize.height * scale,
+                      border: '2px solid #1976d2',
+                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                      borderRadius: 1,
+                      pointerEvents: 'none',
+                      boxShadow: '0 0 8px rgba(25, 118, 210, 0.3)'
+                    }}
+                  />
+                </Box>
+              </Box>
+            );
+          })()}
         </Box>
       )}
     </Box>
