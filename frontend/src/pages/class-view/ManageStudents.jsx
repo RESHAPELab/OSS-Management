@@ -13,6 +13,7 @@ import {
   ListItemText,
   LinearProgress,
   Alert,
+  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -37,6 +38,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 const ManageStudents = () => {
   const { classId } = useParams();
   const { authUser } = useAuthContext();
+  const baseURL = API_BASE_URL;
   const [studentData, setStudentData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,6 +65,7 @@ const ManageStudents = () => {
   // Add Students functionality (mirroring ClassView)
   const [generateJsonConfig, setGenerateJsonConfig] = useState(null);
   const [myQuests, setMyQuests] = useState([]);
+  const [questConfig, setQuestConfig] = useState(null);
 
   // Fetch organizationGh
   const fetchOrganizationGh = async () => {
@@ -140,7 +143,6 @@ const ManageStudents = () => {
     fetchOrganizationGh();
     fetchClassInfo();
     if (classId) fetchGenerateJsonConfig();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId]);
 
   // Fetch repos when org and classInfo are ready
@@ -301,13 +303,13 @@ const ManageStudents = () => {
             
             const requestBody = {
               users: [username], // Single user per request
-              customSequence: generateJsonConfig, // Use GenerateJson config
+              customSequence: generateJsonConfig || questConfig, // Use GenerateJson config if available, else fallback
               className: classInfo?.groupName,
               classId: classInfo?._id
             };
 
-            if (!generateJsonConfig) {
-              setCreateReposStatus('❌ No quest configuration found. Please set up quests in GenerateJson.');
+            if (!generateJsonConfig && !questConfig) {
+              setCreateReposStatus('❌ No quest configuration found. Please set up quests in GenerateJson or ManageQuests.');
               return;
             }
 

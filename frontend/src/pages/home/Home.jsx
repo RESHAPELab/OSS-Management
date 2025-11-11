@@ -10,6 +10,8 @@ let baseURL = API_BASE_URL;
 
 const Home = () => {
     const [profGroups, setProfGroups] = useState([])
+    const [openGroup, setOpenGroup] = useState()
+    const [groupStudents, setGroupStudents] = useState([])
     const {authUser} = useAuthContext(); 
 
     useEffect(() => {
@@ -17,7 +19,6 @@ const Home = () => {
             console.log("logged in user:", authUser.profName)
             fetchGroups()
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authUser])
     
     useEffect(() => {
@@ -46,6 +47,10 @@ const Home = () => {
             console.error('Error creating new group: ', error);
             return null; // Return null on error
         }
+    }
+
+    const handleOpenGroup = async () => {
+
     }
 
     return (
