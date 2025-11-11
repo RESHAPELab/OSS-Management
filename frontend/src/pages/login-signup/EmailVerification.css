@@ -22,6 +22,19 @@
     width: 6%;
     margin-right: 5px;
     margin-left: 5px;
+    border-radius: 8px !important;
+    border: 2px solid #eee;
+    padding: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #eee;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-container .verification-input:focus {
+    outline: none;
 }
 
 .input-group { 

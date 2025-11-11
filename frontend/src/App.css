@@ -7,6 +7,30 @@ body, html {
   height: 100vh;
 }
 
+/* Fix text fields where text is being cut off on the left */
+.MuiTextField-root .MuiOutlinedInput-input {
+  padding-left: 28px !important;
+  padding-right: 14px !important;
+}
+
+.MuiTextField-root .MuiOutlinedInput-root {
+  padding-left: 0 !important;
+}
+
+/* Fix select dropdown text positioning */
+.MuiTextField-root .MuiSelect-select,
+.MuiTextField-root .MuiOutlinedInput-input[readonly],
+.MuiSelect-select {
+  padding-left: 50px !important;
+}
+
+/* Alternative approach for select fields */
+.MuiTextField-root .MuiOutlinedInput-root .MuiSelect-select {
+  padding-left: 50px !important;
+}
+
+
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;
