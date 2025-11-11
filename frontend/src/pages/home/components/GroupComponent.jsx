@@ -20,9 +20,6 @@ import {
   Grid,
   Chip,
   Card,
-  CardContent,
-  Stack,
-  Divider,
   InputBase,
   Tooltip
 } from '@mui/material';
@@ -30,7 +27,6 @@ import {
   Add as AddIcon,
   Check as CheckIcon,
   Close as CloseIcon,
-  Search as SearchIcon,
   School as SchoolIcon,
   Group as GroupIcon
 } from '@mui/icons-material';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../../config/api";
@@ -2350,12 +2350,51 @@ Student can now start their quest journey!`);
     }
   }, [showReadmeModal, classId]);
 
+  // Function to fetch saved quests from database
+  const fetchSavedQuests = useCallback(async () => {
+    if (!classId) return;
+    
+    setIsLoadingSavedQuests(true);
+    setSavedQuestsError("");
+    
+    try {
+      console.log('🔍 [fetchSavedQuests] Fetching saved quests for class:', classId);
+      
+      // First, get the class/group information to find the professor
+      const groupResponse = await axios.get(`${API_BASE_URL}/api/group/${classId}`);
+      
+      if (!groupResponse.data || !groupResponse.data.success) {
+        throw new Error('Failed to fetch class information');
+      }
+      
+      const group = groupResponse.data.data;
+      console.log('✅ [fetchSavedQuests] Found group:', group);
+      
+      // Now fetch all quests from the database (we'll filter them later)
+      const questsResponse = await axios.get(`${API_BASE_URL}/api/quest/all`);
+      
+      if (questsResponse.data && questsResponse.data.success) {
+        console.log('✅ [fetchSavedQuests] Successfully fetched all quests:', questsResponse.data.data);
+        setSavedQuests(questsResponse.data.data || []);
+      } else {
+        console.log('⚠️ [fetchSavedQuests] No quests found or invalid response');
+        setSavedQuests([]);
+      }
+    } catch (error) {
+      console.error('❌ [fetchSavedQuests] Error fetching saved quests:', error);
+      setSavedQuestsError(error.response?.data?.message || 'Failed to fetch saved quests');
+      setSavedQuests([]);
+    } finally {
+      setIsLoadingSavedQuests(false);
+    }
+  }, [classId]);
+
   // Fetch saved quests from database when component loads
   useEffect(() => {
     if (classId) {
       fetchSavedQuests();
     }
-  }, [classId]);
+  }, [classId, fetchSavedQuests]);
 
   const handleReadmeRemove = () => {
     setJsonContent((prev) => {
@@ -2432,47 +2471,8 @@ Student can now start their quest journey!`);
     }
   };
 
-  // Function to fetch saved quests from database
-  const fetchSavedQuests = async () => {
-    if (!classId) return;
-    
-    setIsLoadingSavedQuests(true);
-    setSavedQuestsError("");
-    
-    try {
-      console.log('🔍 [fetchSavedQuests] Fetching saved quests for class:', classId);
-      
-      // First, get the class/group information to find the professor
-      const groupResponse = await axios.get(`${API_BASE_URL}/api/group/${classId}`);
-      
-      if (!groupResponse.data || !groupResponse.data.success) {
-        throw new Error('Failed to fetch class information');
-      }
-      
-      const group = groupResponse.data.data;
-      console.log('✅ [fetchSavedQuests] Found group:', group);
-      
-      // Now fetch all quests from the database (we'll filter them later)
-      const questsResponse = await axios.get(`${API_BASE_URL}/api/quest/all`);
-      
-      if (questsResponse.data && questsResponse.data.success) {
-        console.log('✅ [fetchSavedQuests] Successfully fetched all quests:', questsResponse.data.data);
-        setSavedQuests(questsResponse.data.data || []);
-      } else {
-        console.log('⚠️ [fetchSavedQuests] No quests found or invalid response');
-        setSavedQuests([]);
-      }
-    } catch (error) {
-      console.error('❌ [fetchSavedQuests] Error fetching saved quests:', error);
-      setSavedQuestsError(error.response?.data?.message || 'Failed to fetch saved quests');
-      setSavedQuests([]);
-    } finally {
-      setIsLoadingSavedQuests(false);
-    }
-  };
-
   // Quest management functions
-  const moveQuest = (questIndex, direction) => {
+  const moveQuest = useCallback((questIndex, direction) => {
     const newIndex = direction === "up" ? questIndex - 1 : questIndex + 1;
     if (newIndex < 0 || newIndex >= jsonContent.questSequence.length) return;
 
@@ -2502,7 +2502,7 @@ Student can now start their quest journey!`);
     
     // Refresh stored data list after moving quest
     loadStoredValues();
-  };
+  }, [jsonContent.questSequence]);
 
     // Edit quest modal - only for quest title and description (no tasks)
   const editQuest = (questIndex) => {

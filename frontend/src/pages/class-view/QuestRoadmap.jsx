@@ -23,7 +23,6 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
   const { classId } = useParams();
   const { authUser } = useAuthContext();
   const [draftQuests, setDraftQuests] = useState({ questSequence: [] });
-  const [isDraftLoading, setIsDraftLoading] = useState(false);
   const [localDraftQuests, setLocalDraftQuests] = useState([]); // Local state for draft quest prerequisite changes
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
@@ -44,7 +43,6 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     }
 
     try {
-      setIsDraftLoading(true);
       console.log("🔄 [QuestRoadmap] Loading draft quests for class:", classId);
       console.log("🔄 [QuestRoadmap] API URL:", `${API_BASE_URL}/api/group/${classId}/draft-quest-config`);
 
@@ -67,14 +65,13 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
       console.error("❌ [QuestRoadmap] Error loading draft quests:", error);
       console.error("❌ [QuestRoadmap] Error details:", error.response?.data || error.message);
       setDraftQuests({ questSequence: [] });
-    } finally {
-      setIsDraftLoading(false);
     }
   };
 
   // Load draft quests on component mount
   useEffect(() => {
     loadDraftQuests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [classId]);
 
   // Update local draft quests when draftQuests changes
@@ -446,9 +443,9 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
     }
     
     // Build remaining columns based on prerequisite column position
-    let hasChanges = true;
-    while (hasChanges && processed.size < quests.length) {
-      hasChanges = false;
+    let changesDetected = true;
+    while (changesDetected && processed.size < quests.length) {
+      changesDetected = false;
       const nextColumn = [];
       
       // Get the last column (current parent column)
@@ -471,7 +468,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
         children.forEach(child => {
           nextColumn.push(child);
           processed.add(child.questId || child.id);
-          hasChanges = true;
+          changesDetected = true;
         });
       });
       
@@ -1084,7 +1081,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                           const arrowStyle = getArrowStyle(questIndex);
 
                           return dependentPositions.map((depData, depIndex) => {
-                            const { rowIndex: depRowIndex, dependent } = depData;
+                            const { rowIndex: depRowIndex } = depData;
                             const rowDiff = depRowIndex - questIndex;
                             const isStraight = rowDiff === 0;
                             

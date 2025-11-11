@@ -246,7 +246,6 @@ const LoginSignup = () => {
             onChange={handleChange}
             required
           />
-          <a href="#">Forgot Your Password?</a>
           <button type="submit" disabled={loading}>
             {loading ? "Signing In..." : "Sign In"}
           </button>
