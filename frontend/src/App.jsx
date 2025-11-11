@@ -4,7 +4,7 @@ import EmailVerification from './pages/login-signup/EmailVerification'
 import StudentRegister from './pages/studentSignup/StudentRegister';
 import ClassView from './pages/class-view/ClassView'
 import Home from './pages/home/Home'
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import { useEffect } from 'react';
 import { useAuthContext } from './context/AuthContext';
 import StudentRegistered from './pages/studentSignup/StudentRegistered';
@@ -22,6 +22,7 @@ const App = () => {
       setAuthUser (JSON.parse(storedUser));
       console.log(`signed in user: `, authUser)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setAuthUser ]);
 
   return (

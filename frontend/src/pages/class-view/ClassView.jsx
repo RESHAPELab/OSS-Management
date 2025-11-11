@@ -1,33 +1,21 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import HomeHeader from '../home/components/HomeHeader'
 import axios from 'axios'
 import { useAuthContext } from '../../context/AuthContext';
-import { API_BASE_URL, BOT_BASE_URL } from '../../config/api';
+import { API_BASE_URL } from '../../config/api';
 import {
   Container, Box, Typography, Button, Stack, Card, Dialog, DialogTitle, DialogContent, DialogActions, 
-  Alert, TextField, Chip, List, ListItem, ListItemText, Divider, Paper, Grid, IconButton,
-  Accordion, AccordionSummary, AccordionDetails, FormControlLabel, Switch, LinearProgress,
-  MenuItem
+  Alert, Chip, List, ListItem, ListItemText, Divider, Paper, Grid, IconButton,
+  LinearProgress
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  KeyboardArrowUp as UpIcon,
-  KeyboardArrowDown as DownIcon,
-  ExpandMore as ExpandMoreIcon,
-  School as SchoolIcon,
-  Group as GroupIcon,
   Assignment as AssignmentIcon,
   CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
   Menu as MenuIcon,
   Dashboard as DashboardIcon,
   People as PeopleIcon,
-  Settings as SettingsIcon,
   Download as DownloadIcon,
   Assessment as AssessmentIcon,
   Close as CloseIcon,
@@ -37,7 +25,6 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon,
   Route as RouteIcon
 } from '@mui/icons-material';
-import RepositoryStatusChecker from '../../components/RepositoryStatusChecker';
 import GenerateJson from './GenerateJson';
 import ManageStudents from './ManageStudents';
 import ManageAdmins from './ManageAdmins';
@@ -124,13 +111,6 @@ const ClassView = () => {
     const [isSavingQuestOrder, setIsSavingQuestOrder] = useState(false);
     const [questOrderSaveStatus, setQuestOrderSaveStatus] = useState('');
     const [saveQuestOrderTimeout, setSaveQuestOrderTimeout] = useState(null);
-    const [fixedQ0Quest] = useState({
-        id: 'Q0',
-        title: 'Q0: Introduction to Open Source',
-        description: 'Welcome to the world of Open Source Software! This foundational quest will introduce you to the basic concepts and tools you\'ll need throughout this course.',
-        content: 'This is the fixed introductory quest that cannot be modified or deleted. It serves as the foundation for all other quests in this course.',
-        type: 'fixed'
-    });
     // Unified quest order that includes both fixed and custom quests
     const [unifiedQuestOrder, setUnifiedQuestOrder] = useState([
         { id: 'Q0', title: 'Q0: Introduction to Open Source', content: 'Introduction to Open Source Software', type: 'fixed', isQ0: true },
@@ -138,7 +118,6 @@ const ClassView = () => {
         { id: 'Q2', title: 'Q2', content: 'Forking and Contributing to Repositories', type: 'fixed' },
         { id: 'Q3', title: 'Q3', content: 'Creating Pull Requests and Code Reviews', type: 'fixed' }
     ]);
-    const navigate = useNavigate();
     // 1. Add state for batch repo dialog
     const [showBatchRepoDialog, setShowBatchRepoDialog] = useState(false);
     const [batchCsvFile, setBatchCsvFile] = useState(null);
@@ -162,6 +141,7 @@ const ClassView = () => {
             // Load quests for the course outline
             loadQuestOrderFromDatabase();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [authUser, classId])
 
 
@@ -192,13 +172,6 @@ const ClassView = () => {
     useEffect(() => {
         // console.log('existingReadme state changed:', existingReadme); // Removed
     }, [existingReadme]);
-
-    // Removed this useEffect as it was calling fetchOrganizationRepos too early
-    // The proper useEffect below waits for both organizationGh AND classInfo
-    
-    const toggleAccordion = (index) => {
-        setActiveIndex(activeIndex === index ? null : index);
-    };
     
     // Handle quest grades dialog
     const handleQuestClick = (quest, questIndex) => {
@@ -231,6 +204,7 @@ const ClassView = () => {
             //     studentDataLength: studentData.length
             // });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [studentData, classInfo?.groupName]);
 
     // Debug studentScores state changes
@@ -432,6 +406,7 @@ const ClassView = () => {
         } else {
             console.log('⏳ [ClassView] Waiting for required data...');
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [organizationGh, classInfo]);
 
     const handleCsvUpload = (event) => {
@@ -761,6 +736,7 @@ const ClassView = () => {
             const interval = setInterval(checkCollaborationStatus, 30000);
             return () => clearInterval(interval);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [organizationGh]);
 
     const handleShowActiveOnlyChange = (e) => {
