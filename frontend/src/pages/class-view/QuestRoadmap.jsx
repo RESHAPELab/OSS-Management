@@ -396,6 +396,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                          display: 'flex',
                          flexDirection: 'column',
                          position: 'relative',
+                         overflow: 'hidden',
                          '&:hover': {
                            borderColor: isDraftQuest(quest) 
                              ? '#ff9800' 
@@ -431,49 +432,50 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                 </Box>
 
                 {/* Quest Icon */}
-                <Box sx={{ p: 3, pb: 1 }}>
+                <Box sx={{ p: 2, pb: 0.5 }}>
                   <AssignmentIcon 
                     sx={{ 
                       fontSize: 32, 
                       color: 'primary.main',
                       opacity: 0,
-                      mb: 1
+                      mb: 0.5
                     }} 
                   />
                 </Box>
 
                 {/* Quest Content */}
-                <Box sx={{ px: 3, pb: 3, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Box sx={{ px: 3, pt: 0.5, pb: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
                   {/* Quest Title */}
                   <Typography 
                     variant="h6" 
                     sx={{ 
                       fontWeight: 600, 
-                      mb: 2,
-                      lineHeight: 1.3,
+                      mb: 1.5,
+                      lineHeight: 1.2,
                       display: '-webkit-box',
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
+                      overflow: 'hidden',
+                      wordBreak: 'break-word'
                     }}
                   >
-                    {isDraftQuest(quest) ? quest.questId || quest.id : (quest.title || `Quest ${questIndex + 1}`)}
+                    {quest.title || `Quest ${questIndex + 1}`}
                   </Typography>
 
                   {/* Prerequisites and Deploy Button Container */}
-                  <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 0.5, width: '100%', pb: 1 }}>
                     {isDraftQuest(quest) ? (
                       // Draft quest prerequisite dropdown (only enabled for leaf nodes)
-                      <Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 0, display: 'block', textAlign: 'center' }}>
                           Prerequisite:
-                          {!isDraftQuestMovable(quest) && (
-                            <Typography component="span" variant="caption" sx={{ ml: 1, color: '#ff9800', fontSize: '0.65rem', fontStyle: 'italic' }}>
-                              (Locked - has dependents)
-                            </Typography>
-                          )}
                         </Typography>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                        {!isDraftQuestMovable(quest) && (
+                          <Typography variant="caption" sx={{ mb: 0.25, color: '#ff9800', fontSize: '0.65rem', fontStyle: 'italic', textAlign: 'center' }}>
+                            (Locked - has dependents)
+                          </Typography>
+                        )}
+                        <FormControl size="small" sx={{ minWidth: 120, maxWidth: 200, width: 'fit-content' }}>
                           <Select
                             value={quest.metadata?.prerequisite || ''}
                             onChange={(e) => {
@@ -507,6 +509,20 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                             }}
                             displayEmpty
                             disabled={!isDraftQuestMovable(quest)}
+                            MenuProps={{
+                              PaperProps: {
+                                sx: {
+                                  maxHeight: 120,
+                                  maxWidth: 180,
+                                  '& .MuiMenuItem-root': {
+                                    fontSize: '0.7rem',
+                                    minHeight: 28,
+                                    py: 0.25,
+                                    px: 1
+                                  }
+                                }
+                              }
+                            }}
                             sx={{
                               fontSize: '0.75rem',
                               height: 24,
@@ -603,40 +619,44 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
 
                     {/* Deploy Button for Draft Quests - Different states based on chain position */}
                     {isDraftQuest(quest) && !isMiddleDraftQuest(quest) && (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={!isFirstDraftQuestInChain(quest)}
-                        sx={{
-                          backgroundColor: isFirstDraftQuestInChain(quest) ? '#9c27b0' : '#bdbdbd',
-                          color: 'white',
-                          fontSize: '0.7rem',
-                          px: 1.5,
-                          py: 0.3,
-                          minWidth: 'auto',
-                          height: 24,
-                          alignSelf: 'flex-start',
-                          borderRadius: '50px', // Completely rounded
-                          '&:hover': {
-                            backgroundColor: isFirstDraftQuestInChain(quest) ? '#7b1fa2' : '#bdbdbd',
-                          },
-                          '&:disabled': {
-                            backgroundColor: '#bdbdbd',
+                      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', mt: 0.5 }}>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={!isFirstDraftQuestInChain(quest)}
+                          sx={{
+                            backgroundColor: isFirstDraftQuestInChain(quest) ? '#9c27b0' : '#bdbdbd',
                             color: 'white',
-                          },
-                          textTransform: 'none',
-                          fontWeight: 500
-                        }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (isFirstDraftQuestInChain(quest)) {
-                            // No functionality - UI only as requested
-                            console.log('Deploy button clicked for quest:', quest.questId || quest.id);
-                          }
-                        }}
-                      >
-                        Deploy
-                      </Button>
+                            fontSize: '0.7rem',
+                            px: 4,
+                            py: 0.3,
+                            minWidth: 'auto',
+                            maxWidth: 'fit-content',
+                            height: 24,
+                            borderRadius: '50px', // Completely rounded
+                            '&:hover': {
+                              backgroundColor: isFirstDraftQuestInChain(quest) ? '#7b1fa2' : '#bdbdbd',
+                            },
+                            '&:disabled': {
+                              backgroundColor: '#bdbdbd',
+                              color: 'white',
+                            },
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            whiteSpace: 'nowrap',
+                            mx: 'auto'
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isFirstDraftQuestInChain(quest)) {
+                              // No functionality - UI only as requested
+                              console.log('Deploy button clicked for quest:', quest.questId || quest.id);
+                            }
+                          }}
+                        >
+                          Deploy
+                        </Button>
+                      </Box>
                     )}
                   </Box>
                 </Box>
@@ -721,7 +741,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       top: 0,
                                       left: 0,
                                       width: '100%',
-                                      height: `${Math.abs(rowDiff) * 203 + 100}%`,
+                                      height: `${Math.abs(rowDiff) * 224 + 100}%`,
                                       overflow: 'visible'
                                     }}
                                   >
@@ -740,7 +760,7 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                       x1={`${sharedCoords.bendX}%`}
                                       y1="0"
                                       x2={`${sharedCoords.bendX}%`}
-                                      y2={`${rowDiff * 203}px`}
+                                      y2={`${rowDiff * 224}px`}
                                       stroke="#9e9e9e"
                                       strokeWidth="3"
                                       strokeDasharray="8,8"
@@ -748,16 +768,16 @@ const QuestRoadmap = ({ questBreakdownQuests = [] }) => {
                                     {/* Final horizontal line with shared end */}
                                     <line
                                       x1={`${sharedCoords.bendX}%`}
-                                      y1={`${rowDiff * 203}px`}
+                                      y1={`${rowDiff * 224}px`}
                                       x2={`${sharedCoords.endX}%`}
-                                      y2={`${rowDiff * 203}px`}
+                                      y2={`${rowDiff * 224}px`}
                                       stroke="#9e9e9e"
                                       strokeWidth="3"
                                       strokeDasharray="8,8"
                                     />
                                     {/* Arrowhead */}
                                     <polygon
-                                      points={`${280 * (sharedCoords.endX / 100)},${rowDiff * 203 - 12} ${280 * (sharedCoords.endX / 100) + 20},${rowDiff * 203} ${280 * (sharedCoords.endX / 100)},${rowDiff * 203 + 12}`}
+                                      points={`${280 * (sharedCoords.endX / 100)},${rowDiff * 224 - 12} ${280 * (sharedCoords.endX / 100) + 20},${rowDiff * 224} ${280 * (sharedCoords.endX / 100)},${rowDiff * 224 + 12}`}
                                       fill="#9e9e9e"
                                     />
                                   </svg>
