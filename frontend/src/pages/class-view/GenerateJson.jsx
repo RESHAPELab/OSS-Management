@@ -337,6 +337,7 @@ const GenerateJson = () => {
   const [showQuestDeleteConfirmationDialog, setShowQuestDeleteConfirmationDialog] = useState(false);
   const [showTaskDeleteConfirmationDialog, setShowTaskDeleteConfirmationDialog] = useState(false);
   const [showPurpleDeployConfirmationDialog, setShowPurpleDeployConfirmationDialog] = useState(false);
+  const [isPurpleDeploying, setIsPurpleDeploying] = useState(false);
   const [questToDelete, setQuestToDelete] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [questToDeploy, setQuestToDeploy] = useState(null);
@@ -1300,6 +1301,7 @@ const GenerateJson = () => {
     });
 
     try {
+      setIsPurpleDeploying(true);
       // Calculate the next quest number
       const nextQuestNumber = jsonContent.questSequence.length + 1;
       
@@ -1353,6 +1355,7 @@ const GenerateJson = () => {
         successMessage += `\n💡 Students will unlock automatically when they complete prerequisites.`;
       }
 
+      setIsPurpleDeploying(false);
       alert(successMessage);
 
       // Remove from draft quests
@@ -1394,7 +1397,10 @@ const GenerateJson = () => {
       }
     } catch (error) {
       console.error(`❌ [FRONTEND] Purple deployment failed:`, error);
+      setIsPurpleDeploying(false);
       alert(`❌ Failed to deploy quest: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setIsPurpleDeploying(false);
     }
   };
 
@@ -3543,6 +3549,38 @@ Student can now start their quest journey!`);
 
   return (
     <div>
+      {isPurpleDeploying && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            bgcolor: "rgba(15, 23, 42, 0.85)",
+            zIndex: (theme) => theme.zIndex.modal + 2,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#ffffff",
+            backdropFilter: "blur(2px)",
+          }}
+        >
+          <Stack spacing={2} alignItems="center" sx={{ textAlign: "center" }}>
+            <CircularProgress
+              size={64}
+              sx={{ color: "#bb86fc" }}
+              aria-label="Purple deployment in progress"
+            />
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Purple Deploy in Progress
+            </Typography>
+            <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.75)" }}>
+              Please wait while the new quest is deployed and auto-unlocks are processed.
+            </Typography>
+          </Stack>
+        </Box>
+      )}
       <Container maxWidth="lg" sx={{ py: 4, width: "100%", textAlign: "left" }}>
         {/* Page Title */}
         <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 3 }}>
