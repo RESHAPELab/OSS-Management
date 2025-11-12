@@ -4777,7 +4777,7 @@ Student can now start their quest journey!`);
                             <Box sx={{ mt: 2 }}>
                               <FormControlLabel
                                 control={
-                                  <Switch
+                                  <Checkbox
                                     checked={task.saveValidatedData || false}
                                     onChange={(e) =>
                                       handleTaskChange(
@@ -4786,11 +4786,10 @@ Student can now start their quest journey!`);
                                         e.target.checked
                                       )
                                     }
-                                    sx={STYLES.toggle.orangeSwitch}
                                   />
                                 }
                                 label="Save validated data per user"
-                                sx={STYLES.formLabel.withDescription}
+                                sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                               />
                               {task.saveValidatedData && (
                                 <>
@@ -4870,7 +4869,7 @@ Student can now start their quest journey!`);
                           >
                             <FormControlLabel
                               control={
-                                <Switch
+                                <Checkbox
                                   checked={task.useStoredKey || false}
                                   onChange={(e) =>
                                     handleTaskChange(
@@ -4879,10 +4878,10 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Use stored data for Issue Number"
+                              sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                             />
                             <FormControl
                               sx={{ minWidth: 240 }}
@@ -5029,7 +5028,7 @@ Student can now start their quest journey!`);
                           <Box sx={{ mt: 2 }}>
                             <FormControlLabel
                               control={
-                                <Switch
+                                <Checkbox
                                   checked={task.saveValidatedData || false}
                                   onChange={(e) =>
                                     handleTaskChange(
@@ -5038,17 +5037,9 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                    sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save validated data per user"
-                              sx={{
-                                "& .MuiFormControlLabel-label": {
-                                  fontSize: "0.95rem",
-                                  fontWeight: 500,
-                                  color: "#374151",
-                                },
-                              }}
                             />
                             {task.saveValidatedData && (
                               <>
@@ -5240,7 +5231,7 @@ Student can now start their quest journey!`);
                           <Box sx={{ mt: 2 }}>
                             <FormControlLabel
                               control={
-                                <Switch
+                                <Checkbox
                                   checked={task.saveValidatedData || false}
                                   onChange={(e) =>
                                     handleTaskChange(
@@ -5249,17 +5240,9 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                    sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save validated data per user"
-                              sx={{
-                                "& .MuiFormControlLabel-label": {
-                                  fontSize: "0.95rem",
-                                  fontWeight: 500,
-                                  color: "#374151",
-                                },
-                              }}
                             />
                             {task.saveValidatedData && (
                               <>
@@ -5567,10 +5550,10 @@ Student can now start their quest journey!`);
                             </Alert>
 
                             {/* Detailed Feedback Toggle */}
-                            <Box sx={{ mt: 1 }}>
+                            <Box sx={{ mt: 1, overflow: 'visible' }}>
                               <FormControlLabel
                                 control={
-                                  <Switch
+                                  <Checkbox
                                     checked={
                                       task.llmTextValidation
                                         ?.enableDetailedFeedback || false
@@ -5586,15 +5569,19 @@ Student can now start their quest journey!`);
                                         }
                                       )
                                     }
-                                    sx={STYLES.toggle.orangeSwitch}
                                   />
                                 }
                                 label="Enable detailed feedback"
-                                sx={{ mb: 1 }}
+                                sx={{ ...STYLES.checkbox.standard, mb: 0.5, display: 'flex', width: 'fit-content' }}
                               />
                               <Typography
                                 variant="body2"
-                                sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
+                                sx={{ 
+                                  ml: 0, 
+                                  mb: 2, 
+                                  fontSize: '0.875rem', 
+                                  color: 'text.secondary',
+                                }}
                               >
                                 When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
                               </Typography>
@@ -5641,7 +5628,7 @@ Student can now start their quest journey!`);
                           <Box sx={{ mt: 2 }}>
                             <FormControlLabel
                               control={
-                                <Switch
+                                <Checkbox
                                   checked={task.saveValidatedData !== false}
                                   onChange={(e) =>
                                     handleTaskChange(
@@ -5650,17 +5637,10 @@ Student can now start their quest journey!`);
                                       e.target.checked
                                     )
                                   }
-                                  sx={STYLES.toggle.orangeSwitch}
                                 />
                               }
                               label="Save collected information for later tasks"
-                              sx={{
-                                "& .MuiFormControlLabel-label": {
-                                  fontSize: "0.95rem",
-                                  fontWeight: 500,
-                                  color: "#374151",
-                                },
-                              }}
+                              sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                             />
                             {task.saveValidatedData !== false && (
                               <>
@@ -6431,7 +6411,7 @@ Student can now start their quest journey!`);
                         <Box sx={{ mt: 2 }}>
                           <FormControlLabel
                             control={
-                              <Switch
+                              <Checkbox
                                 checked={editingTaskData.saveValidatedData || false}
                                 onChange={(e) =>
                                   setEditingTaskData({
@@ -6439,17 +6419,10 @@ Student can now start their quest journey!`);
                                     saveValidatedData: e.target.checked,
                                   })
                                 }
-                                sx={STYLES.toggle.orangeSwitch}
                               />
                             }
                             label="Save validated data for later tasks"
-                            sx={{
-                              "& .MuiFormControlLabel-label": {
-                                fontSize: "0.95rem",
-                                fontWeight: 500,
-                                color: "#374151",
-                              },
-                            }}
+                            sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                           />
                           {editingTaskData.saveValidatedData && (
                             <>
@@ -6581,7 +6554,7 @@ Student can now start their quest journey!`);
                       <Box sx={{ mt: 2 }}>
                         <FormControlLabel
                           control={
-                            <Switch
+                            <Checkbox
                               checked={editingTaskData.saveValidatedData || false}
                               onChange={(e) =>
                                 setEditingTaskData({
@@ -6589,10 +6562,10 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
-                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Save validated data for later tasks"
+                          sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                         />
                         {editingTaskData.saveValidatedData && (
                           <>
@@ -6727,24 +6700,37 @@ Student can now start their quest journey!`);
                         sx={{ width: 150, mb: 2 }}
                       />
 
-                      <FormControlLabel
-                        control={
-                          <Checkbox
-                            checked={editingTaskData.llmTextValidation?.enableDetailedFeedback || false}
-                            onChange={(e) =>
-                              setEditingTaskData({
-                                ...editingTaskData,
-                                llmTextValidation: {
-                                  ...editingTaskData.llmTextValidation,
-                                  enableDetailedFeedback: e.target.checked,
-                                },
-                              })
-                            }
-                          />
-                        }
-                        label="Enable Detailed Feedback"
-                        sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
-                      />
+                      <Box sx={{ overflow: 'visible' }}>
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={editingTaskData.llmTextValidation?.enableDetailedFeedback || false}
+                              onChange={(e) =>
+                                setEditingTaskData({
+                                  ...editingTaskData,
+                                  llmTextValidation: {
+                                    ...editingTaskData.llmTextValidation,
+                                    enableDetailedFeedback: e.target.checked,
+                                  },
+                                })
+                              }
+                            />
+                          }
+                          label="Enable Detailed Feedback"
+                          sx={{ ...STYLES.checkbox.standard, mb: 0.5, display: 'flex', width: 'fit-content' }}
+                        />
+                        <Typography
+                          variant="body2"
+                          sx={{ 
+                            ml: 0, 
+                            mb: 2, 
+                            fontSize: '0.875rem', 
+                            color: 'text.secondary',
+                          }}
+                        >
+                          When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
+                        </Typography>
+                      </Box>
                     </Box>
                   )}
 
@@ -7256,7 +7242,7 @@ Student can now start their quest journey!`);
                       <Box sx={{ mt: 2 }}>
                         <FormControlLabel
                           control={
-                            <Switch
+                            <Checkbox
                               checked={editingTaskData.saveValidatedData || false}
                               onChange={(e) =>
                                 setEditingTaskData({
@@ -7264,17 +7250,10 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
-                                    sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Save validated data per user"
-                          sx={{
-                            "& .MuiFormControlLabel-label": {
-                              fontSize: "0.95rem",
-                              fontWeight: 500,
-                              color: "#374151",
-                            },
-                          }}
+                          sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                         />
                         {editingTaskData.saveValidatedData && (
                           <>
@@ -7383,7 +7362,7 @@ Student can now start their quest journey!`);
                       <Box sx={{ mt: 0 }}>
                         <FormControlLabel
                           control={
-                            <Switch
+                            <Checkbox
                               checked={editingTaskData.llmTextValidation?.enableDetailedFeedback || false}
                               onChange={(e) =>
                                 setEditingTaskData({
@@ -7394,18 +7373,11 @@ Student can now start their quest journey!`);
                                   },
                                 })
                               }
-                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Enable detailed feedback from AI validation"
-                          sx={{ mb: 1 }}
+                          sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                         />
-                        <Typography
-                          variant="body2"
-                          sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
-                        >
-                          When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
-                        </Typography>
                       </Box>
                     </Box>
                   )}
@@ -7480,7 +7452,7 @@ Student can now start their quest journey!`);
                       <Box sx={{ mt: 0 }}>
                         <FormControlLabel
                           control={
-                            <Switch
+                            <Checkbox
                               checked={editingTaskData.imageValidation?.enableDetailedFeedback || false}
                               onChange={(e) =>
                                 setEditingTaskData({
@@ -7491,18 +7463,11 @@ Student can now start their quest journey!`);
                                   },
                                 })
                               }
-                              sx={STYLES.toggle.orangeSwitch}
                             />
                           }
                           label="Enable detailed feedback from AI validation"
-                          sx={{ mb: 1 }}
+                          sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                         />
-                        <Typography
-                          variant="body2"
-                          sx={{ display: "block", mt: 0, mb: 1, ml: 0, fontSize: '0.875rem', color: '#666' }}
-                        >
-                          When enabled, students receive specific feedback about what they got wrong instead of generic error messages.
-                        </Typography>
                       </Box>
                     </Box>
                   )}
@@ -7598,7 +7563,7 @@ Student can now start their quest journey!`);
                       <Box sx={{ mt: 2 }}>
                         <FormControlLabel
                           control={
-                            <Switch
+                            <Checkbox
                               checked={editingTaskData.saveValidatedData !== false}
                               onChange={(e) =>
                                 setEditingTaskData({
@@ -7606,27 +7571,10 @@ Student can now start their quest journey!`);
                                   saveValidatedData: e.target.checked,
                                 })
                               }
-                              sx={{
-                                "& .MuiSwitch-switchBase.Mui-checked": {
-                                  color: "#4caf50",
-                                  "&:hover": {
-                                    backgroundColor:
-                                      "rgba(76, 175, 80, 0.08)",
-                                  },
-                                },
-                                "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                                  { backgroundColor: "#4caf50" },
-                              }}
                             />
                           }
                           label="Save collected information for later tasks"
-                          sx={{
-                            "& .MuiFormControlLabel-label": {
-                              fontSize: "0.95rem",
-                              fontWeight: 500,
-                              color: "#374151",
-                            },
-                          }}
+                          sx={{ ...STYLES.checkbox.standard, mb: 2, display: 'flex', width: 'fit-content' }}
                         />
                         {editingTaskData.saveValidatedData !== false && (
                           <>
