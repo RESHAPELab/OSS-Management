@@ -1824,6 +1824,18 @@ const saveDraftQuestConfig = async (req, res) => {
 
         console.log(`✅ [saveDraftQuestConfig] Successfully saved draft quest JSON for class: ${group.groupName}`);
 
+        // Emit socket event to notify other users in this class
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`class:${classId}`).emit('draft-quest-config-updated', {
+                classId: group._id,
+                className: group.groupName,
+                questCount: draftQuestConfig.questSequence?.length || 0,
+                lastUpdated: group.draftQuestLastUpdated
+            });
+            console.log(`🔔 [saveDraftQuestConfig] Emitted draft-quest-config-updated event to class:${classId}`);
+        }
+
         res.status(200).json({
             success: true,
             message: 'Draft quest configuration saved successfully',

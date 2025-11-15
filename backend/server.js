@@ -1,5 +1,7 @@
 const express = require("express");
 const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
 const dotenv = require("dotenv").config({
   path: path.join(__dirname, "..", ".env"),
 });
@@ -25,6 +27,17 @@ if (process.env.NODE_ENV !== "test") {
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
+
+// Make io accessible to route handlers
+app.set('io', io);
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -50,20 +63,45 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('🔌 Client connected:', socket.id);
+  
+  // Join class-specific room
+  socket.on('join-class', (classId) => {
+    socket.join(`class:${classId}`);
+    console.log(`📚 Socket ${socket.id} joined class room: class:${classId}`);
+  });
+  
+  // Leave class room
+  socket.on('leave-class', (classId) => {
+    socket.leave(`class:${classId}`);
+    console.log(`📚 Socket ${socket.id} left class room: class:${classId}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('🔌 Client disconnected:', socket.id);
+  });
+});
+
 // Export app for testing purposes
 if (process.env.NODE_ENV !== "test") {
-  const server = app.listen(port, '0.0.0.0', () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`Server has started on port ${port} with PID ${process.pid}`);
+    console.log(`🔌 Socket.io server is ready`);
   });
   
   // Handle graceful shutdown
   const gracefulShutdown = () => {
     console.log('Received shutdown signal, closing server...');
-    server.close(() => {
-      console.log('Server closed');
-      closeDB().then(() => {
-        console.log('Database connection closed');
-        process.exit(0);
+    io.close(() => {
+      console.log('Socket.io closed');
+      server.close(() => {
+        console.log('Server closed');
+        closeDB().then(() => {
+          console.log('Database connection closed');
+          process.exit(0);
+        });
       });
     });
   };

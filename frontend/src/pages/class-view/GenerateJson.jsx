@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { io } from "socket.io-client";
 import { API_BASE_URL } from "../../config/api";
 import TextEditor from "../../components/TextEditor";
 import {
@@ -360,6 +361,10 @@ const GenerateJson = () => {
   const [taskEditMessage, setTaskEditMessage] = useState('');
 
   // Quest deployment dialog state
+
+  // Real-time notification state
+  const [showDraftUpdateAlert, setShowDraftUpdateAlert] = useState(false);
+  const [draftUpdateInfo, setDraftUpdateInfo] = useState(null);
 
   // Initial JSON content with state management
   const [jsonContent, setJsonContent] = useState({
@@ -1126,13 +1131,24 @@ const GenerateJson = () => {
       console.log("🔄 Loading draft quests for class:", classId);
 
       const response = await axios.get(
-        `${API_BASE_URL}/api/group/${classId}/draft-quest-config`
+        `${API_BASE_URL}/api/group/${classId}/draft-quest-config`,
+        {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          params: {
+            _t: Date.now() // Cache buster
+          }
+        }
       );
 
       if (response.data.success) {
         const draftConfig = response.data.data.draftQuestConfig || { questSequence: [] };
+        console.log("📦 Raw draft config received:", JSON.stringify(draftConfig, null, 2));
         setDraftQuests(draftConfig);
         console.log("✅ Loaded draft quests:", draftConfig.questSequence?.length || 0);
+        console.log("✅ Draft quests updated in state");
       }
     } catch (error) {
       console.error("Error loading draft quests:", error);
@@ -2402,6 +2418,43 @@ Student can now start their quest journey!`);
     }
   }, [classId, fetchSavedQuests]);
 
+  // Socket.io connection for real-time draft quest config updates
+  useEffect(() => {
+    if (!classId) return;
+
+    // Connect to socket.io server
+    const socketUrl = API_BASE_URL.replace('/api', '');
+    const socket = io(socketUrl, {
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect', () => {
+      console.log('🔌 Connected to socket server');
+      socket.emit('join-class', classId);
+    });
+
+    socket.on('draft-quest-config-updated', async (data) => {
+      console.log('🔔 Received draft-quest-config-updated event:', data);
+      setDraftUpdateInfo(data);
+      setShowDraftUpdateAlert(true);
+      
+      // Auto-refresh draft quests in the background
+      console.log('🔄 Auto-refreshing draft quest config after notification...');
+      await loadDraftQuests();
+      console.log('✅ Draft quest config auto-refreshed');
+    });
+
+    socket.on('disconnect', () => {
+      console.log('🔌 Disconnected from socket server');
+    });
+
+    // Cleanup on unmount
+    return () => {
+      socket.emit('leave-class', classId);
+      socket.disconnect();
+    };
+  }, [classId]);
+
   const handleReadmeRemove = () => {
     setJsonContent((prev) => {
       const newContent = { ...prev };
@@ -3582,6 +3635,34 @@ Student can now start their quest journey!`);
         </Box>
       )}
       <Container maxWidth="lg" sx={{ py: 4, width: "100%", textAlign: "left" }}>
+        {/* Real-time Draft Quest Update Alert */}
+        {showDraftUpdateAlert && draftUpdateInfo && (
+          <Alert 
+            severity="info" 
+            sx={{ mb: 3 }}
+            onClose={() => setShowDraftUpdateAlert(false)}
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                disabled={isDraftLoading}
+                onClick={async () => {
+                  console.log('🔄 Refreshing draft quest config after update notification...');
+                  await loadDraftQuests();
+                  setShowDraftUpdateAlert(false);
+                  console.log('✅ Draft quest config refreshed and alert dismissed');
+                }}
+              >
+                {isDraftLoading ? 'Refreshing...' : 'Refresh'}
+              </Button>
+            }
+          >
+            <AlertTitle>Draft Quest Config Updated</AlertTitle>
+            The draft quest configuration for <strong>{draftUpdateInfo.className}</strong> was just updated by another user ({draftUpdateInfo.questCount} draft quests). 
+            The page has been automatically refreshed with the latest changes.
+          </Alert>
+        )}
+
         {/* Page Title */}
         <Typography variant="h3" component="h1" sx={{ fontWeight: 700, mb: 3 }}>
           Manage Class Quests
