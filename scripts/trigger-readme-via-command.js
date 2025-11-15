@@ -82,8 +82,11 @@ async function triggerReadmeUpdateViaCommand() {
   let failCount = 0;
   const errors = [];
   
-  // Use the OSS-Doorway bot token 
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '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';
+  // Use the OSS-Doorway bot token from environment variable
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+  if (!GITHUB_TOKEN) {
+    throw new Error('GITHUB_TOKEN environment variable is required');
+  }
   
   for (let i = 0; i < Q6_USERS.length; i++) {
     const repoName = Q6_USERS[i];
