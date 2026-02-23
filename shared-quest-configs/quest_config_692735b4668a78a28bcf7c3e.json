@@ -1,0 +1,38 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1768784403434",
+      "title": "Test 001",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 1,
+      "metadata": {
+        "title": "Test 001",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "",
+          "taskTitle": "",
+          "desc": "Complete this task",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "validate-file-exists",
+          "expectedFileName": "contributing.md",
+          "expectedFileType": "",
+          "saveValidatedData": false,
+          "savedDataName": "llm_validated_response",
+          "success": "yes ",
+          "error": "no",
+          "answer": ""
+        }
+      }
+    }
+  ]
+}

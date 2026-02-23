@@ -1,0 +1,43 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1768849575565",
+      "title": "ADCDAC",
+      "description": "CDACADC",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 1,
+      "metadata": {
+        "title": "ADCDAC",
+        "description": "CDACADC",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "CDSCDS",
+          "taskTitle": "CDSCDS",
+          "desc": "CDSCDS",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "CDACADCDS"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "accept": "DSCDACDACAD",
+          "success": "CDCADC",
+          "error": "CSDCDSC",
+          "answer": ""
+        }
+      }
+    }
+  ]
+}

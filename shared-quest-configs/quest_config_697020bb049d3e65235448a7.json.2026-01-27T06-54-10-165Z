@@ -1,0 +1,308 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1769312466069",
+      "title": "CodeReview",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 8,
+      "metadata": {
+        "title": "CodeReview",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "type": "iterative-code-review",
+          "title": "Submit your C++ implementation of the characteristic() and mantissa() functions.",
+          "taskTitle": "Submit your C++ implementation of the characteristic() and mantissa() functions.",
+          "desc": "Submit your C++ implementation of the characteristic() and mantissa() functions.",
+          "points": 20,
+          "xp": 20,
+          "accept": "Submit your C++ implementation of the characteristic() and mantissa() functions.\n\n### Conversion Functions (F1)\n\nThe two functions, characteristic() and mantissa(), will break a character array into a characteristic and a mantissa. The characteristic for the number 2.351 is 2 and the mantissa is 351 over 1,000. The characteristic for the number 0.0125 is 0 and the mantissa is 125 over 10,000. The characteristic for the number -4.0 is -4 and the mantissa is 0 over 10. These values should be stored in the reference parameters c, numerator and denominator. The C string may include leading or trailing spaces, unary plus or minus signs, integers, or real numbers. Your functions must handle all of these cases. If an invalid string is passed in your function will return false. If the passed in string was valid return true.\n\n```\nbool characteristic(char numString[], int& c);\nbool mantissa(char numString[], int& numerator, int& denominator);\n...\n...\nchar number[] = \"123.456\";\nint c, n, d;\n \n//if the conversion from C string to integers can take place\nif(characteristic(number, c) && mantissa(number, n, d))\n{\n    //do some math with c, n, and d\n}\nelse\n{\n    //handle the error on input\n}\n```\n\n**Requirements:**\n- Implement both functions according to the specification\n- Handle all edge cases (empty strings, invalid input, trailing spaces)\n- Include proper validation and error checking\n\n**Submission Format:**\nPost a GitHub file URL to your code (e.g., https://github.com/yourname/repo/blob/main/functions.cpp)\n\nYou may resubmit your code after receiving feedback. Type \"done\" to recheck the same file after making updates.",
+          "success": "🎉 **Excellent work!** Your code has been approved!\n\nYour implementation correctly handles all requirements:\n- Proper validation and error checking\n- Edge case handling\n- Correct function signatures\n\nYou've earned **20 points**!",
+          "error": "📝 **Code needs revision**\n\nPlease review the feedback below and update your code. You can resubmit by posting a new file URL or typing \"done\" to recheck the same file.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": "",
+          "repositoryToBeStored": "",
+          "requireOwnership": true,
+          "allowForkOfFork": true,
+          "storeForkUrl": true,
+          "expectedFileName": "",
+          "expectedFileType": "",
+          "targetRepository": "",
+          "targetBranch": "main",
+          "sourceRepository": "",
+          "requireOpenState": true,
+          "requireRecentPush": false,
+          "recentPushWindowHours": 24,
+          "expectedFilePath": "",
+          "fileContentValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "iterativeCodeReview": {
+            "reviewPrompt": "The student must implement two C++ functions:\n\n1. characteristic(char numString[], int& c) - Extracts the integer part of a number\n   - Must handle leading/trailing spaces\n   - Must handle unary plus/minus signs  \n   - Must validate that digits were found\n   - Must return false for invalid strings\n   \n2. mantissa(char numString[], int& numerator, int& denominator) - Extracts fractional part\n   - Must handle integers (denominator should be 10, not 1)\n   - Must validate the entire string\n   - Must handle trailing spaces and junk characters\n   - Must return false for invalid strings\n\nBoth functions must:\n- Check for null pointers\n- Validate the entire input string\n- Return false for any invalid input\n- Use correct function signatures",
+            "reviewCriteria": [
+              "Both functions have correct signatures (char numString[], int& parameters, bool return)",
+              "characteristic() handles leading spaces, unary signs, and validates digits",
+              "mantissa() correctly calculates denominator (10 for integers, power of 10 for decimals)",
+              "Both functions validate the entire string and reject trailing junk",
+              "Both functions include null pointer checks",
+              "Functions return false for invalid input (empty, just signs, non-digits)"
+            ],
+            "maxIterations": 5,
+            "temperature": 0.3,
+            "enableDetailedFeedback": true
+          }
+        },
+        "T2": {
+          "type": "iterative-code-review",
+          "title": "Math Functions - Multiply and Divide",
+          "taskTitle": "Math Functions - Multiply and Divide",
+          "desc": "Math Functions - Multiply and Divide",
+          "points": 1,
+          "xp": 1,
+          "accept": "Implement the multiply() and divide() functions for numbers represented as mantissa and characteristic.\n\nRequirements:\nThe multiply() function should multiply two numbers: (c1 + n1/d1) × (c2 + n2/d2)\nThe divide() function should divide two numbers: (c1 + n1/d1) ÷ (c2 + n2/d2)\nThe result should be converted to a C string and stored in the result array\nThe array must end with '\\0'\nThe 'len' parameter tells how many characters can be placed in the result array\nFunctions must return true if at minimum the characteristic of the result can be stored\nIf the result is non-integer, place as many digits as will fit after the decimal point\nFunctions must return false if the result cannot fit (including null terminator)\nYou cannot use any external library functions - you must implement all logic yourself\nAny code you submit cannot contain calls to someone else's code\n\nFunction Signatures:\n\n```\nbool multiply(int c1, int n1, int d1, int c2, int n2, int d2, char result[], int len);bool divide(int c1, int n1, int d1, int c2, int n2, int d2, char result[], int len);\n```\n\nExample Usage:\n```\nchar answer[100];\nint c1, n1, d1;\nint c2, n2, d2;\n\n// ... set values ...\n\nif(divide(c1, n1, d1, c2, n2, d2, answer, 100))\n{\n    //display string with answer\n}\nelse\n{\n    //display error message\n}\n```\n\nSubmit your code by providing a GitHub file URL or typing \"done\" to recheck the same file.\n",
+          "success": "🎉 Excellent work! \n\nYour code has been approved!\nYour implementation correctly handles all requirements:\nProper arithmetic operations for multiply and divide\nCorrect string conversion without external libraries\nProper buffer bounds checking\nCorrect return value logic\nProper error handling\nYou've earned **1** point for this task!",
+          "error": "📝 Code needs revision\n\nPlease review the feedback below and update your code. You can resubmit by posting a new file URL or typing \"done\" to recheck the same file.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": "",
+          "repositoryToBeStored": "",
+          "requireOwnership": true,
+          "allowForkOfFork": true,
+          "storeForkUrl": true,
+          "expectedFileName": "",
+          "expectedFileType": "",
+          "targetRepository": "",
+          "targetBranch": "main",
+          "sourceRepository": "",
+          "requireOpenState": true,
+          "requireRecentPush": false,
+          "recentPushWindowHours": 24,
+          "expectedFilePath": "",
+          "fileContentValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "iterativeCodeReview": {
+            "reviewPrompt": "Both functions correctly perform arithmetic operations:\nmultiply(): (c1 + n1/d1) × (c2 + n2/d2)\ndivide(): (c1 + n1/d1) ÷ (c2 + n2/d2)\nFunctions properly convert the result to a C string:\nResult is stored in the result array\nArray ends with '\\0' null terminator\nRespects the len parameter (buffer size)\nReturn value logic:\nReturns true if at minimum the characteristic can be stored\nReturns false if result cannot fit (including null terminator)\nFor non-integer results, places as many decimal digits as will fit\nProper error handling:\nHandles division by zero in divide()\nHandles buffer overflow cases\nHandles edge cases (zero values, negative numbers, etc.)",
+            "reviewCriteria": [
+              "multiply() function correctly calculates (c1 + n1/d1) × (c2 + n2/d2)",
+              "divide() function correctly calculates (c1 + n1/d1) ÷ (c2 + n2/d2)",
+              "Result is properly converted to C string and stored in result array",
+              "Array ends with '\\0' null terminator",
+              "Functions respect the len parameter and check buffer bounds",
+              "Functions return true only when result can fit (including null terminator)",
+              "Functions return false when result cannot fit",
+              "String conversion is implemented manually",
+              "divide() function handles division by zero correctly",
+              "Functions handle edge cases (zero, negative numbers, overflow)",
+              "Code is complete, compilable, and syntactically correct"
+            ],
+            "maxIterations": 5,
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "botCodeReview": {
+            "acceptMessage": "",
+            "originalCode": "#include <cstring>\n#include <cctype>\n\n// BAD: trims only leading spaces, not trailing\nstatic char* skipSpaces(char* s) {\n    while (*s && std::isspace((unsigned char)*s)) s++;\n    return s;\n}\n\n// BAD CODE: weak validation, wrong edge cases\nbool add(int c1, int n1, int d1, int c2, int n2, int d2, char result[], int len) {\n    // BAD: doesn't check if len is sufficient\n    // BAD: doesn't handle overflow\n    int totalC = c1 + c2;\n    int totalN = n1 * d2 + n2 * d1;\n    int totalD = d1 * d2;\n    \n    // BAD: uses sprintf without checking buffer length\n    sprintf(result, \"%d.%d\", totalC, totalN);\n    return true; // BAD: always returns true\n}\n\nbool subtract(int c1, int n1, int d1, int c2, int n2, int d2, char result[], int len) {\n    // BAD: same issues as add()\n    int totalC = c1 - c2;\n    int totalN = n1 * d2 - n2 * d1;\n    int totalD = d1 * d2;\n    \n    // BAD: doesn't convert to decimal properly\n    sprintf(result, \"%d\", totalC);\n    return true;\n}",
+            "codeLanguage": "py",
+            "requirements": "These two functions take mantissa and characteristic parameters and perform arithmetic operations.\n\nThe add() function should add two numbers: (c1 + n1/d1) + (c2 + n2/d2)\nThe subtract() function should subtract: (c1 + n1/d1) - (c2 + n2/d2)\n\nThe result should be converted to a C string and stored in the result array.\nThe array must end with '\\0'.\nThe 'len' parameter tells how many characters can be placed in the result array.\n\nFunctions must return true if at minimum the characteristic of the result can be stored.\nIf the result is non-integer, place as many digits as will fit after the decimal point.\nFunctions must return false if the result cannot fit (including null terminator).",
+            "knownIssues": [
+              "Uses sprintf without checking buffer length - buffer overflow risk",
+              "Doesn't validate that len parameter is sufficient before writing",
+              "Always returns true regardless of whether result fits",
+              "Doesn't properly convert mantissa to decimal digits in result string",
+              "Doesn't handle integer overflow in arithmetic operations",
+              "Doesn't check if result array has space for null terminator",
+              "Subtract function doesn't convert fractional part to string at all",
+              "Add function doesn't respect the len parameter when formatting"
+            ],
+            "maxIterations": 5,
+            "temperature": 0.1,
+            "enableDetailedFeedback": true,
+            "awardPointsOnFailure": false
+          }
+        },
+        "T3": {
+          "type": "bot-code-review",
+          "title": "Math Functions Code Review",
+          "taskTitle": "Math Functions Code Review",
+          "desc": "Math Functions Code Review",
+          "points": 20,
+          "xp": 20,
+          "accept": "I need your help reviewing my code! I've implemented two math functions that work with characteristic and mantissa representations, but I'm having some issues.\n\n**Your job:**\n1. Review the code I've posted below\n2. Identify any bugs, validation issues, or problems\n3. Post your feedback as a comment\n4. I'll fix what you mention and repost the code\n5. Keep reviewing until all issues are found\n\n**What to look for:**\n- Missing validation or error handling\n- Buffer overflow risks\n- Incorrect arithmetic or logic\n- Edge cases not handled\n- Return value issues\n\nSimply reply **start** to get started!",
+          "success": "🎉 **Excellent Code Review!**\n\nYou successfully identified all the critical issues in my code! Your feedback was thorough and constructive.\n\n**Issues You Found:**\n✅ Buffer overflow vulnerability  \n✅ Missing input validation  \n✅ Incorrect return value logic  \n✅ Negative number handling  \n✅ Format string issues  \n✅ Null terminator problems  \n\nThe code is now correct and safe. Great job! +150 points",
+          "error": "Keep looking! There are still issues in the code that need to be identified.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": "",
+          "repositoryToBeStored": "",
+          "requireOwnership": true,
+          "allowForkOfFork": true,
+          "storeForkUrl": true,
+          "expectedFileName": "",
+          "expectedFileType": "",
+          "targetRepository": "",
+          "targetBranch": "main",
+          "sourceRepository": "",
+          "requireOpenState": true,
+          "requireRecentPush": false,
+          "recentPushWindowHours": 24,
+          "expectedFilePath": "",
+          "fileContentValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "iterativeCodeReview": {
+            "reviewPrompt": "",
+            "reviewCriteria": [],
+            "maxIterations": 5,
+            "temperature": 0.3,
+            "enableDetailedFeedback": true
+          },
+          "botCodeReview": {
+            "acceptMessage": "",
+            "originalCode": "#include <cstring>\n#include <cmath>\n\nbool add(int c1, int n1, int d1, int c2, int n2, int d2, char result[], int len) {\n    // Convert mantissas to decimals\n    double val1 = c1 + (double)n1 / d1;\n    double val2 = c2 + (double)n2 / d2;\n    double sum = val1 + val2;\n    \n    // Extract characteristic and mantissa from result\n    int resultChar = (int)sum;\n    double resultMant = sum - resultChar;\n    \n    // Build result string\n    sprintf(result, \"%d.%f\", resultChar, resultMant);\n    \n    return true;\n}\n\nbool subtract(int c1, int n1, int d1, int c2, int n2, int d2, char result[], int len) {\n    // Convert to decimals\n    double val1 = c1 + (double)n1 / d1;\n    double val2 = c2 + (double)n2 / d2;\n    double diff = val1 - val2;\n    \n    // Extract parts\n    int resultChar = (int)diff;\n    double resultMant = diff - resultChar;\n    \n    // Build string\n    sprintf(result, \"%d.%f\", resultChar, resultMant);\n    \n    return true;\n}",
+            "codeLanguage": "cpp",
+            "requirements": "Implement add() and subtract() functions that:\n- Take two numbers represented as characteristic (c), numerator (n), denominator (d)\n- Perform addition or subtraction\n- Store result as a C-string in the result[] array with max length 'len'\n- Result must end with '\\0'\n- Must store at minimum the characteristic\n- If non-integer, place as many decimal digits as will fit\n- Return true if at least the characteristic was stored\n- Return false on error",
+            "knownIssues": [
+              "Uses sprintf without checking buffer length - buffer overflow risk",
+              "Always returns true - should return false if buffer is too small",
+              "No validation of input parameters (negative denominators, zero denominators)",
+              "Doesn't handle negative results correctly (for subtract)",
+              "sprintf format for mantissa is wrong - prints 0.xxx instead of decimal digits",
+              "No null terminator guarantee if buffer is too small"
+            ],
+            "maxIterations": 5,
+            "temperature": 0.3,
+            "enableDetailedFeedback": true
+          }
+        }
+      }
+    }
+  ]
+}

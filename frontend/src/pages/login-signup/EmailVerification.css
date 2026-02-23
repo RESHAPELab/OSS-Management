@@ -1,0 +1,45 @@
+#verification-container { 
+    width: 50%;
+    height: 70vh;
+}
+
+.form-container { 
+    display: flex; 
+}
+
+.form-container h1 { 
+    font-size: xx-large;
+}
+
+.form-container .email-input { 
+    width: 50%;
+    margin-right: 25%; 
+    margin-left: 25%;
+    text-align: center;
+}
+
+.form-container .verification-input { 
+    width: 6%;
+    margin-right: 5px;
+    margin-left: 5px;
+    border-radius: 8px !important;
+    border: 2px solid #eee;
+    padding: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    background-color: #eee;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.form-container .verification-input:focus {
+    outline: none;
+}
+
+.input-group { 
+    flex-direction: row;
+    justify-content: center;
+    text-align: center;
+}
+

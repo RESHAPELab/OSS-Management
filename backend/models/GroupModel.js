@@ -13,22 +13,125 @@ const GroupSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Student"
     }],
+    admins: [{
+        githubUsername: {
+            type: String,
+            required: true
+        },
+        role: {
+            type: String,
+            enum: ['professor', 'assistant', 'grader', 'mentor', 'moderator', 'other'],
+            default: 'assistant'
+        },
+        addedAt: {
+            type: Date,
+            default: Date.now
+        },
+        addedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Professor"
+        }
+    }],
     professor:{
-        //describes teacher/professor/organization/etc...
         type: mongoose.Schema.Types.ObjectId,
-        ref: "GroupOrganizer"
+        ref: "Professor"
     },
     quests:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Quest"
     }],
     classCode: {
-        type: String
+        type: String,
+        required: true,
+        unique: true
     },
     students: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Student"
-    }]
+    }],
+    active: { 
+        type: Boolean,
+        default: true
+    },
+    questOrder: [{
+        questId: {
+            type: String, // Can be "Q0", "Q1", etc. for fixed quests or ObjectId for custom quests
+            required: true
+        },
+        questType: {
+            type: String,
+            enum: ['fixed', 'custom'],
+            default: 'custom'
+        },
+        sequenceNumber: {
+            type: Number,
+            required: true
+        },
+        title: {
+            type: String,
+            required: true
+        },
+        isQ0: {
+            type: Boolean,
+            default: false
+        },
+        prerequisites: [{
+            questId: {
+                type: String,
+                required: true
+            },
+            type: {
+                type: String,
+                enum: ['completion', 'score', 'custom'],
+                default: 'completion'
+            },
+            required: {
+                type: Boolean,
+                default: true
+            },
+            description: {
+                type: String,
+                default: ''
+            },
+            minScore: {
+                type: Number,
+                default: 0
+            }
+        }]
+    }],
+    questOrderLastUpdated: {
+        type: Date,
+        default: Date.now
+    },
+    repositoryPattern: {
+        type: String,
+        default: 'cs-{classCode}-{username}',
+        description: 'Pattern for generating repository names. Use {classCode} and {username} as placeholders.'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    questJsonConfig: {
+        type: Object,
+        default: null,
+        description: 'Stores the complete quest JSON configuration for the generate JSON page'
+    },
+    questJsonLastUpdated: {
+        type: Date,
+        default: null
+    },
+    draftQuestConfig: {
+        type: Object,
+        default: null,
+        description: 'Stores draft quests that are not yet published to main sequence'
+    },
+    draftQuestLastUpdated: {
+        type: Date,
+        default: null
+    }
+}, {
+    timestamps: true
 })
 
 module.exports = mongoose.model("Group", GroupSchema)

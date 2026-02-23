@@ -1,0 +1,91 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1768682717336",
+      "title": "James 001",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 1,
+      "metadata": {
+        "title": "James 001",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "fork this repo",
+          "taskTitle": "fork this repo",
+          "desc": "fork this repo",
+          "points": 1,
+          "xp": 1,
+          "hints": [],
+          "detailedHints": [],
+          "type": "validate-fork-url",
+          "repositoryToBeStored": "igorsteinmacher/CS499-OSS",
+          "requireOwnership": true,
+          "allowForkOfFork": true,
+          "saveValidatedData": true,
+          "savedDataName": "llm_validated_response",
+          "accept": "please fork this repo; https://github.com/igorsteinmacher/CS499-OSS",
+          "success": "yes yes yes",
+          "error": "no no no",
+          "answer": ""
+        },
+        "T2": {
+          "type": "validate-file-exists",
+          "title": "New Task 2",
+          "taskTitle": "New Task 2",
+          "desc": "New Task 2",
+          "points": 1,
+          "xp": 1,
+          "accept": "is this file real?",
+          "success": "yes yes yes",
+          "error": "no no no",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "adcad",
+          "answerType": ""
+        }
+      }
+    }
+  ]
+}

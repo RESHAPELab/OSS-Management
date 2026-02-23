@@ -2,11 +2,17 @@ import './App.css';
 import LoginSignup from './pages/login-signup/LoginSignup';
 import EmailVerification from './pages/login-signup/EmailVerification'
 import StudentRegister from './pages/studentSignup/StudentRegister';
+import ClassView from './pages/class-view/ClassView'
 import Home from './pages/home/Home'
-import { Navigate, Route, Routes } from "react-router-dom";
+import LandingPage from './pages/landingpage/LandingPage'
+import { Route, Routes } from "react-router-dom";
 import { useEffect } from 'react';
 import { useAuthContext } from './context/AuthContext';
-
+import StudentRegistered from './pages/studentSignup/StudentRegistered';
+import ManageQuests from './pages/class-view/ManageQuests';
+import GenerateJson from './pages/class-view/GenerateJson';
+import InviteByName from './pages/class-view/InviteByName';
+import ManageStudents from './pages/class-view/ManageStudents';
 
 const App = () => {
   const { authUser , setAuthUser  } = useAuthContext(); 
@@ -17,15 +23,23 @@ const App = () => {
       setAuthUser (JSON.parse(storedUser));
       console.log(`signed in user: `, authUser)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setAuthUser ]);
 
   return (
     <div className="App">
       <Routes>
-        <Route path='/login' element={authUser  ? <Home /> : <LoginSignup />} />
-        <Route path='/' element={authUser ? (authUser.verified ? <Home /> : <EmailVerification />) : <LoginSignup /> } />
-        <Route path='/verify' element={authUser && !authUser.verified ? <EmailVerification /> : <Home/>} />
-        <Route path='/studentRegister' element={< StudentRegister />} />
+        <Route exact path='/landing' element={<LandingPage />} />
+        <Route exact path='/login' element={authUser  ? <Home /> : <LoginSignup />} />
+        <Route exact path='/' element={authUser ? (authUser.verified ? <Home /> : <EmailVerification />) : <LoginSignup /> } />
+        <Route exact path='/verify' element={authUser && !authUser.verified ? <EmailVerification /> : <Home/>} />
+        <Route exact path='/studentRegister' element={< StudentRegister />} />
+        <Route exact path='/studentRegistered' element={< StudentRegistered />} />
+        <Route path="/class/:classId" element={<ClassView />} />
+        <Route path="/class/:classId/manage-quests" element={<ManageQuests />} />
+        <Route path="/class/:classId/generatejson" element={<GenerateJson />} />
+        <Route path="/class/:classId/invite" element={<InviteByName />} />
+        <Route path="/class/:classId/manage-students" element={<ManageStudents />} />
       </Routes>
     </div>
   );

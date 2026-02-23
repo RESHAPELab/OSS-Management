@@ -1,0 +1,49 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1769312466069",
+      "title": "CodeReview",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 8,
+      "metadata": {
+        "title": "CodeReview",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "Submit your C++ implementation of the characteristic() and mantissa() functions.",
+          "taskTitle": "Submit your C++ implementation of the characteristic() and mantissa() functions.",
+          "desc": "Submit your C++ implementation of the characteristic() and mantissa() functions.",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "iterative-code-review",
+          "iterativeCodeReview": {
+            "reviewPrompt": "The student must implement two C++ functions:\n\n1. characteristic(char numString[], int& c) - Extracts the integer part of a number\n   - Must handle leading/trailing spaces\n   - Must handle unary plus/minus signs  \n   - Must validate that digits were found\n   - Must return false for invalid strings\n   \n2. mantissa(char numString[], int& numerator, int& denominator) - Extracts fractional part\n   - Must handle integers (denominator should be 10, not 1)\n   - Must validate the entire string\n   - Must handle trailing spaces and junk characters\n   - Must return false for invalid strings\n\nBoth functions must:\n- Check for null pointers\n- Validate the entire input string\n- Return false for any invalid input\n- Use correct function signatures",
+            "reviewCriteria": [
+              "Both functions have correct signatures (char numString[], int& parameters, bool return)",
+              "characteristic() handles leading spaces, unary signs, and validates digits",
+              "mantissa() correctly calculates denominator (10 for integers, power of 10 for decimals)",
+              "Both functions validate the entire string and reject trailing junk",
+              "Both functions include null pointer checks",
+              "Functions return false for invalid input (empty, just signs, non-digits)"
+            ],
+            "maxIterations": 5,
+            "temperature": 0.3,
+            "enableDetailedFeedback": true
+          },
+          "accept": "Submit your C++ implementation of the characteristic() and mantissa() functions.\n\n**Requirements:**\n- Implement both functions according to the specification\n- Handle all edge cases (empty strings, invalid input, trailing spaces)\n- Include proper validation and error checking\n\n**Submission Format:**\nPost a GitHub file URL to your code (e.g., https://github.com/yourname/repo/blob/main/functions.cpp)\n\nYou may resubmit your code after receiving feedback. Type \"done\" to recheck the same file after making updates.",
+          "success": "🎉 **Excellent work!** Your code has been approved!\n\nYour implementation correctly handles all requirements:\n- Proper validation and error checking\n- Edge case handling\n- Correct function signatures\n\nYou've earned **20 points**!",
+          "error": "📝 **Code needs revision**\n\nPlease review the feedback below and update your code. You can resubmit by posting a new file URL or typing \"done\" to recheck the same file.",
+          "answer": ""
+        }
+      }
+    }
+  ]
+}

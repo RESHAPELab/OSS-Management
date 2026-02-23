@@ -1,0 +1,3648 @@
+{
+  "_id": "68cb1e412ace0edafc9f895e",
+  "groupId": "68a770b8140b9c0174c13ce7_purple_1758142017627",
+  "configId": "68a770b8140b9c0174c13ce7_purple_1758142017627",
+  "classId": "68a770b8140b9c0174c13ce7_purple_1758142017627",
+  "config": {
+    "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+    "Q1": {
+      "metadata": {
+        "title": "A-0.1 - Intro to the Course",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "T1": {
+        "desc": "",
+        "points": 0,
+        "xp": 0,
+        "hints": [],
+        "detailedHints": [],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Accept all answers as correct."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "accept": "Provide the names of the students who worked with you on this assignment. Answer 'none' if you worked individually.",
+        "success": "Thank you. ",
+        "error": "❌ **Something went wrong**\n\nPlease review the question and try again.",
+        "answer": ""
+      },
+      "T2": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Check the syllabus, section \"Assessment Methods and Grading\". The syllabus is accessible on the Canvas menu, after selecting the course. ",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 1
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Team project: 35%",
+            "Quizzes and Assignments: 40%",
+            "Midterm exam: 10%",
+            "Final Exam: 15%"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Course components: How much does each of these activities represent in the final grade in this course? \n1) Team Project:\n2) Quizzes and Assignments:   \n3) Mid-term Exam:\n4) Final Exam:",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T3": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "The course schedule can be found in the module => Start Here <= ",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 1
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "10/15 (accept multiple formats, like October 15, 2025, 10/15, 15/10, 2025, Wed 10/15, Wednesday 10/15, etc.)"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "accept": "According to the course schedule, on which day will the mid-term exam be?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T4": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Make sure your answer covers something similar to: \"Active learning: You are expected to participate fully in the lectures (...) difference between participating in a class vs. watching a pre-recorded course.\".",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 1
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Something similar to: \"Active learning: You are expected to participate fully in the lectures (not only watch them) by asking and answering questions and discussing the topics. Important: ASK QUESTIONS! Every question is valid and needs to be heard. That’s the main difference between participating in a class vs. watching a pre-recorded course.\""
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Copy and paste the explanation from the syllabus about active learning.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T5": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "The link is available in the module => Start Here <= or on the syllabus",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 1
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Accept any of thes: https://forms.gle/UEKx76wRdM6mK2AU6 or https://docs.google.com/forms/d/e/1FAIpQLScpTd6QuaesmRwCnSxCSYUeMnAs8sIH3b_gqZOKIvkBYJBWSg/viewform"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "accept": "What's the link for submitting anonymous feedback?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T6": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Find the roles in the \"Team Project | Overview\" document on Canvas.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 1
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The roles should be: Team Leader, Product Owner, Reviewer, Minute-taker"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "According to the team project instructions, what four roles should be rotated among team members?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T7": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "You can find the URL in the \"Team Project First Steps\" document.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 1
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Accept any of these: https://docs.google.com/document/d/1njFE2i9ashyp4A441-7TJA3wIiBnj7YiSJV6E-1zREw/edit?tab=t.0 or https://docs.google.com/document/d/1njFE2i9ashyp4A441-7TJA3wIiBnj7YiSJV6E-1zREw/edit"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "accept": "Where should you go if you have a project idea or want to explore and join existing projects? Answer with the URL.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T8": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [],
+        "type": "multiple-choice",
+        "accept": "**Question:** What should you submit to Canvas for a project deliverable? Answer only the Option letter.\n\nA) A PDF\nB) A Microsoft Word file\nC) A pull request URL\nD) An MD file\nE) An HTML file\n\n**Instructions:** Select the correct answer.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again. Answer only with the option letter.\n\n**Hint:** Think carefully about the options.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "A",
+        "question": "What should you submit to Canvas for a project deliverable? Answer only the Option letter.",
+        "options": [
+          {
+            "label": "A",
+            "value": "A PDF"
+          },
+          {
+            "label": "B",
+            "value": "A Microsoft Word file"
+          },
+          {
+            "label": "C",
+            "value": "A pull request URL"
+          },
+          {
+            "label": "D",
+            "value": "An MD file"
+          },
+          {
+            "label": "E",
+            "value": "An HTML file"
+          }
+        ]
+      },
+      "T9": {
+        "desc": "",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Just type OK when you have finished answering the survey.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 1
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The answer should be \"OK\" or any variation of this."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A0.1\nAnswer \"ok\" when done.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      }
+    },
+    "Q2": {
+      "metadata": {
+        "title": "A-1.1",
+        "description": "A-1.1",
+        "prerequisite": "Q1",
+        "type": "custom"
+      },
+      "T1": {
+        "desc": "Group Information",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [],
+        "type": "collect-info",
+        "accept": "Provide the names of the students who worked with you on this assignment. Answer 'none' if you worked individually.",
+        "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n",
+        "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n",
+        "answer": "",
+        "saveValidatedData": false,
+        "savedDataName": "collected_info"
+      },
+      "T2": {
+        "desc": "Understanding Software Complexity in Practice",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Make sure your answer covers: (A) Describe the purpose of a software system, including (i) the problem solved by the system and (ii) the target audience of the system. (B) Describe a software development role. (C) Provide metrics of scale (e.g., duration of the project, team size, lines of code, number of users or systems affected, budget or business impact, etc.) D) Describe lessons learned from a software development project.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Describe the purpose of a software system, including the problem solved by the system and the target audience of the system.",
+            "Describe a software development role",
+            "Provide metrics of scale (e.g., duration of the project, team size, lines of code, number of users or systems affected, budget or business impact",
+            "Describe lessons learned from a software development project"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "PART I - Understanding Software Complexity\n\nAs a group, discuss the software projects each member has worked on and identify the largest or most complex project represented in your group. Once you've selected this project, have the relevant group member provide the following information:\n\na) Purpose and objectives - What problem did this software solve? Who was the target audience?\nb) Your role and responsibilities - What specific tasks, components, or phases of the project did you work on?\nc) Project scale - Provide relevant indicators such as the duration of the project, team size, lines of code (approximate), number of users or systems affected, budget or business impact (if appropriate to share)\nd) What lessons were learned that might apply to this class team project?\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T3": {
+        "desc": "Software Engineering Challenges",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Make sure your answer covers: A) At least one software development difficulty, B) An explanation why the difficulty emerged, C) How the difficulty was addressed.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Describe at least one software development difficulty",
+            "Provide an explanation why the difficulty emerged",
+            "Describe how the difficulty was addressed"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Based on the large software project your group discussed, identify and analyze specific engineering difficulties that emerged due to the system's scale and complexity. These are challenges that typically don't occur in smaller, simpler projects. List up to 3 challenges. For each challenge you identify, please:\n\na) Describe the specific difficulty encountered\nb) Explain why this difficulty emerged at scale (what made it different from small projects?)\nc) Discuss how the development team addressed or attempted to solve this challenge\n\nYou can consider challenges related to activities such as code organization and maintenance, team coordination and communication, testing and debugging, requirements management, integration, deployment, etc.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": ""
+      },
+      "T4": {
+        "desc": "Estimation of Size",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "They should provide 5 estimates of lines of code."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Estimate (your best guess) the approximate size (lines of code) of the following projects based on a discussion with your peers and some light research using Google or looking at the provided references:\na) Average academic assignments\nb) A typical corporate project\nc) Facebook \n  - Reference: [https://bit.ly/3zIFmLK](https://bit.ly/3zIFmLK)) \nd) Software that runs in a car\n  - References:\n  - [https://bit.ly/3JM74vK](https://bit.ly/3JM74vK)\n  - [https://bit.ly/3dpouCh](https://bit.ly/3dpouCh)\n\ne) Select a GitHub repository\nChoose a GitHub repository (from an OSS project or one of your own projects). Count the lines of code using the online tool [https://codetabs.com/count-loc/count-loc-online.html](https://codetabs.com/count-loc/count-loc-online.html) and report:\n  - Repository name\n  - Number of lines of code\n\nf) Google\n  - Reference: [https://bit.ly/3pa1CJE](https://bit.ly/3pa1CJE)\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T5": {
+        "desc": "OSS Project Size and Development Effort",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Ensure your answer directly addresses the question and provides enough specifics.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The student should provide reasonable answers for the following information. You don't need to check the exact values. Be lenient with what is considered reasonable. Only mark it wrong if it seems completely off or if information is missing.   1. Project name 2. Open Hub URL  3. Number of contributors 4. Total commits 5. Lines of Code 6. COCOMO effort estimate (years)"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Software project complexity increases significantly with the number of developers and the diversity of technologies involved. To understand this relationship, you'll analyze an active open-source project and evaluate the effort involved in its development.\n\nVisit [https://www.openhub.net/](https://www.openhub.net/) and select an active project with substantial development activity (avoid dormant or trivial projects). Choose a project that interests you or relates to your field of study and provide the information below using data from the project's Open Hub page:\n1. Project name\n2. Open Hub URL \n3. Number of contributors\n4. Total commits\n5. Lines of Code\n6. COCOMO effort estimate (years)\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T6": {
+        "desc": "Software Engineering Strategies",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Ensure your answer directly addresses the question and provides enough specifics. You should provide 3 reasonable software engineering strategies, explaining why those strategies are relevant for a complex project.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Check if the student provided 3 reasonable software engineering strategies, explaining why those strategies are relevant for a complex project."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Based on the effort estimation you provided in the previous question, it's clear that a project of this scale and complexity would be difficult to execute successfully without applying formal software engineering practices.\n\nIf you were to start a similar project from scratch, propose three specific strategies you would prioritize. For each strategy, briefly explain (i) what the strategy entails and (ii) why it is critical for a project of this scale.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T7": {
+        "desc": "Coordination Challenges",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Ensure your answer directly addresses the question and provides enough specifics. You should list 5 coordination challenges that don't exist with solo programming. For each challenge, you should suggest a practice or tool that could help. Number your challenges. ",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "They should list 5 coordination challenges that don't exist with solo programming. For each challenge, they should suggest a practice or tool that could help. "
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Imagine you're leading a 50-person development team. List five coordination challenges you'd face that don't exist with solo programming. For each challenge, suggest a practice or tool that could help.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T8": {
+        "desc": "Software Engineering Ethics",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Consider fundamental ethical principles: Privacy (protecting user data), Security (preventing harm), Transparency (being honest about system capabilities), and Accountability (taking responsibility for system outcomes).",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          },
+          {
+            "content": "As systems scale, consider: Bias and Fairness (ensuring systems don't discriminate), Accessibility (making systems usable by diverse populations), Environmental Impact (energy consumption, carbon footprint), and Social Impact (how systems affect society).",
+            "image": "",
+            "video": null,
+            "sequence": 2,
+            "penalty": 0
+          },
+          {
+            "content": "Think about professional obligations: Code of Ethics (following ACM/IEEE guidelines), Continuous Learning (staying updated on best practices), Whistleblowing (reporting unethical practices), and Advocacy (promoting ethical development practices).",
+            "image": "",
+            "video": null,
+            "sequence": 3,
+            "penalty": 0
+          },
+          {
+            "content": "Provide specific examples: Social media algorithms affecting mental health, autonomous vehicles making life-or-death decisions, AI systems used in hiring/justice, and surveillance systems impacting privacy rights.",
+            "image": "",
+            "video": null,
+            "sequence": 4,
+            "penalty": 0
+          },
+          {
+            "content": "Discuss practical actions: Ethical Design (building ethics into the development process), Testing for Bias (evaluating systems for discrimination), Documentation (clearly explaining system limitations), and User Consent (ensuring informed user agreement).",
+            "image": "",
+            "video": null,
+            "sequence": 5,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Must discuss at least 1 ethical responsibility",
+            "Must explain why this responsibility has become more important at scale"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "As software systems become larger and more influential, what ethical responsibilities do software engineers have?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": ""
+      },
+      "T9": {
+        "desc": "AI and Software Engineering",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Ensure your answer directly addresses the question and provides enough specifics. You should (i) express an opinion about how AI tools are changing the need for software engineering and (ii) justify your answer.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "They should express an opinion about how AI tools (like GitHub Copilot, ChatGPT) are changing the need for software engineering and justify."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "PART II - AI Literacy\n\nAI tools (like GitHub Copilot, ChatGPT) are changing software development. Do these tools reduce or increase the need for software engineering practices? Justify.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": ""
+      },
+      "T10": {
+        "desc": "Challenges introduced by AI",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "List at least one challenge AI tools introduce to software engineering.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "List at least one challenge AI tools introduce to software engineering."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "What new challenges do AI tools introduce to software engineering?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T11": {
+        "desc": "Reflection",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Any reflection related to software engineering is fine. "
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Reflect on how this assignment has changed your understanding of the necessity and complexity of software engineering. ",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T12": {
+        "desc": "Software Engineering Skills",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "List at least one software engineering skill.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "List at least one skill."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "accept": "Reflection: What skills do you need to develop as a future software engineer? ",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      },
+      "T13": {
+        "desc": "Feedback",
+        "points": 1,
+        "xp": 1,
+        "hints": [],
+        "detailedHints": [
+          {
+            "content": "Just type OK when you have finished answering the survey.",
+            "image": "",
+            "video": null,
+            "sequence": 1,
+            "penalty": 0
+          }
+        ],
+        "type": "llm-text-validation",
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The answer should be \"OK\" or any variation of this."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A0.1\nAnswer \"ok\" when done.\n\n\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\nYou can type \"help\" for additional guidance.",
+        "answer": ""
+      }
+    },
+    "Q3": {
+      "metadata": {
+        "title": "A-2.1 - Software Engineering Tools",
+        "description": "Goal: You will gain a deeper understanding of the tools used in software engineering.",
+        "prerequisite": "Q2",
+        "type": "custom",
+        "sequenceNumber": 0,
+        "groupId": "68accc656847fdb7c19b1f0a-test"
+      },
+      "T1": {
+        "type": "collect-info",
+        "title": "Student names",
+        "taskTitle": "Student names",
+        "desc": "Student names",
+        "points": 0,
+        "xp": 0,
+        "accept": "Provide the names of the students who worked with you on this assignment. Answer 'none' if you worked individually.",
+        "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** 1\n\nGreat contribution! 📋",
+        "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "collected_info",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T2": {
+        "type": "llm-text-validation",
+        "title": "Most used IDEs",
+        "taskTitle": "Most used IDEs",
+        "desc": "Most used IDEs",
+        "points": 1,
+        "xp": 1,
+        "accept": "PART I - IDEs\n\nLet's take a look at what tools developers use. Stack Overflow conducts an annual survey to which thousands of developers respond. Check the results on the most popular technologies: \n\nhttps://survey.stackoverflow.co/2024/technology \n\nWhat are the top 6 integrated development environments (IDEs)?\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student's answer should contain: Visual Studio Code, Visual Studio, IntelliJ, Notepad++, Vim, and Android Studio. Accept any variation of these names and any order.",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T3": {
+        "type": "llm-text-validation",
+        "title": "Classifying IDEs",
+        "taskTitle": "Classifying IDEs",
+        "desc": "Classifying IDEs",
+        "points": 1,
+        "xp": 1,
+        "accept": "In the list of IDEs from the previous question, you can find lightweight and heavyweight IDEs. \n\nLightweight IDEs are basically text editors enhanced with features for writing code (e.g., highlighting, completion, compiling, etc.) \n\nHeavyweight IDEs offer a more complete set of features, which may include tools to simplify the construction of graphical user interfaces, integration with database systems, version control systems, and deployment environments, tools for team collaboration, class and object browsers, etc. \n\nHow would you classify the list above in these two categories? If you are not familiar with a specific IDE, conduct some light research about it.\n\nLightweight IDEs: \nHeavyweight IDEs: \n\nTip: There should be 3 heavyweight and 3 lightweight IDEs in the list.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "Lightweight IDEs: Visual Studio Code, Notepad++, Vim\nHeavyweight IDEs: Visual Studio, IntelliJ, Android Studio",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T4": {
+        "type": "llm-text-validation",
+        "title": "Using GitHub Issue Tracker",
+        "taskTitle": "Using GitHub Issue Tracker",
+        "desc": "Using GitHub Issue Tracker",
+        "points": 1,
+        "xp": 1,
+        "accept": "PART II - ISSUE TRACKERS\n\nLet's use an issue tracker. Create a new repository on GitHub titled ‘cs386-a2.1’ (only one for the group) and add your teammates as collaborators (you can do this in the ‘settings’ section). If a teammate does not have a GitHub account, assist them in setting one up. If you are working individually, add the instructor to your repository (you can find the instructor's GitHub ID on the “About the Teaching Staff” page in the “Start Here” module on Canvas). \n\nImagine that your team is developing software for a self-driving car. Each group member should create 2 issues that read like new feature requests and 2 that read like bug fix requests (be creative, we should be able to infer from the title whether the issue is a feature or a bug). \n\nPaste here a screenshot of the issue tracker showing the list of issues. ",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T5": {
+        "type": "llm-text-validation",
+        "title": "Discussing issues",
+        "taskTitle": "Discussing issues",
+        "desc": "Discussing issues",
+        "points": 1,
+        "xp": 1,
+        "accept": "Developers discuss the issues before they are developed. Each teammate should enter one of the issues created by a colleague (or their own if working individually) and add a comment. Paste a screenshot of the issue tracker here, showing the list of issues (it should now display the number of comments each issue has).    \n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T6": {
+        "type": "llm-text-validation",
+        "title": "Labeling issues",
+        "taskTitle": "Labeling issues",
+        "desc": "Labeling issues",
+        "points": 1,
+        "xp": 1,
+        "accept": "Labels can help organize the list of issues, which can grow substantially. Each teammate should add the label \"bug\" or \"enhancement\" to their issues (it can be done in the right column of the issue). Paste a screenshot of the issue tracker here, showing the list of issues (it should now display the labels).  \n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T7": {
+        "type": "llm-text-validation",
+        "title": "Labeling issues 2",
+        "taskTitle": "Labeling issues 2",
+        "desc": "Labeling issues 2",
+        "points": 1,
+        "xp": 1,
+        "accept": "A good practice is labeling issues with the part of the system that is affected. Create new labels for potential components of the system (e.g., computer vision, decision-making, actuator, user interface, etc.). Each teammate should add some of these labels to the issues (each issue can have more than one label). Paste a screenshot of the issue tracker here, showing the list of issues (it should now display the new labels).",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T8": {
+        "type": "llm-text-validation",
+        "title": "Creating milestones",
+        "taskTitle": "Creating milestones",
+        "desc": "Creating milestones",
+        "points": 1,
+        "xp": 1,
+        "accept": "Projects organize the issues based on milestones. Create two milestones named \"Release 1.0\" and \"Release 2.0\". Each teammate should add their issues to one of these milestones. Paste a screenshot of the issue tracker here, showing the list of issues (it should now display the issues linked to milestones).   ",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T9": {
+        "type": "llm-text-validation",
+        "title": "Closing issues",
+        "taskTitle": "Closing issues",
+        "desc": "Closing issues",
+        "points": 1,
+        "xp": 1,
+        "accept": "As you close issues, GitHub tracks progress toward a Milestone. One of the teammates should close one of the issues associated with Release 1.0. Paste a screenshot here of this issue, showing that it is closed and the progress bar of the milestone has been updated.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T10": {
+        "type": "llm-text-validation",
+        "title": "Assigning developers",
+        "taskTitle": "Assigning developers",
+        "desc": "Assigning developers",
+        "points": 1,
+        "xp": 1,
+        "accept": "Let's now assign the developers responsible for the issue—the assignees. Each teammate should assign their open issues to a colleague (or to themselves if working individually). You can create more issues if needed. Paste a screenshot of the issue tracker here, showing the list of issues (it should now display the assignees).",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T11": {
+        "type": "llm-text-validation",
+        "title": "Mentioning developers",
+        "taskTitle": "Mentioning developers",
+        "desc": "Mentioning developers",
+        "points": 1,
+        "xp": 1,
+        "accept": "Sometimes, you may want the opinion of a teammate about the issue you are working on. You can mention a teammate using the @ symbol in a comment, and they will be notified. Each teammate should solicit the opinion of another group member on the issue's resolution (preferably someone who was not the creator or assignee). If you are working individually, mention the instructor. Paste a screenshot here showing the mention of one of the issues (one example is sufficient). \n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T12": {
+        "type": "llm-text-validation",
+        "title": "Linking issues",
+        "taskTitle": "Linking issues",
+        "desc": "Linking issues",
+        "points": 1,
+        "xp": 1,
+        "accept": "Often, issues are interrelated, and you want to connect them. Each teammate should refer to another issue in a comment using the \"#\" symbol followed by the issue number (e.g., \"I think the problem started in #45\", \"this should be fixed after #32\", etc.). When you do this, GitHub creates an event in the referred issue. Paste here a screenshot showing an example of an issue referencing another one. \n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T13": {
+        "type": "llm-text-validation",
+        "title": "Searching issues",
+        "taskTitle": "Searching issues",
+        "desc": "Searching issues",
+        "points": 1,
+        "xp": 1,
+        "accept": "Use the search bar to find all issues that were assigned to you and are closed. Paste here a screenshot showing the search and its results.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present.",
+          "validationParameters": [
+            "Accept ANY image format (Markdown, HTML, direct URLs, GitHub attachments, etc.)",
+            "Must contain an image reference or URL",
+            "Be very lenient - accept any reasonable image submission",
+            "Focus on presence of image, not specific format"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T14": {
+        "type": "llm-text-validation",
+        "title": "Finding issues in a real project",
+        "taskTitle": "Finding issues in a real project",
+        "desc": "Finding issues in a real project",
+        "points": 1,
+        "xp": 1,
+        "accept": "Finally, let's see how a real project uses the issue tracker. Let's explore the issues from the jQuery project (a popular JavaScript library): https://github.com/jquery/jquery. Find an example of the use of the following features. Add the issue number where you can find the example. \n\nAn open issue:\nA closed issue: \nAn issue with comments: \nWhat are the comments about?\nAn issue with a label: \nAn issue assigned to a milestone: \nAn issue assigned to someone: \nAn issue with a mention and/or reference: \n\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The response should contain an answer for each of these items:\nAn open issue:\nA closed issue: \nAn issue with comments: \nWhat are the comments about?\nAn issue with a label: \nAn issue assigned to a milestone: \nAn issue assigned to someone: \nAn issue with a mention and/or reference: \n",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T15": {
+        "type": "llm-text-validation",
+        "title": "Markdown language",
+        "taskTitle": "Markdown language",
+        "desc": "Markdown language",
+        "points": 1,
+        "xp": 1,
+        "accept": "PART III - DOCUMENTATION TOOLS\n\nLet's create a Readme file for your project. GitHub adopts a markdown notation (https://guides.github.com/features/mastering-markdown/). Create a new file named readme.md in your repository (‘Code’ tab on GitHub) and write Markdown code to produce an output similar to the following figure, following the provided instructions. \n\n![Unit 2 Tooling Overview](https://drive.google.com/uc?export=view&id=1aVpe0ADqL3NM8dMBjPzUsoKYrT1PWYi3)\n\nRequirements:\nMyCarDriver should be a first-level heading.\nInstallation and Developers should be second-level headings.\nThe term pip should be linked to https://pypi.org/project/pip/ \nThe pip logo should come from this URL: https://raw.githubusercontent.com/github/explore/666de02829613e0244e9441b114edb85781e972c/topics/pip/pip.png \nAdd the names of your group members to the list of developers. Add the instructor's name if working individually.\nThe first name should be in bold.\nThe second name should be in italics.\n\nAnswer here the markdown code you created.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "The answer should be something similar to the following code or that generates similar results. Accept any names as developer names. Require at least two names.\n\n# MyCarDriver\n\nMyCarDriver drives the car for you.\n\n## Installation\n\nUse the package manager [pip](https://pypi.org/project/pip/) to install MyCarDriver.\n\n![pip logo](https://raw.githubusercontent.com/github/explore/666de02829613e0244e9441b114edb85781e972c/topics/pip/pip.png)\n\n## Developers\n\n- **First Developer Name**\n- *Second Developer Name*\n- Third Developer Name\n- Fourth Developer Name",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T16": {
+        "type": "collect-info",
+        "title": "Reflection",
+        "taskTitle": "Reflection",
+        "desc": "Reflection",
+        "points": 1,
+        "xp": 1,
+        "accept": "What did you learn in this assignment?",
+        "success": "✅ Thank you for providing your thoughts!",
+        "error": "❌ No answer received",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "Accept any answer in ",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T17": {
+        "type": "collect-info",
+        "title": "Feedback",
+        "taskTitle": "Feedback",
+        "desc": "Feedback",
+        "points": 1,
+        "xp": 1,
+        "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A2.1\nAnswer \"ok\" when done.\n",
+        "success": "✅ Thank you for providing your feedback!",
+        "error": "❌ **Answer not accepted**",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      }
+    },
+    "Q4": {
+      "metadata": {
+        "title": "Q4: A-3.1 - Software Interception",
+        "description": "A-3.1 - Software Interception",
+        "prerequisite": "Q3",
+        "type": "custom"
+      },
+      "T1": {
+        "type": "llm-text-validation",
+        "title": "T1",
+        "taskTitle": "T1",
+        "desc": "T1",
+        "points": 1,
+        "xp": 1,
+        "accept": "The first six tasks are in relation to problem 1:\n\nhttps://docs.google.com/document/d/15_lS_H3HRDGwujOcav2uyqDkAxIjbN7HVzO74oiZRKw/edit?usp=sharing\n\nCritique the interviews. What did they do right and wrong?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Students should provide 2 or more sentences describing right or wrong thing done with the first and second interview."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T2": {
+        "type": "llm-text-validation",
+        "title": "T2",
+        "taskTitle": "T2",
+        "desc": "T2",
+        "points": 1,
+        "xp": 1,
+        "accept": "Problem 1: https://docs.google.com/document/d/15_lS_H3HRDGwujOcav2uyqDkAxIjbN7HVzO74oiZRKw/edit?usp=sharing\n\nWhat are the key insights of each interview? Which hypotheses were validated or invalidated?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Student is expected to write a response in two or more sentences, explaining anything insightful about the first and second interview. Expect an explanation of any hypothesis that was validated or invalidated."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T3": {
+        "type": "llm-text-validation",
+        "title": "T3",
+        "taskTitle": "T3",
+        "desc": "T3",
+        "points": 1,
+        "xp": 1,
+        "accept": "Problem 1: https://docs.google.com/document/d/15_lS_H3HRDGwujOcav2uyqDkAxIjbN7HVzO74oiZRKw/edit?usp=sharing\n\nWhat is the assessment for each interviewee: Must have / Nice to have / Don’t care?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Student should input two sentences, one for interviewee 1 and one for interviewee 2. Sentences should just contain \"must have\" or \"nice to have\" or \"don't care\"."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T4": {
+        "type": "llm-text-validation",
+        "title": "T4",
+        "taskTitle": "T4",
+        "desc": "T4",
+        "points": 1,
+        "xp": 1,
+        "accept": "Problem 1: https://docs.google.com/document/d/15_lS_H3HRDGwujOcav2uyqDkAxIjbN7HVzO74oiZRKw/edit?usp=sharing\n\nWhat new hypotheses could be investigated in subsequent interviews?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Should be two or more sentences about at least one new hypothesis. Be lenient."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T5": {
+        "type": "llm-text-validation",
+        "title": "T5",
+        "taskTitle": "T5",
+        "desc": "T5",
+        "points": 1,
+        "xp": 1,
+        "accept": "Problem 1: https://docs.google.com/document/d/15_lS_H3HRDGwujOcav2uyqDkAxIjbN7HVzO74oiZRKw/edit?usp=sharing\n\nIn your opinion, what should the team do? Pivot? Focus on a specific segment of businesspeople? Terminate the project? Do more interviews? Why?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Student should provide 2 or more sentences describing what to do with the project, whether to terminate, pivot, etc. Be lenient, as long as they explain their reasoning."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T6": {
+        "type": "llm-text-validation",
+        "title": "T6",
+        "taskTitle": "T6",
+        "desc": "T6",
+        "points": 1,
+        "xp": 1,
+        "accept": "Problem 1: https://docs.google.com/document/d/15_lS_H3HRDGwujOcav2uyqDkAxIjbN7HVzO74oiZRKw/edit?usp=sharing\n\nAssume that you conducted additional interviews, which suggested a genuine need and interest in MyLieDetector among junior executives. Based on the information about the product above and your own analysis and ideas, complete the Agile Inception deck (the template is on Canvas). Add here a link to the file on your Google Drive (don't forget to share it).",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Student should provide a url. It can be any url."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T7": {
+        "type": "llm-text-validation",
+        "title": "T7",
+        "taskTitle": "T7",
+        "desc": "T7",
+        "points": 1,
+        "xp": 1,
+        "accept": "For the **Flashcard App** (“Helps students learn more efficiently through active recall and spaced repetition, improving exam performance with minimal time investment.”), what is the **value** and what is the **feature?**",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": true,
+        "savedDataName": "collected_info",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "State both the value (benefit) and the feature (capability)",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T8": {
+        "type": "llm-text-validation",
+        "title": "T8",
+        "taskTitle": "T8",
+        "desc": "T8",
+        "points": 1,
+        "xp": 1,
+        "accept": "For the **Grade Tracker App** (“Empowers students to monitor academic progress in real time, make informed decisions about their studies, and avoid surprises at the end of the semester.”), what is the **value** and what is the **feature?**",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "State both the value (benefit) and the feature (capability)",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T9": {
+        "type": "llm-text-validation",
+        "title": "T9",
+        "taskTitle": "T9",
+        "desc": "T9",
+        "points": 1,
+        "xp": 1,
+        "accept": "For the **To-do List App** (“Increases productivity by helping students prioritize, organize, and complete tasks on time, reducing stress and procrastination.”), what is the **value** and what is the **feature?**",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "State both the value (benefit) and the feature (capability)",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T10": {
+        "type": "llm-text-validation",
+        "title": "T10",
+        "taskTitle": "T10",
+        "desc": "T10",
+        "points": 1,
+        "xp": 1,
+        "accept": "For the **Habit Tracker App** (“Encourages personal growth and consistency by visually tracking habits and offering motivational feedback on progress.”), what is the **value** and what is the **feature?**",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "State both the value (benefit) and the feature (capability)",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "For the Habit Tracker App (“Encourages personal growth and consistency by visually tracking habits and offering motivational feedback on progress.”), what is the value and what is the feature?",
+        "answerType": ""
+      },
+      "T11": {
+        "type": "llm-text-validation",
+        "title": "T11",
+        "taskTitle": "T11",
+        "desc": "T11",
+        "points": 1,
+        "xp": 1,
+        "accept": "For the **Collaborative Calendar App** (“Simplifies group scheduling by showing mutual availability, reducing back-and-forth communication for meeting planning.”), what is the **value** and what is the **feature?**",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "State both the value (benefit) and the feature (capability)",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T12": {
+        "type": "collect-info",
+        "title": "T12",
+        "taskTitle": "T12",
+        "desc": "T12",
+        "points": 1,
+        "xp": 1,
+        "accept": "**Reflection:** What did you learn from this activity?\n\n![Image](https://github.com/user-attachments/assets/74d03950-fc43-4faa-9224-bddb2139e437)\n\n\"Desperation creates inspiration.\"",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": true,
+        "savedDataName": "collected_infosasssas",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      }
+    },
+    "Q5": {
+      "metadata": {
+        "title": "Q5: A-4.1 - SW Requirements Concepts",
+        "description": "A-4.1 - SW Requirements Concepts",
+        "prerequisite": "Q4",
+        "type": "custom"
+      },
+      "T1": {
+        "type": "llm-text-validation",
+        "title": "T1 - Stakeholder Misalignment",
+        "taskTitle": "T1 - Stakeholder Misalignment",
+        "desc": "T1 - Stakeholder Misalignment",
+        "points": 1,
+        "xp": 1,
+        "accept": "Part I - BENEFITS\n\nThe figure below highlights the challenges of software development projects and the varying perspectives of **different stakeholders on the system**. Why can solid requirement engineering avoid this situation?  \n\n<img src=\"https://github.com/user-attachments/assets/2917bcfc-00ed-4165-a12a-9bc50f419a9f\" alt=\"Software Requirements Concepts\" style=\"max-width: 100%; height: auto;\" />",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The answer should relate to how clear requirements prevent project problems or stakeholder confusion, or the answer should mention how unclear requirements create problems"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T2": {
+        "type": "llm-text-validation",
+        "title": "T2 - Cost of Late Fixes",
+        "taskTitle": "T2 - Cost of Late Fixes",
+        "desc": "T2 - Cost of Late Fixes",
+        "points": 1,
+        "xp": 1,
+        "accept": "Poor requirements engineering can increase the **project's cost.** \n\n![Image](https://github.com/user-attachments/assets/1347dc89-9a6c-4bc9-a680-46c73aa66a34)\n\n**(a)** According to the figure below [Boehm, 1981], how much higher can the cost of fixing a fault be during post-delivery maintenance in relation to the beginning of the project? \n\n**(b)** Why do you think the cost increases that much?\n\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should relate to how fault costs increase as projects progress through development stages"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T3": {
+        "type": "llm-text-validation",
+        "title": "T3 - Legal Disputes",
+        "taskTitle": "T3 - Legal Disputes",
+        "desc": "T3 - Legal Disputes",
+        "points": 1,
+        "xp": 1,
+        "accept": "Statistics from the Cutter Consortium Survey (2002) indicate that 78% of software development companies become involved in **legal disputes** with their clients, often due to misunderstandings about what should be implemented and project scope. For example, software development companies are paid to deliver a system, and clients often request additional development, which the company claims is outside the scope. How can a solid engineering requirement avoid this situation?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should relate to the association between requirements and project scope"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T4": {
+        "type": "llm-text-validation",
+        "title": "T4 - Benefits",
+        "taskTitle": "T4 - Benefits",
+        "desc": "T4 - Benefits",
+        "points": 1,
+        "xp": 1,
+        "accept": "The ISO/IEC/IEEE 29148 lists the following benefits for documenting requirements:\n\n1. It establishes the basis for agreement between the acquirers or suppliers on what the product is to do (in market-driven projects, the user input may be provided by marketing).\n\n2. It forces a rigorous assessment of requirements before design can begin and reduces later redesign.\n\n3. It provides a realistic basis for estimating product costs, risks and schedules.\n\n4. Organizations can use the specifications to develop validation and verification plans.\n\n5. It provides an informed basis for deploying a product to new users or new operational environments.\n\n6. It provides a basis for product enhancement.\n\nWhich of these benefits addresses the problems described in the previous questions? Provide at least 3 benefits.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Provide at least 3 examples"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T5": {
+        "type": "llm-text-validation",
+        "title": "T5 - Writing Requirements",
+        "taskTitle": "T5 - Writing Requirements",
+        "desc": "T5 - Writing Requirements",
+        "points": 1,
+        "xp": 1,
+        "accept": "The ISO/IEC/IEEE 29148 establishes the international standard for Requirements Engineering.\n\n**The document:** [ISO-IEC-IEEE-29148.pdf](https://drive.google.com/file/d/1T5jXkpIda4gsbkA7E20wXTJp5D_ZWfsy/view?usp=sharing)\n\nRead Section 5.2.4 Requirements Construct. Create one example of a requirement per group member using one of the formats illustrated in the text ([Condition] [Subject] [Action] [Object] [Constraint] or [Condition] [Action or Constraint] [Value] or [Subject] [Action] [Value]). Each example must be from a different system. Specify the system to which the requirement applies.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should use the correct format structures: [Condition] [Subject] [Action] [Object] [Constraint], [Condition] [Action or Constraint] [Value], or [Subject] [Action] [Value]"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T6": {
+        "type": "llm-text-validation",
+        "title": "T6 - Quality Attributes",
+        "taskTitle": "T6 - Quality Attributes",
+        "desc": "T6 - Quality Attributes",
+        "points": 1,
+        "xp": 1,
+        "accept": "Another standard, ISO/IEC 25010:2011, categorizes quality attributes (non-functional requirements), as observed in the figure below.\n\n<img width=\"685\" height=\"227\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/ba35c229-1d01-4bc9-9885-083abff4ad97\" />\n\nChoose one of these quality attributes (a different one for each member) and give an example of a type of system for which the quality attribute is critical. Follow the example below.\n\nSecurity - a mobile bank system",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should mention a quality attribute (e.g., security, performance, maintainability, portability, compatibility, interoperability, testability, adaptability, replaceability, etc.)"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T7": {
+        "type": "llm-text-validation",
+        "title": "T7 - E-Commerce Functions",
+        "taskTitle": "T7 - E-Commerce Functions",
+        "desc": "T7 - E-Commerce Functions",
+        "points": 1,
+        "xp": 1,
+        "accept": "Imagine you are working on the requirements engineering phase for an e-commerce platform. Identify and list three essential functional requirements that are crucial for the system's success. Explain why each requirement is significant, and provide a brief description of how they contribute to the overall system functionality.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should identify functional requirements that are essential for e-commerce operations and explain their business value"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T8": {
+        "type": "llm-text-validation",
+        "title": "T8 - Banking Performance",
+        "taskTitle": "T8 - Banking Performance",
+        "desc": "T8 - Banking Performance",
+        "points": 1,
+        "xp": 1,
+        "accept": "A mobile banking application is in development, and non-functional requirements related to performance efficiency are crucial. \n\n(a) Define two non-functional requirements associated with the application's performance. Ensure these requirements are measurable, and provide specific metrics to quantify their success. \n\n(b) Discuss the potential impact on user satisfaction if these metrics are not met.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should define measurable performance requirements such as response time, throughput, or resource efficiency with specific metrics"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T9": {
+        "type": "llm-text-validation",
+        "title": "T8 - Capstone Requirements",
+        "taskTitle": "T8 - Capstone Requirements",
+        "desc": "T8 - Capstone Requirements",
+        "points": 1,
+        "xp": 1,
+        "accept": "Find a capstone project in the link below (each teammate should choose a different project — it can be from any year). Locate the requirements specification document produced by the capstone team. As the answer, report the project name, term, and an example of a requirement.  \n\nhttps://www.ceias.nau.edu/cs/CS_Capstone/CS476.html ",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should identify a specific project and an example of a software requirement"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T10": {
+        "type": "llm-text-validation",
+        "title": "T10 - Level of details",
+        "taskTitle": "T10 - Level of details",
+        "desc": "T10 - Level of details",
+        "points": 1,
+        "xp": 1,
+        "accept": "The level of detail required in the requirements varies from system to system. The figure below presents a set of requirements for a software system used in a military airplane [Parnas, 2013]. Why do you think such detailed requirements are necessary in this case?\n\n<img width=\"800\" height=\"328\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/f2745ea4-5993-4711-8f2e-8ff5348ede37\" />",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should explain why detailed requirements are necessary for military airplane software"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T11": {
+        "type": "llm-text-validation",
+        "title": "T11 - Low-Detail in Requirements",
+        "taskTitle": "T11 - Low-Detail in Requirements",
+        "desc": "T11 - Low-Detail in Requirements",
+        "points": 1,
+        "xp": 1,
+        "accept": "In which type of system is it *unnecessary* to have a very detailed list of requirements before beginning implementation?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should identify systems where detailed upfront requirements are not essential"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T12": {
+        "type": "llm-text-validation",
+        "title": "T12 - Pros & Cons of Detail",
+        "taskTitle": "T12 - Pros & Cons of Detail",
+        "desc": "T12 - Pros & Cons of Detail",
+        "points": 1,
+        "xp": 1,
+        "accept": "What are the advantages and disadvantages of preparing a very detailed and comprehensive list of requirements at the beginning of a project, before development begins?\n\nProvide advantages and disadvantages.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should list at least one distinct advantages and one distinct disadvantage"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T13": {
+        "type": "llm-text-validation",
+        "title": "T13 - Measurability",
+        "taskTitle": "T13 - Measurability",
+        "desc": "T13 - Measurability",
+        "points": 1,
+        "xp": 1,
+        "accept": "Requirements should be measurable and verifiable. Why?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should explain why requirements should be measurable and verifiable"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T14": {
+        "type": "llm-text-validation",
+        "title": "T14 - Traceability",
+        "taskTitle": "T14 - Traceability",
+        "desc": "T14 - Traceability",
+        "points": 1,
+        "xp": 1,
+        "accept": "Requirements should be traceable (you should know where each requirement came from and the consequences of the requirement on the source code/project). Why?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should explain why requirements should be traceable"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T15": {
+        "type": "llm-text-validation",
+        "title": "T15 - Quality Levels",
+        "taskTitle": "T15 - Quality Levels",
+        "desc": "T15 - Quality Levels",
+        "points": 1,
+        "xp": 1,
+        "accept": "Choosing the right level for quality attributes is very important.\n\n<img width=\"800\" height=\"505\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/fb99225e-dd43-46bc-9327-fe3172c7f8d0\" />\n\nExplain the graph above in your own words.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should explain the quality attributes graph, including the benefit zones "
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T16": {
+        "type": "llm-text-validation",
+        "title": "T16 - Bad MVP Approaches",
+        "taskTitle": "T16 - Bad MVP Approaches",
+        "desc": "T16 - Bad MVP Approaches",
+        "points": 1,
+        "xp": 1,
+        "accept": "A minimum viable product (MVP) is a product with just enough features to gather validated learning about the product and its development.\n\n<img width=\"800\" height=\"566\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/06c7404b-ef37-4635-8c3e-2bcbd14f33d4\" />\n\nExplain why the first two approaches in the figure above are not recommended ways of building an MVP.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should explain why the first two MVP approaches are not recommended"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T17": {
+        "type": "llm-text-validation",
+        "title": "T17 - MVP Task App",
+        "taskTitle": "T17 - MVP Task App",
+        "desc": "T17 - MVP Task App",
+        "points": 1,
+        "xp": 1,
+        "accept": "Imagine you are a product manager tasked with developing a Minimum Viable Product (MVP) for a new task management application. The application aims to simplify task organization and collaboration for small teams. Your goal is to identify the key requirements for the MVP that will provide maximum value to users while minimizing development efforts.\nIdentify three essential functional requirements for the MVP of the task management application. \n\nExplain why each of these requirements is crucial for delivering value to users and achieving the primary objectives of the application.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n",
+        "error": "❌ **Incorrect Answer**\n\nThat's not the right answer. Please review the question and try again.\n\n**Hint:** Think carefully about the options.\n\nGreat contribution! 📋",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Answer should identify requirements that provide maximum user value with minimal development effort, following MVP principles"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T18": {
+        "type": "collect-info",
+        "title": "T18 - Reflection and feedback",
+        "taskTitle": "T18 - Reflection and feedback",
+        "desc": "T18 - Reflection and feedback",
+        "points": 1,
+        "xp": 1,
+        "accept": "Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A4.1\nAnswer \"ok\" when done.\n",
+        "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\nGreat contribution! 📋",
+        "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "collected_infoLHKUGIYUFTYDRTUFI",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      }
+    },
+    "Q6": {
+      "metadata": {
+        "title": "Q6: A-4.2 Use Cases",
+        "description": "Goal: You will learn more about employing use cases to specify software requirements. \n",
+        "prerequisite": "Q5",
+        "type": "custom"
+      },
+      "T1": {
+        "type": "collect-info",
+        "title": "Student Names",
+        "taskTitle": "Student Names",
+        "desc": "Student Names",
+        "points": 1,
+        "xp": 1,
+        "accept": "Provide the names of the students who worked with you on this assignment. Answer 'none' if you worked individually.",
+        "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** 1\n\nGreat contribution! 📋",
+        "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": true,
+        "savedDataName": "collected_info",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T2": {
+        "type": "llm-text-validation",
+        "title": "Actors and Use Cases",
+        "taskTitle": "Actors and Use Cases",
+        "desc": "Actors and Use Cases",
+        "points": 1,
+        "xp": 1,
+        "accept": "Software analysts employ Use Cases to specify software requirements. \nA use case diagram describes the actors and their goals in using the system.\n\n<img width=\"560\" height=\"181\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/a2995dfb-f79c-4d55-ad2c-819942525278\" />\n\nIn the diagram above, what are the actor(s) and use case(s)?",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.\n",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "User must provide at least one actor and at least one use case"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T3": {
+        "type": "llm-text-validation",
+        "title": "Actors for Systems",
+        "taskTitle": "Actors for Systems",
+        "desc": "Actors for Systems",
+        "points": 1,
+        "xp": 1,
+        "accept": "An Actor represents a persona who will use the system.\n \nAn actor can be represented as a stick figure or as a box with the stereotype &lt;&lt;actor&gt;&gt; on top of it (usually adopted for representing external systems). \n\nTo identify actors, ask questions such as: Who will use the system? Who is responsible for the use cases? \n\n![Image](https://github.com/user-attachments/assets/6e05c8a2-0625-455c-b68c-023f0ad2cecc)\n\nIdentify at least 3 actors for each of the following systems:\na) Restaurant management system: \nb) Academic management system: \nc) Online banking system: \n\n",
+        "success": "",
+        "error": "",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "An Actor represents a persona who will use the system. \nAn actor can be represented as a stick figure or as a box with the stereotype <<actor>> on top of it (usually adopted for representing external systems). \nTo identify actors, ask questions such as: Who will use the system? Who is responsible for the use cases? \nIdentify at least 3 actors for each of the following systems\n",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "User must list at least 3 actors for the following systems: Restaurant management system, Academic management system, and Online banking system",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T4": {
+        "type": "llm-text-validation",
+        "title": "Use Cases",
+        "taskTitle": "Use Cases",
+        "desc": "Use Cases",
+        "points": 1,
+        "xp": 1,
+        "accept": "To identify use cases, think about the actors’ responsibilities and goals. \n\nChoose one of the systems from **Q6T3** and draw a use case diagram with at least two actors and 4 use cases. For this question and all the others, you can use any online drawing tool that supports creating use case diagrams (e.g., Creately, Draw.io, Gliffy, Lucidchart, SmartDraw, etc.) or produce a hand drawing. \n\nYou can see examples of use case diagrams on this website: [https://www.uml-diagrams.org/use-case-diagrams-examples.html](https://www.uml-diagrams.org/use-case-diagrams-examples.html)\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "validationParameters": [
+            "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T5": {
+        "type": "llm-text-validation",
+        "title": "Restaurant Management System Requirements",
+        "taskTitle": "Restaurant Management System Requirements",
+        "desc": "Restaurant Management System Requirements",
+        "points": 1,
+        "xp": 1,
+        "accept": "You were hired to specify requirements for a restaurant management system. As a good software analyst, you know that a use case represents an action performed through the system, i.e., actions performed outside the system are not represented in a use case diagram.\n\nDraw a use case diagram for each of these situations. Remember that use cases are represented as ellipses and actors as stick figures.\n\n(a) The manager prints the list of deliveries and calls a driver using their phone to assign a delivery. \n\n(b) The driver opens the app and chooses a delivery from the set of available deliveries. \n\n(c) The system automatically selects an available driver, who receives a push notification in their app and can accept or decline the delivery. TIP: \"System\" is not an actor in this case. \n\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The student should provide THREE images. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be three images present."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T6": {
+        "type": "llm-text-validation",
+        "title": "Use Case Common Errors",
+        "taskTitle": "Use Case Common Errors",
+        "desc": "Use Case Common Errors",
+        "points": 1,
+        "xp": 1,
+        "accept": "Common errors in defining use cases are: \n(i) defining a goal as too coarse-grained/too big/too vague \n(ii) defining an intermediate step as a goal (the use case should comprise a complete set of steps to accomplish a goal) \n(iii) not using a verb to define the name of the use case \n(iv) representing the system as an actor. \n\na.\n<img width=\"240\" height=\"90\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/091f5105-b51c-4f8c-a4e8-68ac83b1f565\" />\n\nb.\n<img width=\"234\" height=\"90\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/614b2488-a2e0-42a1-ae2c-d42d0828d95d\" />\n\nc.\n<img width=\"231\" height=\"90\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/14d3aa0e-8b67-440d-93d7-f5918f7951d8\" />\n\nd.\n<img width=\"234\" height=\"90\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/9e77a09f-52b3-4238-bfa6-4f0a7a768c1f\" />\n\ne.\n<img width=\"269\" height=\"90\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/398819eb-1663-4c5b-9297-79e18f29eaf5\" />\n\nWhich of these errors occur in the following use cases (copy and paste the number and the description of the error):\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The student must identify which of the five use case examples (a-e) contain errors from the list"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T7": {
+        "type": "llm-text-validation",
+        "title": "Home Automation System– Use Cae",
+        "taskTitle": "Home Automation System– Use Cae",
+        "desc": "Home Automation System– Use Cae",
+        "points": 1,
+        "xp": 1,
+        "accept": "Draw a use case diagram for the following home automation system. Residents access the system via the Internet and monitor lights and the residential alarm. Sensors monitor doors and windows. If a door or window is opened without deactivating the alarm, the siren is triggered, and the system sends an alert to the police system. A resident enters the password on the panel next to the door to turn off the alarm.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T8": {
+        "type": "llm-text-validation",
+        "title": "Use Case Dependencies",
+        "taskTitle": "Use Case Dependencies",
+        "desc": "Use Case Dependencies",
+        "points": 1,
+        "xp": 1,
+        "accept": "It is possible to represent dependencies among use cases. The stereotype &lt;&lt;includes&gt;&gt; indicates the execution of a use case leads to the execution of another one, and &lt;&lt;extends&gt;&gt; indicates the execution of a use case optionally leads to the execution of another one. Draw an example for each of these types of dependencies. It can be in a single diagram or in two diagrams.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "The student should provide an image. Accept ANY format that contains an image - this includes Markdown ![Image](url), HTML img tags, direct image URLs, GitHub attachments, or any other image format. The key is that there must be an image present."
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T9": {
+        "type": "llm-text-validation",
+        "title": "Textual Description",
+        "taskTitle": "Textual Description",
+        "desc": "Textual Description",
+        "points": 1,
+        "xp": 1,
+        "accept": "The details of a use case are provided in a textual description. \n\nAs the textual description specifies software requirements, the language should be precise and straightforward enough for users and clients to understand. \n\nWrite a Use Case description for the functionality “Transfer money” from an Online Banking System. Use the template provided in the slides on Canvas. **Include the header, the description, and the alternative scenarios.**\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Response must be a use case description for the functionality “Transfer money” from an Online Banking System"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T10": {
+        "type": "llm-text-validation",
+        "title": "Rewrite Steps in Implementation-Agnostic Language– Part 1",
+        "taskTitle": "Rewrite Steps in Implementation-Agnostic Language– Part 1",
+        "desc": "Rewrite Steps in Implementation-Agnostic Language– Part 1",
+        "points": 1,
+        "xp": 1,
+        "accept": "The use case steps describe goals or intentions and typically should not contain user interface or implementation details (e.g., clicking, typing, window, database, etc.). This is a bad practice that anticipates and limits implementation decisions. Remember, you are writing requirements, not designing the solution. Rewrite the following steps using implementation-agnostic language (select, inform, register, etc.):\n\nThe system writes the product data to the database. \nThe system executes an INSERT in the Product table.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "take in any answer"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T11": {
+        "type": "llm-text-validation",
+        "title": "Rewrite Steps in Implementation-Agnostic Language– Part 2",
+        "taskTitle": "Rewrite Steps in Implementation-Agnostic Language– Part 2",
+        "desc": "Rewrite Steps in Implementation-Agnostic Language– Part 2",
+        "points": 1,
+        "xp": 1,
+        "accept": "The use case steps describe goals or intentions and typically should not contain user interface or implementation details (e.g., clicking, typing, window, database, etc.). This is a bad practice that anticipates and limits implementation decisions. Remember, you are writing requirements, not designing the solution. Rewrite the following steps using implementation-agnostic language (select, inform, register, etc.):\n\nThe user clicks on the button corresponding to the form of payment.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "accept any user"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T12": {
+        "type": "llm-text-validation",
+        "title": "Rewrite Steps in Implementation-Agnostic Language– Part 3",
+        "taskTitle": "Rewrite Steps in Implementation-Agnostic Language– Part 3",
+        "desc": "Rewrite Steps in Implementation-Agnostic Language– Part 3",
+        "points": 1,
+        "xp": 1,
+        "accept": "The use case steps describe goals or intentions and typically should not contain user interface or implementation details (e.g., clicking, typing, window, database, etc.). This is a bad practice that anticipates and limits implementation decisions. Remember, you are writing requirements, not designing the solution. Rewrite the following steps using implementation-agnostic language (select, inform, register, etc.):\n\nThe user types the product name. \nThe user clicks on the desired product. \n\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "Accept in any user"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T13": {
+        "type": "llm-text-validation",
+        "title": "Rewrite Steps in Implementation-Agnostic Language– Part 4",
+        "taskTitle": "Rewrite Steps in Implementation-Agnostic Language– Part 4",
+        "desc": "Rewrite Steps in Implementation-Agnostic Language– Part 4",
+        "points": 1,
+        "xp": 1,
+        "accept": "The use case steps describe goals or intentions and typically should not contain user interface or implementation details (e.g., clicking, typing, window, database, etc.). This is a bad practice that anticipates and limits implementation decisions. Remember, you are writing requirements, not designing the solution. Rewrite the following steps using implementation-agnostic language (select, inform, register, etc.):\n\nThe user opens an auxiliary window and chooses one in the products list box.\n",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "accept any answer"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T14": {
+        "type": "llm-text-validation",
+        "title": "AI Literacy– Part 1",
+        "taskTitle": "AI Literacy– Part 1",
+        "desc": "AI Literacy– Part 1",
+        "points": 1,
+        "xp": 1,
+        "accept": "**The Following use case was written by ChatGPT 4. Critique it.**\n\n**Use Case Name:** Change Membership Plan\n\n**Actors:**\n* Member (Primary Actor)\n* Membership System (Supporting System)\n\n**Preconditions:**\n1. The member is logged into the system.\n2. The member currently has an active membership plan.\n\n**Postconditions:**\n1. The member's plan is updated to reflect the new membership choice.\n2. The system updates the billing details according to the new plan.\n\n**Main Success Scenario:**\n1. The member navigates to the \"Membership Details\" section within their profile.\n2. The member selects the option to view or change their current membership plan.\n3. The system displays the current plan details along with other available membership options.\n4. The member selects a new plan from the available options.\n5. The system prompts the member to confirm the change and displays the differences in benefits and cost between the current and new plan.\n6. The member reviews the information and confirms the selection.\n7. The system processes the change and updates the membership details.\n8. The system sends a confirmation email to the member regarding the change of plan.\n9. The system displays a confirmation message to the member indicating the successful update of their membership plan.\n\n**Extensions:**\n* **4a.** If the selected new plan is lower in cost, the system calculates the prorated refund amount and informs the member during the confirmation step.\n* **4b.** If the selected new plan is higher in cost, the system calculates the additional prorated amount due and informs the member during the confirmation step.\n* **6a.** If the member decides not to proceed after reviewing the plan differences, the system allows the member to cancel the action and retains the current membership plan.\n\n**Special Requirements:**\n* The system must ensure all transactions are secure.\n* The system must update the membership details in real-time to ensure the member can immediately benefit from the new plan features.\n\n**Frequency of Use:** Moderate to high, depending on membership flexibility and member engagement levels.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "accept any response",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T15": {
+        "type": "llm-text-validation",
+        "title": "AI Literacy– Part 2",
+        "taskTitle": "AI Literacy– Part 2",
+        "desc": "AI Literacy– Part 2",
+        "points": 1,
+        "xp": 1,
+        "accept": "**The Following use case was written by ChatGPT o1-preview.** \n**Which one did you prefer? Why?**\n\n**Use Case:** Change Membership Plan\n\n**Brief Description:**\nThis use case outlines the process by which a registered member can change their current membership plan to a different one. This could involve upgrading to a plan with more benefits or downgrading to a more basic plan. The system facilitates the selection, confirmation, and implementation of the new plan while ensuring all billing adjustments are accurately processed.\n\n**Actors:**\n* Primary Actor: Member/User\n* Supporting Actors:\n  * Billing System\n  * Notification Service\n  * Customer Support Representative (if assistance is needed)\n\n**Preconditions:**\n1. The user is a registered member with an active membership plan.\n2. The user is authenticated and logged into their account.\n3. The system displays available membership plans.\n\n**Postconditions:**\n1. The user's membership plan is updated to the newly selected plan.\n2. Billing adjustments are made to reflect the change (prorated charges or credits applied).\n3. The user receives a confirmation notification regarding the change.\n4. Access permissions are updated based on the new membership level.\n\n**Main Success Scenario (Basic Flow):**\n1. **Access Membership Settings:**\n   * The user navigates to the \"Account Settings\" section.\n   * The user selects \"Change Membership Plan.\"\n2. **View Available Plans:**\n   * The system displays the user's current plan and a list of available membership plans, including details and pricing.\n3. **Select New Plan:**\n   * The user selects the desired new membership plan.\n4. **Review Plan Details:**\n   * The system presents a summary of the new plan, including features, pricing, and the effective date.\n   * The system calculates any prorated charges or credits.\n5. **Confirm Change:**\n   * The user reviews the information and confirms the change.\n   * The system prompts for any additional required information (e.g., payment details if upgrading).\n6. **Process Change:**\n   * The system updates the user's membership plan in the database.\n   * The system processes any billing transactions.\n   * Access permissions are adjusted accordingly.\n7. **Send Confirmation:**\n   * The system sends a confirmation email or message to the user summarizing the changes.\n   * The user is redirected to a confirmation page.\n\n**Extensions (Alternative Flows):**\n* **3a. User Requests More Information:**\n  * The user selects a plan to view more details.\n  * The system displays comprehensive information about the selected plan.\n  * Return to Step 3.\n* **5a. User Cancels Operation:**\n  * The user decides not to proceed and cancels the operation.\n  * The system returns the user to the \"Account Settings\" page without making changes.\n  * Postcondition: No changes are made to the membership plan.\n* **6a. Payment Failure:**\n  * The system attempts to process payment but fails (e.g., due to invalid payment method).\n  * The system notifies the user of the payment issue.\n  * The user updates payment information.\n  * Return to Step 6.\n* **6b. Contractual Obligations Prevent Change:**\n  * The system detects that the user is under a contract that restricts changes.\n  * The system informs the user of the restriction and provides options (e.g., contact support).\n  * Postcondition: Membership plan remains unchanged unless resolved through customer support.\n\n**Special Requirements:**\n* Security: All transactions must be secure to protect user data and payment information.\n* Usability: The interface should be intuitive, allowing users to change plans with minimal steps.\n* Regulatory Compliance: The process must comply with financial regulations and consumer rights laws.\n* Accessibility: The feature should be accessible to users with disabilities, adhering to accessibility standards.\n\n**Assumptions:**\n1. The user has a valid payment method on file if the new plan requires additional charges.\n2. The system can process real-time billing adjustments.\n\n**Notes and Issues:**\n* Proration Calculations: Ensure that proration for mid-cycle changes is accurate.\n* Notification Preferences: Respect the user's communication preferences when sending confirmations.\n* Customer Support Involvement: Define clear protocols for when and how customer support should intervene if issues arise.\n\n**Frequency of Use:**\nThis use case is expected to be used occasionally by members, primarily when their service needs change.\n\n**Stakeholders and Interests:**\n* Members: Want a seamless and transparent process for changing plans.\n* Billing Department: Needs accurate records of changes for financial reporting.\n* Customer Support: Requires clear information to assist users who encounter issues.\n* Management: Interested in user retention and satisfaction rates.\n\n**Performance Requirements:**\n1. The system should process the membership change within a few seconds.\n2. Notifications should be sent immediately after the change is processed.",
+        "success": "✅ **Correct!**\n\nExcellent! You've answered correctly.\n\n**Points earned:** 1\n\nGreat work! 🎉\n",
+        "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [
+            "accept any response"
+          ],
+          "temperature": 0.1,
+          "enableDetailedFeedback": true
+        },
+        "questNotes": "",
+        "answerType": ""
+      },
+      "T16": {
+        "type": "collect-info",
+        "title": "Reflection",
+        "taskTitle": "Reflection",
+        "desc": "Reflection",
+        "points": 1,
+        "xp": 1,
+        "accept": "What did you learn from this activity?\n\n<img width=\"360\" height=\"432\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/caa2d056-2739-4020-8894-29c2849650eb\" />",
+        "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.",
+        "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.",
+        "answer": "",
+        "correctAnswer": "",
+        "question": "",
+        "options": [
+          {
+            "label": "A",
+            "value": ""
+          },
+          {
+            "label": "B",
+            "value": ""
+          }
+        ],
+        "repository": "",
+        "ossRepository": "",
+        "issueNumber": "",
+        "apiEndpoint": "",
+        "responsePath": "",
+        "expectedAnswerType": "Number",
+        "enableTolerance": false,
+        "toleranceRange": 10,
+        "saveValidatedData": false,
+        "savedDataName": "",
+        "questions": [],
+        "hints": [],
+        "detailedHints": [],
+        "llmTextValidation": {
+          "question": "",
+          "validationParameters": [],
+          "temperature": 0.1,
+          "enableDetailedFeedback": false
+        },
+        "questNotes": "",
+        "answerType": ""
+      }
+    }
+  },
+  "createdAt": "2025-09-17T20:46:57.627Z",
+  "updatedAt": "2025-09-17T20:46:57.627Z",
+  "source": "file_upload",
+  "createdBy": "oss-management",
+  "originalFilePath": "quest_config_68a770b8140b9c0174c13ce7_purple_1756928031626.json",
+  "version": 1,
+  "__v": 0,
+  "isPurpleDeployment": true,
+  "baseConfigId": "68ae285da55121ce00725643",
+  "deployedQuestId": "Q6",
+  "deployedAt": "2025-09-17T20:46:57.627Z",
+  "migratedFrom": "68a770b8140b9c0174c13ce8-with-q3"
+}

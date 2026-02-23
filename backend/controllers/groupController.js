@@ -1,8 +1,15 @@
-
 const Quest = require("../models/QuestModel");
 const Task = require("../models/TaskModel")
 const Hint = require('../models/HintModel');
 const Student = require("../models/StudentModel");
+const Professor = require('../models/ProfessorModel')
+const Group = require('../models/GroupModel')
+const Readme = require("../models/ReadmeModel");
+const fs = require('fs');
+const path = require('path');
+const { MongoClient } = require('mongodb');
+const axios = require('axios');
+const UserStoredData = require('../models/UserStoredData');
 
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,10 +26,12 @@ const getProfessor = async(req, res) => {
         }
         
         return res.status(200).json({
+            _id: professor._id,
             profName: professor.name,
             email: professor.email,
             groups: professor.ownedGroups,
-            quests: professor.quests
+            quests: professor.quests,
+            verified: professor.verified
         });
     } catch(error) {
         console.debug(`Error in getProfessor function: ${error}`)
@@ -70,14 +79,248 @@ const createGroup = async (req, res) =>  {
 
         await newGroup.save()
 
+        // 🎯 AUTO-CREATE DEFAULT QUEST CONFIGURATION
+        const defaultQuestConfig = {
+            map_repo_link: "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+            questSequence: [
+                {
+                    questId: "Q1",
+                    title: "Understanding OSS Projects and GitHub Basics",
+                    isQ0: false,
+                    questType: "fixed",
+                    sequenceNumber: 0,
+                    metadata: {
+                        title: "Q1: Understanding OSS Projects and GitHub Basics",
+                        description: "Learn the fundamentals of open source software and GitHub workflow",
+                        prerequisite: null,
+                        type: "general",
+                    },
+                    badgeDescription: "Explorer 🚀",
+                    tasks: {
+                        T1: {
+                            desc: "Explore the issue tracker",
+                            points: 20,
+                            xp: 20,
+                            type: "get-issue-count",
+                            ossRepository: "probot-test-org/test-repo",
+                            accept: '### 🎯 Task 1: Find the Issue Tracker\n\n**Objective:** The issue tracker is the hub for project discussions, bug reports, and feature requests. Your goal is to find the issue tracker within our GitHub repository.\n\n**Task:** Visit the GitHub repository in the link below and **COUNT** the number of open issues and provide that number in the comment box to complete the task.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo)\n\n**Outcome:** This task will help you become familiar with how issues are reported, discussed, and tracked. Understanding the volume of discussions is crucial for grasping the project\'s activity level and areas that might need your contribution.\n\n**Help:** If you need help with this task, type "help" in the comment box to get hints, but it will cost you 5 points from your total score.',
+                            success: "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of issues in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. Each task completed is a step forward in your adventure. \n\nReady for the next challenge? More experiences and rewards await!\n\nA new task has appeared in the issues tab.\n\nYour adventure awaits! 🌟\n\n",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** issues in our project. \n\nNo worries, though! Mistakes are just stepping stones on the path to learning.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nEach issue represents a story, a problem to solve, or a feature to improve. Finding the correct number is just the start of understanding the broader narrative of our project.\n\nReady for another try? Your correct answer awaits just a click away!",
+                            answer: "",
+                            hints: [],
+                        },
+                        T2: {
+                            desc: "Explore the pull-request menu",
+                            points: 20,
+                            xp: 20,
+                            type: "get-pr-count",
+                            ossRepository: "probot-test-org/test-repo",
+                            accept: '### 🎯 Task 2: Find the Pull Request Menu\n\n**Objective:** Pull requests are the heart of collaboration in a GitHub repository, allowing you to suggest changes and contribute directly. Your mission is to find the pull request menu within our GitHub repository and gauge the level of ongoing collaborations.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n **Task:** Go to the GitHub repository using the link below, find the number of **open** pull requests, and enter it in the comment box below.\n\n**Outcome:** Completing this task will deepen your understanding of how contributions are proposed, discussed, and integrated into the project. Recognizing the volume of open pull requests helps you see the project\'s dynamic nature and where you might contribute in the future.\n\n**Help:** If you need help with this task, type "help" in the comment box to get hints, but it will cost you 5 points from your total score.',
+                            success: "### 🌟 Congratulations! You Nailed It!\n\nYou've successfully identified the correct number of pull requests in our project, displaying keen attention to detail and dedication. As a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nKeep up the great work! Your journey through the quest is shaping up to be an exciting one. Each task completed is a step forward in your adventure. \n\nReady for the next challenge? More experiences and rewards await!\n\nYou will see a new task in your issues tab!\n\nYour adventure awaits! 🌟\n\n",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the number you've provided doesn't match the current count of **OPEN** pull requests in our project.\n\nNo worries, though! Mistakes are part of the learning journey, and every misstep is an opportunity for growth.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nConsider this a bit of detective work 🕵️‍♂️.\n\nEvery open pull request is a potential contribution, waiting to enhance the project or fix an underlying issue. Identifying the correct number not only demonstrates your attentiveness but also helps you get acquainted with the contributions landscape of our project.\n\nReady to try again? The accurate count—and a chance to sharpen your project navigation skills—is just a click away!",
+                            answer: "",
+                            hints: [],
+                        },
+                        T3: {
+                            desc: "Explore the fork button",
+                            points: 20,
+                            xp: 20,
+                            type: "multiple-choice",
+                            accept: '**Question:** ### 🎯 Task 3: Locate the Fork Button \n\n**Objective:** Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.\n\n**Task:** Go to the GitHub repository using the link below, locate the **Fork** button, and note where it\'s positioned.\n\n**Choose the option that best describes where the "Fork" button is located.**\n\nA) Bottom-left corner of the page\nB) Directly under the repository description\nC) Next to the "Watch" and "Star" buttons\nD) In the repository\'s "Settings" tab\n\n**Instructions:** Select the correct answer.',
+                            success: "### 🌟 Congratulations! You've Got It Right!\n\nYou've correctly identified the fork button's location within a GitHub repository as the top-right corner of the page, showcasing your growing familiarity with GitHub's interface and tools for collaboration.\n\nAs a reward for your keen observation and learning skills, you've earned ${experiencePoints} experience points!\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you need a total of **100 points to level up**, meaning you're just **${pointsRemaining} points away** from achieving that milestone.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of open-source collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards await!\n\nTo dive into your next task, look in the issues tab!\n\nThe adventure continues! 🌟\n\n",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt looks like the location you've selected for the fork button doesn't align with its typical placement in a GitHub repository.\n\nNo worries, though! Mistakes are simply steps on the path to mastery, and every attempt brings you closer to understanding.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThis is a bit like a treasure hunt 🗺️.\n\nFinding the fork button is a fundamental skill for navigating GitHub and making your mark on projects. Correctly identifying its location ensures you're ready to start experimenting and contributing on your own terms.\n\nReady for another try? Your correct answer is just a decision away!\n\n**Please select the correct answer from the options below:**\n\nA) Bottom-left corner of the page\nB) Directly under the repository description\nC) Top-right corner of the page\nD) In the repository's \"Settings\" tab\n\n**Type** the letter in the comment box to complete this task.",
+                            answer: "C",
+                            question: '### 🎯 Task 3: Locate the Fork Button \n\n**Objective:** Forking is a cornerstone of GitHub collaboration. It enables you to create a personal copy of a repository so you can experiment with changes without affecting the original project.\n\n**Task:** Go to the GitHub repository using the link below, locate the **Fork** button, and note where it\'s positioned.\n\n**Choose the option that best describes where the "Fork" button is located.**\n\n',
+                            options: [
+                                { label: "A", value: "Bottom-left corner of the page" },
+                                { label: "B", value: "Directly under the repository description" },
+                                { label: "C", value: 'Next to the "Watch" and "Star" buttons' },
+                                { label: "D", value: 'In the repository\'s "Settings" tab' },
+                            ],
+                            hints: [],
+                        },
+                        T4: {
+                            desc: "Explore the readme file",
+                            points: 20,
+                            xp: 20,
+                            type: "multiple-choice",
+                            accept: "**Question:** ### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Instructions:** Select the correct answer.",
+                            success: "### 🌟 Congratulations! You've Got It Right!\n\nYou've successfully identified a key piece of information or instruction from the README file, demonstrating your thorough attention to detail and commitment to understanding the project.\n\nAs a reward for your keen observation and learning skills, you've earned ${experiencePoints} experience points!\n\n>🌟 🌟 🌟\n\n🏆 **Current Progress:** You now have **${currentPoints} points**, edging closer to the next level. Remember, you're just **${pointsRemaining} points away** from leveling up!.\n\n🎯 **Quest Completion:** You now have ${completionRate}% completion rate, to successfully complete the entire quest, you need to reach an 100% completion rate. Every task you accomplish brings you closer to mastering the GitHub realm and unlocking new levels of collaboration and contribution.\n\n> 🌟 🌟 🌟\n\nFantastic work! The path you're on is filled with learning and achievement. Each task you complete propels you further in your journey through the world of open-source collaboration.\n\nAre you ready to tackle the next challenge? More adventures and rewards are on the horizon! \n\nThere will be a new task in your issues tab.\n\nThe adventure continues! 🌟\n\n",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the information you've shared from the README file doesn't quite match what we were looking for, or perhaps it was misunderstood.\n\nDon't fret, though! Each step, including the missteps, is part of the journey towards greater knowledge and proficiency.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nConsider this a chance to dive deeper 🤿.\n\nThe README file is packed with insights about the project, often hiding gems of information crucial for new contributors. By revisiting and reflecting on its content, you're not just completing a task but also building a foundation for meaningful contributions.\n\nReady to give it another go? The README file awaits with the details you need to move forward!\n\n**Please select the correct answer from the options below based on the sessions described in the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Type** the letter in the comment box to complete this task.",
+                            answer: "D",
+                            question: "### 🎯 Task 4: Locate the README File\n\n**Objective:** The README file serves as the welcoming guide and introduction to a project, providing essential information, instructions, and insights.\n\n**Task:** Go to the GitHub repository using the link below, find the **README** section, and identify which of the following sections is listed there.\n\n**Which of the following sections is within the README file:**\n\nA) Functionality\nB) Design\nC) Architecture\nD) Contributing\n\n**Instructions:** Select the correct answer.",
+                            options: [
+                                { label: "A", value: "Functionality" },
+                                { label: "B", value: "Design" },
+                                { label: "C", value: "Architecture" },
+                                { label: "D", value: "Contributing" },
+                            ],
+                            hints: [],
+                        },
+                        T5: {
+                            desc: "Explore the contributors",
+                            points: 20,
+                            xp: 20,
+                            type: "get-top-contributor",
+                            ossRepository: "probot-test-org/test-repo",
+                            accept: "### 🎯 Task 5: Discover the Contributors \n\n**Objective:** Understanding who has contributed to a project can provide insights into the project's community and potentially whom to reach out to for collaboration or questions.\n\n**Task:** Go to the GitHub repository using the link below, locate the **number 1** contributor, and **TYPE** their username in the comment box. Do NOT include any symbols.\n\n🔗 [GitHub Repository: probot-test-org/test-repo](https://github.com/probot-test-org/test-repo) \n\n**Outcome:** This task will help you become familiar with the collaborative nature of open-source projects on GitHub. Identifying contributors helps you understand the project's community size and diversity, offering a window into the people behind the project.\n\n**Help:** If you need help with this task, type \"help\" in the comment box to get hints, but it will cost you 5 points from your total score.",
+                            success: "### 🌟 Congratulations! You've Reached a New Level!\n\nWith your latest achievement, you've accurately identified the number of contributors to our project, demonstrating not just your ability to navigate GitHub but also your appreciation for community collaboration.\n\nAs a reward for your sharp observation skills, you've earned **${experiencePoints} experience points!**\n\n> 🌟 🌟 🌟\n\n🏆 **Current Progress:** You've now accomplished a total of **${currentPoints} points**, achieving a remarkable milestone in your journey. This success is a testament to your dedication, learning, and contributions thus far.\n\n🎯 **Quest Completion:** You've successfully completed the tasks for this quest, leaving only the remaining quiz. This accomplishment signifies your mastery over the tasks at hand and your readiness to embark on new challenges and quests within the GitHub realm and beyond.\n\n> 🌟 🌟 🌟\n\nIncredible work! Your journey through this quest has been a tale of persistence, learning, and growth. Each task you've completed has not only contributed to your knowledge but has also paved the way for future adventures in open-source collaboration.\n\n**🚀 Ready for New Horizons:** With this quest behind you, new quests await, brimming with opportunities for exploration, learning, and making an impact.\n\nTo begin your next adventure, keep an eye out for the command or instructions that will introduce your next task. Your dedication and skills are invaluable assets on this journey of continuous learning and contribution.\n\nOnward to new quests and achievements! 🌟\n\n",
+                            error: "### 🚨 Oops, That's Not Quite Right!\n\nIt seems the number of contributors you've mentioned doesn't align with the current roster of contributors to our project.\n\nBut remember, every error is a stepping stone towards greater understanding and skill.\n\nIf you need help, don't forget that you can type **\"help\"** to get hints to complete this task.\n\nThink of this as honing your analytical skills 🔍.\n\nEach contributor represents a unique contribution to the project, from code commits to documentation. Recognizing the breadth and depth of the community's engagement is crucial for appreciating the collective effort involved in open-source projects.\n\nAre you ready for another attempt? The correct number, and a chance to deepen your understanding of our project's community, is just a few clicks away!",
+                            answer: "",
+                            hints: [],
+                        },
+                        T6: {
+                            desc: "Quiz",
+                            points: 20,
+                            xp: 20,
+                            type: "quiz",
+                            questions: [
+                                {
+                                    question: "What is the primary purpose of the issue tracker in a GitHub repository?",
+                                    optionA: "To list all contributors to the project",
+                                    optionB: "To track bug reports, feature requests, and project discussions",
+                                    optionC: "To store documentation and project guidelines",
+                                    optionD: "To manage pull requests and merges",
+                                    correctAnswer: "b",
+                                    explanation: "",
+                                },
+                                {
+                                    question: "Which statement best describes a pull request on GitHub?",
+                                    optionA: "A way to propose changes to a repository, allowing for code review and discussion before integration",
+                                    optionB: "A method of archiving issues and marking them as resolved",
+                                    optionC: "A feature used for backing up repository data to a different server",
+                                    optionD: "A section where repository settings and configurations are modified",
+                                    correctAnswer: "a",
+                                    explanation: "",
+                                },
+                                {
+                                    question: "Why would you fork a repository on GitHub?",
+                                    optionA: "To permanently delete it from your account",
+                                    optionB: "To merge two different repositories into one",
+                                    optionC: "To create a personal copy where you can experiment and make changes without affecting the original",
+                                    optionD: "To mark it as one of your favorite projects",
+                                    correctAnswer: "c",
+                                    explanation: "",
+                                },
+                                {
+                                    question: "What information is typically found in a README file of a GitHub project?",
+                                    optionA: "The project's history and commit logs",
+                                    optionB: "A guide on how to contribute, along with an overview of the project",
+                                    optionC: "Personal information about the contributors",
+                                    optionD: "All the issues that have ever been reported",
+                                    correctAnswer: "b",
+                                    explanation: "",
+                                },
+                                {
+                                    question: "How can understanding who has contributed the most to a project be useful?",
+                                    optionA: "It ensures that you get paid for your contributions",
+                                    optionB: "It prevents other people from making changes to your code",
+                                    optionC: "It lets you change the project's license to your preference",
+                                    optionD: "It helps identify the project's most active users and potential people to reach out to for guidance",
+                                    correctAnswer: "d",
+                                    explanation: "",
+                                },
+                            ],
+                            accept: '### 🧠 Quest 1 Quiz \n Answer the following questions to test your knowledge of the GitHub contribution process.\n Note that you may navigate to issues and view your "closed issues" to view old tasks that may help you answer these questions! \n\nThere is only one attempt allowed!',
+                            success: "Good Job!",
+                            error: "### Oops, That's Not Quite Right! Check if you have an answer for each question and if you are following the answer pattern: [X, X, X]",
+                            answer: "",
+                            hints: [],
+                        },
+                    },
+                },
+            ],
+        };
+
+        // Save the default quest configuration to the group
+        newGroup.questJsonConfig = defaultQuestConfig;
+        await newGroup.save();
+
+        console.log(`✅ [createGroup] Default quest configuration saved for new class: ${groupName}`);
+
+        // 🔄 ALSO save to OSS-Doorway DB (questconfigs collection) so bot can find it
+        try {
+            const { MongoClient } = require('mongodb');
+            const mongoose = require('mongoose');
+            // SECURITY: Never hardcode credentials. Always use environment variables.
+            if (!process.env.OSS_DOORWAY_DB_URI) {
+              throw new Error('OSS_DOORWAY_DB_URI environment variable is required');
+            }
+            const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI;
+            const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+            
+            const client = new MongoClient(ossDoorwayUri);
+            await client.connect();
+            const db = client.db(ossDoorwayDbName);
+            const questConfigsCollection = db.collection('questconfigs');
+            
+            // Check if config already exists for this class (shouldn't, but check anyway)
+            const existingQuestConfig = await questConfigsCollection.findOne({
+                $or: [
+                    { classId: newGroup._id.toString() },
+                    { groupId: newGroup._id.toString() },
+                    { configId: newGroup._id.toString() }
+                ]
+            });
+            
+            // Transform questSequence to legacy format for bot compatibility
+            const legacyFormat = { map_repo_link: defaultQuestConfig.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map" };
+            for (const quest of defaultQuestConfig.questSequence) {
+                const questId = quest.questId;
+                const meta = quest.metadata || {};
+                const tasks = quest.tasks || {};
+                legacyFormat[questId] = { metadata: meta, ...tasks };
+            }
+            
+            if (existingQuestConfig) {
+                // Update existing config (shouldn't happen for new classes, but handle it)
+                await questConfigsCollection.updateOne(
+                    { _id: existingQuestConfig._id },
+                    {
+                        $set: {
+                            config: legacyFormat,
+                            configData: defaultQuestConfig,
+                            questSequence: defaultQuestConfig.questSequence,
+                            updatedAt: new Date()
+                        }
+                    }
+                );
+                console.log(`✅ [createGroup] Updated existing config in questconfigs collection`);
+            } else {
+                // Create new config document
+                const newConfigDoc = {
+                    _id: new mongoose.Types.ObjectId(),
+                    classId: newGroup._id.toString(),
+                    groupId: newGroup._id.toString(),
+                    configId: newGroup._id.toString(),
+                    config: legacyFormat,
+                    configData: defaultQuestConfig,
+                    questSequence: defaultQuestConfig.questSequence,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    isPurpleDeployment: false
+                };
+                
+                await questConfigsCollection.insertOne(newConfigDoc);
+                console.log(`✅ [createGroup] Created default config in questconfigs collection for class: ${newGroup._id}`);
+            }
+            
+            await client.close();
+        } catch (dbError) {
+            console.error(`⚠️ [createGroup] Failed to save default config to questconfigs collection:`, dbError.message);
+            // Continue - this is not critical for group creation, but log it
+        }
+
         professor.ownedGroups.push(newGroup._id); 
         await professor.save()
 
         if (newGroup) {
             res.status(201).json({
+                _id: newGroup._id, // Add the _id field
                 professorID: newGroup.professor, 
                 groupName: newGroup.groupName,
-                classCode: newGroup.classCode
+                classCode: newGroup.classCode,
+                active: true
             })
         } else { 
             return res.status(400).json({error: `Error creating new group for professor with id ${professorID}`})
@@ -90,18 +333,59 @@ const createGroup = async (req, res) =>  {
 
 
 // given professorID
-// get a list of all the professor's groups
+// get a list of all the professor's groups (owned + admin)
 const getGroups = async (req, res) => {
     const { professorID } = req.params;
 
     try{ 
-        const prof = await Professor.findById(professorID)
+        const prof = await Professor.findById(professorID);
+        
         if (!prof) { 
             return res.status(400).json({error: "No professor provided"})
         }
 
+        // Get owned groups
+        const ownedGroups = await Group.find({
+            _id: { $in: prof.ownedGroups }
+        }).select('groupName classCode active students createdAt updatedAt admins professor')
+          .populate('professor', 'name email')
+          .sort({ createdAt: -1 });
+
+        // Get groups where this professor is an admin
+        const adminGroups = await Group.find({
+            'admins.githubUsername': { $regex: new RegExp(`^${prof.githubUsername}$`, 'i') },
+            'admins.role': { $in: ['professor', 'assistant', 'grader'] }
+        }).select('groupName classCode active students createdAt updatedAt admins professor')
+          .populate('professor', 'name email')
+          .sort({ createdAt: -1 });
+
+        // Combine and deduplicate groups
+        const allGroups = [...ownedGroups];
+        const ownedGroupIds = ownedGroups.map(g => g._id.toString());
+        
+        adminGroups.forEach(adminGroup => {
+            if (!ownedGroupIds.includes(adminGroup._id.toString())) {
+                allGroups.push(adminGroup);
+            }
+        });
+
+        // Add student count and access level to each group
+        const groupsWithMetadata = allGroups.map(group => {
+            const isOwner = group.professor._id.toString() === professorID;
+            const adminRole = group.admins.find(admin => 
+                admin.githubUsername.toLowerCase() === prof.githubUsername.toLowerCase()
+            )?.role;
+
+            return {
+                ...group.toObject(),
+                studentCount: group.students ? group.students.length : 0,
+                accessLevel: isOwner ? 'owner' : (adminRole || 'unknown'),
+                isOwner: isOwner
+            };
+        });
+
         res.status(200).json({
-            groups: prof.ownedGroups
+            groups: groupsWithMetadata
         });
         
     } catch(error) { 
@@ -110,33 +394,47 @@ const getGroups = async (req, res) => {
     }
 }
 
+const getGroupByCode = async (req, res) => {
+    const {classCode} = req.params; 
+    try {
+
+        const group = await Group.findOne({classCode})
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        console.log('group', group)
+        res.status(200).json(group);
+    } catch (error) { 
+        console.debug(`Error in getGroupByCode function: ${error}`)
+        return res.status(500).json({error})
+    }
+}
+
 // given professorID and groupID
 //return info for one of professor's groups
 const getGroup = async (req, res ) => {
-    const { professorID, groupID } = req.params;
-
+    const { groupID } = req.params;
     try{ 
-        const professorExists = await Professor.findById(professorID)
-        if (!professorExists) { 
-            return res.status(400).json({error: "No professor provided"})
-        }
-
-        if (!professorExists.ownedGroups.includes(groupID)) {
-            return res.status(403).json({ error: `Group with ID ${groupID} is not owned by professor ${professorID}` });
-        }
-
-        const group = await Group.findById(groupID);
+        const group = await Group.findById(groupID).populate('students').populate('professor', 'name');
         if (!group) {
             return res.status(404).json({ error: `Group with ID ${groupID} not found` });
         }
 
+        // Get professor's name
+        const professorName = group.professor ? 
+            group.professor.name || 'Unknown Professor' : 
+            'Unknown Professor';
+
         res.status(200).json({
             groupID: group._id,
             groupName: group.groupName,
-            professorID: group.professor,
-            members: group.members,
+            professorID: group.professor?._id,
+            professorName: professorName,
+            students: group.students,
             admin: group.admin,
             quests: group.quests,
+            classCode: group.classCode
         });
         
     } catch(error) { 
@@ -149,6 +447,7 @@ const getGroup = async (req, res ) => {
 const deleteGroup = async(req, res) => { 
     const { professorID, groupID } = req.params;
 
+    //! change this to disable group
     try {
         const professor = await Professor.findById(professorID)
         if (!professor) { 
@@ -286,7 +585,7 @@ const removeQuestFromGroup = async(req, res) => {
 
 // update a specific quest
 const updateQuest = async(req, res) => { 
-    const { professorID, questID } = req.params;
+    const { professorID, groupID, questID } = req.params;
     const { questTitle, prerequisites } = req.body; 
 
     try{ 
@@ -536,7 +835,7 @@ const getTask = async(req, res) => {
 
 
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // these functions are for dealing with hints
 
 
@@ -687,12 +986,2142 @@ const getHint = async(req, res) => {
     }
 }
 
+const saveGroupReadme = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { content, fileName } = req.body;
 
+        if (!content) {
+            return res.status(400).json({ message: "README content is required" });
+        }
+
+        // Check if group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Find existing README or create new one
+        let readme = await Readme.findOne({ group: groupId });
+        
+        if (readme) {
+            // Update existing README
+            readme.content = content;
+            readme.fileName = fileName || 'README.md';
+        } else {
+            // Create new README
+            readme = new Readme({
+                group: groupId,
+                content: content,
+                fileName: fileName || 'README.md'
+            });
+        }
+
+        await readme.save();
+
+        res.status(200).json({
+            message: "README saved successfully",
+            readme: {
+                id: readme._id,
+                fileName: readme.fileName,
+                contentLength: readme.content.length
+            }
+        });
+    } catch (error) {
+        console.error("Error saving README:", error);
+        res.status(500).json({ message: "Error saving README", error: error.message });
+    }
+};
+
+const getGroupReadme = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        // Check if group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Find existing README
+        const readme = await Readme.findOne({ group: groupId });
+        
+        if (!readme) {
+            return res.status(404).json({ message: "No README found for this group" });
+        }
+
+        res.status(200).json({
+            readme: {
+                id: readme._id,
+                fileName: readme.fileName,
+                contentLength: readme.content.length,
+                content: readme.content
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching README:", error);
+        res.status(500).json({ message: "Error fetching README", error: error.message });
+    }
+};
+
+// Batch update README across all student repositories
+const updateReadmeAcrossRepos = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { content, fileName, pushToRepos = false } = req.body;
+
+        // Allow empty string to clear the first section; only reject undefined/null
+        if (content === undefined || content === null) {
+            return res.status(400).json({ message: "README content is required" });
+        }
+
+        // Check if group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Save README to database first
+        let readme = await Readme.findOne({ group: groupId });
+        
+        if (readme) {
+            readme.content = content; // may be empty string to clear first section
+            readme.fileName = fileName || 'README.md';
+        } else {
+            readme = new Readme({
+                group: groupId,
+                content: content, // may be empty
+                fileName: fileName || 'README.md'
+            });
+        }
+
+        await readme.save();
+
+        // If pushToRepos is true, update all student repositories
+        if (pushToRepos) {
+            console.log(`🚀 [BATCH-README] Starting batch README update for class: ${group.groupName}`);
+            
+            // Import required modules for GitHub operations
+            const { sendMessageToBot, getGithubAppInstallationAccessToken } = require('../utils/botMessage');
+            
+            // Format class name to match repository naming convention
+            const formattedClassName = group.groupName
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+            console.log(`🔧 [BATCH-README] Original class name: "${group.groupName}"`);
+            console.log(`🔧 [BATCH-README] Formatted class name: "${formattedClassName}"`);
+
+            // Get organization from environment
+            const organizationGh = process.env.GITHUB_ORG;
+            if (!organizationGh) {
+                return res.status(500).json({ message: "GitHub organization not configured" });
+            }
+
+            // Get repositories from bot server (COPY from working test script)
+            console.log(`📋 [BATCH-README] Fetching repositories from ${organizationGh} using bot server`);
+            const reposResponse = await sendMessageToBot(
+                "github/listRepos",
+                { org: organizationGh }
+            );
+
+            if (!reposResponse || !reposResponse.data) {
+                return res.status(502).json({ message: "Bot did not return repository data" });
+            }
+
+            console.log(`📊 [BATCH-README] Total repositories in org: ${reposResponse.data.length}`);
+
+            // Filter repositories to only those for this class (COPY from working test script)
+            const classRepos = reposResponse.data.filter(repo => 
+                repo.name.endsWith(`-${formattedClassName}`)
+            );
+
+            console.log(`🔍 [BATCH-README] Looking for repos ending with: "-${formattedClassName}"`);
+            console.log(`📊 [BATCH-README] Found ${classRepos.length} repositories for class: ${group.groupName}`);
+            
+            if (classRepos.length > 0) {
+                console.log(`📝 [BATCH-README] Class repositories:`, classRepos.map(r => r.name));
+            } else {
+                // Log some example repo names to help debug
+                const exampleRepos = reposResponse.data.slice(0, 10).map(r => r.name);
+                console.log(`❌ [BATCH-README] No repos found. Example repo names:`, exampleRepos);
+            }
+
+            const results = {
+                successful: [],
+                failed: [],
+                total: classRepos.length
+            };
+
+            // Define the boundary marker for splitting sections
+            const sectionBoundary = '----\n*This README is automatically updated as you progress through the course.*';
+            
+            // For each repo, do the function (COPY from working test script)
+            for (const repo of classRepos) {
+                const repoName = repo.name;
+                const username = repoName.replace(`-${formattedClassName}`, '');
+                
+                try {
+                    console.log(`📝 [BATCH-README] Processing repository: ${repoName}`);
+                    
+                    // Get access token for this repo (COPY from working test script)
+                    const accessToken = await getGithubAppInstallationAccessToken();
+                    console.log(`🔑 Got access token: ${accessToken ? 'Yes' : 'No'}`);
+                    
+                    // Fetch current README content using GitHub API directly (COPY from working test script)
+                    let currentReadmeContent = '';
+                    let currentSha = null;
+                    
+                    try {
+                        const currentReadmeResponse = await axios.get(
+                            `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
+                            {
+                                headers: {
+                                    Authorization: `token ${accessToken}`,
+                                    Accept: 'application/vnd.github.v3+json',
+                                    'User-Agent': 'OSS-Management-Backend'
+                                }
+                            }
+                        );
+                        
+                        currentReadmeContent = Buffer.from(currentReadmeResponse.data.content, 'base64').toString('utf-8');
+                        currentSha = currentReadmeResponse.data.sha;
+                        console.log(`📄 [BATCH-README] Current README found for ${repoName}, length: ${currentReadmeContent.length}`);
+                        console.log(`📄 [BATCH-README] Current SHA: ${currentSha}`);
+                    } catch (fetchError) {
+                        if (fetchError.response?.status === 404) {
+                            console.log(`📄 [BATCH-README] No existing README found for ${repoName}, will create new one`);
+                        } else {
+                            console.log(`📄 [BATCH-README] Error fetching README for ${repoName}: ${fetchError.message}`);
+                        }
+                    }
+
+                    // Split the current README into sections (COPY from working test script)
+                    let firstSection = content; // New instructor content
+                    let secondSection = '';
+
+                    if (currentReadmeContent && currentReadmeContent.includes(sectionBoundary)) {
+                        // Preserve existing second section
+                        const sections = currentReadmeContent.split(sectionBoundary);
+                        if (sections.length > 1) {
+                            secondSection = sectionBoundary + sections.slice(1).join(sectionBoundary);
+                            console.log(`🔧 [BATCH-README] Preserving existing progress section for ${repoName}`);
+                        }
+                    } else {
+                        // Call Doorway's updateReadme API endpoint directly
+                        console.log(`🔧 [BATCH-README] Calling Doorway's updateReadme API for ${repoName}`);
+                        
+                        try {
+                            // Call the Doorway's updateReadme API endpoint
+                            const doorwayUrl = process.env.OSS_DOORWAY_URL || 'http://localhost:4000';
+                            const updateResponse = await axios.post(`${doorwayUrl}/api/updateReadme`, {
+                                owner: organizationGh,
+                                repo: repoName,
+                                username: username
+                            });
+                            
+                            if (updateResponse.status === 200 && updateResponse.data?.success) {
+                                console.log(`✅ [BATCH-README] Doorway updateReadme completed for ${repoName}`);
+                                // Skip the manual update since Doorway already updated it
+                                continue;
+                            } else {
+                                console.log(`⚠️ [BATCH-README] Doorway updateReadme failed for ${repoName}, falling back to basic section`);
+                                secondSection = `\n\n${sectionBoundary}`;
+                            }
+                        } catch (err) {
+                            console.log(`⚠️ [BATCH-README] Error calling Doorway updateReadme for ${repoName}: ${err.message}`);
+                            // Fall back to basic section if Doorway is not available
+                            secondSection = `\n\n${sectionBoundary}`;
+                        }
+                    }
+
+                    // Combine sections (COPY from working test script)
+                    const newReadmeContent = firstSection + secondSection;
+                    console.log(`📝 [BATCH-README] New README content length: ${newReadmeContent.length}`);
+
+                    // Update the README file using GitHub API directly (COPY from working test script)
+                    const commitMessage = `Update README via batch update - ${new Date().toISOString()}`;
+                    
+                    const writePayload = {
+                        message: commitMessage,
+                        content: Buffer.from(newReadmeContent).toString('base64'),
+                        branch: 'main'
+                    };
+                    
+                    // If we have an existing SHA, include it for update (COPY from working test script)
+                    if (currentSha) {
+                        writePayload.sha = currentSha;
+                    }
+                    
+                    console.log(`📤 [BATCH-README] Updating README for ${repoName}...`);
+                    await axios.put(
+                        `https://api.github.com/repos/${organizationGh}/${repoName}/contents/README.md`,
+                        writePayload,
+                        {
+                            headers: {
+                                Authorization: `token ${accessToken}`,
+                                Accept: 'application/vnd.github.v3+json',
+                                'User-Agent': 'OSS-Management-Backend'
+                            }
+                        }
+                    );
+
+                    console.log(`✅ [BATCH-README] Successfully updated README for ${repoName}`);
+                    results.successful.push({ username, repoName });
+                    
+                } catch (error) {
+                    console.error(`❌ [BATCH-README] Failed to update README for ${repoName}:`, error.message);
+                    results.failed.push({ 
+                        username, 
+                        repoName, 
+                        error: error.response?.data?.message || error.message 
+                    });
+                }
+            }
+
+            console.log(`🎉 [BATCH-README] Batch update completed. Success: ${results.successful.length}, Failed: ${results.failed.length}`);
+
+            return res.status(200).json({
+                message: "README saved and batch update completed",
+                readme: {
+                    id: readme._id,
+                    fileName: readme.fileName,
+                    contentLength: readme.content.length
+                },
+                batchUpdate: {
+                    enabled: true,
+                    results: results
+                }
+            });
+        }
+
+        // Standard response if not pushing to repos
+        res.status(200).json({
+            message: "README saved successfully",
+            readme: {
+                id: readme._id,
+                fileName: readme.fileName,
+                contentLength: readme.content.length
+            },
+            batchUpdate: {
+                enabled: false
+            }
+        });
+
+    } catch (error) {
+        console.error("Error in batch README update:", error);
+        res.status(500).json({ 
+            message: "Error updating README", 
+            error: error.message 
+        });
+    }
+};
+
+// Quest Order Management Functions
+const saveQuestOrder = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        const { questOrder } = req.body;
+
+        if (!questOrder || !Array.isArray(questOrder)) {
+            return res.status(400).json({ message: "Quest order array is required" });
+        }
+
+        // Generate dynamic prerequisites based on quest order
+        const questOrderWithPrerequisites = questOrder.map((quest, index) => {
+            const prerequisites = generateDynamicPrerequisites(questOrder, index);
+            
+            return {
+                questId: quest.questId || quest.id || quest._id,
+                questType: quest.questType || quest.type || 'custom',
+                sequenceNumber: quest.sequenceNumber || index,
+                title: quest.title || quest.questTitle || quest.content || 'Unknown Quest',
+                isQ0: quest.isQ0 || false,
+                prerequisites: prerequisites
+            };
+        });
+
+        // Try to update with retry logic for version conflicts
+        let updatedGroup = null;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        while (retryCount < maxRetries) {
+            try {
+                // Use findByIdAndUpdate to avoid version conflicts
+                updatedGroup = await Group.findByIdAndUpdate(
+                    groupId,
+                    {
+                        questOrder: questOrderWithPrerequisites,
+                        questOrderLastUpdated: new Date()
+                    },
+                    { 
+                        new: true, 
+                        runValidators: true,
+                        // Add optimistic concurrency control
+                        versionKey: false
+                    }
+                );
+
+                if (updatedGroup) {
+                    break; // Success, exit retry loop
+                }
+            } catch (updateError) {
+                retryCount++;
+                console.log(`Retry ${retryCount}/${maxRetries} for group ${groupId}:`, updateError.message);
+                
+                if (retryCount >= maxRetries) {
+                    throw updateError;
+                }
+                
+                // Wait a bit before retrying
+                await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
+            }
+        }
+
+        if (!updatedGroup) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Automatically generate dynamic config after saving quest order
+        try {
+            const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
+            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
+            const config = await generator.generateDynamicConfig();
+            
+            console.log(`✅ Auto-generated dynamic config for group ${groupId}:`, config.metadata);
+        } catch (configError) {
+            console.error(`⚠️ Auto-config generation failed for group ${groupId}:`, configError.message);
+            // Don't fail the entire request if config generation fails
+        }
+
+        res.status(200).json({
+            message: "Quest order and prerequisites saved successfully",
+            questOrder: updatedGroup.questOrder,
+            lastUpdated: updatedGroup.questOrderLastUpdated
+        });
+    } catch (error) {
+        console.error("Error saving quest order:", error);
+        
+        // Provide more specific error messages
+        if (error.name === 'VersionError') {
+            res.status(409).json({ 
+                message: "Quest order was modified by another operation. Please try again.",
+                error: "Version conflict detected"
+            });
+        } else {
+            res.status(500).json({ 
+                message: "Error saving quest order", 
+                error: error.message 
+            });
+        }
+    }
+};
+
+// Helper function to generate dynamic prerequisites
+const generateDynamicPrerequisites = (questOrder, currentIndex) => {
+    const prerequisites = [];
+    
+    // Q0 has no prerequisites
+    if (currentIndex === 0) {
+        return [];
+    }
+    
+    // For all other quests, prerequisite is the previous quest
+    if (currentIndex > 0) {
+        const previousQuest = questOrder[currentIndex - 1];
+        prerequisites.push({
+            questId: previousQuest.questId || previousQuest.id || previousQuest._id,
+            type: 'completion',
+            required: true,
+            description: `Complete ${previousQuest.title || previousQuest.questTitle || previousQuest.content} first`,
+            minScore: 0
+        });
+    }
+    
+    return prerequisites;
+};
+
+const getQuestOrder = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        // Check if group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Return quest order if it exists, otherwise return default order
+        if (group.questOrder && group.questOrder.length > 0) {
+            res.status(200).json({
+                questOrder: group.questOrder,
+                lastUpdated: group.questOrderLastUpdated,
+                hasCustomOrder: true
+            });
+        } else {
+            // Return default quest order with prerequisites
+            const defaultQuestOrder = [
+                { 
+                    questId: 'Q0', 
+                    questType: 'fixed', 
+                    sequenceNumber: 0, 
+                    title: 'Q0: Introduction to Open Source', 
+                    isQ0: true,
+                    prerequisites: []
+                },
+                { 
+                    questId: 'Q1', 
+                    questType: 'fixed', 
+                    sequenceNumber: 1, 
+                    title: 'Q1: Understanding OSS Projects and GitHub Basics', 
+                    isQ0: false,
+                    prerequisites: [{
+                        questId: 'Q0',
+                        type: 'completion',
+                        required: true,
+                        description: 'Complete Q0: Introduction to Open Source first',
+                        minScore: 0
+                    }]
+                },
+            ];
+            
+            res.status(200).json({
+                questOrder: defaultQuestOrder,
+                lastUpdated: null,
+                hasCustomOrder: false
+            });
+        }
+    } catch (error) {
+        console.error("Error fetching quest order:", error);
+        res.status(500).json({ message: "Error fetching quest order", error: error.message });
+    }
+};
+
+const resetQuestOrder = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+
+        // Reset to default quest order using findByIdAndUpdate to avoid version conflicts
+        const defaultQuestOrder = [
+            { 
+                questId: 'Q0', 
+                questType: 'fixed', 
+                sequenceNumber: 0, 
+                title: 'Q0: Introduction to Open Source', 
+                isQ0: true,
+                prerequisites: []
+            },
+            { 
+                questId: 'Q1', 
+                questType: 'fixed', 
+                sequenceNumber: 1, 
+                title: 'Q1: Understanding OSS Projects and GitHub Basics', 
+                isQ0: false,
+                prerequisites: [{
+                    questId: 'Q0',
+                    type: 'completion',
+                    required: true,
+                    description: 'Complete Q0: Introduction to Open Source first',
+                    minScore: 0
+                }]
+            },
+        ];
+
+        const updatedGroup = await Group.findByIdAndUpdate(
+            groupId,
+            {
+                questOrder: defaultQuestOrder,
+                questOrderLastUpdated: new Date()
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedGroup) {
+            return res.status(404).json({ message: "Group not found" });
+        }
+
+        // Automatically generate dynamic config after resetting quest order
+        try {
+            const DynamicQuestConfigGenerator = require('../services/DynamicQuestConfigGenerator');
+            const baseURL = req.get('host') ? `http://${req.get('host')}` : 'http://localhost:8080';
+            const generator = new DynamicQuestConfigGenerator(groupId, baseURL);
+            const config = await generator.generateDynamicConfig();
+            
+            console.log(`✅ Auto-generated dynamic config for group ${groupId} after reset:`, config.metadata);
+        } catch (configError) {
+            console.error(`⚠️ Auto-config generation failed for group ${groupId} after reset:`, configError.message);
+            // Don't fail the entire request if config generation fails
+        }
+
+        res.status(200).json({
+            message: "Quest order reset to default successfully",
+            questOrder: updatedGroup.questOrder,
+            lastUpdated: updatedGroup.questOrderLastUpdated
+        });
+    } catch (error) {
+        console.error("Error resetting quest order:", error);
+        res.status(500).json({ message: "Error resetting quest order", error: error.message });
+    }
+};
+
+// Get class ID from repository name
+const getClassIdFromRepo = async (req, res) => {
+    try {
+        const { repoName } = req.params;
+        
+        // Extract class code from repository name pattern: cs-277-oss-in-theory-username
+        const match = repoName.match(/^cs-(\d+)-(\w+)-(\w+)-(.+)$/);
+        
+        if (!match) {
+            // Fallback: resolve by group name suffix pattern '<anything>-<groupNameLower>'
+            const parts = String(repoName).split('-');
+            if (parts.length >= 2) {
+                const groupNameLower = parts[parts.length - 1];
+                // Try to find a group whose name matches case-insensitively
+                const group = await Group.findOne({ groupName: new RegExp(`^${groupNameLower}$`, 'i') }).select('_id groupName');
+                if (group) {
+                    return res.status(200).json({ success: true, data: { classId: group._id, groupName: group.groupName } });
+                }
+            }
+            return res.status(404).json({ success: false, message: 'Unable to resolve class from repository name' });
+        }
+        
+        const [, courseNumber, subject, courseName] = match;
+        const classCode = `${courseNumber}-${subject}-${courseName}`;
+        
+        // Find the group with this class code
+        const group = await Group.findOne({ classCode });
+        if (!group) {
+            return res.status(404).json({ success: false, message: 'Class not found for repo' });
+        }
+        
+        return res.status(200).json({ success: true, data: { classId: group._id, classCode } });
+    } catch (error) {
+        console.error('Error resolving class ID from repo:', error);
+        return res.status(500).json({ success: false, message: 'Error resolving class ID', error: error.message });
+    }
+};
+
+// Save quest JSON configuration for a class
+const saveQuestJsonConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const { questJsonConfig } = req.body;
+
+        console.log(`💾 [saveQuestJsonConfig] Saving quest JSON for class: ${classId}`);
+        console.log(`📊 [saveQuestJsonConfig] JSON size: ${JSON.stringify(questJsonConfig).length} characters`);
+
+        if (!questJsonConfig) {
+            return res.status(400).json({
+                success: false,
+                message: 'Quest JSON configuration is required'
+            });
+        }
+
+        // Validate JSON structure
+        if (!questJsonConfig.questSequence || !Array.isArray(questJsonConfig.questSequence)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid JSON structure: questSequence array is required'
+            });
+        }
+
+        // Find and update the group
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        // Update quest JSON configuration
+        group.questJsonConfig = questJsonConfig;
+        group.questJsonLastUpdated = new Date();
+        await group.save();
+
+        // Also save to questconfigs collection for purple deploy compatibility
+        try {
+            const { MongoClient } = require('mongodb');
+            const mongoose = require('mongoose');
+            // SECURITY: Never hardcode credentials. Always use environment variables.
+            if (!process.env.OSS_DOORWAY_DB_URI) {
+              throw new Error('OSS_DOORWAY_DB_URI environment variable is required');
+            }
+            const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI;
+            const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+            
+            const client = new MongoClient(ossDoorwayUri);
+            await client.connect();
+            const db = client.db(ossDoorwayDbName);
+            const questConfigsCollection = db.collection('questconfigs');
+            
+            // Check if config already exists for this class
+            const existingQuestConfig = await questConfigsCollection.findOne({
+                $or: [
+                    { classId: classId },
+                    { groupId: classId },
+                    { configId: classId }
+                ]
+            });
+            
+            // Transform questSequence to legacy format for compatibility
+            const legacyFormat = { map_repo_link: questJsonConfig.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map" };
+            for (const quest of questJsonConfig.questSequence) {
+                const questId = quest.questId;
+                const meta = quest.metadata || {};
+                const tasks = quest.tasks || {};
+                legacyFormat[questId] = { metadata: meta, ...tasks };
+            }
+            
+            if (existingQuestConfig) {
+                // Update existing config
+                await questConfigsCollection.updateOne(
+                    { _id: existingQuestConfig._id },
+                    {
+                        $set: {
+                            config: legacyFormat,
+                            configData: questJsonConfig,
+                            questSequence: questJsonConfig.questSequence,
+                            updatedAt: new Date()
+                        }
+                    }
+                );
+                console.log(`✅ [saveQuestJsonConfig] Updated existing config in questconfigs collection`);
+            } else {
+                // Create new config document
+                const newConfigDoc = {
+                    _id: new mongoose.Types.ObjectId(),
+                    classId: classId,
+                    groupId: classId,
+                    configId: classId,
+                    config: legacyFormat,
+                    configData: questJsonConfig,
+                    questSequence: questJsonConfig.questSequence,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    isPurpleDeployment: false
+                };
+                
+                await questConfigsCollection.insertOne(newConfigDoc);
+                console.log(`✅ [saveQuestJsonConfig] Created new config in questconfigs collection`);
+            }
+            
+            await client.close();
+        } catch (dbError) {
+            console.error('⚠️ Failed to save to questconfigs collection:', dbError.message);
+            // Continue - this is not critical for group save
+        }
+
+        // Also write a legacy-compatible config file for the bot
+        try {
+            const outputDir = path.join(__dirname, '../../../OSS-Doorway/src/config/generated');
+            const outputPath = path.join(outputDir, `quest_config_${classId}.json`);
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            // Transform questJsonConfig.questSequence into legacy format expected by the bot
+            const legacyConfig = { map_repo_link: questJsonConfig.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map" };
+            for (const quest of questJsonConfig.questSequence) {
+                const questId = quest.questId;
+                const meta = quest.metadata || {};
+                const tasks = quest.tasks || {};
+                legacyConfig[questId] = { metadata: meta, ...tasks };
+            }
+
+            fs.writeFileSync(outputPath, JSON.stringify(legacyConfig, null, 2));
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            fs.writeFileSync(`${outputPath}.${timestamp}`, JSON.stringify(legacyConfig, null, 2));
+            console.log(`✅ [saveQuestJsonConfig] Wrote legacy config to ${outputPath}`);
+        } catch (fileErr) {
+            console.error('⚠️ Failed to write legacy config file:', fileErr.message);
+            // Do not fail the API response for file write issues
+        }
+
+        console.log(`✅ [saveQuestJsonConfig] Successfully saved quest JSON for class: ${group.groupName}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Quest JSON configuration saved successfully',
+            data: {
+                classId: group._id,
+                className: group.groupName,
+                questCount: questJsonConfig.questSequence.length,
+                lastUpdated: group.questJsonLastUpdated
+            }
+        });
+
+    } catch (error) {
+        console.error('Error saving quest JSON config:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error saving quest JSON configuration',
+            error: error.message
+        });
+    }
+};
+
+// Get quest JSON configuration for a class
+const getQuestJsonConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+
+        console.log(`📖 [getQuestJsonConfig] Retrieving quest JSON for class: ${classId}`);
+
+        // Find the group for basic info
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        // 🔄 NEW: Check questconfigs collection for latest configuration (including purple deploys)
+        const { MongoClient } = require('mongodb');
+        const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI || 'mongodb+srv://USERNAME:PASSWORD@cluster.mongodb.net/?retryWrites=true&w=majority&appName=gamification';
+        const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+        
+        let latestConfig = null;
+        let configSource = 'groups';
+        
+        try {
+            const client = new MongoClient(ossDoorwayUri);
+            await client.connect();
+            const db = client.db(ossDoorwayDbName);
+            
+            // Find all configurations for this class, sorted by creation date (newest first)
+            const allConfigs = await db.collection('questconfigs').find({
+                $or: [
+                    { classId: classId },
+                    { classId: { $regex: `${classId}_purple_` } },
+                    { groupId: classId },
+                    { groupId: { $regex: `${classId}_purple_` } },
+                    { configId: classId },
+                    { configId: { $regex: `${classId}_purple_` } }
+                ]
+            }).sort({ createdAt: -1 }).toArray();
+            
+            // 🔍 NEW: Check what config students are actually using
+            let activeConfigId = null;
+            let studentUsageCount = {};
+            
+            try {
+                const userDataCollection = db.collection('userData');
+                const studentsInClass = await userDataCollection.find({
+                    $or: [
+                        { 'user_data.customGroupId': classId },
+                        { 'user_data.customGroupId': { $regex: new RegExp(`^${classId}_purple_`) } }
+                    ]
+                }).toArray();
+                
+                // Count how many students are using each config
+                studentsInClass.forEach(student => {
+                    const customGroupId = student.user_data?.customGroupId;
+                    if (customGroupId) {
+                        studentUsageCount[customGroupId] = (studentUsageCount[customGroupId] || 0) + 1;
+                    }
+                });
+                
+                // Find the config with the most students using it
+                let maxUsage = 0;
+                Object.keys(studentUsageCount).forEach(configId => {
+                    if (studentUsageCount[configId] > maxUsage) {
+                        maxUsage = studentUsageCount[configId];
+                        activeConfigId = configId;
+                    }
+                });
+                
+                if (activeConfigId && maxUsage > 0) {
+                    console.log(`📊 [getQuestJsonConfig] Student config usage:`, studentUsageCount);
+                    console.log(`📊 [getQuestJsonConfig] Active config (most students): ${activeConfigId} (${maxUsage} students)`);
+                } else {
+                    console.log(`📊 [getQuestJsonConfig] No students found in class, will use most recent config`);
+                }
+            } catch (studentQueryError) {
+                console.warn(`⚠️ [getQuestJsonConfig] Could not query student usage: ${studentQueryError.message}`);
+                // Continue with most recent config fallback
+            }
+            
+            await client.close();
+            
+            if (allConfigs.length > 0) {
+                // Try to find the config that students are actually using
+                let mostRecentConfig = null;
+                
+                if (activeConfigId) {
+                    // Find the config that students are using
+                    mostRecentConfig = allConfigs.find(config => 
+                        config.classId === activeConfigId || 
+                        config.groupId === activeConfigId || 
+                        config.configId === activeConfigId
+                    );
+                    
+                    if (mostRecentConfig) {
+                        console.log(`✅ [getQuestJsonConfig] Found config in use by students: ${activeConfigId}`);
+                    } else {
+                        console.log(`⚠️ [getQuestJsonConfig] Active config ${activeConfigId} not found in questconfigs, falling back to most recent`);
+                    }
+                }
+                
+                // Fallback to most recent config if:
+                // - No active config found
+                // - No students in class
+                // - Active config not found in questconfigs
+                if (!mostRecentConfig) {
+                    mostRecentConfig = allConfigs[0];
+                    console.log(`📊 [getQuestJsonConfig] Using most recent config (by createdAt): ${mostRecentConfig.classId}`);
+                }
+                const configData = mostRecentConfig.config || mostRecentConfig.configData || mostRecentConfig.questConfig || {};
+                
+                // Convert legacy format to questSequence format if needed
+                if (configData && !configData.questSequence) {
+                    const questKeys = Object.keys(configData).filter(k => k.startsWith('Q')).sort();
+                    const questSequence = questKeys.map((questId, index) => {
+                        const quest = configData[questId];
+                        
+                        // Extract tasks from the quest object
+                        const tasks = {};
+                        Object.keys(quest).forEach(key => {
+                            if (key.startsWith('T') && key !== 'metadata') {
+                                tasks[key] = quest[key];
+                            }
+                        });
+                        
+                        return {
+                            questId: questId,
+                            title: quest.metadata?.title || questId,
+                            isQ0: questId === 'Q0',
+                            questType: quest.metadata?.type || 'custom',
+                            sequenceNumber: index,
+                            tasks: tasks, // Include tasks object
+                            metadata: quest.metadata || {
+                                title: quest.metadata?.title || questId,
+                                description: quest.metadata?.description || '',
+                                prerequisite: index > 0 ? questKeys[index - 1] : null,
+                                type: quest.metadata?.type || 'custom'
+                            }
+                        };
+                    });
+                    
+                    latestConfig = {
+                        map_repo_link: configData.map_repo_link || "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+                        questSequence: questSequence
+                    };
+                } else if (configData.questSequence) {
+                    latestConfig = configData;
+                } else {
+                    latestConfig = mostRecentConfig;
+                }
+                
+                // Update configSource to reflect if we're using the active config or most recent
+                if (activeConfigId && mostRecentConfig.classId === activeConfigId) {
+                    const studentCount = studentUsageCount[activeConfigId] || 0;
+                    configSource = mostRecentConfig.isPurpleDeployment 
+                        ? `questconfigs (purple deploy - ${studentCount} students using)` 
+                        : `questconfigs (${studentCount} students using)`;
+                } else {
+                configSource = mostRecentConfig.isPurpleDeployment ? 'questconfigs (purple deploy)' : 'questconfigs';
+                }
+                
+                console.log(`✅ [getQuestJsonConfig] Found config in questconfigs collection`);
+                console.log(`📊 [getQuestJsonConfig] Config source: ${configSource}`);
+                console.log(`📊 [getQuestJsonConfig] Config classId: ${mostRecentConfig.classId}`);
+                console.log(`📊 [getQuestJsonConfig] Config ID: ${mostRecentConfig._id}`);
+                console.log(`📊 [getQuestJsonConfig] Quest count: ${latestConfig.questSequence?.length || Object.keys(configData).filter(k => k.startsWith('Q')).length}`);
+                console.log(`📊 [getQuestJsonConfig] Last updated: ${mostRecentConfig.updatedAt || mostRecentConfig.createdAt}`);
+            }
+            
+        } catch (mongoError) {
+            console.warn(`⚠️ [getQuestJsonConfig] Could not check questconfigs collection: ${mongoError.message}`);
+            console.log(`📖 [getQuestJsonConfig] Falling back to groups collection`);
+        }
+        
+        // Fallback to groups collection if no config found in questconfigs
+        if (!latestConfig) {
+            if (!group.questJsonConfig) {
+                console.log(`📭 [getQuestJsonConfig] No quest JSON found for class: ${group.groupName}`);
+                return res.status(200).json({
+                    success: true,
+                    message: 'No quest JSON configuration found',
+                    data: {
+                        questJsonConfig: null,
+                        lastUpdated: null,
+                        hasConfig: false
+                    }
+                });
+            }
+            
+            latestConfig = group.questJsonConfig;
+            configSource = 'groups';
+        }
+
+        console.log(`✅ [getQuestJsonConfig] Successfully retrieved quest JSON for class: ${group.groupName}`);
+        console.log(`📊 [getQuestJsonConfig] Final quest count: ${latestConfig.questSequence?.length || 0}`);
+        console.log(`📊 [getQuestJsonConfig] Configuration source: ${configSource}`);
+
+        // Check if config is actually empty (no quests)
+        const questCount = latestConfig.questSequence?.length || 0;
+        const isEmpty = questCount === 0;
+
+        // Sort questSequence numerically by questId before returning
+        if (latestConfig.questSequence && Array.isArray(latestConfig.questSequence) && !isEmpty) {
+            latestConfig.questSequence.sort((a, b) => {
+                const getQuestNumber = (quest) => {
+                    const questId = quest.questId || quest.id;
+                    if (questId && typeof questId === 'string') {
+                        const match = questId.match(/Q(\d+)/i);
+                        if (match) return parseInt(match[1], 10);
+                    }
+                    const title = quest.title || quest.questTitle || '';
+                    const titleMatch = title.match(/Q(\d+)/i);
+                    if (titleMatch) return parseInt(titleMatch[1], 10);
+                    return quest.sequenceNumber || 999;
+                };
+                return getQuestNumber(a) - getQuestNumber(b);
+            });
+            console.log(`🔢 [getQuestJsonConfig] Sorted quest sequence: ${latestConfig.questSequence.map(q => q.questId).join(', ')}`);
+        }
+
+        // If config is empty, return hasConfig: false to prevent frontend from auto-saving default
+        if (isEmpty) {
+            console.log(`📭 [getQuestJsonConfig] Config is empty (0 quests), returning hasConfig: false`);
+            return res.status(200).json({
+                success: true,
+                message: 'No quest JSON configuration found (empty config)',
+                data: {
+                    questJsonConfig: null,
+                    lastUpdated: null,
+                    hasConfig: false,
+                    questCount: 0,
+                    className: group.groupName,
+                    classCode: group.classCode,
+                    configSource: configSource
+                }
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Quest JSON configuration retrieved successfully',
+            data: {
+                questJsonConfig: latestConfig,
+                lastUpdated: group.questJsonLastUpdated,
+                hasConfig: true,
+                questCount: questCount,
+                className: group.groupName,
+                classCode: group.classCode,
+                configSource: configSource
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting quest JSON config:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving quest JSON configuration',
+            error: error.message
+        });
+    }
+};
+
+// Save draft quest configuration for a class
+const saveDraftQuestConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const { draftQuestConfig } = req.body;
+
+        console.log(`💾 [saveDraftQuestConfig] Saving draft quest JSON for class: ${classId}`);
+        console.log(`📊 [saveDraftQuestConfig] JSON size: ${JSON.stringify(draftQuestConfig).length} characters`);
+
+        if (!draftQuestConfig) {
+            return res.status(400).json({
+                success: false,
+                message: 'Draft quest configuration is required'
+            });
+        }
+
+        // Find and update the group
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        // Update draft quest configuration in database
+        group.draftQuestConfig = draftQuestConfig;
+        group.draftQuestLastUpdated = new Date();
+        await group.save();
+
+        // Also write draft config to JSON file for the bot to use
+        try {
+            const outputDir = path.join(__dirname, '../../shared-quest-configs');
+            const outputPath = path.join(outputDir, `quest_config_${classId}.json`);
+            
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+
+            // Write the draft config directly (questSequence format)
+            fs.writeFileSync(outputPath, JSON.stringify(draftQuestConfig, null, 2));
+            
+            // Also save a timestamped backup
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const backupPath = `${outputPath}.${timestamp}`;
+            fs.writeFileSync(backupPath, JSON.stringify(draftQuestConfig, null, 2));
+            
+            console.log(`✅ [saveDraftQuestConfig] Wrote draft config to ${outputPath}`);
+            console.log(`✅ [saveDraftQuestConfig] Backup saved to ${backupPath}`);
+        } catch (fileErr) {
+            console.error('⚠️ Failed to write draft config file:', fileErr.message);
+            // Do not fail the API response for file write issues
+        }
+
+        // Also save to OSS-Doorway DB (questconfigs collection) in questSequence format for test repos
+        try {
+            const { MongoClient } = require('mongodb');
+            const mongoose = require('mongoose');
+            // SECURITY: Never hardcode credentials. Always use environment variables.
+            if (!process.env.OSS_DOORWAY_DB_URI) {
+              throw new Error('OSS_DOORWAY_DB_URI environment variable is required');
+            }
+            const ossDoorwayUri = process.env.OSS_DOORWAY_DB_URI;
+            const ossDoorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+            
+            const client = new MongoClient(ossDoorwayUri);
+            await client.connect();
+            const db = client.db(ossDoorwayDbName);
+            const questConfigsCollection = db.collection('questconfigs');
+            
+            // Find ALL existing test repo configs for this class (pattern: classId-test-*)
+            const testConfigPattern = new RegExp(`^${classId}-test-`);
+            const existingTestConfigs = await questConfigsCollection.find({
+                $or: [
+                    { classId: { $regex: testConfigPattern } },
+                    { groupId: { $regex: testConfigPattern } },
+                    { configId: { $regex: testConfigPattern } }
+                ]
+            }).toArray();
+            
+            if (existingTestConfigs.length > 0) {
+                // Update ALL existing test repo configs with the latest draft
+                console.log(`🔄 [saveDraftQuestConfig] Found ${existingTestConfigs.length} existing test repo config(s), updating them...`);
+                
+                for (const existingConfig of existingTestConfigs) {
+                    await questConfigsCollection.updateOne(
+                        { _id: existingConfig._id },
+                        {
+                            $set: {
+                                configData: draftQuestConfig, // Save questSequence format
+                                questSequence: draftQuestConfig.questSequence,
+                                updatedAt: new Date()
+                            }
+                        }
+                    );
+                    console.log(`✅ [saveDraftQuestConfig] Updated test config ${existingConfig.configId || existingConfig.classId || existingConfig.groupId}`);
+                }
+            } else {
+                // No existing test configs found, create a new one
+                const testGroupId = `${classId}-test-${Date.now()}`;
+                const newConfigDoc = {
+                    _id: new mongoose.Types.ObjectId(),
+                    classId: testGroupId,
+                    groupId: testGroupId,
+                    configId: testGroupId,
+                    configData: draftQuestConfig, // Save questSequence format
+                    questSequence: draftQuestConfig.questSequence,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    isPurpleDeployment: false
+                };
+                
+                await questConfigsCollection.insertOne(newConfigDoc);
+                console.log(`✅ [saveDraftQuestConfig] Created new test config in questconfigs collection (questSequence format)`);
+            }
+            
+            await client.close();
+        } catch (dbError) {
+            console.error('⚠️ Failed to save draft config to questconfigs collection:', dbError.message);
+            // Continue - this is not critical for draft save
+        }
+
+        console.log(`✅ [saveDraftQuestConfig] Successfully saved draft quest JSON for class: ${group.groupName}`);
+
+        // Emit socket event to notify other users in this class
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`class:${classId}`).emit('draft-quest-config-updated', {
+                classId: group._id,
+                className: group.groupName,
+                questCount: draftQuestConfig.questSequence?.length || 0,
+                lastUpdated: group.draftQuestLastUpdated
+            });
+            console.log(`🔔 [saveDraftQuestConfig] Emitted draft-quest-config-updated event to class:${classId}`);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Draft quest configuration saved successfully',
+            data: {
+                classId: group._id,
+                className: group.groupName,
+                questCount: draftQuestConfig.questSequence?.length || 0,
+                lastUpdated: group.draftQuestLastUpdated
+            }
+        });
+
+    } catch (error) {
+        console.error('Error saving draft quest config:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error saving draft quest configuration',
+            error: error.message
+        });
+    }
+};
+
+// Get draft quest configuration for a class
+const getDraftQuestConfig = async (req, res) => {
+    try {
+        const { classId } = req.params;
+
+        console.log(`📖 [getDraftQuestConfig] Retrieving draft quest JSON for class: ${classId}`);
+
+        // Find the group and return draft quest JSON config
+        const group = await Group.findById(classId);
+        if (!group) {
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        if (!group.draftQuestConfig) {
+            console.log(`📭 [getDraftQuestConfig] No draft quest JSON found for class: ${group.groupName}`);
+            return res.status(200).json({
+                success: true,
+                message: 'No draft quest configuration found',
+                data: {
+                    draftQuestConfig: { questSequence: [] },
+                    lastUpdated: null,
+                    hasConfig: false
+                }
+            });
+        }
+
+        console.log(`✅ [getDraftQuestConfig] Successfully retrieved draft quest JSON for class: ${group.groupName}`);
+        console.log(`📊 [getDraftQuestConfig] Quest count: ${group.draftQuestConfig.questSequence?.length || 0}`);
+
+        res.status(200).json({
+            success: true,
+            message: 'Draft quest configuration retrieved successfully',
+            data: {
+                draftQuestConfig: group.draftQuestConfig,
+                lastUpdated: group.draftQuestLastUpdated,
+                hasConfig: true,
+                questCount: group.draftQuestConfig.questSequence?.length || 0,
+                className: group.groupName,
+                classCode: group.classCode
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting draft quest config:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving draft quest configuration',
+            error: error.message
+        });
+    }
+};
+
+// Delete a draft quest
+const deleteDraftQuest = async (req, res) => {
+    try {
+        const { classId, questIndex } = req.params;
+
+        console.log(`🗑️ [deleteDraftQuest] Deleting draft quest ${questIndex} for class: ${classId}`);
+
+        const group = await Group.findById(classId);
+        if (!group) {
+            console.log(`❌ [deleteDraftQuest] Class not found: ${classId}`);
+            return res.status(404).json({
+                success: false,
+                message: 'Class not found'
+            });
+        }
+
+        console.log(`🔍 [deleteDraftQuest] Found group: ${group.groupName}`);
+        console.log(`🔍 [deleteDraftQuest] Draft config exists: ${!!group.draftQuestConfig}`);
+        console.log(`🔍 [deleteDraftQuest] Quest sequence exists: ${!!group.draftQuestConfig?.questSequence}`);
+        console.log(`🔍 [deleteDraftQuest] Quest sequence length: ${group.draftQuestConfig?.questSequence?.length || 0}`);
+
+        if (!group.draftQuestConfig || !group.draftQuestConfig.questSequence) {
+            console.log(`❌ [deleteDraftQuest] No draft quests found for class: ${classId}`);
+            return res.status(404).json({
+                success: false,
+                message: 'No draft quests found'
+            });
+        }
+
+        const questIndexNum = parseInt(questIndex, 10);
+        console.log(`🔍 [deleteDraftQuest] Parsed quest index: ${questIndexNum}`);
+        
+        if (questIndexNum < 0 || questIndexNum >= group.draftQuestConfig.questSequence.length) {
+            console.log(`❌ [deleteDraftQuest] Invalid quest index ${questIndexNum}, valid range: 0-${group.draftQuestConfig.questSequence.length - 1}`);
+            return res.status(400).json({
+                success: false,
+                message: `Invalid quest index ${questIndexNum}, valid range: 0-${group.draftQuestConfig.questSequence.length - 1}`
+            });
+        }
+
+        // Log the quest being deleted
+        const questToDelete = group.draftQuestConfig.questSequence[questIndexNum];
+        console.log(`🗑️ [deleteDraftQuest] Deleting quest: "${questToDelete?.title || 'Unknown'}" at index ${questIndexNum}`);
+
+        // Create a new array without the quest to delete (more reliable than splice)
+        const updatedQuestSequence = group.draftQuestConfig.questSequence.filter((_, index) => index !== questIndexNum);
+        
+        console.log(`🔍 [deleteDraftQuest] Original length: ${group.draftQuestConfig.questSequence.length}`);
+        console.log(`🔍 [deleteDraftQuest] New length: ${updatedQuestSequence.length}`);
+
+        // Update the draft config with the new array
+        group.draftQuestConfig = {
+            ...group.draftQuestConfig,
+            questSequence: updatedQuestSequence
+        };
+        
+        group.draftQuestLastUpdated = new Date();
+        
+        console.log(`💾 [deleteDraftQuest] Saving changes to database...`);
+        const savedGroup = await group.save();
+        
+        console.log(`✅ [deleteDraftQuest] Database save completed`);
+        console.log(`🔍 [deleteDraftQuest] Final quest count: ${savedGroup.draftQuestConfig.questSequence.length}`);
+        
+        // Verify the deletion by re-fetching from database
+        const verificationGroup = await Group.findById(classId);
+        if (verificationGroup && verificationGroup.draftQuestConfig && verificationGroup.draftQuestConfig.questSequence) {
+            console.log(`🔍 [deleteDraftQuest] Verification - quest count after re-fetch: ${verificationGroup.draftQuestConfig.questSequence.length}`);
+            console.log(`🔍 [deleteDraftQuest] Verification - quest titles: ${verificationGroup.draftQuestConfig.questSequence.map(q => q.title).join(', ')}`);
+        } else {
+            console.log(`⚠️ [deleteDraftQuest] Verification - no draft config found after save`);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Draft quest deleted successfully',
+            data: {
+                questCount: savedGroup.draftQuestConfig.questSequence.length,
+                deletedQuestTitle: questToDelete?.title || 'Unknown'
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ [deleteDraftQuest] Error deleting draft quest:', error);
+        console.error('❌ [deleteDraftQuest] Stack trace:', error.stack);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting draft quest',
+            error: error.message
+        });
+    }
+};
+
+// Upsert a stored value for a user in a class
+const upsertStoredValue = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const { githubUsername, key } = req.body;
+        let { value } = req.body;
+        if (!githubUsername || !key) {
+            return res.status(400).json({ success: false, message: 'githubUsername and key are required' });
+        }
+        const group = await Group.findById(classId);
+        if (!group) return res.status(404).json({ success: false, message: 'Class not found' });
+
+        // Coerce value type based on quest JSON config (expectedAnswerType for the savedDataName)
+        try {
+            const questJson = group.questJsonConfig || {};
+            const seq = Array.isArray(questJson.questSequence) ? questJson.questSequence : [];
+            let expectedType = null;
+            for (const quest of seq) {
+                const tasks = quest?.tasks || {};
+                for (const [taskId, task] of Object.entries(tasks)) {
+                    const save = task?.saveValidatedData || task?.config?.saveValidatedData;
+                    const name = task?.savedDataName || task?.config?.savedDataName;
+                    const typeHint = task?.expectedAnswerType || task?.config?.expectedAnswerType;
+                    if (save && name && name === key) {
+                        expectedType = typeHint || 'String';
+                        break;
+                    }
+                }
+                if (expectedType) break;
+            }
+            if (expectedType === 'Number') {
+                const coerced = Number(value);
+                if (!Number.isNaN(coerced)) value = coerced;
+            }
+        } catch (coerceErr) {
+            console.warn('[upsertStoredValue] Failed to coerce value type:', coerceErr?.message || coerceErr);
+        }
+
+        const doc = await UserStoredData.findOneAndUpdate(
+            { group: classId, githubUsername },
+            { $set: { [`storedValues.${key}`]: value } },
+            { upsert: true, new: true }
+        );
+        return res.status(200).json({ success: true, data: { githubUsername: doc.githubUsername, storedValues: doc.storedValues } });
+    } catch (error) {
+        console.error('Error upserting stored value:', error);
+        return res.status(500).json({ success: false, message: 'Error upserting stored value', error: error.message });
+    }
+};
+
+// Fetch stored values for a class from backend storage
+const getStoredValuesBackend = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const docs = await UserStoredData.find({ group: classId });
+        const valuesByUser = {};
+        for (const d of docs) {
+            valuesByUser[d.githubUsername] = Object.fromEntries(d.storedValues || []);
+        }
+        return res.status(200).json({ success: true, data: { valuesByUser } });
+    } catch (error) {
+        console.error('Error fetching backend stored values:', error);
+        return res.status(500).json({ success: false, message: 'Error fetching backend stored values', error: error.message });
+    }
+};
+
+// Fetch stored data keys from quest JSON and per-student values
+const getStoredValuesForClass = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const group = await Group.findById(classId).populate('students');
+        if (!group) {
+            return res.status(404).json({ success: false, message: 'Class not found' });
+        }
+        const questJson = group.questJsonConfig || {};
+        const keys = [];
+        // Walk questSequence to find custom-api-call tasks with saveValidatedData
+        const seq = Array.isArray(questJson.questSequence) ? questJson.questSequence : [];
+        for (const quest of seq) {
+            const tasks = quest?.tasks || {};
+            for (const [taskId, task] of Object.entries(tasks)) {
+                if (task?.taskType === 'custom-api-call' || task?.type === 'custom-api-call') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    const expected = task.expectedAnswerType || task.config?.expectedAnswerType || 'Number';
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: expected });
+                    }
+                } else if (task?.taskType === 'get-issue-count' || task?.type === 'get-issue-count') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: 'Number' });
+                    }
+                } else if (task?.taskType === 'issue-no' || task?.type === 'issue-no') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: 'Number' });
+                    }
+                } else if (task?.taskType === 'collect-info' || task?.type === 'collect-info') {
+                    const save = task.saveValidatedData || task.config?.saveValidatedData;
+                    const name = task.savedDataName || task.config?.savedDataName;
+                    if (save && name) {
+                        keys.push({ questId: quest.questId, taskId, dataName: name, expectedType: 'Text' });
+                    }
+                }
+            }
+        }
+
+        // Attempt to fetch per-user values from bot DB (user_data collection)
+        const valuesByUser = {};
+        try {
+            // Check both databases: main database and OSS-Doorway bot database
+            const databases = [
+                { uri: process.env.URI, dbName: process.env.DB_NAME, name: 'Main DB' },
+                { uri: process.env.OSS_DOORWAY_DB_URI, dbName: process.env.OSS_DOORWAY_DB_NAME, name: 'OSS-Doorway Bot DB' }
+            ];
+            
+            for (const dbConfig of databases) {
+                if (!dbConfig.uri || !dbConfig.dbName) {
+                    console.warn(`[getStoredValuesForClass] ${dbConfig.name}: URI or DB_NAME env not set; skipping`);
+                    continue;
+                }
+                
+                console.log(`[getStoredValuesForClass] Searching ${dbConfig.name} for class: ${classId}`);
+                
+                try {
+                    const client = new MongoClient(dbConfig.uri);
+                    await client.connect();
+                    console.log(`[getStoredValuesForClass] Connected to ${dbConfig.name}`);
+                    
+                    const db = client.db(dbConfig.dbName);
+                    const collection = db.collection('user_data');
+                    
+                    // Strategy 1: Find users by classId (customGroupId)
+                    let docs = await collection.find({ 'user_data.customGroupId': classId }, { projection: { user_data: 1, _id: 1 } }).toArray();
+                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Found ${docs.length} users by customGroupId: ${classId}`);
+                    
+                    for (const doc of docs) {
+                        const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                        if (Object.keys(stored).length > 0) {
+                            valuesByUser[doc._id] = stored;
+                            console.log(`[getStoredValuesForClass] ${dbConfig.name}: Added user ${doc._id} with ${Object.keys(stored).length} stored values`);
+                        }
+                    }
+                    
+                    // Strategy 2: If no users found, try to find by repository pattern matching
+                    if (Object.keys(valuesByUser).length === 0 && group.groupName) {
+                        console.log(`[getStoredValuesForClass] ${dbConfig.name}: No users found by customGroupId, trying repository pattern matching...`);
+                        
+                        // Look for users with repository names that might match this class
+                        // The bot often uses patterns like: username-messages-timestamp
+                        const possiblePatterns = [
+                            `-${String(group.groupName).toLowerCase()}`,
+                            `-${String(group.groupName).toLowerCase()}-messages`,
+                            `-messages-${String(group.groupName).toLowerCase()}`
+                        ];
+                        
+                        for (const pattern of possiblePatterns) {
+                            const regex = new RegExp(`${pattern}$`, 'i');
+                            const docsByName = await collection.find({ _id: { $regex: regex } }, { projection: { user_data: 1, _id: 1 } }).toArray();
+                            console.log(`[getStoredValuesForClass] ${dbConfig.name}: Pattern "${pattern}" found ${docsByName.length} users`);
+                            
+                            for (const doc of docsByName) {
+                                const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                                if (Object.keys(stored).length > 0) {
+                                    valuesByUser[doc._id] = stored;
+                                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Added user ${doc._id} with ${Object.keys(stored).length} stored values`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Strategy 3: Look for any users with stored values that might be relevant
+                    if (Object.keys(valuesByUser).length === 0) {
+                        console.log(`[getStoredValuesForClass] ${dbConfig.name}: Still no users found, searching for any users with stored values...`);
+                        
+                        // Find any users who have stored values (this will catch collect-info data)
+                        const docsWithStoredValues = await collection.find(
+                            { 'user_data.storedValues': { $exists: true, $ne: {} } },
+                            { projection: { user_data: 1, _id: 1 } }
+                        ).limit(50).toArray(); // Limit to avoid overwhelming results
+                        
+                        console.log(`[getStoredValuesForClass] ${dbConfig.name}: Found ${docsWithStoredValues.length} users with stored values`);
+                        
+                        for (const doc of docsWithStoredValues) {
+                            const stored = (doc.user_data && doc.user_data.storedValues) || {};
+                            if (Object.keys(stored).length > 0) {
+                                // Only add if we don't already have this user
+                                if (!valuesByUser[doc._id]) {
+                                    valuesByUser[doc._id] = stored;
+                                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Added user ${doc._id} with stored values: ${Object.keys(stored).join(', ')}`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    await client.close();
+                    console.log(`[getStoredValuesForClass] ${dbConfig.name}: Connection closed`);
+                    
+                } catch (dbErr) {
+                    console.error(`[getStoredValuesForClass] ${dbConfig.name}: Failed to fetch per-user values:`, dbErr.message);
+                }
+            }
+            
+            console.log(`[getStoredValuesForClass] Final result: ${Object.keys(valuesByUser).length} users with stored values`);
+            
+        } catch (dbErr) {
+            console.error('[getStoredValuesForClass] Failed to fetch per-user values:', dbErr.message);
+        }
+
+        // Merge backend-stored values (from our own collection) for this class
+        try {
+            const backendDocs = await (require('../models/UserStoredData')).find({ group: classId });
+            for (const d of backendDocs) {
+                const obj = Object.fromEntries(d.storedValues || []);
+                valuesByUser[d.githubUsername] = { ...(valuesByUser[d.githubUsername] || {}), ...obj };
+            }
+        } catch (mergeErr) {
+            console.warn('[getStoredValuesForClass] Failed to merge backend stored values:', mergeErr?.message || mergeErr);
+        }
+
+        return res.status(200).json({ success: true, data: { keys, valuesByUser } });
+    } catch (error) {
+        console.error('Error fetching stored values for class:', error);
+        return res.status(500).json({ success: false, message: 'Error fetching stored values', error: error.message });
+    }
+};
+
+// New function to fetch collected_info data directly from OSS-Doorway database
+const getCollectedInfoForClass = async (req, res) => {
+    const { classId } = req.params;
+    
+    if (!classId) {
+        return res.status(400).json({ success: false, message: 'Class ID is required' });
+    }
+    
+    try {
+        console.log(`[getCollectedInfoForClass] Fetching collected_info data for class: ${classId}`);
+        
+        // Use the same database connection logic as getStoredValuesForClass
+        const projection = { 
+          _id: 1, 
+          'user_data.github': 1, 
+          'user_data.username': 1, 
+          'user_data.storedValues': 1 
+        };
+        
+        let allUsers = [];
+        
+        // Check both databases: main database and OSS-Doorway bot database
+        const databases = [
+            { uri: process.env.URI, dbName: process.env.DB_NAME, name: 'Main DB' },
+            { uri: process.env.OSS_DOORWAY_DB_URI || process.env.URI, dbName: process.env.OSS_DOORWAY_DB_NAME || process.env.DB_NAME, name: 'OSS-Doorway Bot DB' }
+        ];
+        
+        for (const dbConfig of databases) {
+            if (!dbConfig.uri || !dbConfig.dbName) {
+                console.warn(`[getCollectedInfoForClass] ${dbConfig.name}: URI or DB_NAME env not set; skipping`);
+                continue;
+            }
+            
+            console.log(`[getCollectedInfoForClass] Searching ${dbConfig.name} for class: ${classId}`);
+            
+            try {
+                const client = new MongoClient(dbConfig.uri);
+                await client.connect();
+                console.log(`[getCollectedInfoForClass] Connected to ${dbConfig.name}`);
+                
+                const db = client.db(dbConfig.dbName);
+                const collection = db.collection('user_data');
+                
+                let users = [];
+                
+                // Strategy 1: Find users by classId (customGroupId)
+                users = await collection.find(
+                    { 'user_data.customGroupId': classId },
+                    { projection }
+                ).toArray();
+                console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Exact match: Found ${users.length} users in class ${classId}`);
+                
+                // Strategy 2: If no users found, try repository pattern matching
+                if (users.length === 0) {
+                    console.log(`[getCollectedInfoForClass] ${dbConfig.name}: No users found by exact customGroupId, trying repository pattern matching...`);
+                    
+                    // Look for users with repository names that might match this class
+                    const possiblePatterns = [
+                        `-friend`,
+                        `-friend-messages`,
+                        `-messages-friend`
+                    ];
+                    
+                    for (const pattern of possiblePatterns) {
+                        const regex = new RegExp(`${pattern}$`, 'i');
+                        const docsByName = await collection.find(
+                            { _id: { $regex: regex } },
+                            { projection }
+                        ).toArray();
+                        console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Pattern "${pattern}" found ${docsByName.length} users`);
+                        
+                        if (docsByName.length > 0) {
+                            users = docsByName;
+                            break;
+                        }
+                    }
+                }
+                
+                // Strategy 3: Look for any users with collected_info data
+                if (users.length === 0) {
+                    console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Still no users found, searching for any users with collected_info data...`);
+                    
+                    // Special case: If the requested class ID is the one from the URL that doesn't exist,
+                    // try to find the actual class that has collected_info data
+                    if (classId === '68ab703e6ceb965e0759df11') {
+                        console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Special case: Looking for class with collected_info data...`);
+                        
+                        // Search for any class that has collected_info data
+                        const docsWithCollectedInfo = await collection.find(
+                            { 
+                                'user_data.storedValues.collected_info': { $exists: true, $ne: null },
+                                'user_data.customGroupId': { $exists: true, $ne: null }
+                            },
+                            { projection }
+                        ).limit(50).toArray();
+                        
+                        console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Found ${docsWithCollectedInfo.length} users with collected_info data`);
+                        users = docsWithCollectedInfo;
+                    } else {
+                        // Regular search for any users with collected_info data
+                        const docsWithCollectedInfo = await collection.find(
+                            { 
+                                'user_data.storedValues.collected_info': { $exists: true, $ne: null },
+                                'user_data.customGroupId': { $exists: true, $ne: null }
+                            },
+                            { projection }
+                        ).limit(50).toArray();
+                        
+                        console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Found ${docsWithCollectedInfo.length} users with collected_info data`);
+                        users = docsWithCollectedInfo;
+                    }
+                }
+                
+                // Add users from this database to the total
+                allUsers = allUsers.concat(users);
+                console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Added ${users.length} users, total now: ${allUsers.length}`);
+                
+                await client.close();
+                console.log(`[getCollectedInfoForClass] ${dbConfig.name}: Connection closed`);
+                
+            } catch (dbErr) {
+                console.error(`[getCollectedInfoForClass] ${dbConfig.name}: Failed to fetch collected_info data:`, dbErr.message);
+            }
+        }
+        
+        console.log(`[getCollectedInfoForClass] Final result: Found ${allUsers.length} users across all databases for class ${classId}`);
+            
+            // Process the data to extract collected_info
+            const collectedInfoData = {};
+            let totalCollectedInfoEntries = 0;
+            
+            for (const user of allUsers) {
+                const storedValues = user.user_data?.storedValues || {};
+                const collectedInfoEntries = [];
+                
+                // Extract all collected_info entries
+                for (const [key, value] of Object.entries(storedValues)) {
+                    if (key === 'collected_info' || key.includes('collected_info')) {
+                        collectedInfoEntries.push({
+                            key: key,
+                            value: value
+                        });
+                        totalCollectedInfoEntries++;
+                    }
+                }
+                
+                if (collectedInfoEntries.length > 0) {
+                    collectedInfoData[user._id] = {
+                        userId: user._id,
+                        github: user.user_data?.github || 'N/A',
+                        username: user.user_data?.username || 'N/A',
+                        collectedInfo: collectedInfoEntries
+                    };
+                }
+            }
+            
+            console.log(`[getCollectedInfoForClass] Found ${totalCollectedInfoEntries} collected_info entries across ${Object.keys(collectedInfoData).length} users`);
+            
+            return res.status(200).json({
+                success: true,
+                data: collectedInfoData,
+                summary: {
+                    totalUsers: allUsers.length,
+                    usersWithCollectedInfo: Object.keys(collectedInfoData).length,
+                    totalCollectedInfoEntries: totalCollectedInfoEntries,
+                    requestedClassId: classId,
+                    actualClassId: allUsers.length > 0 ? allUsers[0]?.user_data?.customGroupId : null,
+                    usedRequestedClassId: allUsers.length > 0 && allUsers[0]?.user_data?.customGroupId === classId
+                }
+            });
+        
+    } catch (error) {
+        console.error('[getCollectedInfoForClass] Error:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Error fetching collected_info data', 
+            error: error.message 
+        });
+    }
+};
+
+// Create test repository using draft quest configuration
+const createTestRepo = async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { username, questConfig, isTestRepo, forceDelete } = req.body;
+
+    console.log(`🧪 [CREATE-TEST-REPO] Starting test repo creation for user: ${username}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Class ID: ${classId}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Is Test Repo: ${isTestRepo}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Force Delete: ${forceDelete}`);
+
+    // Get the group to get the actual class name
+    const group = await Group.findById(classId);
+    if (!group) {
+      return res.status(404).json({
+        success: false,
+        message: 'Class not found'
+      });
+    }
+
+    // Create test class name with -test suffix
+    const actualClassName = group.groupName || group.className || "Unknown";
+    const testClassName = `${actualClassName}-test`;
+    
+    // Format the repository name to check if it exists
+    const formattedClassName = actualClassName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    const testRepoName = `${username}-${formattedClassName}-test`;
+    
+    // Check if repository already exists
+    try {
+      const { Octokit } = await import('@octokit/rest');
+      const { createAppAuth } = await import('@octokit/auth-app');
+      
+      let privateKey = process.env.OSS_DOORWAY_PRIVATE_KEY;
+      if (privateKey && privateKey.includes('\\n')) {
+        privateKey = privateKey.replace(/\\n/g, '\n');
+      }
+      
+      const auth = createAppAuth({
+        appId: process.env.OSS_DOORWAY_APP_ID,
+        privateKey: privateKey,
+      });
+      
+      const { token } = await auth({ type: "app" });
+      const octokit = new Octokit({
+        auth: token,
+        userAgent: 'OSS-Management'
+      });
+      
+      const { data: installations } = await octokit.apps.listInstallations();
+      const installation = installations.find(inst => 
+        inst.account.login === process.env.GITHUB_ORG
+      );
+      
+      if (!installation) {
+        throw new Error(`GitHub App not installed in organization: ${process.env.GITHUB_ORG}`);
+      }
+      
+      const { token: installationToken } = await auth({
+        type: "installation",
+        installationId: installation.id,
+      });
+      
+      const orgOctokit = new Octokit({
+        auth: installationToken,
+        userAgent: 'OSS-Management'
+      });
+      
+      // Check if repo exists
+      try {
+        await orgOctokit.repos.get({
+          owner: process.env.GITHUB_ORG,
+          repo: testRepoName
+        });
+        
+        console.log(`⚠️ [CREATE-TEST-REPO] Repository ${testRepoName} already exists`);
+        
+        // If forceDelete is true, delete the existing repo first
+        if (forceDelete === true) {
+          console.log(`🗑️ [CREATE-TEST-REPO] Force delete enabled, deleting existing repo: ${testRepoName}`);
+          
+          try {
+            await orgOctokit.repos.delete({
+              owner: process.env.GITHUB_ORG,
+              repo: testRepoName
+            });
+            console.log(`✅ [CREATE-TEST-REPO] Existing repository deleted: ${testRepoName}`);
+            
+            // Add a small delay to ensure GitHub processes the deletion
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } catch (deleteError) {
+            console.error(`❌ [CREATE-TEST-REPO] Failed to delete existing repository:`, deleteError.message);
+            return res.status(500).json({
+              success: false,
+              message: `Failed to delete existing repository: ${deleteError.message}`
+            });
+          }
+        } else {
+          // Repository exists and forceDelete is not set - ask user
+          const repoUrl = `https://github.com/${process.env.GITHUB_ORG}/${testRepoName}`;
+          return res.status(409).json({
+            success: false,
+            repoExists: true,
+            message: `Test repository already exists for user ${username}`,
+            repositoryUrl: repoUrl,
+            repositoryName: testRepoName
+          });
+        }
+      } catch (checkError) {
+        if (checkError.status === 404) {
+          console.log(`✅ [CREATE-TEST-REPO] Repository ${testRepoName} does not exist, proceeding with creation`);
+        } else {
+          throw checkError;
+        }
+      }
+    } catch (checkErr) {
+      console.warn(`⚠️ [CREATE-TEST-REPO] Could not check if repository exists:`, checkErr.message);
+      // Continue with creation attempt
+    }
+    
+    console.log(`🧪 [CREATE-TEST-REPO] Original class name: ${actualClassName}`);
+    console.log(`🧪 [CREATE-TEST-REPO] Test class name: ${testClassName}`);
+    // Use the current draft quests from the group's draftQuestConfig
+    // This ensures that when creating a draft repo, it uses the latest saved draft quests
+    const effectiveQuestConfig = group.draftQuestConfig && typeof group.draftQuestConfig === 'object' 
+      ? group.draftQuestConfig 
+      : { questSequence: [] };
+
+    console.log(`🧪 [CREATE-TEST-REPO] Using draft quest config with ${effectiveQuestConfig?.questSequence?.length || 0} quests`);
+    console.log(`🧪 [CREATE-TEST-REPO] Draft quest titles: ${effectiveQuestConfig?.questSequence?.map(q => q.title || q.questId).join(', ') || 'None'}`);
+    
+    // Log the quest config being used for debugging
+    if (effectiveQuestConfig.questSequence && effectiveQuestConfig.questSequence.length > 0) {
+      console.log(`🧪 [CREATE-TEST-REPO] First quest details:`, {
+        questId: effectiveQuestConfig.questSequence[0]?.questId,
+        title: effectiveQuestConfig.questSequence[0]?.title,
+        taskCount: Object.keys(effectiveQuestConfig.questSequence[0]?.tasks || {}).length
+      });
+    }
+
+    // Create timestamped test-specific class ID to ensure uniqueness
+    const timestamp = Date.now();
+    const testClassId = `${classId}-test-${timestamp}`;
+    
+    console.log(`🧪 [CREATE-TEST-REPO] Test class ID: ${testClassId}`);
+    
+    // 1) Convert questSequence format to bot-compatible format and save to questconfigs collection
+    try {
+      const mongoose = require('mongoose');
+      const connection = mongoose.connection;
+      const questConfigSchema = new mongoose.Schema({
+        groupId: String,
+        configId: String,
+        classId: String,
+        configData: Object,
+        config: mongoose.Schema.Types.Mixed,
+        createdAt: Date,
+        updatedAt: Date,
+        source: String,
+        createdBy: String,
+        originalFilePath: String,
+        version: Number
+      }, { collection: 'questconfigs' });
+
+      const QuestConfig = (connection.models.QuestConfig || connection.model('QuestConfig', questConfigSchema));
+
+      // Convert questSequence format to full bot format (Q1, Q2...) with metadata and tasks
+      const botCompatibleConfig = {
+        map_repo_link: effectiveQuestConfig.map_repo_link || "https://github.com/OSS-Doorway-Dev/{{repoName}}"
+      };
+
+      if (effectiveQuestConfig.questSequence && effectiveQuestConfig.questSequence.length > 0) {
+        effectiveQuestConfig.questSequence.forEach((quest, index) => {
+          const questKey = quest.questId || `Q${index + 1}`;
+          // Flatten tasks if nested and preserve all task fields (T1, T2, ...)
+          let tasks = quest.tasks;
+          if (tasks && tasks.tasks && typeof tasks.tasks === 'object') {
+            tasks = tasks.tasks;
+          }
+          tasks = tasks || {};
+          // Build quest entry with metadata and tasks spread at top level
+          botCompatibleConfig[questKey] = {
+            metadata: {
+              ...(quest.metadata || {}),
+              prerequisite: index === 0 ? null : `Q${index}`
+            },
+            ...tasks
+          };
+        });
+      }
+
+      console.log(`🔄 [CREATE-TEST-REPO] Converted to bot format with keys: ${Object.keys(botCompatibleConfig)}`);
+
+      const now = new Date();
+      await QuestConfig.findOneAndUpdate(
+        { $or: [ { groupId: testClassId }, { configId: testClassId }, { classId: testClassId } ] },
+        {
+          groupId: testClassId,
+          configId: testClassId,
+          classId: testClassId,
+          configData: botCompatibleConfig,
+          config: botCompatibleConfig,
+          updatedAt: now,
+          source: 'management:createTestRepo',
+          createdAt: now
+        },
+        { upsert: true, new: true }
+      );
+      console.log(`💾 [CREATE-TEST-REPO] Saved test quest config to Management DB for ${testClassId}`);
+
+      // ALSO save to the OSS-Doorway database so the bot can load this config immediately
+      try {
+        const mongoose = require('mongoose');
+        // SECURITY: Never hardcode credentials. Always use environment variables.
+        if (!process.env.OSS_DOORWAY_DB_URI) {
+          throw new Error('OSS_DOORWAY_DB_URI environment variable is required');
+        }
+        const doorwayUri = process.env.OSS_DOORWAY_DB_URI;
+        const doorwayDbName = process.env.OSS_DOORWAY_DB_NAME || 'test';
+
+        const doorwayConn = await mongoose.createConnection(doorwayUri, { dbName: doorwayDbName });
+        await new Promise((resolve, reject) => {
+          doorwayConn.once('connected', resolve);
+          doorwayConn.once('error', reject);
+          setTimeout(() => reject(new Error('Doorway DB connection timeout')), 10000);
+        });
+
+        const doorwayQuestConfigSchema = new mongoose.Schema({
+          configId: String,
+          classId: String,
+          config: Object,
+          createdAt: Date,
+          updatedAt: Date,
+          createdBy: String,
+          originalFilePath: String,
+          version: Number
+        }, { collection: 'questconfigs' });
+
+        const DoorwayQuestConfig = doorwayConn.model('QuestConfig', doorwayQuestConfigSchema);
+        const saved = await DoorwayQuestConfig.findOneAndUpdate(
+          { configId: testClassId },
+          {
+            configId: testClassId,
+            classId: testClassId,
+            config: botCompatibleConfig,
+            createdAt: now,
+            updatedAt: now,
+            createdBy: 'oss-management:createTestRepo',
+            originalFilePath: `quest_config_${testClassId}.json`,
+            version: 1
+          },
+          { upsert: true, new: true }
+        );
+        await doorwayConn.close();
+        console.log(`💾 [CREATE-TEST-REPO] Saved test quest config to Doorway DB: ${saved?.configId}`);
+      } catch (doorwaySaveErr) {
+        console.warn(`⚠️ [CREATE-TEST-REPO] Could not save test quest config to Doorway DB: ${doorwaySaveErr.message}`);
+      }
+    } catch (saveErr) {
+      console.warn(`⚠️ [CREATE-TEST-REPO] Could not save test quest config: ${saveErr.message}`);
+      console.error(saveErr);
+    }
+
+    // 2) Attempt cache invalidation on OSS-Doorway (best-effort)
+    try {
+      const axios = require('axios');
+      // Prefer full Doorway base; fall back to legacy cache base and localhost variants
+      const candidates = [
+        process.env.OSS_DOORWAY_URL,
+        process.env.OSS_DOORWAY_CACHE_BASE,
+        'http://localhost:4000',
+        'http://localhost:3000'
+      ].filter(Boolean);
+      for (const base of candidates) {
+        try {
+          await axios.delete(`${base}/api/cache/delete/${encodeURIComponent(testClassId)}`).catch(()=>{});
+          await axios.post(`${base}/api/cache/clear`).catch(()=>{});
+          console.log(`🗑️ [CREATE-TEST-REPO] Cache invalidation attempted at ${base} for ${testClassId}`);
+        } catch (_) {
+          // continue to next candidate
+        }
+      }
+    } catch (cacheErr) {
+      console.warn(`⚠️ [CREATE-TEST-REPO] Cache invalidation skipped/failed: ${cacheErr.message}`);
+    }
+
+    // 3) Use the existing createCustomRepos function but with test parameters
+    const repoController = require('./repoController');
+    
+    // Prepare the request for the existing createCustomRepos function
+    const testReq = {
+      body: {
+        users: [username],
+        customSequence: effectiveQuestConfig, // Use draft/determined quest configuration
+        className: testClassName, // Use test class name
+        classId: testClassId, // Use timestamped test-specific class ID
+        customGroupId: testClassId, // CRITICAL: Set customGroupId to match the saved config
+        isTestRepo: true // Mark as test repository
+      }
+    };
+
+    // Create a mock response object to capture the result
+    let repoResult = null;
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => {
+          repoResult = { status: code, data };
+        }
+      }),
+      json: (data) => {
+        repoResult = { status: 200, data };
+      }
+    };
+
+    // Call the existing createCustomRepos function
+    await repoController.createCustomRepos(testReq, mockRes);
+
+    if (repoResult && repoResult.status === 200 && repoResult.data.results) {
+      const { successful, unsuccessful } = repoResult.data.results;
+      
+      if (successful && successful.length > 0) {
+        const successResult = successful[0];
+        // Format the repository URL (collapse non-alphanumerics to single hyphen and trim)
+        const formattedClassName = actualClassName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        const repoUrl = `https://github.com/OSS-Doorway-Dev/${username}-${formattedClassName}-test`;
+        
+        console.log(`✅ [CREATE-TEST-REPO] Test repository created successfully: ${repoUrl}`);
+        
+        return res.json({
+          success: true,
+          message: 'Test repository created successfully',
+          repositoryUrl: repoUrl,
+          repositoryName: `${username}-${formattedClassName}-test`,
+          className: testClassName,
+          customGroupId: testClassId, // Return the timestamped ID for reference
+          questConfig: effectiveQuestConfig,
+          timestamp: timestamp
+        });
+      } else if (unsuccessful && unsuccessful.length > 0) {
+        const error = unsuccessful[0];
+        console.error(`❌ [CREATE-TEST-REPO] Failed to create test repository: ${error.error}`);
+        
+        return res.status(400).json({
+          success: false,
+          message: error.error || 'Failed to create test repository'
+        });
+      }
+    }
+
+    // If we get here, something went wrong
+    console.error(`❌ [CREATE-TEST-REPO] Unexpected response from createCustomRepos`);
+    return res.status(500).json({
+      success: false,
+      message: 'Unexpected error creating test repository'
+    });
+
+  } catch (error) {
+    console.error('❌ [CREATE-TEST-REPO] Error creating test repository:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
 
 module.exports = {
     getProfessor, 
     createGroup,
     getGroup,
+    getGroupByCode,
     getGroups,
     deleteGroup,
     createQuest,
@@ -713,4 +3142,21 @@ module.exports = {
     updateHint, 
     deleteHint, 
     getHint,
+    saveGroupReadme,
+    getGroupReadme,
+    updateReadmeAcrossRepos,
+    saveQuestOrder,
+    getQuestOrder,
+    resetQuestOrder,
+    getClassIdFromRepo,
+    saveQuestJsonConfig,
+    getQuestJsonConfig,
+    saveDraftQuestConfig,
+    getDraftQuestConfig,
+    deleteDraftQuest,
+    getStoredValuesForClass,
+    upsertStoredValue,
+    getStoredValuesBackend,
+    getCollectedInfoForClass,
+    createTestRepo
 }

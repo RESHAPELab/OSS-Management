@@ -1,0 +1,43 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1769028253534",
+      "title": "thre eletter word",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 6,
+      "metadata": {
+        "title": "thre eletter word",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "thre eletter word",
+          "taskTitle": "thre eletter word",
+          "desc": "thre eletter word",
+          "points": 1,
+          "xp": 1,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "usermust provide a three letter word"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "accept": "thre eletter word",
+          "success": "yes",
+          "error": "no",
+          "answer": ""
+        }
+      }
+    }
+  ]
+}

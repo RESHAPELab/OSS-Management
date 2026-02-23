@@ -1,0 +1,914 @@
+{
+  "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map",
+  "questSequence": [
+    {
+      "questId": "Q1",
+      "title": "Q1: Understanding OSS Projects and GitHub Basics",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 0,
+      "tasks": {},
+      "metadata": {
+        "title": "Q1: Understanding OSS Projects and GitHub Basics",
+        "description": "Learn about understanding oss projects and github basics",
+        "prerequisite": null,
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q2",
+      "title": "Q2: Exploring GitHub Repositories and Issue Tracking",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 1,
+      "tasks": {
+        "T1": {
+          "type": "collect-info",
+          "title": "T1 - Student Names",
+          "taskTitle": "T1 - Student Names",
+          "desc": "T1 - Student Names",
+          "points": 0,
+          "xp": 0,
+          "accept": "Enter the names of students in the group that you worked with or your own name if it's just you.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**Points earned:** 0",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "llm_validated_response",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      },
+      "metadata": {
+        "title": "Q2: Exploring GitHub Repositories and Issue Tracking",
+        "description": "Learn about exploring github repositories and issue tracking",
+        "prerequisite": "Q1",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q3",
+      "title": "Q3: Forking and Cloning Repositories",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 2,
+      "tasks": {
+        "T1": {
+          "title": "s d sd sd",
+          "taskTitle": "s d sd sd",
+          "desc": "s d sd sd",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "accept": "s s sd sd ",
+          "success": "fscdc",
+          "error": "csdcdsa",
+          "answer": ""
+        }
+      },
+      "metadata": {
+        "title": "Q3: Forking and Cloning Repositories",
+        "description": " sc sf sf sf ",
+        "prerequisite": "Q2",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q4",
+      "title": "Q4: Understanding Pull Requests and Code Review",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 3,
+      "tasks": {
+        "T1": {
+          "title": "csdcsdc",
+          "taskTitle": "csdcsdc",
+          "desc": "csdcsdc",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "csdcds"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "accept": "csdcsdc",
+          "success": "csdcsd",
+          "error": "csdcsdc",
+          "answer": ""
+        }
+      },
+      "metadata": {
+        "title": "Q4: Understanding Pull Requests and Code Review",
+        "description": "csdcsdcsd",
+        "prerequisite": "Q3",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q5",
+      "title": "Q5: Creating and Managing Branches",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 4,
+      "tasks": {
+        "T1": {
+          "type": "llm-text-validation",
+          "title": "csdcs",
+          "taskTitle": "csdcs",
+          "desc": "csdcs",
+          "points": 20,
+          "xp": 20,
+          "accept": "s. s",
+          "success": " s s",
+          "error": "s. s",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T2": {
+          "type": "multiple-choice",
+          "title": "New Task 2",
+          "points": 100,
+          "accept": "",
+          "success": "",
+          "error": "",
+          "taskTitle": "New Task 2",
+          "desc": "New Task 2"
+        },
+        "T3": {
+          "type": "multiple-choice",
+          "title": "New Task 3",
+          "points": 100,
+          "accept": "",
+          "success": "",
+          "error": "",
+          "taskTitle": "New Task 3",
+          "desc": "New Task 3"
+        },
+        "T4": {
+          "type": "multiple-choice",
+          "title": "New Task 4",
+          "points": 100,
+          "accept": "",
+          "success": "",
+          "error": "",
+          "taskTitle": "New Task 4",
+          "desc": "New Task 4"
+        }
+      },
+      "metadata": {
+        "title": "Q5: Creating and Managing Branches",
+        "description": " s s",
+        "prerequisite": "Q4",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q6",
+      "title": "Q6: Working with README Files and Documentation",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 5,
+      "tasks": {
+        "T1": {
+          "type": "llm-text-validation",
+          "title": " s ",
+          "taskTitle": " s ",
+          "desc": " s ",
+          "points": 20,
+          "xp": 20,
+          "accept": " s s ",
+          "success": "s s  bn≠–",
+          "error": " s s",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      },
+      "metadata": {
+        "title": "Q6: Working with README Files and Documentation",
+        "description": "scs",
+        "prerequisite": "Q5",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q7",
+      "title": "Q7: Contributing to Open Source Projects",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 6,
+      "tasks": {
+        "T1": {
+          "title": " s ",
+          "taskTitle": " s ",
+          "desc": " s ",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "accept": " s s",
+          "success": " s ",
+          "error": "s s fs",
+          "answer": ""
+        }
+      },
+      "metadata": {
+        "title": "Q7: Contributing to Open Source Projects",
+        "description": "s s ",
+        "prerequisite": "Q6",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q8",
+      "title": "Q8: Understanding Git Workflow and Commits",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 7,
+      "tasks": {
+        "T1": {
+          "type": "llm-text-validation",
+          "title": "fix u and me!!!cccewc sdcsd ",
+          "taskTitle": "fix u and me!!!cccewc sdcsd ",
+          "desc": "fix u and me!!!cccewc sdcsd ",
+          "points": 20,
+          "xp": 20,
+          "accept": "s c s",
+          "success": " s ",
+          "error": "s s s",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      },
+      "metadata": {
+        "title": "Q8: Understanding Git Workflow and Commits",
+        "description": " s s",
+        "prerequisite": "Q7",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q9",
+      "title": "Q9: Collaborating with Teams on GitHub",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 8,
+      "tasks": {
+        "T1": {
+          "type": "llm-text-validation",
+          "title": "csdcsd",
+          "taskTitle": "csdcsd",
+          "desc": "csdcsd",
+          "points": 20,
+          "xp": 20,
+          "accept": " s s s",
+          "success": " sc ",
+          "error": "s s s",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      },
+      "metadata": {
+        "title": "Q9: Collaborating with Teams on GitHub",
+        "description": " s s",
+        "prerequisite": "Q8",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q10",
+      "title": "Q10: Using GitHub Issues for Project Management",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 9,
+      "tasks": {
+        "T1": {
+          "title": "cadsc",
+          "taskTitle": "cadsc",
+          "desc": "cadsc",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "multiple-choice",
+          "accept": "**Question:** acdc\n\nA) adc\nB) adcadc\nC) cadcad\nD) cadcdac\nE) cdacad\n\n**Instructions:** Select the correct answer.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** 20\n\nGreat contribution! 📋",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+          "answer": "d",
+          "question": "acdc",
+          "options": [
+            {
+              "label": "A",
+              "value": "adc"
+            },
+            {
+              "label": "B",
+              "value": "adcadc"
+            },
+            {
+              "label": "C",
+              "value": "cadcad"
+            },
+            {
+              "label": "D",
+              "value": "cadcdac"
+            },
+            {
+              "label": "E",
+              "value": "cdacad"
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "title": "Q10: Using GitHub Issues for Project Management",
+        "description": "dasdas",
+        "prerequisite": "Q9",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q11",
+      "title": "Q11: Understanding Open Source Licenses",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 10,
+      "tasks": {
+        "T1": {
+          "type": "imageValidation",
+          "title": "UML Use Caserewqa",
+          "taskTitle": "UML Use Caserewqa",
+          "desc": "UML Use Caserewqa",
+          "points": 1,
+          "xp": 1,
+          "accept": "Design a UML use case diagram for a library management system that shows the interactions between different actors and the system's functionality.\n\n**Requirements:**\n- Create a use case diagram using UML notation\n- Include at least 3 different actors (e.g., Librarian, Student, Guest)\n- Include at least 5 use cases (e.g., Borrow Book, Return Book, Search Catalog, etc.)\n- Show relationships between actors and use cases using proper UML notation\n- Use standard UML symbols: stick figures for actors, ovals for use cases\n\n**Deliverable:**\nSubmit your use case diagram as an image. You can create it using:\n- Draw.io (diagrams.net)\n- Lucidchart\n- Visio\n- Or any UML modeling tool",
+          "success": "success",
+          "error": "error",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "dscdsc/dscdc",
+          "ossRepository": "dscdsc/dscdc",
+          "issueNumber": "22",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "must be use case diagram",
+            "enableDetailedFeedback": true
+          },
+          "questNotes": "rewsqaarewqasdcsdcdsc",
+          "answerType": ""
+        }
+      },
+      "metadata": {
+        "title": "Q11: Understanding Open Source Licenses",
+        "description": "cdacda",
+        "prerequisite": "Q10",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q12",
+      "title": "Q12: Code Quality and Testing Practices",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 11,
+      "tasks": {
+        "T1": {
+          "title": "csdcs",
+          "taskTitle": "csdcs",
+          "desc": "csdcs",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "accept": "dscdsc",
+          "success": "csdcsd",
+          "error": "csdcsd",
+          "answer": ""
+        }
+      },
+      "metadata": {
+        "title": "Q12: Code Quality and Testing Practices",
+        "description": "csadcsadc",
+        "prerequisite": "Q11",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q13",
+      "title": "Q13: Continuous Integration and Deployment",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 12,
+      "tasks": {
+        "T1": {
+          "title": " sd s",
+          "taskTitle": " sd s",
+          "desc": " sd s",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "accept": " sd sd",
+          "success": " sd s",
+          "error": "  sd ds",
+          "answer": ""
+        }
+      },
+      "metadata": {
+        "title": "Q13: Continuous Integration and Deployment",
+        "description": "scfcs",
+        "prerequisite": "Q12",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q14",
+      "title": "Q14: Security Best Practices in OSS",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 13,
+      "tasks": {
+        "T1": {
+          "title": "cadcad",
+          "taskTitle": "cadcad",
+          "desc": "cadcad",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "accept": "cadcad",
+          "success": "cadca",
+          "error": "cadcad",
+          "answer": ""
+        },
+        "T2": {
+          "type": "multiple-choice",
+          "title": "New Task 2",
+          "points": 100,
+          "accept": "",
+          "success": "",
+          "error": "",
+          "taskTitle": "New Task 2",
+          "desc": "New Task 2"
+        },
+        "T3": {
+          "type": "multiple-choice",
+          "title": "New Task 3",
+          "points": 100,
+          "accept": "",
+          "success": "",
+          "error": "",
+          "taskTitle": "New Task 3",
+          "desc": "New Task 3"
+        }
+      },
+      "metadata": {
+        "title": "Q14: Security Best Practices in OSS",
+        "description": "caeca",
+        "prerequisite": "Q13",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q15",
+      "title": "Q15: Community Building and Communication",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 14,
+      "tasks": {
+        "T1": {
+          "title": "csdcsd",
+          "taskTitle": "csdcsd",
+          "desc": "csdcsd",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "accept": "cscs",
+          "success": "sdcsd",
+          "error": "csdcsd",
+          "answer": ""
+        },
+        "T2": {
+          "type": "multiple-choice",
+          "title": "New Task 2",
+          "points": 100,
+          "accept": "",
+          "success": "",
+          "error": "",
+          "taskTitle": "New Task 2",
+          "desc": "New Task 2"
+        },
+        "T3": {
+          "type": "multiple-choice",
+          "title": "New Task 3",
+          "points": 100,
+          "accept": "",
+          "success": "",
+          "error": "",
+          "taskTitle": "New Task 3",
+          "desc": "New Task 3"
+        }
+      },
+      "metadata": {
+        "title": "Q15: Community Building and Communication",
+        "description": "sdcsdc",
+        "prerequisite": "Q14",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q16",
+      "title": "Q16: Advanced Git Techniques",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 15,
+      "tasks": {
+        "T1": {
+          "type": "collect-info",
+          "title": "T1 - Student Names",
+          "taskTitle": "T1 - Student Names",
+          "desc": "T1 - Student Names",
+          "points": 0,
+          "xp": 0,
+          "accept": "Enter the names of students in the group that you worked with or your own name if it's just you.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**Points earned:** 0",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "llm_validated_response",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      },
+      "metadata": {
+        "title": "Q16: Advanced Git Techniques",
+        "description": "Learn about advanced git techniques",
+        "prerequisite": "Q15",
+        "type": "custom"
+      }
+    },
+    {
+      "questId": "Q17",
+      "title": "Q17: Open Source Project Maintenance",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 16,
+      "tasks": {
+        "T1": {
+          "type": "collect-info",
+          "title": "T1 - Student Names",
+          "taskTitle": "T1 - Student Names",
+          "desc": "T1 - Student Names",
+          "points": 0,
+          "xp": 0,
+          "accept": "Enter the names of students in the group that you worked with or your own name if it's just you.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**Points earned:** 0",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "llm_validated_response",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      },
+      "metadata": {
+        "title": "Q17: Open Source Project Maintenance",
+        "description": "Learn about open source project maintenance",
+        "prerequisite": "Q16",
+        "type": "custom"
+      }
+    }
+  ]
+}

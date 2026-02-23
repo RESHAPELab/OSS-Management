@@ -1,0 +1,41 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1768847516697",
+      "title": "fscsfdc",
+      "description": "csdcsdc",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 1,
+      "metadata": {
+        "title": "fscsfdc",
+        "description": "csdcsdc",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": " sxc xc",
+          "taskTitle": " sxc xc",
+          "desc": " sxc xc",
+          "points": 20,
+          "xp": 20,
+          "hints": [],
+          "detailedHints": [],
+          "type": "llm-text-validation",
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "accept": " sc sc c sf s",
+          "success": "✅ **Correct Answer!**\n\nOutstanding! You've successfully identified the top contributor to this repository.\n\n**What you learned:** Understanding contributor patterns helps identify key maintainers in open source projects.\n\n**Points earned:** 20\n\nExcellent detective work! 🕵️",
+          "error": "❌ **Incorrect Answer**\n\nThat's not the top contributor. Please check the repository again.\n\n**Hint:** Go to Insights → Contributors and look for the user with the most commits.\n\nYou can type \"help\" for additional hints.",
+          "answer": ""
+        }
+      }
+    }
+  ]
+}

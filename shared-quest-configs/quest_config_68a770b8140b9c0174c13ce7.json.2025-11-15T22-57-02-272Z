@@ -1,0 +1,1435 @@
+{
+  "questSequence": [
+    {
+      "questId": "TEMP_1762875579189",
+      "title": "A-9.1 - Code Quality part 1",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 19,
+      "metadata": {
+        "title": "A-9.1 - Code Quality part 1",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "type": "collect-info",
+          "title": "Student names A-9.1",
+          "taskTitle": "Student names A-9.1",
+          "desc": "Student names A-9.1",
+          "points": 1,
+          "xp": 1,
+          "accept": "Enter the names of the students you've worked with. Enter \"none\" if you are working alone.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** 1\n\nGreat contribution! 📋",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "llm_validated_response",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T2": {
+          "type": "llm-text-validation",
+          "title": "Code Quality part 1 of 3",
+          "taskTitle": "Code Quality part 1 of 3",
+          "desc": "Code Quality part 1 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "Joel Spolsky, one of the creators of Stack Overflow, once said that \"it's harder to read code than to write it.\"* Discuss within your group. Do you agree with this sentence? Why?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be about whether code is harder to read than write. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T3": {
+          "type": "llm-text-validation",
+          "title": "Code Quality Part 2 of 3",
+          "taskTitle": "Code Quality Part 2 of 3",
+          "desc": "Code Quality Part 2 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "Both code snippets below produce the same output. Which one do you prefer? Why?\n\n**Code Sample 1**\n```\nclass Order\n    def total\n        items.nap do !item.quantity\n        end.reduce(&:+)\n    end\nend\n```\n**Code Sample 2**\n```\nclass Order\n    def total\n        result = 0\n        for item do item do\n            result = result + (item.price * item.quantity)\n        end\n        return result\n    end\nend\n```",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be whether use prefers sample 1 or 2 and why. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T4": {
+          "type": "llm-text-validation",
+          "title": "Code Quality Part 3 of 3",
+          "taskTitle": "Code Quality Part 3 of 3",
+          "desc": "Code Quality Part 3 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "Clean code is code that is easy to understand and easy to change. Several important software engineers were asked about what they consider clean code:\n\n<img width=\"268\" height=\"292\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/d62b6521-cbfe-40e5-9ede-5c9a2675cd60\" />\n<div style=\"margin-left:170px;\">\nBjarne Stroustrup, Inventor of C++: *\"I like my code to be elegant and efficient. The logic should be straightforward to make it hard for bugs to hide, the dependencies minimal to ease maintenance, error handling complete according to an articulated strategy, and performance close to optimal so as not to tempt people to make the code messy with unprincipled optimizations. Clean code does one thing well.”*\n</div>\n\n<img width=\"277\" height=\"259\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/b5e33b05-d45e-47d5-8f3c-d9da2f9654f4\" />\n<div style=\"margin-left:170px;\">\nGrady Booch, Author of Object Oriented Analysis and Design with Applications: *“Clean code is simple and direct. Clean code reads like well-written prose. Clean code never obscures the designer's intent but rather is full of crisp [clearly defined] abstractions and straightforward lines of control.”*\n</div>\n\n<img width=\"270\" height=\"307\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/ba5940ec-07b0-44c4-a0c2-d60aea232e64\" />\n<div style=\"margin-left:170px;\">\nDave Thomas, Founder of OTI, godfather of the Eclipse Strategy: *“Clean code can be read, and enhanced by a developer other than its original author. It has unit and acceptance tests. It has meaningful names. It provides one way rather than many ways for doing one thing. It has minimal dependencies, which are explicitly defined, and provides a clear and minimal API. Code should be literate since depending on the language, not all necessary. information can be expressed clearly in code alone.”*\n</div>\n\n<img width=\"293\" height=\"359\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/61fd65c3-c0dc-4306-afd5-e0624b9b08ee\" />\n<div style=\"margin-left:170px;\">\nMichael Feathers, Author of Working Effectively With Legacy Code: *“I could list all of the qualities that I notice in clean code, but there is one overarching quality that leads to all of them. Clean code always looks it was written by someone who cares. There is nothing obvious that you can do to make it better. All of those things were thought about by the code's author, and if you try to imagine improvements, you're led back to where you are, sitting in appreciation of the code someone left for you – code left by someone who cares deeply about the craft.”*\n</div>\n\n<img width=\"252\" height=\"293\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/ef5eef04-a2ee-4eef-ba00-b8223bf4c8bd\" />\n<div style=\"margin-left:170px;\">\nRon Jeffries, Author of Extreme Programming Installed: *“In priority order, simple code: Runs all tests, Contains no duplication, Expresses all the design ideas that are in the system, and Minimizes the number of entities such as classes, methods, functions, and the like.”*\n</div>\n\n\n<img width=\"258\" height=\"285\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/895cc3d6-345f-4231-981b-ccfd94c172d8\" />\n<div style=\"margin-left:170px;\">\nWard Cunningham, Co-author of the Agile Manifesto: *“You know you are working on clean code when each routine you read turns out to be pretty much what you expected. You can call it beautiful code when the codes also makes it look like the language was made for the problem.\"*\n</div>\nList at least five recurrent themes in their quotes.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should list at least five recurring themes from the question's quotes. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T5": {
+          "type": "llm-text-validation",
+          "title": "Comments part 1 of 3",
+          "taskTitle": "Comments part 1 of 3",
+          "desc": "Comments part 1 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "There is a big discussion in the development community about using code comments vs. writing self-documenting code (e.g., see this Quora post - https://softwareengineering.stackexchange.com/questions/51307/self-documenting-code-vs-commented-code). Self-documenting code means that it is so clear that it does not need a code comment. Some important sources advocate against code comments and are in favor of self-documenting code:\n\n●​  *Code never lies; comments sometimes do. (Ron Jeffries)*\n●​  *A comment is a failure to express yourself in code. If you fail, then write a comment; but try not to fail. (Uncle Bob)*\n●​  *The comments will inevitably become out of date, and untrustworthy commentsare worse than no comments at all. (The Pragmatic Programmer)*\n●​  *A comment is the code’s way of asking to be clearer. (Kent Beck)*\n●​  *When you feel the need to write a comment, first try to refactor the code so that any comment becomes superfluous. (Martin Fowler)*\n\nIf you want to read more about self-documenting code, see this webpage: https://medium.com/codex/towards-self-documenting-code-371364bdccbb \nWhy are these people in favor of self-documenting code?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should explain why self-documenting code is in favor. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T6": {
+          "type": "llm-text-validation",
+          "title": "Comments part 2 of 3",
+          "taskTitle": "Comments part 2 of 3",
+          "desc": "Comments part 2 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "On the other hand, some people argue in favor of using code comments. See, for example:\n​\n●​ https://hackaday.com/2019/03/05/good-code-documents-itself-and-ot\nher-hilarious-jokes-you-shouldnt-tell-yourself/\n●​ https://queue.acm.org/detail.cfm?id=1053354\n\nWhy do these people advocate in favor of code comments?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be why code comments are favorable. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T7": {
+          "type": "llm-text-validation",
+          "title": "Comments part 3 of 3",
+          "taskTitle": "Comments part 3 of 3",
+          "desc": "Comments part 3 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "Are you generally in favor of using code comments, or do you prefer/write self-documenting code? Why?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be whether user prefers self-documenting code or comments. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T8": {
+          "type": "llm-text-validation",
+          "title": "Refactoring Part 1 of 5",
+          "taskTitle": "Refactoring Part 1 of 5",
+          "desc": "Refactoring Part 1 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Poor-quality code should be refactored. Refactoring is the process of restructuring existing source code without changing its external behavior. Martin Fowler cataloged several refactoring techniques: https://refactoring.com/catalog/index.html One of them is \"replace conditional with polymorphism.\" Why can this technique improve code quality?\"\n\n",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer should explain how replacing conditionals with polymorphism can improve code quality."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T9": {
+          "type": "llm-text-validation",
+          "title": "Refactoring part 2 of 5",
+          "taskTitle": "Refactoring part 2 of 5",
+          "desc": "Refactoring part 2 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Another technique is the \"Extract Function\" (https://refactoring.com/catalog/extractFunction.html). Why can this technique improve code quality?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should explain how \"extract function\" can improve code quality. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T10": {
+          "type": "llm-text-validation",
+          "title": "Refactoring Part 3 of 5",
+          "taskTitle": "Refactoring Part 3 of 5",
+          "desc": "Refactoring Part 3 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Explain what refactoring has been done in this commit: https://github.com/Kaiteki-Fedi/Kaiteki/commit/0aa7cdb9c423579cc00929cb4c02bd6d43f0659a",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [
+            {
+              "content": "Look at the commit message. It describes the name of the refactoring technique.",
+              "image": "",
+              "penalty": 0
+            }
+          ],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should talk about the extract method refactoring technique. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T11": {
+          "type": "llm-text-validation",
+          "title": "Refactoring part 4 of 5",
+          "taskTitle": "Refactoring part 4 of 5",
+          "desc": "Refactoring part 4 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Apply the Extract Function technique in the code snippet below:\n```\nclass Calculate {\n    int calculate(int a, int b) {\n        if (a < 10) {\n            a = a % 10;\n            a = a + b;\n        }\n        return b / a;\n    }\n}\n```",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be the above code refactored. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T12": {
+          "type": "llm-text-validation",
+          "title": "Refactoring Part 5 of 5",
+          "taskTitle": "Refactoring Part 5 of 5",
+          "desc": "Refactoring Part 5 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Finally, choose another refactoring technique from Martin Fowler's catalog and report here what it does and why it can improve code quality.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be about a refactoring technique and what it does. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T13": {
+          "type": "collect-info",
+          "title": "Reflection and feedback A-9.1",
+          "taskTitle": "Reflection and feedback A-9.1",
+          "desc": "Reflection and feedback A-9.1",
+          "points": 0,
+          "xp": 0,
+          "accept": "To know more about refactoring:\n●​ https://refactoring.guru/refactoring/techniques – This site explains several\nrefactoring techniques, accompanied by code examples in multiple\nlanguages.\n\n[Reflection & Feedback] Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A9.1\n\nEnter \"ok\" when done.\n\nFor Fun:\n<img width=\"564\" height=\"320\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/501201eb-6340-456c-b3fd-4aa357f99a9a\" />",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\nGreat contribution! 📋",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      }
+    },
+    {
+      "questId": "TEMP_1763060124399",
+      "title": "a-9.2 - Code Quality Part 2 wefwe",
+      "description": "",
+      "isQ0": false,
+      "questType": "custom",
+      "sequenceNumber": 20,
+      "metadata": {
+        "title": "a-9.2 - Code Quality Part 2 wefwe",
+        "description": "",
+        "prerequisite": null,
+        "type": "custom"
+      },
+      "badgeDescription": "Custom Quest 🎯",
+      "tasks": {
+        "T1": {
+          "title": "Student Names",
+          "taskTitle": "Student Names",
+          "desc": "Student Names",
+          "points": 0,
+          "xp": 0,
+          "hints": [],
+          "detailedHints": [],
+          "type": "collect-info",
+          "accept": "Enter the names of the students you worked with. Enter \"none\" otherwise.",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!\n\n**What you learned:** Information sharing is an important part of collaborative work.\n\n**Points earned:** 0\n\nGreat contribution! 📋",
+          "error": "❌ **No Response Detected**\n\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+          "answer": "",
+          "saveValidatedData": false,
+          "savedDataName": "llm_validated_response"
+        },
+        "T2": {
+          "type": "llm-text-validation",
+          "title": "Code Readability Part 1 of 3",
+          "taskTitle": "Code Readability Part 1 of 3",
+          "desc": "Code Readability Part 1 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "“One thing that was counterintuitive is that in my first ‘real’ software engineering jobs, I spent 80-90% of my coding time reading and 10% writing.” \n– Eric Dashofy [General Manager & Deputy CIO, The Aerospace Corporation] Why do developers spend so much time reading code? List at least 3 reasons.\n",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Should list three reasons why developers spend more time reading than writing code. Be lenient"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T3": {
+          "type": "llm-text-validation",
+          "title": "Code Readability Part 2 of 3",
+          "taskTitle": "Code Readability Part 2 of 3",
+          "desc": "Code Readability Part 2 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "Think about the largest piece of software you have worked on. When was it easy to read and understand a piece of code in the project? Why was it easy?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Should explain when it was easy to read a piece of code and why. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T4": {
+          "type": "llm-text-validation",
+          "title": "Code Readability part 3 of 3",
+          "taskTitle": "Code Readability part 3 of 3",
+          "desc": "Code Readability part 3 of 3",
+          "points": 1,
+          "xp": 1,
+          "accept": "When was it difficult to read and understand a piece of code in the aforementioned project? Why was it difficult?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Should explain it was difficult to read code and why. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T5": {
+          "type": "llm-text-validation",
+          "title": "Code Conventions part 1 of 5",
+          "taskTitle": "Code Conventions part 1 of 5",
+          "desc": "Code Conventions part 1 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Different people have different preferences and coding styles. Why is it harmful to the project if each developer writes code in their own style?",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should explain why coding in a personal style is harmful. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T6": {
+          "type": "llm-text-validation",
+          "title": "Code Conventions - part 2 of 5",
+          "taskTitle": "Code Conventions - part 2 of 5",
+          "desc": "Code Conventions - part 2 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "What is your group’s favorite programming language? Do some online research and report here the URL of the code conventions for this programming language.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer should be a url."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T7": {
+          "type": "llm-text-validation",
+          "title": "Code Conventions of part 3 of 5",
+          "taskTitle": "Code Conventions of part 3 of 5",
+          "desc": "Code Conventions of part 3 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Each group member: cite an example of a rule established in the code conventions reported in the previous question.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer should be an example of a rule. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T8": {
+          "type": "imageValidation",
+          "title": "Code Conventions part 4 of 5",
+          "taskTitle": "Code Conventions part 4 of 5",
+          "desc": "Code Conventions part 4 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Download and install pycodestyle, a popular linter for Python’s PEP8 standard: https://github.com/PyCQA/pycodestyle Write a program in Python that implements bubble sort on a list of integers. Your program should have a “bubblesort” function and should test that function with some examples. Run pycodestyle on your code. If pycodestyle didn’t find any problems, introduce some intentional style inconsistencies for it to detect. Paste an image of the results of the pycodestyle here:",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              ""
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be pycodestyle output."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T9": {
+          "type": "llm-text-validation",
+          "title": "Code Conventions part 5 of 5",
+          "taskTitle": "Code Conventions part 5 of 5",
+          "desc": "Code Conventions part 5 of 5",
+          "points": 1,
+          "xp": 1,
+          "accept": "Fix the style issues in your program and copy and paste your resulting source code here:",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should be of code."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T10": {
+          "type": "llm-text-validation",
+          "title": "Code Smells part 1 of 2",
+          "taskTitle": "Code Smells part 1 of 2",
+          "desc": "Code Smells part 1 of 2",
+          "points": 1,
+          "xp": 1,
+          "accept": "Sometimes the code “smells,” i.e., it is not necessarily rotten (it still works) but it smells bad (it is disgusting to work with it). Code smell, also known as bad smell, refers to any symptom in the source code of a program that possibly indicates a deeper problem. They indicate weaknesses in design that may slow down development or increase the risk of bugs or failures in the future.\n\nEach group member: choose a code smell you previously found in your own code or someone else's code. Why does this smell indicate a risk of slowing down the development or introducing bugs?\nhttps://en.wikipedia.org/wiki/Code_smell",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer should explain what code smell the user found the impact it would have. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T11": {
+          "type": "llm-text-validation",
+          "title": "Code Smells part 2 of 2",
+          "taskTitle": "Code Smells part 2 of 2",
+          "desc": "Code Smells part 2 of 2",
+          "points": 1,
+          "xp": 1,
+          "accept": "What code smell is present in the Python code below?\n```\nclass OrderProcessor:\n    def __init__(self):\n        self.items = []\n        self.customer = None\n        self.discount = 0\n        self.tax_rate = 0.21\n    def process_order(self, customer, items):\n    # Validate customer\n        if not customer.name or not customer.address:\n            raise ValueError(\"Invalid customer data\")\n        self.customer = customer\n    # Validate and process items\n    if not items:\n        raise ValueError(\"Order must contain items\")\n    self.items = items\n    # Calculate subtotal\n    subtotal = 0\n    for item in items:\n        if item.price < 0:\n            raise ValueError(\"Item price cannot be negative\")\n    if item.quantity <= 0:\n        raise ValueError(\"Item quantity must be positive\")\n    subtotal += item.price * item.quantity\n    # Apply discounts\n    if subtotal > 1000:\n        self.discount = 0.1\n    elif subtotal > 500:\n        self.discount = 0.05\n    else:\n        self.discount = 0\n    # Calculate final amounts\n    discount_amount = subtotal * self.discount\n    subtotal_after_discount = subtotal - discount_amount\n    tax = subtotal_after_discount * self.tax_rate\n    total = subtotal_after_discount + tax\n    # Generate order summary\n    summary = f\"\"\"\n    Order Summary for {customer.name}\n    Subtotal: ${subtotal:.2f}\n    Discount: ${discount_amount:.2f}\n    Tax: ${tax:.2f}\n    Total: ${total:.2f}\n    \"\"\"\n    return summary\n```",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should identify a code smell from the code in the question. Be lenient"
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T12": {
+          "type": "llm-text-validation",
+          "title": "Metrics Part 1 of 2",
+          "taskTitle": "Metrics Part 1 of 2",
+          "desc": "Metrics Part 1 of 2",
+          "points": 1,
+          "xp": 1,
+          "accept": "Software metrics enable you to evaluate your code and pinpoint areas that require improvement.\nhttps://en.wikipedia.org/wiki/Software_metric\nEach group member: choose a software metric, explain how it is calculated, and what kind of code quality issue the metric can help to point out.",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "Answer should explain a software metric and what code quality issue it can detect. Be lenient."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T13": {
+          "type": "llm-text-validation",
+          "title": "Metrics part 2 of 2",
+          "taskTitle": "Metrics part 2 of 2",
+          "desc": "Metrics part 2 of 2",
+          "points": 1,
+          "xp": 1,
+          "accept": "​Cyclomatic complexity is a metric frequently used by software developers.\nhttps://en.wikipedia.org/wiki/Cyclomatic_complexity\nhttps://www.educative.io/answers/what-is-cyclomatic-complexity\nStudy the metric and calculate the cyclomatic complexity for the Python code below.\n```\ndef program(a):\n    b = a - 3\n    for i in range(10):\n        a = a + b\n    if a > 10:\n        a = 10\n    print(a)\n    return a\n```",
+          "success": "✅ **Answer accepted!**\n\nExcellent! Your answer has been accepted.\n\n**Points earned:** 1\n\nGreat work! 🎉",
+          "error": "❌ **Answer not accepted**\n\nPlease review your answer and try again. Type your response in the comment box below.\n\nYou can type \"help\" for additional guidance.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [
+              "answer should be a cyclometric complexity calculation."
+            ],
+            "temperature": 0.1,
+            "enableDetailedFeedback": true
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        },
+        "T14": {
+          "type": "collect-info",
+          "title": "Reflection and feedback",
+          "taskTitle": "Reflection and feedback",
+          "desc": "Reflection and feedback",
+          "points": 0,
+          "xp": 0,
+          "accept": "[Reflection & Feedback] Individually, answer the following questionnaire:\nhttps://qualtrics.nau.edu/jfe/form/SV_e9a3okkpfrQCYUm?assignment=A9.2\n\nType in \"ok\" when done.\n\nFor fun:\n<img width=\"525\" height=\"392\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/663df583-7288-4312-868d-d259f66dacbb\" />\n",
+          "success": "✅ **Information Collected!**\n\nThank you for providing the requested information!",
+          "error": "\nIt looks like you haven't provided any information yet.\n\n**Please:** Type your response in the comment box below.\n\n**Note:** This is a non-graded task - any response will be accepted.",
+          "answer": "",
+          "correctAnswer": "",
+          "question": "",
+          "options": [
+            {
+              "label": "A",
+              "value": ""
+            },
+            {
+              "label": "B",
+              "value": ""
+            }
+          ],
+          "repository": "",
+          "ossRepository": "",
+          "issueNumber": "",
+          "apiEndpoint": "",
+          "responsePath": "",
+          "expectedAnswerType": "Number",
+          "enableTolerance": false,
+          "toleranceRange": 10,
+          "saveValidatedData": false,
+          "savedDataName": "",
+          "questions": [],
+          "hints": [],
+          "detailedHints": [],
+          "llmTextValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "imageValidation": {
+            "question": "",
+            "validationParameters": [],
+            "temperature": 0.1,
+            "enableDetailedFeedback": false
+          },
+          "questNotes": "",
+          "answerType": ""
+        }
+      }
+    }
+  ],
+  "map_repo_link": "https://raw.githubusercontent.com/caiton1/OSS-Doorway/main/map"
+}
