@@ -10,9 +10,11 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.backup
+*.env.backup
 
-
-#
+# Private keys (never commit)
+*.pem
 .pem
 
 # Build outputs

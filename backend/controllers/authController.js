@@ -148,14 +148,16 @@ const generatePasswordRecoveringCode = async (req, res) => {
         }
     }
 
+    const emailNorm = String(email).toLowerCase();
+
     try {
         const existingRecord = await RecoveringPassword.findOne({
-            email,
+            email: emailNorm,
             createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) }, 
             status: "active",
         });
 
-        const profExists = await Professor.findOne({email});
+        const profExists = await Professor.findOne({ email: emailNorm });
         
         if (!profExists) { 
             return res.status(400).send("Professor account doesn't exists")
@@ -166,10 +168,10 @@ const generatePasswordRecoveringCode = async (req, res) => {
             await existingRecord.save();
         }
 
-        const newCode = await generateCode.generateAndSendCode(email);
+        const newCode = await generateAndSendCode(emailNorm);
         
         const newRecord = new RecoveringPassword({
-            email,
+            email: emailNorm,
             code: newCode,
             status: "active",
             totalTrials: 0,
@@ -177,13 +179,15 @@ const generatePasswordRecoveringCode = async (req, res) => {
 
         await newRecord.save();
 
-        console.debug(`New code generated for ${email}: ${newCode}`);
+        console.debug(`New code generated for ${emailNorm}: ${newCode}`);
         return res.status(200).send("Recovering code has been generated and sent to your email");
     } 
     
     catch (error) {
-        console.debug(`Error in recoverPassword function: ${error}`);
-        return res.status(500).json({ error });
+        console.error("Error in generatePasswordRecoveringCode:", error);
+        return res.status(500).json({
+            error: error?.message || "Failed to send recovery code",
+        });
     }
 }
 
@@ -194,9 +198,11 @@ const recoverPassword = async (req, res) => {
         return res.status(400).send("Email, recovering code, and password are required");
     }
 
+    const emailNorm = String(email).toLowerCase();
+
     try {
         const existingRecord = await RecoveringPassword.findOne({
-            email,
+            email: emailNorm,
             status: "active",
             createdAt: { $gt: new Date(Date.now() - 30 * 60 * 1000) }
         });
@@ -218,13 +224,13 @@ const recoverPassword = async (req, res) => {
             return res.status(400).send("Invalid code. Please try again.");
         }
 
-        const professor = await Professor.findOne({ email });
+        const professor = await Professor.findOne({ email: emailNorm });
             
         if (!professor) {
             return res.status(404).send("Professor not found.");
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         professor.password = hashedPassword;
         existingRecord.status = "expired"; 

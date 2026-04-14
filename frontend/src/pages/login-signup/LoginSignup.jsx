@@ -5,6 +5,20 @@ import { API_BASE_URL } from "../../config/api";
 
 let baseURL = API_BASE_URL;
 
+/** API errors may be strings, { error: string|object }, or { message }. Never pass objects to React children. */
+function axiosErrorToString(err, fallback) {
+  const data = err?.response?.data;
+  if (typeof data === "string") return data;
+  if (data && typeof data === "object") {
+    const e = data.error;
+    if (typeof e === "string") return e;
+    if (e && typeof e === "object" && typeof e.message === "string") return e.message;
+    if (typeof data.message === "string") return data.message;
+  }
+  if (typeof err?.message === "string") return err.message;
+  return fallback;
+}
+
 const LoginSignup = () => {
   const [isSignup, setIsSignup] = useState(false);
   const [error, setError] = useState("");
@@ -21,6 +35,15 @@ const LoginSignup = () => {
   const [profLoginData, setProfLoginData] = useState({
     email: "",
     password: "",
+  });
+
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetCodeSent, setResetCodeSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [recoverData, setRecoverData] = useState({
+    email: "",
+    code: "",
+    newPassword: "",
   });
 
   const handleChange = (e) => {
@@ -44,6 +67,83 @@ const LoginSignup = () => {
 
   const handleLoginClick = () => {
     setIsSignup(false);
+  };
+
+  const openPasswordReset = () => {
+    setResetOpen(true);
+    setResetCodeSent(false);
+    setRecoverData((prev) => ({
+      ...prev,
+      email: prev.email || profLoginData.email,
+      code: "",
+      newPassword: "",
+    }));
+    setError("");
+    setSuccess("");
+  };
+
+  const closePasswordReset = () => {
+    setResetOpen(false);
+    setResetCodeSent(false);
+    setRecoverData({ email: "", code: "", newPassword: "" });
+    setError("");
+  };
+
+  const handleRecoverFieldChange = (e) => {
+    const { name, value } = e.target;
+    setRecoverData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSendResetCode = async () => {
+    const email = recoverData.email.trim();
+    if (!email) {
+      setError("Enter your email to receive a reset code.");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    setResetLoading(true);
+    try {
+      await axios.post(`${baseURL}/api/auth/recoverPasswordCode`, { email });
+      setSuccess("Reset code sent. Check your email.");
+      setResetCodeSent(true);
+    } catch (err) {
+      setError(
+        axiosErrorToString(err, "Could not send reset code. Try again.")
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const handleConfirmReset = async () => {
+    const email = recoverData.email.trim();
+    const { code, newPassword } = recoverData;
+    if (!email || !code || !newPassword) {
+      setError("Email, code, and new password are required.");
+      return;
+    }
+    setError("");
+    setSuccess("");
+    setResetLoading(true);
+    try {
+      await axios.post(`${baseURL}/api/auth/recoverPassword`, {
+        email,
+        code: code.trim(),
+        newPassword,
+      });
+      setSuccess("Password updated. You can sign in now.");
+      setResetOpen(false);
+      setResetCodeSent(false);
+      setRecoverData({ email: "", code: "", newPassword: "" });
+      setProfLoginData((prev) => ({ ...prev, email, password: "" }));
+    } catch (err) {
+      setError(
+        axiosErrorToString(err, "Password reset failed. Try again.")
+      );
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const handleRegisterSubmit = async (e) => {
@@ -72,17 +172,9 @@ const LoginSignup = () => {
       }
     } catch (error) {
       console.log(`Error registering:`, error);
-      let errorMessage = "Registration failed. Please try again.";
-      
-      if (error.response?.data) {
-        errorMessage = typeof error.response.data === 'string' 
-          ? error.response.data 
-          : "Registration failed. Please try again.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
+      setError(
+        axiosErrorToString(error, "Registration failed. Please try again.")
+      );
     } finally {
       setLoading(false);
     }
@@ -119,19 +211,7 @@ const LoginSignup = () => {
       }
     } catch (error) {
       console.log(`Error logging in:`, error);
-      let errorMessage = "Login failed. Please try again.";
-      
-      if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.response?.data) {
-        errorMessage = typeof error.response.data === 'string' 
-          ? error.response.data 
-          : "Login failed. Please try again.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      setError(errorMessage);
+      setError(axiosErrorToString(error, "Login failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -156,7 +236,7 @@ const LoginSignup = () => {
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           fontWeight: '500'
         }}>
-          {error}
+          {typeof error === "string" ? error : "Something went wrong."}
         </div>
       )}
       
@@ -177,7 +257,7 @@ const LoginSignup = () => {
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           fontWeight: '500'
         }}>
-          {success}
+          {typeof success === "string" ? success : ""}
         </div>
       )}
       
@@ -228,28 +308,108 @@ const LoginSignup = () => {
 
       {/* Sign In Form */}
       <div className="form-container sign-in">
-        <form onSubmit={handleLoginSubmit}>
-          <h1>Professor Login</h1>
-          <input
-            type="email"
-            placeholder="Email"
-            name="email"
-            value={profLoginData.email}
-            onChange={handleChange}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            name="password"
-            value={profLoginData.password}
-            onChange={handleChange}
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? "Signing In..." : "Sign In"}
-          </button>
-        </form>
+        <div className="sign-in-content">
+          <form onSubmit={handleLoginSubmit}>
+            <h1>Professor Login</h1>
+            <input
+              type="email"
+              placeholder="Email"
+              name="email"
+              value={profLoginData.email}
+              onChange={handleChange}
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              name="password"
+              value={profLoginData.password}
+              onChange={handleChange}
+              required
+            />
+            <button type="submit" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"}
+            </button>
+            <button
+              type="button"
+              className="login-link-button"
+              onClick={openPasswordReset}
+            >
+              Forgot password?
+            </button>
+          </form>
+          {resetOpen && (
+            <div className="recovery-panel">
+              {!resetCodeSent ? (
+                <>
+                  <p className="recovery-hint">
+                    Enter the email for your professor account. We will send a
+                    6-digit code (valid 30 minutes).
+                  </p>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    value={recoverData.email}
+                    onChange={handleRecoverFieldChange}
+                  />
+                  <button
+                    type="button"
+                    disabled={resetLoading}
+                    onClick={handleSendResetCode}
+                  >
+                    {resetLoading ? "Sending…" : "Send reset code"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="recovery-hint">
+                    Check your inbox for the code, then choose a new password.
+                  </p>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Email"
+                    value={recoverData.email}
+                    onChange={handleRecoverFieldChange}
+                    disabled
+                  />
+                  <input
+                    type="text"
+                    name="code"
+                    placeholder="6-digit code"
+                    value={recoverData.code}
+                    onChange={handleRecoverFieldChange}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                  />
+                  <input
+                    type="password"
+                    name="newPassword"
+                    placeholder="New password"
+                    value={recoverData.newPassword}
+                    onChange={handleRecoverFieldChange}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    disabled={resetLoading}
+                    onClick={handleConfirmReset}
+                  >
+                    {resetLoading ? "Updating…" : "Set new password"}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                className="login-link-button"
+                onClick={closePasswordReset}
+              >
+                Back to login
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Toggle Panel */}

@@ -107,6 +107,22 @@ body{
     z-index: 2;
 }
 
+.sign-in-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 40px;
+    overflow-y: auto;
+}
+
+.sign-in-content form {
+    padding-left: 0;
+    padding-right: 0;
+    width: 100%;
+}
+
 .container.active .sign-in{
     transform: translateX(100%);
 }
@@ -215,4 +231,52 @@ body{
 
 .container.active .toggle-right{
     transform: translateX(200%);
+}
+
+.login-link-button {
+    background: none !important;
+    border: none !important;
+    color: #fb5233 !important;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 8px;
+    padding: 4px 0 !important;
+    text-decoration: underline;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 500;
+    width: auto;
+    align-self: flex-start;
+}
+
+.login-link-button:hover {
+    opacity: 0.85;
+}
+
+.recovery-panel {
+    width: 100%;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+}
+
+.recovery-panel .recovery-hint {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.4;
+    margin: 0 0 4px;
+    text-align: left;
+    width: 100%;
+}
+
+.recovery-panel input {
+    margin: 4px 0;
+}
+
+.recovery-panel button[type="button"]:not(.login-link-button) {
+    margin-top: 8px;
 }

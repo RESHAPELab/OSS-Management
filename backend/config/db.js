@@ -19,20 +19,13 @@ const connectDB = async () => {
 
       const uri = mongoServer.getUri();
 
-      // Establish the connection
-      mongoConnection = await mongoose.connect(uri, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+      mongoConnection = await mongoose.connect(uri);
 
       console.log("Connected to in-memory MongoDB");
     } else {
       // For production or development environments, use a real MongoDB URI
       if (!mongoConnection) {
-        mongoConnection = await mongoose.connect(process.env.URI, {
-          useNewUrlParser: true,
-          useUnifiedTopology: true,
-        });
+        mongoConnection = await mongoose.connect(process.env.URI);
 
         console.log("Connected to MongoDB");
       }

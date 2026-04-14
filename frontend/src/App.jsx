@@ -13,6 +13,7 @@ import ManageQuests from './pages/class-view/ManageQuests';
 import GenerateJson from './pages/class-view/GenerateJson';
 import InviteByName from './pages/class-view/InviteByName';
 import ManageStudents from './pages/class-view/ManageStudents';
+import FloatingHelpButton from './components/FloatingHelpButton';
 
 const App = () => {
   const { authUser , setAuthUser  } = useAuthContext(); 
@@ -41,6 +42,7 @@ const App = () => {
         <Route path="/class/:classId/invite" element={<InviteByName />} />
         <Route path="/class/:classId/manage-students" element={<ManageStudents />} />
       </Routes>
+      <FloatingHelpButton />
     </div>
   );
 }

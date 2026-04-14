@@ -1,0 +1,379 @@
+% OSS-Doorway Teacher Guide — compile with: pdflatex TEACHER_GUIDE.tex
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  urlcolor=blue!60!black,
+  citecolor=blue!60!black
+}
+
+\title{OSS-Doorway:\\Teacher Guide (Web Interface Only)}
+\author{}
+\date{}
+
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\subtype}[1]{\subsubsection*{#1}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This guide is for instructors who use OSS-Doorway through the web interface only. You do not need to edit code or configure servers. Your institution or course support team should have set up accounts, GitHub organizations, and hosting.
+\end{abstract}
+
+\section{What OSS-Doorway Does}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Quests} are themed learning units (e.g., ``GitHub basics,'' ``First contribution'').
+  \item \textbf{Tasks} are single steps inside a quest (e.g., ``count open issues,'' ``submit a PR link'').
+  \item Students work in \textbf{their own GitHub repository}, mostly in \textbf{Issues} and comments. The \textbf{bot} checks their work and unlocks the next step.
+  \item You \textbf{author} content in the \textbf{Quest Builder} (instructor site), then \textbf{deploy} it so students see it.
+\end{itemize}
+
+\section{Before You Start}
+
+Ask your administrator to confirm the items in Table~\ref{tab:prereq}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Prerequisites for teaching with OSS-Doorway}
+  \label{tab:prereq}
+  \begin{tabularx}{\linewidth}{@{}lX@{}}
+    \toprule
+    \textbf{Item} & \textbf{Why it matters} \\
+    \midrule
+    Instructor account on the management site &
+      You need login to build quests and manage classes. \\
+    GitHub organization (or policy) for student repos &
+      Student quest repos usually live under your org or a course org. \\
+    Student GitHub usernames collected (or invite) &
+      The system often creates one private repo per student. \\
+    Support contact for outages & Bot errors and deploy issues are usually not fixed in the UI. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Step-by-step: from class to live students}
+\label{sec:steps}
+
+Follow these steps in order the first time you run a course; later you can skip steps you have already done.
+
+\begin{enumerate}[leftmargin=*,itemsep=0.35em]
+  \item \textbf{Sign in} to the instructor (OSS-Management) website with your professor account.
+  \item \textbf{Create or open a class} and note the \textbf{class code} if students register themselves.
+  \item Open the \textbf{Quest Builder} (quest configuration / ``Generate'' screen) \textbf{for that class}.
+  \item \textbf{Create a quest}: enter title, description, and any metadata your UI asks for.
+  \item \textbf{Add tasks} to the quest. For \emph{each} task:
+    \begin{enumerate}[label=\alph*),itemsep=0.2em]
+      \item Set \textbf{title}, \textbf{description}, \textbf{points}, and \textbf{XP}.
+      \item Fill \textbf{response templates}: accept, error, and success text (these are what the bot posts back).
+      \item Choose the \textbf{task type} from the dropdown.
+      \item Complete the \textbf{type-specific fields} (Section~\ref{sec:tasktypes}); they tell the bot \emph{what} to fetch on GitHub or \emph{how} to grade.
+    \end{enumerate}
+  \item Set \textbf{quest order} and \textbf{prerequisites} (if your UI shows a roadmap or ordered list) so Q2 cannot start before Q1 when that is intended.
+  \item \textbf{Save as draft} and resolve any duplicate-title warnings.
+  \item When ready, \textbf{deploy / publish} (sometimes called ``Purple deploy'') so the \textbf{live} quest config matches what students receive.
+  \item \textbf{Enroll students} (GitHub usernames, CSV import, or your school's flow).
+  \item Send students a short \textbf{onboarding} note: accept GitHub invites, open \emph{their} course repo, use \textbf{Issues}, and post answers as \textbf{comments on the active task issue} unless you instruct otherwise.
+  \item During the term, edit in \textbf{draft} first, then \textbf{redeploy} when changes should go live; announce substantive changes.
+\end{enumerate}
+
+\subsection{Draft vs.\ production}
+
+\textbf{Draft} lets you edit safely; students on production usually do not see draft-only work until you publish. \textbf{Production} is the live configuration. Use the labels your UI shows (Deploy, Save to production, etc.).
+
+\section{Creating Tasks (common fields)}
+
+Table~\ref{tab:taskfields} lists fields that apply to almost every task. Section~\ref{sec:tasktypes} adds fields \emph{per task type}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Common task fields in the Quest Builder}
+  \label{tab:taskfields}
+  \begin{tabularx}{\linewidth}{@{}lX@{}}
+    \toprule
+    \textbf{Field} & \textbf{What to write} \\
+    \midrule
+    Title &
+      Short name for the issue list (e.g., ``Task 3: Fork the course repo''). \\
+    Description / instructions &
+      Clear steps: what to do on GitHub and what to paste in the issue comment. \\
+    Points / XP &
+      Gamification weights for your syllabus. \\
+    Task type &
+      Selects the handler and which extra form fields appear (Section~\ref{sec:tasktypes}). \\
+    Responses (accept / error / success) &
+      Bot messages: success vs failure; keep errors constructive. \\
+    Hints (optional) &
+      Often triggered by typing \texttt{help} in comments; may cost points. \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\paragraph{Default submission channel.}
+Unless a task type says otherwise, students submit by \textbf{commenting on the task issue}. The bot reads \texttt{comment.body} and validates against GitHub or your configured rules.
+
+\section{Task types: fields, purpose, and student responses}
+\label{sec:tasktypes}
+
+For each type: \textbf{Fields} are what you enter in the Quest Builder. \textbf{Why / use} is what the runtime does with them. \textbf{Student should post} is a concrete example of a valid-looking answer (exact formatting may vary slightly).
+
+Names match the Quest Builder values (e.g.\ \field{multiple-choice}). A few fields appear as \field{repository} in the UI for metrics; the deployed config may store \field{ossRepository}---the bot accepts either for most metric tasks.
+
+\subsection{Basic, quiz, and information}
+
+\subtype{\texttt{multiple-choice}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] Correct option (A--D), options text (often embedded in the accept response with lines \texttt{A) \ldots}, \texttt{B) \ldots}), plus standard responses.
+  \item[Why / use] The bot compares the student's comment to the stored correct letter (case-insensitive).
+  \item[Student should post] A single letter, e.g.\ \texttt{b} or \texttt{B}.
+\end{description}
+
+\subtype{\texttt{quiz}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] Multiple sub-questions with correct answers (configured as structured questions in the quest data).
+  \item[Why / use] Each position in the student's answer is checked against the corresponding correct answer.
+  \item[Student should post] Comma-separated letters for each question, e.g.\ \texttt{b,a,c,d} or \texttt{[b, a, c]} (brackets and spaces are stripped by the parser).
+\end{description}
+
+\subtype{\texttt{collect-info}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] Optional \field{saveValidatedData}, \field{savedDataName}; optional prompt \field{question} in config; standard responses.
+  \item[Why / use] Always completes once non-empty text is provided; can copy the comment into per-user \texttt{storedValues} and optionally sync to the management API for grading exports.
+  \item[Student should post] Any short text, e.g.\ their team name or email (whatever you asked for in the instructions).
+\end{description}
+
+\subsection{GitHub metrics (live API)}
+
+For all types below, set \textbf{Repository (owner/repo)} in the UI, e.g.\ \texttt{microsoft/vscode}. The bot queries GitHub for the current value and compares it to the student's comment.
+
+\subtype{\texttt{get-issue-count}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{repository}; optional \field{saveValidatedData} + \field{savedDataName} for issue-count storage.
+  \item[Why / use] Fetches open-issue count (per handler logic) for the repo; optional per-user save of the validated number.
+  \item[Student should post] The number only, e.g.\ \texttt{42}.
+\end{description}
+
+\subtype{\texttt{get-pr-count}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{repository}.
+  \item[Why / use] Compares student number to the repository's PR count from the API.
+  \item[Student should post] e.g.\ \texttt{7}.
+\end{description}
+
+\subtype{\texttt{get-open-issue}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{repository} (\texttt{owner/repo}).
+  \item[Why / use] Fetches the open-issues count for that repository and compares it to the student's answer (with optional LLM fallback if the text does not match exactly).
+  \item[Student should post] The number as digits, e.g.\ \texttt{15}.
+\end{description}
+
+\subtype{\texttt{get-top-contributor}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{repository}.
+  \item[Why / use] Resolves the top contributor username from GitHub data.
+  \item[Student should post] GitHub username, e.g.\ \texttt{octocat}.
+\end{description}
+
+\subtype{\texttt{get-issue-title}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{repository}; \field{issueNumber} (the issue to read).
+  \item[Why / use] Fetches that issue's title from the API and compares text to the student's answer.
+  \item[Student should post] Exact title string, e.g.\ \texttt{Fix login bug on Safari}.
+\end{description}
+
+\subsection{Assignment and comment checks}
+
+\subtype{\texttt{assigned}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{ossRepository} (or repo from config), \field{issueNumber} for the issue that must have assignees.
+  \item[Why / use] Verifies the GitHub username the student types is assigned to that issue in that repo.
+  \item[Student should post] A GitHub username, e.g.\ \texttt{their-username}.
+\end{description}
+
+\subtype{\texttt{comment}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{ossRepository}, \field{issueNumber} pointing at the issue where they must leave a real comment first.
+  \item[Why / use] Checks the API for a comment by this user on that issue; the task issue comment must be the word \texttt{done} (lowercase) to confirm they finished.
+  \item[Student should post] \texttt{done} --- after they have commented on the target issue.
+\end{description}
+
+\subtype{\texttt{issue-no}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{repository} / \field{ossRepository}; optional \field{saveValidatedData} + \field{savedDataName}.
+  \item[Why / use] Parses digits from the comment and checks that issue exists in the repo.
+  \item[Student should post] e.g.\ \texttt{17} or \texttt{\#17}.
+\end{description}
+
+\subsection{Custom API call}
+
+\subtype{\texttt{custom-api-call}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{apiEndpoint} (may include \texttt{\{owner\}} / \texttt{\{repo\}} placeholders), \field{responsePath} (JSON path or \texttt{length} for array length), \field{expectedAnswerType} (\texttt{Number}, \texttt{String}, \texttt{Boolean}), optional \field{repository} (defaults to student's quest repo), \field{enableTolerance} + \field{toleranceRange} for numeric slack, optional \field{saveValidatedData} + \field{savedDataName}.
+  \item[Why / use] Calls the GitHub API (or special cases like stargazers) via the bot, extracts a value from the response, compares to the student's answer.
+  \item[Student should post] Whatever matches the extracted value, e.g.\ \texttt{152} for a star count or a string match for text fields.
+\end{description}
+
+\subsection{URL and artifact validations}
+
+\subtype{\texttt{validate-fork-url}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{repositoryToBeStored} (upstream \texttt{owner/repo} they must fork), \field{requireOwnership}, \field{allowForkOfFork}, optional \field{saveValidatedData} + \field{savedDataName}.
+  \item[Why / use] Uses GitHub API to confirm the URL is a fork of the upstream repo and (by default) owned by the student.
+  \item[Student should post] \texttt{https://github.com/student/repo} or \texttt{student/repo}.
+\end{description}
+
+\subtype{\texttt{validate-file-exists}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] Optional \field{expectedFileName}, \field{expectedFileType}; optional save flags.
+  \item[Why / use] Parses a \texttt{blob} URL from the comment and checks the file exists in the repo at that path.
+  \item[Student should post] A GitHub file URL, e.g.\ \texttt{https://github.com/owner/repo/blob/main/README.md}.
+\end{description}
+
+\subtype{\texttt{validate-pr-url}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{targetRepository}, optional \field{targetBranch}, optional \field{sourceRepository}, \field{requireOwnership}, \field{requireOpenState}, optional save flags.
+  \item[Why / use] Resolves PR number from comment, fetches PR via API, checks base repo/branch, mergeability, author, and state.
+  \item[Student should post] \texttt{https://github.com/owner/repo/pull/12}, or \texttt{12}, or \texttt{\#12}.
+\end{description}
+
+\subtype{\texttt{validate-push}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \field{targetRepository} (may use wildcards like \texttt{*/handson}), \field{targetBranch}, optional \field{expectedFilePath}, \field{requireOwnership}, \field{requireRecentPush} + \field{recentPushWindowHours}, optional save flags.
+  \item[Why / use] Extracts a commit SHA from the comment and verifies the commit exists on an allowed repo/branch and matches policy.
+  \item[Student should post] Commit URL or raw SHA, e.g.\ \texttt{https://github.com/owner/repo/commit/abc123\ldots} or \texttt{abc1234}.
+\end{description}
+
+\subtype{\texttt{validate-repository}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] Under \texttt{repositoryValidation}: \field{requireRepositoryExists}, \field{ownershipType} (\texttt{user} / \texttt{organization} / \texttt{any}), \field{specificOwner}, \field{checkBotAuthorization}, \field{requirePublic} / \field{requirePrivate}, optional \field{saveValidatedData} + \field{savedDataName}.
+  \item[Why / use] Confirms the repo exists and matches ownership/visibility rules.
+  \item[Student should post] \texttt{https://github.com/owner/repo} or \texttt{owner/repo}.
+\end{description}
+
+\subsection{AI-assisted types}
+
+\subtype{\texttt{llm-text-validation}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \texttt{llmTextValidation.\field{question}}, \texttt{validationParameters} (rubric bullets), \field{temperature}, \field{enableDetailedFeedback}; optional per-user save flags where enabled.
+  \item[Why / use] Sends the student's text to the LLM with your question and parameters; pass/fail (and sometimes detailed feedback) from the model.
+  \item[Student should post] A short paragraph answering your prompt, e.g.\ explaining a concept in their own words.
+\end{description}
+
+\subtype{\texttt{imageValidation}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \texttt{imageValidation.\field{question}}, \texttt{validationParameters}, temperature, detailed-feedback flag.
+  \item[Why / use] Extracts an image URL from the comment (HTML or Markdown image) and validates with vision/LLM per deployment.
+  \item[Student should post] A message containing an image URL or embedded image link as required by your instructions.
+\end{description}
+
+\subtype{\texttt{validate-file-content}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \texttt{fileContentValidation.\field{question}}, parameters, temperature, feedback flag.
+  \item[Why / use] Reads file content from a repo (per handler) and validates against rubric via LLM.
+  \item[Student should post] Typically a link to the file or repo path you specified in the task instructions.
+\end{description}
+
+\subsection{GitHub Actions}
+
+\subtype{\texttt{validate-github-actions}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \texttt{githubActionsValidation.\field{workflowFilePath}}, \field{validationParameters} (one check per line), \field{enableDetailedFeedback}, \field{waitForWorkflowCompletion}, optional \field{requireStudentOwnership}, \field{requirePrivateRepo}.
+  \item[Why / use] Resolves a target repo from the student's comment (or stored fork URL / fallback), fetches the workflow file, runs line-based checks; optionally waits for CI status.
+  \item[Student should post] A comment that includes their repo, e.g.\ \texttt{https://github.com/student/my-lab}, or rely on a previously saved fork URL if your quest flow stores one.
+\end{description}
+
+\subsection{Code review task types}
+
+\subtype{\texttt{iterative-code-review}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \texttt{iterativeCodeReview}: \field{reviewPrompt}, \field{reviewCriteria}, \field{maxIterations}, \field{temperature}, \field{enableDetailedFeedback}, optional \field{prFilePattern}, \field{commentOnPR}, \field{approvePR}, \field{mergePR}, \field{mergeMethod}.
+  \item[Why / use] Student submits a PR URL; the bot reviews commits with an LLM in a loop until criteria pass or max iterations.
+  \item[Student should post] PR URL as instructed (often \texttt{https://github.com/owner/repo/pull/N}); follow-up happens on the PR or issue per config.
+\end{description}
+
+\subtype{\texttt{bot-code-review}}
+\begin{description}[style=nextline,leftmargin=0cm]
+  \item[Fields] \texttt{botCodeReview}: \field{acceptMessage}, \field{originalCode}, \field{codeLanguage}, \field{requirements}, \field{knownIssues}, iteration and feedback settings, optional \field{createPR}, \field{fileName}.
+  \item[Why / use] Student reviews flawed sample code; bot drives an iterative review dialogue until issues are found or limits hit.
+  \item[Student should post] Free-text review feedback in the issue thread (and approve/review actions per your instructions); exact pattern depends on task phrasing.
+\end{description}
+
+\section{Summary table (quick lookup)}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+  \toprule
+  \textbf{Type} & \textbf{Student comment should usually contain} \\
+  \midrule
+  \field{multiple-choice} & One letter \texttt{a}--\texttt{d}. \\
+  \field{quiz} & Comma-separated letters, e.g.\ \texttt{a,b,c}. \\
+  \field{collect-info} & Arbitrary text (non-empty). \\
+  \field{get-issue-count}, \field{get-pr-count}, \field{get-open-issue} & Numeric string. \\
+  \field{get-top-contributor} & Username. \\
+  \field{get-issue-title} & Issue title text. \\
+  \field{assigned} & GitHub username. \\
+  \field{comment} & The word \texttt{done} (after commenting elsewhere). \\
+  \field{issue-no} & Issue number. \\
+  \field{custom-api-call} & Value matching API-extracted answer. \\
+  \field{validate-fork-url} & Fork URL or \texttt{owner/repo}. \\
+  \field{validate-file-exists} & GitHub blob URL to a file. \\
+  \field{validate-pr-url} & PR URL or PR number. \\
+  \field{validate-push} & Commit URL or SHA. \\
+  \field{validate-github-actions} & Repo URL (or use stored fork). \\
+  \field{validate-repository} & Repository URL or \texttt{owner/repo}. \\
+  \field{llm-text-validation}, \field{imageValidation}, \field{validate-file-content} & Text and/or image/file link per task. \\
+  \field{iterative-code-review} & PR URL (then iterative). \\
+  \field{bot-code-review} & Review text per your prompt. \\
+  \bottomrule
+\end{tabularx}
+}
+
+\section{Repositories and stability}
+
+Many tasks refer to a repository (template, practice repo, or course repo). Set \texttt{owner/repo} where the UI asks. For tasks that depend on counts or titles, prefer repos you control or refresh expected values each term when upstream data changes.
+
+\section{Adding Students and What They See}
+
+Students typically receive a \textbf{private repository} whose \textbf{README} shows progress and whose \textbf{Issues} list tasks. They \textbf{comment on the issue} for the active task to submit answers unless you configured a type that expects only a keyword (e.g.\ \texttt{done}).
+
+\section{Grades and Fairness}
+
+Points and XP support engagement; your syllabus should state how they map to course grades. Hints may reduce points---state that in the syllabus. If students say the bot is ``picky,'' clearer instructions or splitting tasks often help more than long threads in the issue.
+
+\section{Updating Content Mid-Course}
+
+Small fixes (typos, clarity): edit in draft, then redeploy per your team's process. Large changes (quest order, new tasks): coordinate timing so students are not halfway through an obsolete sequence.
+
+\section{When Something Goes Wrong}
+
+\textbf{Try first:} confirm the student is in the correct repo and issue; confirm they submitted in a comment; check task type and required format (e.g.\ \texttt{done} vs a number).
+
+\textbf{Escalate support} when the bot never replies, deploy fails or the wrong quest version appears, or GitHub permissions block repo creation or invites.
+
+\section{Quick Checklist for a Good Task}
+
+\begin{itemize}[leftmargin=*,label=$\square$]
+  \item One clear outcome (``paste X,'' ``answer Y'').
+  \item Where to work (which tab, which repo).
+  \item What to paste or type in the issue comment (use Section~\ref{sec:tasktypes}).
+  \item Wrong answers: what to try next.
+  \item Correct task type selected and all required fields filled.
+\end{itemize}
+
+\section{Closing}
+
+OSS-Doorway lets you teach GitHub and open-source workflows where they happen---in repositories and issues---while the system handles sequencing, validation, and feedback. Day-to-day teaching uses the Quest Builder and class management UI; code and server work belongs with your technical support team.
+
+\end{document}

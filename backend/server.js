@@ -24,8 +24,6 @@ if (process.env.NODE_ENV !== "test") {
   console.log(`Starting server with PID: ${process.pid}`);
 }
 
-connectDB();
-
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -85,29 +83,45 @@ io.on('connection', (socket) => {
 });
 
 // Export app for testing purposes
-if (process.env.NODE_ENV !== "test") {
-  server.listen(port, '0.0.0.0', () => {
-    console.log(`Server has started on port ${port} with PID ${process.pid}`);
-    console.log(`🔌 Socket.io server is ready`);
-  });
-  
-  // Handle graceful shutdown
-  const gracefulShutdown = () => {
-    console.log('Received shutdown signal, closing server...');
-    io.close(() => {
-      console.log('Socket.io closed');
-      server.close(() => {
-        console.log('Server closed');
-        closeDB().then(() => {
-          console.log('Database connection closed');
-          process.exit(0);
-        });
+const gracefulShutdown = () => {
+  console.log('Received shutdown signal, closing server...');
+  io.close(() => {
+    console.log('Socket.io closed');
+    server.close(() => {
+      console.log('Server closed');
+      closeDB().then(() => {
+        console.log('Database connection closed');
+        process.exit(0);
       });
     });
-  };
-  
-  process.on('SIGTERM', gracefulShutdown);
-  process.on('SIGINT', gracefulShutdown);
+  });
+};
+
+if (process.env.NODE_ENV !== "test") {
+  (async function start() {
+    try {
+      await connectDB();
+      server.listen(port, '0.0.0.0', () => {
+        console.log(`Server has started on port ${port} with PID ${process.pid}`);
+        console.log(`🔌 Socket.io server is ready`);
+      });
+      process.on('SIGTERM', gracefulShutdown);
+      process.on('SIGINT', gracefulShutdown);
+    } catch (err) {
+      const code = err && err.code;
+      const msg = err && err.message;
+      if (code === 8000 || /bad auth/i.test(String(msg))) {
+        console.error(
+          'MongoDB authentication failed for URI. Verify the Atlas database user and password in OSS-Management/.env. If the password contains @ : / ? # or spaces, URL-encode it in the connection string.'
+        );
+      }
+      process.exit(1);
+    }
+  })();
+} else {
+  connectDB().catch((err) => {
+    console.error('Error connecting to the database:', err);
+  });
 }
 
 module.exports = app;

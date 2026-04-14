@@ -34,7 +34,6 @@ import {
   Tooltip,
   CircularProgress,
   LinearProgress,
-  ListSubheader,
   Switch,
   Table,
   TableBody,
@@ -43,12 +42,18 @@ import {
   TableHead,
   TableRow,
   FormHelperText,
+  Popover,
+  Collapse,
+  ListItemButton,
+  ListItemText,
 } from "@mui/material";
 import {
   Description as DescriptionIcon,
   Add as AddIcon,
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   LibraryBooks as LibraryBooksIcon,
@@ -228,6 +233,401 @@ const STYLES = {
     },
   },
 };
+
+/**
+ * Task type dropdown: grouped by category; only one category expanded at a time.
+ * `includeRepository` adds validate-repository (recommended true for add + edit).
+ */
+const TASK_TYPE_CATEGORY_DEFINITIONS = (includeRepository) => {
+  const categories = [
+    {
+      id: "custom-api",
+      label: "Custom API",
+      headerSx: {
+        backgroundColor: "#e3f2fd",
+        fontWeight: "bold",
+        borderLeft: "3px solid #2196f3",
+      },
+      items: [
+        {
+          value: "custom-api-call",
+          label: "Custom API Call",
+          description:
+            "Calls any external API endpoint and validates the response. Use this to integrate with third-party services or your own backend for flexible task validation.",
+        },
+      ],
+    },
+    {
+      id: "quizzes-info",
+      label: "Quizzes & information collection",
+      items: [
+        {
+          value: "multiple-choice",
+          label: "Multiple Choice Question (MCQ)",
+          description:
+            "Presents students with a question and a set of predefined answer options (A, B, C…). Automatically graded when the student picks the correct option.",
+        },
+        {
+          value: "quiz",
+          label: "Multi-Question Quiz",
+          description:
+            "A series of multiple-choice questions grouped into one task. Students answer all questions before submitting; the bot grades each one and reports a score.",
+        },
+        {
+          value: "collect-info",
+          label: "Collect Information (Non-graded)",
+          description:
+            "Asks students to submit free-form text (e.g. a link, username, or note). The response is saved for later tasks to reference but no pass/fail grade is applied.",
+        },
+      ],
+    },
+    {
+      id: "github-metrics",
+      label: "GitHub counts & lookups",
+      items: [
+        {
+          value: "get-issue-count",
+          label: "Get Issue Count",
+          description:
+            "Checks that the student's repository has a specific number of issues (open, closed, or total). Useful for verifying they have created or closed the required number of issues.",
+        },
+        {
+          value: "get-pr-count",
+          label: "Get Pull Request Count",
+          description:
+            "Verifies the number of pull requests in the student's repository. Confirms students have submitted the expected amount of PRs.",
+        },
+        {
+          value: "get-top-contributor",
+          label: "Get Top Contributor",
+          description:
+            "Checks who the top contributor to the repository is. Can be used to verify the student is actively committing rather than just forking.",
+        },
+        {
+          value: "get-issue-title",
+          label: "Get Issue Title",
+          description:
+            "Fetches and validates the title of a specific issue in the student's repo. Useful for confirming they created an issue with the correct naming convention.",
+        },
+        {
+          value: "get-open-issue",
+          label: "Get Open Issue Count",
+          description:
+            "Verifies how many issues are currently open in the repository. Useful for tracking that students haven't prematurely closed issues.",
+        },
+      ],
+    },
+    {
+      id: "issue-assignment",
+      label: "Issues, assignments & comments",
+      items: [
+        {
+          value: "assigned",
+          label: "Assignment Validation",
+          description:
+            "Confirms that the student has been assigned to a specific issue in the repository. Useful for verifying that they have claimed or been given a task.",
+        },
+        {
+          value: "issue-no",
+          label: "Issue Number Validation",
+          description:
+            "Validates that the student references a specific issue number in their submission. Ensures students are working on the correct issue.",
+        },
+        {
+          value: "comment",
+          label: "Comment Validation",
+          description:
+            "Checks that the student has left a comment on a specific issue or PR. Useful for participation tasks or requiring students to document their progress.",
+        },
+      ],
+    },
+    {
+      id: "fork-pr-files",
+      label: "Forks, files, PRs & commits",
+      items: [
+        {
+          value: "validate-fork-url",
+          label: "Validate Fork URL",
+          description:
+            "Verifies that the URL the student submits is a valid fork of the expected upstream repository. Confirms they forked the right repo before starting work.",
+        },
+        {
+          value: "validate-file-exists",
+          label: "Validate File Exists",
+          description:
+            "Checks that a specific file or directory path exists in the student's repository at the expected location. Great for confirming deliverables are committed.",
+        },
+        {
+          value: "validate-pr-url",
+          label: "Validate PR URL",
+          description:
+            "Validates that the student has opened a pull request against the correct target repository and branch. Checks PR metadata such as target branch and open/merged status.",
+        },
+        {
+          value: "validate-push",
+          label: "Validate Push/Commit",
+          description:
+            "Verifies that the student has pushed at least one commit to the expected branch. Can also check commit messages or the files changed in the push.",
+        },
+      ],
+    },
+    {
+      id: "github-actions",
+      label: "GitHub Actions workflows",
+      items: [
+        {
+          value: "validate-github-actions",
+          label: "Validate GitHub Actions Workflow",
+          description:
+            "Parses the student's GitHub Actions YAML file and verifies triggers, runners, steps, and action versions match the expected configuration. Can also wait for a workflow run to pass before completing the task.",
+        },
+      ],
+    },
+    {
+      id: "ai-powered",
+      label: "AI-powered validation",
+      headerSx: { backgroundColor: "#fff8e1", fontWeight: 600 },
+      items: [
+        {
+          value: "llm-text-validation",
+          label: "LLM Text Validation",
+          description:
+            "Sends the student's free-text answer to an LLM with your custom prompt and criteria. The AI determines whether the answer is correct and generates tailored feedback. Good for open-ended questions.",
+        },
+        {
+          value: "imageValidation",
+          label: "LLM Image Validation",
+          description:
+            "Asks students to submit a screenshot or image URL. The LLM analyses the image against your criteria (e.g. the correct terminal output is visible) and passes or fails the task accordingly.",
+        },
+        {
+          value: "validate-file-content",
+          label: "LLM File Content Validation",
+          description:
+            "Fetches a specific file from the student's repository and uses an LLM to check its contents against your rubric. Ideal for validating code structure, comments, or documentation quality.",
+        },
+      ],
+    },
+    {
+      id: "code-review",
+      label: "Code review",
+      headerSx: { backgroundColor: "#e8eaf6", fontWeight: 600 },
+      items: [
+        {
+          value: "iterative-code-review",
+          label: "Iterative Code Review",
+          description:
+            "The student submits a PR and the bot iteratively reviews their code with an LLM, posting inline feedback. The student can revise and resubmit up to a configured max iterations before the task auto-completes.",
+        },
+        {
+          value: "bot-code-review",
+          label: "Bot Code Review",
+          description:
+            "The bot writes code in a PR for the student to review. The student must identify bugs or issues the bot intentionally introduced. Tests code-reading and critical thinking skills.",
+        },
+      ],
+    },
+  ];
+  if (includeRepository) {
+    categories.push({
+      id: "repository",
+      label: "Repository validation",
+      items: [
+        {
+          value: "validate-repository",
+          label: "Validate Repository",
+          description:
+            "Checks that the repository a student submits meets your requirements: it exists, is owned by the right user or organisation, is public or private, and that the bot has been installed (authorized) on it.",
+        },
+      ],
+    });
+  }
+  return categories;
+};
+
+function buildTaskTypeLabelMap(includeRepository) {
+  const map = {};
+  TASK_TYPE_CATEGORY_DEFINITIONS(includeRepository).forEach((cat) => {
+    cat.items.forEach((it) => {
+      map[it.value] = it.label;
+    });
+  });
+  return map;
+}
+
+function TaskTypeCategoryPicker({ value, onChange, includeRepository = true }) {
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [openCategoryId, setOpenCategoryId] = useState(null);
+  const open = Boolean(anchorEl);
+
+  const categories = useMemo(
+    () => TASK_TYPE_CATEGORY_DEFINITIONS(includeRepository),
+    [includeRepository]
+  );
+  const labelMap = useMemo(
+    () => buildTaskTypeLabelMap(includeRepository),
+    [includeRepository]
+  );
+
+  const displayLabel = labelMap[value] || value || "";
+
+  const handleCategoryClick = (id) => {
+    setOpenCategoryId((prev) => (prev === id ? null : id));
+  };
+
+  const handlePick = (v) => {
+    onChange(v);
+    setAnchorEl(null);
+    setOpenCategoryId(null);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setOpenCategoryId(null);
+  };
+
+  const openPicker = (el) => {
+    setAnchorEl(el);
+    const cat = categories.find((c) =>
+      c.items.some((it) => it.value === value)
+    );
+    setOpenCategoryId(cat ? cat.id : null);
+  };
+
+  return (
+    <>
+      <TextField
+        fullWidth
+        label="Task Type"
+        value={displayLabel}
+        placeholder="Select task type"
+        onClick={(e) => openPicker(e.currentTarget)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            openPicker(e.currentTarget);
+          }
+        }}
+        InputProps={{
+          readOnly: true,
+          endAdornment: (
+            open ? (
+              <ExpandLessIcon sx={{ color: "action.active", pointerEvents: "none" }} fontSize="small" />
+            ) : (
+              <ExpandMoreIcon sx={{ color: "action.active", pointerEvents: "none" }} fontSize="small" />
+            )
+          ),
+        }}
+        inputProps={{ "aria-haspopup": "true", "aria-expanded": open }}
+        sx={{ cursor: "pointer", borderRadius: 2 }}
+        helperText="Open a category (one at a time), then choose a task type"
+      />
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        slotProps={{
+          paper: {
+            sx: {
+              width: anchorEl ? Math.max(anchorEl.offsetWidth, 300) : 300,
+              maxWidth: "min(100vw - 32px, 480px)",
+              maxHeight: 480,
+              mt: 0.5,
+            },
+          },
+        }}
+      >
+        <Box sx={{ maxHeight: 480, overflow: "auto", py: 0.5 }}>
+          {categories.map((cat) => {
+            const expanded = openCategoryId === cat.id;
+            return (
+              <Box key={cat.id}>
+                <ListItemButton
+                  onClick={() => handleCategoryClick(cat.id)}
+                  sx={{
+                    py: 1,
+                    px: 2,
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: cat.headerSx?.backgroundColor,
+                    borderLeft: cat.headerSx?.borderLeft,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: cat.headerSx?.fontWeight ?? 600, flex: 1 }}
+                  >
+                    {cat.label}
+                  </Typography>
+                  {expanded ? (
+                    <ExpandLessIcon fontSize="small" color="action" />
+                  ) : (
+                    <ExpandMoreIcon fontSize="small" color="action" />
+                  )}
+                </ListItemButton>
+                <Collapse in={expanded} timeout="auto" unmountOnExit>
+                  {cat.items.map((it) => (
+                    <ListItemButton
+                      key={it.value}
+                      selected={value === it.value}
+                      onClick={() => handlePick(it.value)}
+                      sx={{
+                        pl: 4,
+                        pr: 1.5,
+                        py: 0.75,
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <ListItemText
+                        primary={it.label}
+                        primaryTypographyProps={{ variant: "body2" }}
+                      />
+                      {it.description && (
+                        <Tooltip
+                          title={it.description}
+                          placement="right"
+                          arrow
+                          slotProps={{
+                            tooltip: {
+                              sx: {
+                                maxWidth: 280,
+                                fontSize: "0.78rem",
+                                lineHeight: 1.5,
+                              },
+                            },
+                          }}
+                        >
+                          <InfoIcon
+                            fontSize="small"
+                            onClick={(e) => e.stopPropagation()}
+                            sx={{
+                              ml: 1,
+                              flexShrink: 0,
+                              color: "text.disabled",
+                              cursor: "default",
+                              "&:hover": { color: "primary.main" },
+                            }}
+                          />
+                        </Tooltip>
+                      )}
+                    </ListItemButton>
+                  ))}
+                </Collapse>
+              </Box>
+            );
+          })}
+        </Box>
+      </Popover>
+    </>
+  );
+}
 
 // Add default JSON configuration used for new classes
 const defaultJsonContent = {
@@ -4943,191 +5343,14 @@ Student can now start their quest journey!`);
                         )}
                       </Box>
 
-                      {/* Task Type Selection */}
-                      <FormControl fullWidth>
-                        <InputLabel>Task Type</InputLabel>
-                        <Select
-                          value={task.taskType}
-                          onChange={(e) =>
-                            handleTaskChange(
-                              taskIdx,
-                              "taskType",
-                              e.target.value
-                            )
-                          }
-                          label="Task Type"
-                          sx={{ borderRadius: 2 }}
-                        >
-                          {/* Custom API Call - Most Prominent */}
-                          <MenuItem
-                            value="custom-api-call"
-                            sx={{
-                              backgroundColor: "#e3f2fd",
-                              fontWeight: "bold",
-                              borderBottom: "2px solid #2196f3",
-                              "&:hover": {
-                                backgroundColor: "#bbdefb",
-                              },
-                            }}
-                          >
-                            Custom API Call
-                          </MenuItem>
-
-                          <Divider />
-
-                          {/* Default Task Types */}
-                          <ListSubheader
-                            sx={{
-                              backgroundColor: "#f5f5f5",
-                              fontWeight: "bold",
-                              color: "#666",
-                            }}
-                          >
-                            Default Task Types
-                          </ListSubheader>
-
-                          <MenuItem value="multiple-choice">
-                            Multiple Choice Question (MCQ)
-                          </MenuItem>
-                          <MenuItem value="quiz">Multi-Question Quiz</MenuItem>
-                          <MenuItem value="collect-info">Collect Information (Non-graded)</MenuItem>
-                          <MenuItem value="get-issue-count">
-                            Get Issue Count
-                          </MenuItem>
-                          <MenuItem value="get-pr-count">
-                            Get Pull Request Count
-                          </MenuItem>
-                          <MenuItem value="get-top-contributor">
-                            Get Top Contributor
-                          </MenuItem>
-                          <MenuItem value="get-issue-title">
-                            Get Issue Title
-                          </MenuItem>
-                          <MenuItem value="get-open-issue">
-                            Get Open Issue Count
-                          </MenuItem>
-                          <MenuItem value="assigned">
-                            Assignment Validation
-                          </MenuItem>
-                          <MenuItem value="issue-no">
-                            Issue Number Validation
-                          </MenuItem>
-                          <MenuItem value="comment">
-                            Comment Validation
-                          </MenuItem>
-                          <MenuItem value="validate-fork-url">
-                            Validate Fork URL
-                          </MenuItem>
-                          <MenuItem value="validate-file-exists">
-                            Validate File Exists
-                          </MenuItem>
-                          <MenuItem value="validate-pr-url">
-                            Validate PR URL
-                          </MenuItem>
-                          <MenuItem value="validate-push">
-                            Validate Push/Commit
-                          </MenuItem>
-                          <MenuItem value="validate-github-actions">
-                            Validate GitHub Actions Workflow
-                          </MenuItem>
-
-                          <Divider />
-
-                          {/* AI-Powered Task Types */}
-                          <ListSubheader
-                            sx={{
-                              backgroundColor: "#f5f5f5",
-                              fontWeight: "bold",
-                              color: "#666",
-                            }}
-                          >
-                            AI-Powered Task Types
-                          </ListSubheader>
-
-                          <MenuItem
-                            value="llm-text-validation"
-                            sx={{
-                              backgroundColor: "#fff3e0",
-                              fontWeight: "bold",
-                              borderBottom: "2px solid #ff9800",
-                              "&:hover": {
-                                backgroundColor: "#ffe0b2",
-                              },
-                            }}
-                          >
-                            LLM Text Validation
-                          </MenuItem>
-
-                          <MenuItem
-                            value="imageValidation"
-                            sx={{
-                              backgroundColor: "#e8f5e8",
-                              fontWeight: "bold",
-                              borderBottom: "2px solid #4caf50",
-                              "&:hover": {
-                                backgroundColor: "#c8e6c9",
-                              },
-                            }}
-                          >
-                            LLM Image Validation
-                          </MenuItem>
-
-                          <MenuItem
-                            value="validate-file-content"
-                            sx={{
-                              backgroundColor: "#f3e5f5",
-                              fontWeight: "bold",
-                              borderBottom: "2px solid #9c27b0",
-                              "&:hover": {
-                                backgroundColor: "#e1bee7",
-                              },
-                            }}
-                          >
-                            LLM File Content Validation
-                          </MenuItem>
-
-                          <Divider />
-
-                          {/* Code Review Task Types */}
-                          <ListSubheader
-                            sx={{
-                              backgroundColor: "#f5f5f5",
-                              fontWeight: "bold",
-                              color: "#666",
-                            }}
-                          >
-                            Code Review Task Types
-                          </ListSubheader>
-
-                          <MenuItem
-                            value="iterative-code-review"
-                            sx={{
-                              backgroundColor: "#e8eaf6",
-                              fontWeight: "bold",
-                              borderBottom: "2px solid #3f51b5",
-                              "&:hover": {
-                                backgroundColor: "#c5cae9",
-                              },
-                            }}
-                          >
-                            Iterative Code Review
-                          </MenuItem>
-
-                          <MenuItem
-                            value="bot-code-review"
-                            sx={{
-                              backgroundColor: "#e8eaf6",
-                              fontWeight: "bold",
-                              borderBottom: "2px solid #3f51b5",
-                              "&:hover": {
-                                backgroundColor: "#c5cae9",
-                              },
-                            }}
-                          >
-                            Bot Code Review
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
+                      {/* Task Type Selection (categories; one expanded at a time) */}
+                      <TaskTypeCategoryPicker
+                        value={task.taskType}
+                        onChange={(v) =>
+                          handleTaskChange(taskIdx, "taskType", v)
+                        }
+                        includeRepository
+                      />
 
                       <TextField
                         label="Task Title"
@@ -8360,158 +8583,21 @@ Student can now start their quest journey!`);
                     Task Configuration
                   </Typography>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel>Task Type</InputLabel>
-                    <Select
+                  <Box sx={{ mb: 2 }}>
+                    <TaskTypeCategoryPicker
                       value={editingTaskData?.taskType || "multiple-choice"}
-                      onChange={(e) => {
-                        console.log(`🔄 [TASK-EDIT] Changing task type from "${editingTaskData?.taskType}" to "${e.target.value}"`);
-                        setEditingTaskData(prev => ({
+                      onChange={(v) => {
+                        console.log(
+                          `🔄 [TASK-EDIT] Changing task type from "${editingTaskData?.taskType}" to "${v}"`
+                        );
+                        setEditingTaskData((prev) => ({
                           ...prev,
-                          taskType: e.target.value,
+                          taskType: v,
                         }));
                       }}
-                      label="Task Type"
-                      sx={{ borderRadius: 2 }}
-                    >
-                      {/* Custom API Call - Most Prominent */}
-                      <MenuItem
-                        value="custom-api-call"
-                        sx={{
-                          backgroundColor: "#e3f2fd",
-                          fontWeight: "bold",
-                          borderBottom: "2px solid #2196f3",
-                          "&:hover": {
-                            backgroundColor: "#bbdefb",
-                          },
-                        }}
-                      >
-                        Custom API Call
-                      </MenuItem>
-
-                      {/* Default Task Types */}
-                      <ListSubheader
-                        sx={{
-                          backgroundColor: "#f5f5f5",
-                          fontWeight: "bold",
-                          color: "#666",
-                        }}
-                      >
-                        Default Task Types
-                      </ListSubheader>
-                      <MenuItem value="multiple-choice">Multiple Choice Question (MCQ)</MenuItem>
-                      <MenuItem value="quiz">Multi-Question Quiz</MenuItem>
-                      <MenuItem value="collect-info">Collect Information (Non-graded)</MenuItem>
-                      <MenuItem value="get-issue-count">Get Issue Count</MenuItem>
-                      <MenuItem value="get-pr-count">Get Pull Request Count</MenuItem>
-                      <MenuItem value="get-top-contributor">Get Top Contributor</MenuItem>
-                      <MenuItem value="get-issue-title">Get Issue Title</MenuItem>
-                      <MenuItem value="get-open-issue">Get Open Issue Count</MenuItem>
-                      <MenuItem value="assigned">Assignment Validation</MenuItem>
-                      <MenuItem value="comment">Comment Validation</MenuItem>
-                      <MenuItem value="issue-no">Issue Number</MenuItem>
-                      <MenuItem value="validate-fork-url">Validate Fork URL</MenuItem>
-                      <MenuItem value="validate-file-exists">Validate File Exists</MenuItem>
-                      <MenuItem value="validate-pr-url">Validate PR URL</MenuItem>
-                      <MenuItem value="validate-push">Validate Push/Commit</MenuItem>
-                      <MenuItem value="validate-github-actions">Validate GitHub Actions Workflow</MenuItem>
-                      <MenuItem value="validate-repository">Validate Repository</MenuItem>
-
-                      {/* AI-Powered Task Types */}
-                      <ListSubheader
-                        sx={{
-                          backgroundColor: "#f5f5f5",
-                          fontWeight: "bold",
-                          color: "#666",
-                        }}
-                      >
-                        AI-Powered Task Types
-                      </ListSubheader>
-
-                      <MenuItem
-                        value="llm-text-validation"
-                        sx={{
-                          backgroundColor: "#fff3e0",
-                          fontWeight: "bold",
-                          borderBottom: "2px solid #ff9800",
-                          "&:hover": {
-                            backgroundColor: "#ffe0b2",
-                          },
-                        }}
-                      >
-                        LLM Text Validation
-                      </MenuItem>
-
-                      <MenuItem
-                        value="imageValidation"
-                        sx={{
-                          backgroundColor: "#e8f5e8",
-                          fontWeight: "bold",
-                          borderBottom: "2px solid #4caf50",
-                          "&:hover": {
-                            backgroundColor: "#c8e6c9",
-                          },
-                        }}
-                      >
-                        LLM Image Validation
-                      </MenuItem>
-
-                      <MenuItem
-                        value="validate-file-content"
-                        sx={{
-                          backgroundColor: "#f3e5f5",
-                          fontWeight: "bold",
-                          borderBottom: "2px solid #9c27b0",
-                          "&:hover": {
-                            backgroundColor: "#e1bee7",
-                          },
-                        }}
-                      >
-                        LLM File Content Validation
-                      </MenuItem>
-
-                      <Divider />
-
-                      {/* Code Review Task Types */}
-                      <ListSubheader
-                        sx={{
-                          backgroundColor: "#f5f5f5",
-                          fontWeight: "bold",
-                          color: "#666",
-                        }}
-                      >
-                        Code Review Task Types
-                      </ListSubheader>
-
-                      <MenuItem
-                        value="iterative-code-review"
-                        sx={{
-                          backgroundColor: "#e8eaf6",
-                          fontWeight: "bold",
-                          borderBottom: "2px solid #3f51b5",
-                          "&:hover": {
-                            backgroundColor: "#c5cae9",
-                          },
-                        }}
-                      >
-                        Iterative Code Review
-                      </MenuItem>
-
-                      <MenuItem
-                        value="bot-code-review"
-                        sx={{
-                          backgroundColor: "#e8eaf6",
-                          fontWeight: "bold",
-                          borderBottom: "2px solid #3f51b5",
-                          "&:hover": {
-                            backgroundColor: "#c5cae9",
-                          },
-                        }}
-                      >
-                        Bot Code Review
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
+                      includeRepository
+                    />
+                  </Box>
 
                   <Divider sx={{ my: 3 }} />
 
@@ -12474,36 +12560,82 @@ Good luck! 🚀"
 };
 
 // Move these to parent scope so both QuestBlock and TaskBlock can use them
+/** Normalize type slug from quest task objects (DB / draft may use `type` or `taskType`). */
+const resolveTaskTypeKey = (task) => {
+  if (!task) return "";
+  const raw = task.type ?? task.taskType;
+  if (raw == null || raw === "" || raw === "N/A") return "";
+  return String(raw).trim();
+};
+
+const humanizeTaskTypeSlug = (slug) => {
+  if (!slug) return "Unknown";
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+};
+
+/** Stable distinct color for types not in the explicit map (e.g. future task types). */
+const hashStringToColor = (str) => {
+  let h = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    h = str.charCodeAt(i) + ((h << 5) - h);
+  }
+  const hue = Math.abs(h) % 360;
+  return `hsl(${hue}, 52%, 40%)`;
+};
+
 const getTaskTypeColor = (taskType) => {
   switch (taskType) {
     case "multiple-choice":
-      return "#2196f3";
-    case "quiz":
-      return "#9c27b0";
-    case "get-issue-count":
-      return "#ff9800";
-    case "get-pr-count":
-      return "#f44336";
-    case "get-top-contributor":
-      return "#4caf50";
-    case "get-issue-title":
-      return "#607d8b";
-    case "get-open-issue":
-      return "#795548";
-    case "custom-api-call":
       return "#1976d2";
+    case "quiz":
+      return "#7b1fa2";
+    case "collect-info":
+      return "#00897b";
+    case "get-issue-count":
+      return "#f57c00";
+    case "get-pr-count":
+      return "#d32f2f";
+    case "get-top-contributor":
+      return "#388e3c";
+    case "get-issue-title":
+      return "#455a64";
+    case "get-open-issue":
+      return "#6d4c41";
+    case "custom-api-call":
+      return "#0d47a1";
     case "assigned":
-      return "#e91e63";
+      return "#c2185b";
     case "issue-no":
       return "#ff5722";
     case "comment":
-      return "#00bcd4";
+      return "#0097a7";
+    case "validate-fork-url":
+      return "#303f9f";
+    case "validate-file-exists":
+      return "#5e35b1";
+    case "validate-pr-url":
+      return "#6a1b9a";
+    case "validate-push":
+      return "#00695c";
+    case "validate-github-actions":
+      return "#37474f";
+    case "validate-repository":
+      return "#bf360c";
     case "llm-text-validation":
-      return "#ff9800";
-    case "collect-info":
-      return "#4caf50";
+      return "#e65100";
+    case "imageValidation":
+      return "#2e7d32";
+    case "validate-file-content":
+      return "#8e24aa";
+    case "iterative-code-review":
+      return "#283593";
+    case "bot-code-review":
+      return "#4527a0";
     default:
-      return "#757575";
+      return taskType ? hashStringToColor(taskType) : "#757575";
   }
 };
 
@@ -12513,30 +12645,50 @@ const getTaskTypeLabel = (taskType) => {
       return "MCQ";
     case "quiz":
       return "Quiz";
+    case "collect-info":
+      return "Collect info";
     case "get-issue-count":
-      return "Issue Count";
+      return "Issue count";
     case "get-pr-count":
-      return "PR Count";
+      return "PR count";
     case "get-top-contributor":
-      return "Top Contributor";
+      return "Top contributor";
     case "get-issue-title":
-      return "Issue Title";
+      return "Issue title";
     case "get-open-issue":
-      return "Open Issues";
+      return "Open issues";
     case "custom-api-call":
       return "Custom API";
     case "assigned":
       return "Assignment";
     case "issue-no":
-      return "Issue Number";
+      return "Issue #";
     case "comment":
       return "Comment";
+    case "validate-fork-url":
+      return "Fork URL";
+    case "validate-file-exists":
+      return "File exists";
+    case "validate-pr-url":
+      return "PR URL";
+    case "validate-push":
+      return "Push / commit";
+    case "validate-github-actions":
+      return "GitHub Actions";
+    case "validate-repository":
+      return "Repository";
     case "llm-text-validation":
-      return "LLM Text";
-    case "collect-info":
-      return "Collect Info";
+      return "LLM text";
+    case "imageValidation":
+      return "LLM image";
+    case "validate-file-content":
+      return "LLM file";
+    case "iterative-code-review":
+      return "Iterative review";
+    case "bot-code-review":
+      return "Bot review";
     default:
-      return "Unknown";
+      return humanizeTaskTypeSlug(taskType);
   }
 };
 
@@ -12874,6 +13026,8 @@ const TaskBlock = ({
   if (duplicateInfo?.duplicateWithDraft) {
     taskDuplicateMessages.push("Title duplicates another draft task");
   }
+  const taskTypeKey = resolveTaskTypeKey(task);
+  const typeChipBg = getTaskTypeColor(taskTypeKey);
   return (
     <Card
       data-task-id={taskId}
@@ -12950,10 +13104,17 @@ const TaskBlock = ({
           }}
         >
           <Chip
-            label={getTaskTypeLabel(task.type)}
-            color="info"
+            label={getTaskTypeLabel(taskTypeKey)}
             size="small"
-            sx={{ borderRadius: 2, width: "auto", flexShrink: 0 }}
+            sx={{
+              borderRadius: 2,
+              width: "auto",
+              flexShrink: 0,
+              bgcolor: typeChipBg,
+              color: "#fff",
+              fontWeight: 600,
+              "& .MuiChip-label": { px: 1 },
+            }}
           />
           <Chip
             label={`XP: ${task.xp ?? 0}`}
@@ -13137,7 +13298,8 @@ const TaskEditConfirmationDialog = ({
             Quest {questIndex + 1} - Task: {taskData?.taskDesc || taskData?.title || 'Untitled Task'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            Task Type: {taskData?.taskType || 'Unknown'}
+            Task Type:{" "}
+            {getTaskTypeLabel(resolveTaskTypeKey(taskData))}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Points: {taskData?.points || 0} | XP: {taskData?.xp || 0}
