@@ -303,7 +303,7 @@ const ManageStudents = () => {
               users: [username], // Single user per request
               customSequence: generateJsonConfig, // Use GenerateJson config
               className: classInfo?.groupName,
-              classId: classInfo?._id
+              classId: classId || classInfo?.groupID
             };
 
             if (!generateJsonConfig) {

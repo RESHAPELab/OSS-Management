@@ -507,7 +507,7 @@ const ClassView = () => {
                             users: [username], // Single user per request
                             customSequence: generateJsonConfig || questConfig, // Use GenerateJson config if available, else fallback
                             className: classInfo?.groupName,
-                            classId: classInfo?._id
+                            classId: classId || classInfo?.groupID
                         };
 
                         if (!generateJsonConfig && !questConfig) {

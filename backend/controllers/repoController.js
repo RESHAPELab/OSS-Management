@@ -2459,7 +2459,7 @@ typings/
                 userDoc.user_data.customSequenceFile = sequenceFile;
                 
                 // 🟣 Enhanced Quest System: If purple config detected, mark for quest unlocking
-                const isPurpleConfig = uniqueGroupId.includes('_purple_');
+                const isPurpleConfig = String(uniqueGroupId).includes('_purple_');
                 if (isPurpleConfig) {
                   console.log(`🌟 [PURPLE-DEPLOY] Purple config detected: ${uniqueGroupId} - will unlock all quests`);
                   userDoc.user_data.unlockAllQuests = true; // Flag for later processing
@@ -2613,7 +2613,11 @@ typings/
               let groupConfigPath = null;
               if (!isDefaultSequence) {
                 // Use the unique groupId for this specific repo
-                const uniqueGroupId = repoUniqueGroupId;
+                const uniqueGroupId = repoUniqueGroupId || classId;
+                if (!uniqueGroupId) {
+                  console.error(`❌ [ISSUE-CREATION] Missing classId/repoUniqueGroupId for ${repoName}, skipping issue creation`);
+                  throw new Error('Missing classId for quest issue creation');
+                }
                 
                 // Use the shared quest config generated outside the loop
                 console.log(`🔍 [QUEST-CONFIG-REUSE] Using shared quest config`);
@@ -2633,7 +2637,7 @@ typings/
                 });
                 
                 // 🌟 Enhanced Quest System: Check if enhanced quests are enabled
-                const isPurpleConfig = uniqueGroupId.includes('_purple_');
+                const isPurpleConfig = String(uniqueGroupId).includes('_purple_');
                 const enhancedQuestsEnabled = process.env.ENABLE_ENHANCED_QUESTS === 'true';
                 const taskBufferSize = parseInt(process.env.TASK_BUFFER_SIZE) || 1;
                 
